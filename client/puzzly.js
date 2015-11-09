@@ -38,35 +38,39 @@
 		this.drawPieces = function(ctx, img, numPieces){
 
 			var opts = {};
-			opts.curX = 0;
-			opts.curY = 0;
+			
+			// prepare draw options
+			opts.curImgX = 0;
+			opts.curImgY = 0;
+			opts.curCanvasX = this.config.boardBoundary.l;
+			opts.curCanvasY = this.config.boardBoundary.t;
+			opts.drawWidth = this.config.pieceSize;
+			opts.drawHeight = Math.ceil(img.height/10);
 
 			var rowSize = 100;
-			var rowCount = 1;
+			var rowCount = 0;
 
 			for(var i=0;i<numPieces;i++){
-				// Set width of clipped image that will be drawn
-				// Also update curX and curY to reflect new start position after draw
-				opts.drawWidth = this.config.pieceSize;
-				opts.drawHeight = this.config.pieceSize;
+
 
 				// start new row every 100 cells
-				if(i%rowSize===0){
-
+				if(i!==0&&i%rowSize===0){
+					
 					rowCount = rowCount+1;
-					opts.curY = rowCount * opts.drawHeight;
-					opts.canvasStartY = this.config.boardBoundary.t + (rowCount * opts.drawStartY);
 
-				} else {
-					opts.drawStartX = opts.curX;
-					opts.drawStartY = opts.curY;
-					opts.canvasStartX = this.config.boardBoundary.l + opts.drawStartX;
-					opts.canvasStartY = this.config.boardBoundary.t + (rowCount * opts.drawStartY);
+					opts.curImgX = 0;
+					opts.curImgY = rowCount * opts.drawHeight;
+					opts.curCanvasX = this.config.boardBoundary.l;
+					opts.curCanvasY = rowCount===0?this.config.boardBoundary.t:opts.curCanvasY + opts.drawHeight +1;
+
 				}
 
-				ctx.drawImage(img, opts.drawStartX, opts.drawStartY, opts.drawWidth, opts.drawHeight, opts.canvasStartX, opts.canvasStartY, opts.drawWidth, opts.drawHeight);
+				// do draw
+				ctx.drawImage(img, opts.curImgX, opts.curImgY, opts.drawWidth, opts.drawHeight, opts.curCanvasX, opts.curCanvasY, opts.drawWidth, opts.drawHeight);
 
-				opts.curX = opts.drawStartX + opts.drawWidth;
+				// update current coords
+				opts.curImgX = opts.curImgX + opts.drawWidth;
+				opts.curCanvasX = opts.curCanvasX + opts.drawWidth + 1;
 
 			}
 		}
