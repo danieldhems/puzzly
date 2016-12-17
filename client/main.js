@@ -4,16 +4,28 @@ form.addEventListener('submit', function(e){
 	upload(form);
 });
 
+function onUploadSuccess(response){
+	console.log(response);
+}
+
+function onUploadFailure(response){
+	console.log(response);
+}
+
 function upload(form){
 
 	var fd = new FormData(form);
 
-	// Create request
-	var xhr = new XMLHttpRequest();
-	xhr.contentType = "application/x-www-form-urlencoded;";
-	xhr.open('POST', '/api/new', true);
-	xhr.send(fd);
-
+	fetch('/api/new', {
+		body: fd,
+		method: 'POST'
+	}).then( function(r){
+		return r.json();
+	}).then( function(d){
+		console.log(d);
+	}).catch( function(err){
+		console.log(err);
+	});
 }
 
 window.onload = function(){

@@ -5,7 +5,7 @@ var puzzle = require('../model/puzzle.js');
 
 var storage = multer.diskStorage({
 	destination: function(req, file, cb){
-		cb(null, './uploads')
+		cb(null, './uploads');
 	},
 	filename: function(req, file, cb){
 		cb(null, file.originalname);
@@ -19,6 +19,7 @@ var api = {
 		var numPieces = parseInt(req.body.numPieces,10);
 		upload(req, res, function(err){
 			if(err) res.send('error uploading file');
+			console.log(req);
 			var file = req.file;
 			var data = {
 				image: {
