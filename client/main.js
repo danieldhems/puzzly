@@ -5,7 +5,7 @@ form.addEventListener('submit', function(e){
 });
 
 function onUploadSuccess(response){
-	console.log(response);
+	Puzzly.init('canvas', response.image.path, response.numPieces);
 }
 
 function onUploadFailure(response){
@@ -22,12 +22,8 @@ function upload(form){
 	}).then( function(r){
 		return r.json();
 	}).then( function(d){
-		console.log(d);
+		onUploadSuccess(d);
 	}).catch( function(err){
-		console.log(err);
+		onUploadFailure(err);
 	});
-}
-
-window.onload = function(){
-	Puzzly.init('canvas', 'img');
 }

@@ -16,17 +16,23 @@
 			numPieces: 1000
 		};
 
-		this.init = function(canvasId, imageId, numPieces){
+		this.init = function(canvasId, imageUrl, numPieces){
+			console.log('Initiating puzzly: ', imageUrl, numPieces);
 			this.canvas = document.getElementById(canvasId);
 			this.ctx = this.canvas.getContext('2d');
 
-			this.img = document.getElementById(imageId);
+			this.img = new Image();
+			this.img.src = imageUrl;
+			console.log('image loaded: ', this.img.width, this.img.height);
 			this.canvas.width = window.innerWidth;
 			this.canvas.height = window.innerHeight;
 
-			this.config.pieceSize = this.setPieceSize(this.img, numPieces);
+			this.img.onload = function(img){
+				console.log(img);
+				this.config.pieceSize = this.setPieceSize(this.img, numPieces);
+				this.drawPieces(this.ctx, this.img, 1000);
+			}.bind(this);
 
-			this.drawPieces(this.ctx, this.img, 1000);
 		}
 
 		// Add piece size property to main config based on the image and the number of pieces chosen by the user
@@ -36,6 +42,8 @@
 		}
 
 		this.drawPieces = function(ctx, img, numPieces){
+
+			console.log(img);
 
 			var opts = {};
 			
