@@ -11,6 +11,8 @@
 			numPieces: 1000
 		};
 
+		this.pieces = [];
+
 		this.init = function(canvasId, imageUrl, numPieces){
 			console.log('Initiating puzzly: ', imageUrl, numPieces);
 			this.canvas = document.getElementById(canvasId);
@@ -28,7 +30,13 @@
 				this.drawPieces(this.ctx, this.img, numPieces, this.config.pieceSize);
 			}.bind(this);
 
+			window.addEventListener('click', this.onWindowClick);
+
 		}
+
+		this.onWindowClick = function(e){
+			this.getClickTarget(e);
+		}.bind(this);
 
 		// Add piece size property to main config based on the image and the number of pieces chosen by the user
 		// Returns unitless number, intended to be used as pixels
@@ -40,32 +48,74 @@
 
 		this.drawPieces = function(ctx, img, numPieces, pieceSize){
 
-			var opts = {};
-			
 			var boardLeft = this.canvas.offsetLeft + this.config.boardBoundary
 			var boardTop = this.canvas.offsetTop + this.config.boardBoundary
 
 			// prepare draw options
-			opts.curImgX = 0;
-			opts.curImgY = 0;
-			opts.curCanvasX = boardLeft;
-			opts.curCanvasY = boardTop;
+			var curImgX = 0;
+			var curImgY = 0;
+			var curCanvasX = boardLeft;
+			var curCanvasY = boardTop;
 
 			for(var i=0;i<numPieces;i++){
 				// do draw
-				ctx.drawImage(img, opts.curImgX, opts.curImgY, pieceSize, pieceSize, opts.curCanvasX, opts.curCanvasY, pieceSize, pieceSize);
+				ctx.drawImage(img, curImgX, curImgY, pieceSize, pieceSize, curCanvasX, curCanvasY, pieceSize, pieceSize);
+
+				var initialPieceData = this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, pieceSize, i);
 
 				// reached last piece, start next row
-				if(opts.curImgX > img.width){
-					opts.curImgX = 0;
-					opts.curImgY += pieceSize;
-					opts.curCanvasX = boardLeft;
-					opts.curCanvasY += pieceSize;
+				if(curImgX > img.width){
+					curImgX = 0;
+					curImgY += pieceSize;
+					curCanvasX = boardLeft;
+					curCanvasY += pieceSize;
 				} else {
-					opts.curImgX += pieceSize;
-					opts.curCanvasX += pieceSize;
+					curImgX += pieceSize;
+					curCanvasX += pieceSize;
 				}
 			}
+		}
+
+		this.assignInitialPieceData = function(imgX, imgY, canvX, canvY, pieceSize, i){
+			var data = {
+				id: i,
+				imgX: imgX,
+				imgY: imgY,
+				currentX: canvX,
+				currentY: canvY,
+				solvedX: canvX,
+				solvedY: canvY
+			};
+			this.pieces.push(data);
+			return data;
+		}
+
+		this.hasCollision = function(source, target){
+			var pieceBoundary = {
+				top: Math.round(target.currentY),
+				right: Math.round(target.currentX) + this.config.pieceSize,
+				bottom: Math.round(target.currentY) + this.config.pieceSize,
+				left: Math.round(target.currentX)
+			};
+			return source.x > pieceBoundary.left && source.x < pieceBoundary.right && source.y < pieceBoundary.bottom && source.y > pieceBoundary.top;
+		}
+
+		this.getCellByCoords = function(coords){
+			for(var i=this.pieces.length-1;i>-1;i--){
+				var piece = this.pieces[i];
+				if(this.hasCollision(coords, piece)){
+					return piece;
+				}
+			}
+			return null;
+		}
+
+		this.getClickTarget = function(e){
+			var coords = {
+				x: e.clientX,
+				y: e.clientY
+			};
+			console.log(this.getCellByCoords(coords));
 		}
 
 		return this;
