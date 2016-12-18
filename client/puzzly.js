@@ -23,11 +23,11 @@
 			this.img.src = imageUrl;
 
 			this.img.onload = function(img){
-				this.canvas.width = this.img.width;
-				this.canvas.height = this.img.height;
+				this.canvas.width = this.img.width + (this.config.boardBoundary*2);
+				this.canvas.height = this.img.height + (this.config.boardBoundary*2);
 				this.config.pieceSize = this.setPieceSize(this.img, numPieces);
-				console.log(this.config.pieceSize);
-				this.drawPieces(this.ctx, this.img, numPieces, this.config.pieceSize);
+				this.drawImage(this.canvas, this.ctx, this.img, this.config.boardBoundary);
+				this.makePieces(this.canvas, this.img, numPieces, this.config.pieceSize, this.config.boardBoundary);
 			}.bind(this);
 
 			window.addEventListener('click', this.onWindowClick);
@@ -46,10 +46,19 @@
 			return naturalPieceSize;
 		}
 
-		this.drawPieces = function(ctx, img, numPieces, pieceSize){
+		this.drawImage = function(canvas, ctx, img, boardBoundary){
+			var cX = canvas.offsetLeft + boardBoundary;
+			var cY = canvas.offsetTop + boardBoundary;
 
-			var boardLeft = this.canvas.offsetLeft + this.config.boardBoundary
-			var boardTop = this.canvas.offsetTop + this.config.boardBoundary
+			ctx.drawImage(img, 0, 0, img.width, img.height, cX, cY, img.width, img.height);	
+		}
+
+		this.makePieces = function(canvas, img, numPieces, pieceSize, boardBoundary){
+
+			var ctx = canvas.getContext('2d');
+
+			var boardLeft = canvas.offsetLeft + boardBoundary;
+			var boardTop = canvas.offsetTop + boardBoundary;
 
 			// prepare draw options
 			var curImgX = 0;
@@ -59,9 +68,11 @@
 
 			for(var i=0;i<numPieces;i++){
 				// do draw
-				ctx.drawImage(img, curImgX, curImgY, pieceSize, pieceSize, curCanvasX, curCanvasY, pieceSize, pieceSize);
 
 				var initialPieceData = this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, pieceSize, i);
+
+				ctx.strokeStyle = '#000';
+				ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
 
 				// reached last piece, start next row
 				if(curImgX > img.width){
