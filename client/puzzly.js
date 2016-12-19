@@ -3,9 +3,10 @@
 	var Puzzly = function(){
 
 		this.config = {
-			boardSize: {
-				w: 800,
-				h: 600
+			pieceSize: {
+				'500': 40,
+				'1000': 30,
+				'2000': 20
 			},
 			boardBoundary: 200,
 			numPieces: 1000
@@ -22,29 +23,31 @@
 			this.img = new Image();
 			this.img.src = imageUrl;
 
+			this.jigsawSprite = new Image();
+			this.jigsawSprite.src = './jigsaw-sprite.png';
+
 			this.img.onload = function(img){
 				this.canvas.width = this.img.width + (this.config.boardBoundary*2);
 				this.canvas.height = this.img.height + (this.config.boardBoundary*2);
-				this.config.pieceSize = this.setPieceSize(this.img, numPieces);
 				this.drawImage(this.canvas, this.ctx, this.img, this.config.boardBoundary);
-				this.makePieces(this.canvas, this.img, numPieces, this.config.pieceSize, this.config.boardBoundary);
+				this.drawComposite();
+				// this.makePieces(this.canvas, this.img, 1000, this.config.pieceSize['1000'], this.config.boardBoundary);
 			}.bind(this);
 
 			window.addEventListener('click', this.onWindowClick);
 
 		}
 
+		this.drawComposite = function(){
+			this.ctx.drawImage(this.img, 50, 50, 300, 300, 50, 50, 300, 300);
+			// this.ctx.globalCompositeOperation = 'source-in';
+			this.ctx.globalCompositeOperation = 'destination-atop';
+			this.ctx.drawImage(this.jigsawSprite, 50, 0, 135, 135, 50, 50, 50, 50);
+		}
+
 		this.onWindowClick = function(e){
 			this.getClickTarget(e);
 		}.bind(this);
-
-		// Add piece size property to main config based on the image and the number of pieces chosen by the user
-		// Returns unitless number, intended to be used as pixels
-		this.setPieceSize = function(img, numPieces){
-			var naturalPieceSize = Math.sqrt( (img.width*img.height)/numPieces);
-			// var scaledPieceSize = naturalPieceSize / (this.canvas.width*this.canvas.height);
-			return naturalPieceSize;
-		}
 
 		this.drawImage = function(canvas, ctx, img, boardBoundary){
 			var cX = canvas.offsetLeft + boardBoundary;
@@ -75,7 +78,7 @@
 				ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
 
 				// reached last piece, start next row
-				if(curImgX > img.width){
+				if(curImgX === img.width - pieceSize){
 					curImgX = 0;
 					curImgY += pieceSize;
 					curCanvasX = boardLeft;
