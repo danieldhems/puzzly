@@ -27,3 +27,5 @@ function upload(form){
 		onUploadFailure(err);
 	});
 }
+
+Puzzly.init('canvas', './hl.jpg', 1);
