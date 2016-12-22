@@ -19,7 +19,6 @@ var api = {
 		var numPieces = parseInt(req.body.numPieces,10);
 		upload(req, res, function(err){
 			if(err) res.send('error uploading file');
-			console.log(req);
 			var file = req.file;
 			var data = {
 				image: {

@@ -1,3 +1,5 @@
+import Puzzly from './puzzly';
+
 var form = document.forms[0];
 form.addEventListener('submit', function(e){
 	e.preventDefault();
@@ -5,7 +7,7 @@ form.addEventListener('submit', function(e){
 });
 
 function onUploadSuccess(response){
-	Puzzly.init('canvas', response.image.path, response.numPieces);
+	// Puzzly.init('canvas', response.image.path, response.numPieces);
 }
 
 function onUploadFailure(response){
@@ -28,4 +30,4 @@ function upload(form){
 	});
 }
 
-Puzzly.init('canvas', './hl.jpg', 1);
+new Puzzly('canvas', './hl.jpg', 1);

@@ -1,140 +1,152 @@
-;(function Puzzly(){
-	
-	var Puzzly = function(){
+import SpriteMap from './sprite-map'; 
 
+class Puzzly {
+
+	constructor(canvasId, imageUrl, numPieces){
 		this.config = {
 			pieceSize: {
 				'500': 40,
 				'1000': 30,
 				'2000': 20
 			},
+			jigsawSquareSize: 121,
+			jigsawPlugSize: 41,
 			boardBoundary: 200,
 			numPieces: 1000
 		};
 
-		this.pieces = [];
+		this.Pieces = [];
 
-		this.init = function(canvasId, imageUrl, numPieces){
-			console.log('Initiating puzzly: ', imageUrl, numPieces);
-			this.canvas = document.getElementById(canvasId);
-			this.ctx = this.canvas.getContext('2d');
-			this.ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
+		console.log('Initiating puzzly: ', imageUrl, numPieces);
+		
+		this.canvas = document.getElementById(canvasId);
+		this.ctx = canvas.getContext('2d');
 
-			this.img = new Image();
-			this.img.src = imageUrl;
+		this.SourceImage = new Image();
+		this.SourceImage.src = imageUrl;
 
-			this.jigsawSprite = new Image();
-			this.jigsawSprite.src = './jigsaw-sprite.png';
+		this.JigsawSprite = new Image();
+		this.JigsawSprite.src = './jigsaw-sprite.png';
 
-			this.img.onload = function(img){
-				this.canvas.width = this.img.width + (this.config.boardBoundary*2);
-				this.canvas.height = this.img.height + (this.config.boardBoundary*2);
-				this.drawImage(this.canvas, this.ctx, this.img, this.config.boardBoundary);
-				this.drawComposite();
-				// this.makePieces(this.canvas, this.img, 1000, this.config.pieceSize['1000'], this.config.boardBoundary);
-			}.bind(this);
+		this.SourceImage.onload = () => {
+			canvas.width = this.SourceImage.width + (this.config.boardBoundary*2);
+			canvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
+			// drawImage(canvas, this.ctx, img, config.boardBoundary);
 
-			window.addEventListener('click', this.onWindowClick);
-
+			this.drawPiece(this.SourceImage, {x: 50, y: 50}, this.JigsawSprite, SpriteMap, 'side-l-stb-pr', 50);
+			// makePieces(canvas, img, 1000, config.pieceSize['1000'], config.boardBoundary);
 		}
 
-		this.drawComposite = function(){
-			this.ctx.drawImage(this.img, 50, 50, 300, 300, 50, 50, 300, 300);
-			// this.ctx.globalCompositeOperation = 'source-in';
-			this.ctx.globalCompositeOperation = 'destination-atop';
-			this.ctx.drawImage(this.jigsawSprite, 50, 0, 135, 135, 50, 50, 50, 50);
-		}
+		window.addEventListener('click', this.onWindowClick);
 
-		this.onWindowClick = function(e){
-			this.getClickTarget(e);
-		}.bind(this);
-
-		this.drawImage = function(canvas, ctx, img, boardBoundary){
-			var cX = canvas.offsetLeft + boardBoundary;
-			var cY = canvas.offsetTop + boardBoundary;
-
-			ctx.drawImage(img, 0, 0, img.width, img.height, cX, cY, img.width, img.height);	
-		}
-
-		this.makePieces = function(canvas, img, numPieces, pieceSize, boardBoundary){
-
-			var ctx = canvas.getContext('2d');
-
-			var boardLeft = canvas.offsetLeft + boardBoundary;
-			var boardTop = canvas.offsetTop + boardBoundary;
-
-			// prepare draw options
-			var curImgX = 0;
-			var curImgY = 0;
-			var curCanvasX = boardLeft;
-			var curCanvasY = boardTop;
-
-			for(var i=0;i<numPieces;i++){
-				// do draw
-
-				var initialPieceData = this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, pieceSize, i);
-
-				ctx.strokeStyle = '#000';
-				ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
-
-				// reached last piece, start next row
-				if(curImgX === img.width - pieceSize){
-					curImgX = 0;
-					curImgY += pieceSize;
-					curCanvasX = boardLeft;
-					curCanvasY += pieceSize;
-				} else {
-					curImgX += pieceSize;
-					curCanvasX += pieceSize;
-				}
-			}
-		}
-
-		this.assignInitialPieceData = function(imgX, imgY, canvX, canvY, pieceSize, i){
-			var data = {
-				id: i,
-				imgX: imgX,
-				imgY: imgY,
-				currentX: canvX,
-				currentY: canvY,
-				solvedX: canvX,
-				solvedY: canvY
-			};
-			this.pieces.push(data);
-			return data;
-		}
-
-		this.hasCollision = function(source, target){
-			var pieceBoundary = {
-				top: Math.round(target.currentY),
-				right: Math.round(target.currentX) + this.config.pieceSize,
-				bottom: Math.round(target.currentY) + this.config.pieceSize,
-				left: Math.round(target.currentX)
-			};
-			return source.x > pieceBoundary.left && source.x < pieceBoundary.right && source.y < pieceBoundary.bottom && source.y > pieceBoundary.top;
-		}
-
-		this.getCellByCoords = function(coords){
-			for(var i=this.pieces.length-1;i>-1;i--){
-				var piece = this.pieces[i];
-				if(this.hasCollision(coords, piece)){
-					return piece;
-				}
-			}
-			return null;
-		}
-
-		this.getClickTarget = function(e){
-			var coords = {
-				x: e.clientX,
-				y: e.clientY
-			};
-			console.log(this.getCellByCoords(coords));
-		}
-
-		return this;
 	}
 
-	window.Puzzly = new Puzzly();
 
-})();
+
+	// Draw puzzle piece
+	drawPiece(sourceImg, sourceImgCoords, jigsawSprite, SpriteMap, pieceType, pieceSize){
+		// Get jigsaw piece sprite data
+		let piece = SpriteMap[pieceType];
+
+		// Get scale of intended piece size compared to sprite
+		let scale = pieceSize / this.config.jigsawSquareSize;
+
+		// Implement logic to add scaled overlap width / height of plug size for jigsaw pieces,
+		// depending on which sides the plugs are on e.g. top, right, bottom, left
+		let pieceW = pieceSize + (this.config.jigsawPlugSize * scale);
+		let pieceH = pieceSize;
+
+		this.ctx.drawImage(sourceImg, sourceImgCoords.x, sourceImgCoords.y, pieceSize, pieceSize, 50, 50, pieceSize, pieceSize);
+		this.ctx.globalCompositeOperation = 'destination-atop';
+		this.ctx.drawImage(jigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, 50, 50, pieceW, pieceH);
+	}
+
+	onWindowClick(e){
+		this.getClickTarget(e);
+	}
+
+	drawImage(canvas, ctx, img, boardBoundary){
+		var cX = canvas.offsetLeft + boardBoundary;
+		var cY = canvas.offsetTop + boardBoundary;
+
+		ctx.drawImage(img, 0, 0, img.width, img.height, cX, cY, img.width, img.height);	
+	}
+
+	makePieces(canvas, img, numPieces, pieceSize, boardBoundary){
+
+		ctx = canvas.getContext('2d');
+
+		var boardLeft = canvas.offsetLeft + boardBoundary;
+		var boardTop = canvas.offsetTop + boardBoundary;
+
+		// prepare draw options
+		var curImgX = 0;
+		var curImgY = 0;
+		var curCanvasX = boardLeft;
+		var curCanvasY = boardTop;
+
+		for(var i=0;i<numPieces;i++){
+			// do draw
+
+			var initialPieceData = assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, pieceSize, i);
+
+			ctx.strokeStyle = '#000';
+			ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
+
+			// reached last piece, start next row
+			if(curImgX === img.width - pieceSize){
+				curImgX = 0;
+				curImgY += pieceSize;
+				curCanvasX = boardLeft;
+				curCanvasY += pieceSize;
+			} else {
+				curImgX += pieceSize;
+				curCanvasX += pieceSize;
+			}
+		}
+	}
+
+	assignInitialPieceData(imgX, imgY, canvX, canvY, pieceSize, i){
+		var data = {
+			id: i,
+			imgX: imgX,
+			imgY: imgY,
+			currentX: canvX,
+			currentY: canvY,
+			solvedX: canvX,
+			solvedY: canvY
+		};
+		pieces.push(data);
+		return data;
+	}
+
+	hasCollision(source, target){
+		var pieceBoundary = {
+			top: Math.round(target.currentY),
+			right: Math.round(target.currentX) + config.pieceSize,
+			bottom: Math.round(target.currentY) + config.pieceSize,
+			left: Math.round(target.currentX)
+		};
+		return source.x > pieceBoundary.left && source.x < pieceBoundary.right && source.y < pieceBoundary.bottom && source.y > pieceBoundary.top;
+	}
+
+	getCellByCoords(coords){
+		for(var i=pieces.length-1;i>-1;i--){
+			var piece = pieces[i];
+			if(hasCollision(coords, piece)){
+				return piece;
+			}
+		}
+		return null;
+	}
+
+	getClickTarget(e){
+		var coords = {
+			x: e.clientX,
+			y: e.clientY
+		};
+		console.log(getCellByCoords(coords));
+	}
+}
+
+export default Puzzly;
