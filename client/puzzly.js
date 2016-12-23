@@ -10,7 +10,7 @@ class Puzzly {
 				'2000': 20
 			},
 			jigsawSquareSize: 121,
-			jigsawPlugSize: 41,
+			jigsawPlugSize: 45,
 			boardBoundary: 200,
 			numPieces: 1000
 		};
@@ -20,7 +20,9 @@ class Puzzly {
 		console.log('Initiating puzzly: ', imageUrl, numPieces);
 		
 		this.canvas = document.getElementById(canvasId);
-		this.ctx = canvas.getContext('2d');
+		this.tmpCanvas = document.getElementById('tmp-canvas');
+		this.ctx = this.canvas.getContext('2d');
+		this.tmpCtx = this.tmpCanvas.getContext('2d');
 
 		this.SourceImage = new Image();
 		this.SourceImage.src = imageUrl;
@@ -29,11 +31,20 @@ class Puzzly {
 		this.JigsawSprite.src = './jigsaw-sprite.png';
 
 		this.SourceImage.onload = () => {
-			canvas.width = this.SourceImage.width + (this.config.boardBoundary*2);
-			canvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
+			this.canvas.width = this.SourceImage.width + (this.config.boardBoundary*2);
+			this.canvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
+			this.tmpCanvasWidth = window.innerWidth;
+			this.tmpCanvasHeight = window.innerHeight;
 			// drawImage(canvas, this.ctx, img, config.boardBoundary);
 
-			this.drawPiece(this.SourceImage, {x: 50, y: 50}, this.JigsawSprite, SpriteMap, 'side-l-stb-pr', 50);
+			let jigsawPiece1 = SpriteMap['side-l-st-prb'];
+			let jigsawPiece2 = SpriteMap['corner-tl-sr-pb'];
+
+			console.log(jigsawPiece1)
+			console.log(jigsawPiece2)
+
+			this.drawPiece(this.SourceImage, {x: 50, y: 50}, this.JigsawSprite, jigsawPiece1, 50, {x:50,y:50});
+			this.drawPiece(this.SourceImage, {x: 50, y: 0}, this.JigsawSprite, jigsawPiece2, 50, {x:100,y:100});
 			// makePieces(canvas, img, 1000, config.pieceSize['1000'], config.boardBoundary);
 		}
 
@@ -44,21 +55,47 @@ class Puzzly {
 
 
 	// Draw puzzle piece
-	drawPiece(sourceImg, sourceImgCoords, jigsawSprite, SpriteMap, pieceType, pieceSize){
-		// Get jigsaw piece sprite data
-		let piece = SpriteMap[pieceType];
-
+	drawPiece(sourceImg, sourceImgCoords, jigsawSprite, piece, pieceSize, canvasCoords){
 		// Get scale of intended piece size compared to sprite
 		let scale = pieceSize / this.config.jigsawSquareSize;
+		let pieceW = null;
+		let pieceH = null;
 
-		// Implement logic to add scaled overlap width / height of plug size for jigsaw pieces,
-		// depending on which sides the plugs are on e.g. top, right, bottom, left
-		let pieceW = pieceSize + (this.config.jigsawPlugSize * scale);
-		let pieceH = pieceSize;
+		let lrRegex = new RegExp('[lr]', 'g');
+		let tbRegex = new RegExp('[tb]', 'g');
 
-		this.ctx.drawImage(sourceImg, sourceImgCoords.x, sourceImgCoords.y, pieceSize, pieceSize, 50, 50, pieceSize, pieceSize);
-		this.ctx.globalCompositeOperation = 'destination-atop';
-		this.ctx.drawImage(jigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, 50, 50, pieceW, pieceH);
+		if(piece.connectors.plugs.length === 1){
+			if(piece.connectors.plugs === 'l' || piece.connectors.plugs === 'r' ){
+				pieceW = pieceSize + (this.config.jigsawPlugSize * scale);
+				pieceH = pieceSize;
+			}
+			if(piece.connectors.plugs === 't' || piece.connectors.plugs === 'b' ){
+				pieceH = pieceSize + (this.config.jigsawPlugSize * scale);
+				pieceW = pieceSize;
+			}
+		} else {
+			pieceW = pieceSize;
+			pieceH = pieceSize;
+			if(piece.connectors.plugs.indexOf('l') > -1){
+				pieceW += (this.config.jigsawPlugSize * scale);
+			}
+			if(piece.connectors.plugs.indexOf('r') > -1){
+				pieceW += (this.config.jigsawPlugSize * scale);
+			}
+			if(piece.connectors.plugs.indexOf('t') > -1){
+				pieceH += (this.config.jigsawPlugSize * scale);
+			}
+			if(piece.connectors.plugs.indexOf('b') > -1){
+				pieceH += (this.config.jigsawPlugSize * scale);
+			}
+		}
+
+		this.tmpCtx.save();
+		this.tmpCtx.drawImage(sourceImg, sourceImgCoords.x, sourceImgCoords.y, pieceSize, pieceSize, canvasCoords.x, canvasCoords.y, pieceSize, pieceSize);
+		this.tmpCtx.globalCompositeOperation = 'destination-atop';
+		this.tmpCtx.drawImage(jigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, canvasCoords.x, canvasCoords.y, pieceW, pieceH);
+		this.ctx.drawImage(this.tmpCanvas, canvasCoords.x, canvasCoords.y);
+		this.tmpCtx.restore();
 	}
 
 	onWindowClick(e){

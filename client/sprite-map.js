@@ -1,7 +1,7 @@
 export default {
 'corner-tl-srb': {
-	width: 65,
-	height: 86,
+	width: 124,
+	height: 161,
 	connectors: {
 		sockets: 'r',
 		plugs: 'b'
@@ -12,14 +12,14 @@ export default {
 	}
 },
 'corner-tl-sr-pb': {
-	width: 65,
-	height: 86,
+	width: 124,
+	height: 161,
 	connectors: {
 		sockets: 'r',
 		plugs: 'b'
 	},
 	coords: {
-		x: 150,
+		x: 286,
 		y: 0
 	}
 },
@@ -73,7 +73,7 @@ export default {
 
 'side-l-stb-pr': {
 	width: 165,
-	height: 120,
+	height: 121,
 	connectors: {
 		sockets: 'tb',
 		plugs: 'r'
@@ -84,14 +84,14 @@ export default {
 	}
 },
 'side-l-st-prb': {
-	width: 86,
-	height: 86,
+	width: 163,
+	height: 161,
 	connectors: {
-		sockets: 'tb',
-		plugs: 'r'
+		sockets: 't',
+		plugs: 'rb'
 	},
 	coords: {
-		x: 21,
-		y: 128
+		x: 287,
+		y: 246
 	}
-}};
+},};
