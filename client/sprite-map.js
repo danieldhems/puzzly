@@ -12,8 +12,8 @@ export default {
 	}
 },
 'corner-tl-sr-pb': {
-	width: 124,
-	height: 161,
+	width: 121,
+	height: 163,
 	connectors: {
 		sockets: 'r',
 		plugs: 'b'
@@ -85,7 +85,7 @@ export default {
 },
 'side-l-st-prb': {
 	width: 163,
-	height: 161,
+	height: 164,
 	connectors: {
 		sockets: 't',
 		plugs: 'rb'
@@ -94,4 +94,15 @@ export default {
 		x: 287,
 		y: 246
 	}
-},};
+},
+'side-l-ptrb': {
+	width: 163,
+	height: 205,
+	connectors: {
+		plugs: 'trb'
+	},
+	coords: {
+		x: 1757,
+		y: 204
+	}
+}};

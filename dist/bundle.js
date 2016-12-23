@@ -116,8 +116,8 @@
 					'1000': 30,
 					'2000': 20
 				},
-				jigsawSquareSize: 121,
-				jigsawPlugSize: 45,
+				jigsawSquareSize: 123,
+				jigsawPlugSize: 41,
 				boardBoundary: 200,
 				numPieces: 1000
 			};
@@ -140,18 +140,18 @@
 			this.SourceImage.onload = function () {
 				_this.canvas.width = _this.SourceImage.width + _this.config.boardBoundary * 2;
 				_this.canvas.height = _this.SourceImage.height + _this.config.boardBoundary * 2;
-				_this.tmpCanvasWidth = window.innerWidth;
-				_this.tmpCanvasHeight = window.innerHeight;
+				_this.tmpCanvasWidth = _this.canvas.width;
+				_this.tmpCanvasHeight = _this.canvas.height;
 				// drawImage(canvas, this.ctx, img, config.boardBoundary);
 
 				var jigsawPiece1 = _spriteMap2.default['side-l-st-prb'];
 				var jigsawPiece2 = _spriteMap2.default['corner-tl-sr-pb'];
+				var jigsawPiece3 = _spriteMap2.default['side-l-ptrb'];
 
-				console.log(jigsawPiece1);
-				console.log(jigsawPiece2);
-
-				_this.drawPiece(_this.SourceImage, { x: 50, y: 50 }, _this.JigsawSprite, jigsawPiece1, 50, { x: 50, y: 50 });
-				_this.drawPiece(_this.SourceImage, { x: 50, y: 0 }, _this.JigsawSprite, jigsawPiece2, 50, { x: 100, y: 100 });
+				_this.ctx.strokeRect(0, 0, _this.canvas.width, _this.canvas.height);
+				_this.drawPiece(_this.SourceImage, { x: 50, y: 50 }, _this.JigsawSprite, jigsawPiece1, 50, { x: 50, y: 100 });
+				_this.drawPiece(_this.SourceImage, { x: 50, y: 24 }, _this.JigsawSprite, jigsawPiece2, 50, { x: 500, y: 550 });
+				_this.drawPiece(_this.SourceImage, { x: 200, y: 24 }, _this.JigsawSprite, jigsawPiece3, 50, { x: 20, y: 350 });
 				// makePieces(canvas, img, 1000, config.pieceSize['1000'], config.boardBoundary);
 			};
 
@@ -164,46 +164,50 @@
 		_createClass(Puzzly, [{
 			key: 'drawPiece',
 			value: function drawPiece(sourceImg, sourceImgCoords, jigsawSprite, piece, pieceSize, canvasCoords) {
-				// Get scale of intended piece size compared to sprite
-				var scale = pieceSize / this.config.jigsawSquareSize;
-				var pieceW = null;
-				var pieceH = null;
 
-				var lrRegex = new RegExp('[lr]', 'g');
-				var tbRegex = new RegExp('[tb]', 'g');
-
-				if (piece.connectors.plugs.length === 1) {
-					if (piece.connectors.plugs === 'l' || piece.connectors.plugs === 'r') {
-						pieceW = pieceSize + this.config.jigsawPlugSize * scale;
-						pieceH = pieceSize;
-					}
-					if (piece.connectors.plugs === 't' || piece.connectors.plugs === 'b') {
-						pieceH = pieceSize + this.config.jigsawPlugSize * scale;
-						pieceW = pieceSize;
-					}
-				} else {
-					pieceW = pieceSize;
-					pieceH = pieceSize;
-					if (piece.connectors.plugs.indexOf('l') > -1) {
-						pieceW += this.config.jigsawPlugSize * scale;
-					}
-					if (piece.connectors.plugs.indexOf('r') > -1) {
-						pieceW += this.config.jigsawPlugSize * scale;
-					}
-					if (piece.connectors.plugs.indexOf('t') > -1) {
-						pieceH += this.config.jigsawPlugSize * scale;
-					}
-					if (piece.connectors.plugs.indexOf('b') > -1) {
-						pieceH += this.config.jigsawPlugSize * scale;
-					}
-				}
+				var dims = this.getPieceDimensions(piece, pieceSize);
 
 				this.tmpCtx.save();
-				this.tmpCtx.drawImage(sourceImg, sourceImgCoords.x, sourceImgCoords.y, pieceSize, pieceSize, canvasCoords.x, canvasCoords.y, pieceSize, pieceSize);
+				this.tmpCtx.drawImage(sourceImg, sourceImgCoords.x, sourceImgCoords.y, dims.w, dims.h, 0, 0, dims.w, dims.h);
 				this.tmpCtx.globalCompositeOperation = 'destination-atop';
-				this.tmpCtx.drawImage(jigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, canvasCoords.x, canvasCoords.y, pieceW, pieceH);
+				this.tmpCtx.drawImage(jigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, 0, 0, dims.w, dims.h);
 				this.ctx.drawImage(this.tmpCanvas, canvasCoords.x, canvasCoords.y);
 				this.tmpCtx.restore();
+			}
+		}, {
+			key: 'getPieceDimensions',
+			value: function getPieceDimensions(piece, pieceSize) {
+				var scale = pieceSize / this.config.jigsawSquareSize;
+				var dims = {
+					w: null,
+					h: null
+				};
+				if (piece.connectors.plugs.length === 1) {
+					if (piece.connectors.plugs === 'l' || piece.connectors.plugs === 'r') {
+						dims.w = pieceSize + this.config.jigsawPlugSize * scale;
+						dims.h = pieceSize;
+					}
+					if (piece.connectors.plugs === 't' || piece.connectors.plugs === 'b') {
+						dims.h = pieceSize + this.config.jigsawPlugSize * scale;
+						dims.w = pieceSize;
+					}
+				} else {
+					dims.w = pieceSize;
+					dims.h = pieceSize;
+					if (piece.connectors.plugs.indexOf('l') > -1) {
+						dims.w += this.config.jigsawPlugSize * scale;
+					}
+					if (piece.connectors.plugs.indexOf('r') > -1) {
+						dims.w += this.config.jigsawPlugSize * scale;
+					}
+					if (piece.connectors.plugs.indexOf('t') > -1) {
+						dims.h += this.config.jigsawPlugSize * scale;
+					}
+					if (piece.connectors.plugs.indexOf('b') > -1) {
+						dims.h += this.config.jigsawPlugSize * scale;
+					}
+				}
+				return dims;
 			}
 		}, {
 			key: 'onWindowClick',
@@ -329,8 +333,8 @@
 			}
 		},
 		'corner-tl-sr-pb': {
-			width: 124,
-			height: 161,
+			width: 121,
+			height: 163,
 			connectors: {
 				sockets: 'r',
 				plugs: 'b'
@@ -401,7 +405,7 @@
 		},
 		'side-l-st-prb': {
 			width: 163,
-			height: 161,
+			height: 164,
 			connectors: {
 				sockets: 't',
 				plugs: 'rb'
@@ -409,6 +413,17 @@
 			coords: {
 				x: 287,
 				y: 246
+			}
+		},
+		'side-l-ptrb': {
+			width: 163,
+			height: 205,
+			connectors: {
+				plugs: 'trb'
+			},
+			coords: {
+				x: 1757,
+				y: 204
 			}
 		} };
 

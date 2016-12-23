@@ -9,8 +9,8 @@ class Puzzly {
 				'1000': 30,
 				'2000': 20
 			},
-			jigsawSquareSize: 121,
-			jigsawPlugSize: 45,
+			jigsawSquareSize: 123,
+			jigsawPlugSize: 41,
 			boardBoundary: 200,
 			numPieces: 1000
 		};
@@ -33,18 +33,18 @@ class Puzzly {
 		this.SourceImage.onload = () => {
 			this.canvas.width = this.SourceImage.width + (this.config.boardBoundary*2);
 			this.canvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
-			this.tmpCanvasWidth = window.innerWidth;
-			this.tmpCanvasHeight = window.innerHeight;
+			this.tmpCanvasWidth = this.canvas.width;
+			this.tmpCanvasHeight = this.canvas.height;
 			// drawImage(canvas, this.ctx, img, config.boardBoundary);
 
 			let jigsawPiece1 = SpriteMap['side-l-st-prb'];
 			let jigsawPiece2 = SpriteMap['corner-tl-sr-pb'];
+			let jigsawPiece3 = SpriteMap['side-l-ptrb'];
 
-			console.log(jigsawPiece1)
-			console.log(jigsawPiece2)
-
-			this.drawPiece(this.SourceImage, {x: 50, y: 50}, this.JigsawSprite, jigsawPiece1, 50, {x:50,y:50});
-			this.drawPiece(this.SourceImage, {x: 50, y: 0}, this.JigsawSprite, jigsawPiece2, 50, {x:100,y:100});
+			this.ctx.strokeRect(0,0,this.canvas.width, this.canvas.height);
+			this.drawPiece(this.SourceImage, {x: 50, y: 50}, this.JigsawSprite, jigsawPiece1, 50, {x:50,y:100});
+			this.drawPiece(this.SourceImage, {x: 50, y: 24}, this.JigsawSprite, jigsawPiece2, 50, {x:500,y:550});
+			this.drawPiece(this.SourceImage, {x: 200, y: 24}, this.JigsawSprite, jigsawPiece3, 50, {x:20,y:350});
 			// makePieces(canvas, img, 1000, config.pieceSize['1000'], config.boardBoundary);
 		}
 
@@ -56,46 +56,49 @@ class Puzzly {
 
 	// Draw puzzle piece
 	drawPiece(sourceImg, sourceImgCoords, jigsawSprite, piece, pieceSize, canvasCoords){
-		// Get scale of intended piece size compared to sprite
-		let scale = pieceSize / this.config.jigsawSquareSize;
-		let pieceW = null;
-		let pieceH = null;
 
-		let lrRegex = new RegExp('[lr]', 'g');
-		let tbRegex = new RegExp('[tb]', 'g');
-
-		if(piece.connectors.plugs.length === 1){
-			if(piece.connectors.plugs === 'l' || piece.connectors.plugs === 'r' ){
-				pieceW = pieceSize + (this.config.jigsawPlugSize * scale);
-				pieceH = pieceSize;
-			}
-			if(piece.connectors.plugs === 't' || piece.connectors.plugs === 'b' ){
-				pieceH = pieceSize + (this.config.jigsawPlugSize * scale);
-				pieceW = pieceSize;
-			}
-		} else {
-			pieceW = pieceSize;
-			pieceH = pieceSize;
-			if(piece.connectors.plugs.indexOf('l') > -1){
-				pieceW += (this.config.jigsawPlugSize * scale);
-			}
-			if(piece.connectors.plugs.indexOf('r') > -1){
-				pieceW += (this.config.jigsawPlugSize * scale);
-			}
-			if(piece.connectors.plugs.indexOf('t') > -1){
-				pieceH += (this.config.jigsawPlugSize * scale);
-			}
-			if(piece.connectors.plugs.indexOf('b') > -1){
-				pieceH += (this.config.jigsawPlugSize * scale);
-			}
-		}
+		let dims = this.getPieceDimensions(piece, pieceSize);
 
 		this.tmpCtx.save();
-		this.tmpCtx.drawImage(sourceImg, sourceImgCoords.x, sourceImgCoords.y, pieceSize, pieceSize, canvasCoords.x, canvasCoords.y, pieceSize, pieceSize);
+		this.tmpCtx.drawImage(sourceImg, sourceImgCoords.x, sourceImgCoords.y, dims.w, dims.h, 0, 0, dims.w, dims.h);
 		this.tmpCtx.globalCompositeOperation = 'destination-atop';
-		this.tmpCtx.drawImage(jigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, canvasCoords.x, canvasCoords.y, pieceW, pieceH);
+		this.tmpCtx.drawImage(jigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, 0, 0, dims.w, dims.h);
 		this.ctx.drawImage(this.tmpCanvas, canvasCoords.x, canvasCoords.y);
 		this.tmpCtx.restore();
+	}
+
+	getPieceDimensions(piece, pieceSize){
+		let scale = pieceSize / this.config.jigsawSquareSize;
+		let dims = {
+			w: null,
+			h: null
+		};
+		if(piece.connectors.plugs.length === 1){
+			if(piece.connectors.plugs === 'l' || piece.connectors.plugs === 'r' ){
+				dims.w = pieceSize + (this.config.jigsawPlugSize * scale);
+				dims.h = pieceSize;
+			}
+			if(piece.connectors.plugs === 't' || piece.connectors.plugs === 'b' ){
+				dims.h = pieceSize + (this.config.jigsawPlugSize * scale);
+				dims.w = pieceSize;
+			}
+		} else {
+			dims.w = pieceSize;
+			dims.h = pieceSize;
+			if(piece.connectors.plugs.indexOf('l') > -1){
+				dims.w += this.config.jigsawPlugSize * scale;
+			}
+			if(piece.connectors.plugs.indexOf('r') > -1){
+				dims.w += this.config.jigsawPlugSize * scale;
+			}
+			if(piece.connectors.plugs.indexOf('t') > -1){
+				dims.h += this.config.jigsawPlugSize * scale;
+			}
+			if(piece.connectors.plugs.indexOf('b') > -1){
+				dims.h += this.config.jigsawPlugSize * scale;
+			}
+		}
+		return dims;
 	}
 
 	onWindowClick(e){
