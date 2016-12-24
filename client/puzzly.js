@@ -5,7 +5,7 @@ class Puzzly {
 	constructor(canvasId, imageUrl, numPieces){
 		this.config = {
 			pieceSize: {
-				'500': 40,
+				'500': Math.sqrt(500),
 				'1000': 30,
 				'2000': 20
 			},
@@ -15,7 +15,7 @@ class Puzzly {
 			numPieces: 1000
 		};
 
-		this.Pieces = [];
+		this.pieces = [];
 
 		console.log('Initiating puzzly: ', imageUrl, numPieces);
 		
@@ -40,12 +40,16 @@ class Puzzly {
 			let jigsawPiece1 = SpriteMap['side-l-st-prb'];
 			let jigsawPiece2 = SpriteMap['corner-tl-sr-pb'];
 			let jigsawPiece3 = SpriteMap['side-l-ptrb'];
+			let jigsawPiece4 = SpriteMap['side-m-ptrbl'];
 
 			this.ctx.strokeRect(0,0,this.canvas.width, this.canvas.height);
-			this.drawPiece(this.SourceImage, {x: 50, y: 50}, this.JigsawSprite, jigsawPiece1, 50, {x:50,y:100});
-			this.drawPiece(this.SourceImage, {x: 50, y: 24}, this.JigsawSprite, jigsawPiece2, 50, {x:500,y:550});
-			this.drawPiece(this.SourceImage, {x: 200, y: 24}, this.JigsawSprite, jigsawPiece3, 50, {x:20,y:350});
-			// makePieces(canvas, img, 1000, config.pieceSize['1000'], config.boardBoundary);
+			
+			this.drawPiece(this.SourceImage, {x: 50, y: 50}, this.JigsawSprite, jigsawPiece1, this.config.pieceSize['500'], {x:50,y:100});
+			this.drawPiece(this.SourceImage, {x: 50, y: 24}, this.JigsawSprite, jigsawPiece2, this.config.pieceSize['500'], {x:500,y:550});
+			this.drawPiece(this.SourceImage, {x: 200, y: 24}, this.JigsawSprite, jigsawPiece3, this.config.pieceSize['500'], {x:20,y:350});
+			this.drawPiece(this.SourceImage, {x: 250, y: 24}, this.JigsawSprite, jigsawPiece4, this.config.pieceSize['500'], {x:20,y:250});
+			
+			this.makePieces(this.canvas, this.SourceImage, 500, this.config.pieceSize['500'], this.config.boardBoundary);
 		}
 
 		window.addEventListener('click', this.onWindowClick);
@@ -114,10 +118,8 @@ class Puzzly {
 
 	makePieces(canvas, img, numPieces, pieceSize, boardBoundary){
 
-		ctx = canvas.getContext('2d');
-
-		var boardLeft = canvas.offsetLeft + boardBoundary;
-		var boardTop = canvas.offsetTop + boardBoundary;
+		var boardLeft = this.canvas.offsetLeft + boardBoundary;
+		var boardTop = this.canvas.offsetTop + boardBoundary;
 
 		// prepare draw options
 		var curImgX = 0;
@@ -128,10 +130,10 @@ class Puzzly {
 		for(var i=0;i<numPieces;i++){
 			// do draw
 
-			var initialPieceData = assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, pieceSize, i);
+			var initialPieceData = this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, pieceSize, i);
 
-			ctx.strokeStyle = '#000';
-			ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
+			this.ctx.strokeStyle = '#000';
+			this.ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
 
 			// reached last piece, start next row
 			if(curImgX === img.width - pieceSize){
@@ -146,6 +148,33 @@ class Puzzly {
 		}
 	}
 
+	getCandidatePieces(currentPiece, rowPosition, rowLength, previousRow){
+		switch(currentPiece.orientation){
+			case 'corner':
+				// next piece must:
+				// - be side or middle
+				// - be able to connect to current piece
+
+				// Is end of row
+				if(rowPosition === rowLength - 1){
+
+				}
+				//
+				else {
+					let hasPlug = currentPiece.connectors.plugs.indexOf('r');
+					let hasSocket = currentPiece.connectors.plugs.indexOf('r');
+					if(currentPiece.connectors.indexOf())
+				}
+				break;
+			case 'side':
+
+				break;
+			case 'middle':
+
+				break;
+		}
+	}
+
 	assignInitialPieceData(imgX, imgY, canvX, canvY, pieceSize, i){
 		var data = {
 			id: i,
@@ -156,7 +185,7 @@ class Puzzly {
 			solvedX: canvX,
 			solvedY: canvY
 		};
-		pieces.push(data);
+		this.pieces.push(data);
 		return data;
 	}
 

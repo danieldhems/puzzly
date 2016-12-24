@@ -112,7 +112,7 @@
 
 			this.config = {
 				pieceSize: {
-					'500': 40,
+					'500': Math.sqrt(500),
 					'1000': 30,
 					'2000': 20
 				},
@@ -122,7 +122,7 @@
 				numPieces: 1000
 			};
 
-			this.Pieces = [];
+			this.pieces = [];
 
 			console.log('Initiating puzzly: ', imageUrl, numPieces);
 
@@ -147,12 +147,16 @@
 				var jigsawPiece1 = _spriteMap2.default['side-l-st-prb'];
 				var jigsawPiece2 = _spriteMap2.default['corner-tl-sr-pb'];
 				var jigsawPiece3 = _spriteMap2.default['side-l-ptrb'];
+				var jigsawPiece4 = _spriteMap2.default['side-m-ptrbl'];
 
 				_this.ctx.strokeRect(0, 0, _this.canvas.width, _this.canvas.height);
-				_this.drawPiece(_this.SourceImage, { x: 50, y: 50 }, _this.JigsawSprite, jigsawPiece1, 50, { x: 50, y: 100 });
-				_this.drawPiece(_this.SourceImage, { x: 50, y: 24 }, _this.JigsawSprite, jigsawPiece2, 50, { x: 500, y: 550 });
-				_this.drawPiece(_this.SourceImage, { x: 200, y: 24 }, _this.JigsawSprite, jigsawPiece3, 50, { x: 20, y: 350 });
-				// makePieces(canvas, img, 1000, config.pieceSize['1000'], config.boardBoundary);
+
+				_this.drawPiece(_this.SourceImage, { x: 50, y: 50 }, _this.JigsawSprite, jigsawPiece1, _this.config.pieceSize['500'], { x: 50, y: 100 });
+				_this.drawPiece(_this.SourceImage, { x: 50, y: 24 }, _this.JigsawSprite, jigsawPiece2, _this.config.pieceSize['500'], { x: 500, y: 550 });
+				_this.drawPiece(_this.SourceImage, { x: 200, y: 24 }, _this.JigsawSprite, jigsawPiece3, _this.config.pieceSize['500'], { x: 20, y: 350 });
+				_this.drawPiece(_this.SourceImage, { x: 250, y: 24 }, _this.JigsawSprite, jigsawPiece4, _this.config.pieceSize['500'], { x: 20, y: 250 });
+
+				_this.makePieces(_this.canvas, _this.SourceImage, 500, _this.config.pieceSize['500'], _this.config.boardBoundary);
 			};
 
 			window.addEventListener('click', this.onWindowClick);
@@ -226,10 +230,8 @@
 			key: 'makePieces',
 			value: function makePieces(canvas, img, numPieces, pieceSize, boardBoundary) {
 
-				ctx = canvas.getContext('2d');
-
-				var boardLeft = canvas.offsetLeft + boardBoundary;
-				var boardTop = canvas.offsetTop + boardBoundary;
+				var boardLeft = this.canvas.offsetLeft + boardBoundary;
+				var boardTop = this.canvas.offsetTop + boardBoundary;
 
 				// prepare draw options
 				var curImgX = 0;
@@ -240,10 +242,10 @@
 				for (var i = 0; i < numPieces; i++) {
 					// do draw
 
-					var initialPieceData = assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, pieceSize, i);
+					var initialPieceData = this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, pieceSize, i);
 
-					ctx.strokeStyle = '#000';
-					ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
+					this.ctx.strokeStyle = '#000';
+					this.ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
 
 					// reached last piece, start next row
 					if (curImgX === img.width - pieceSize) {
@@ -269,7 +271,7 @@
 					solvedX: canvX,
 					solvedY: canvY
 				};
-				pieces.push(data);
+				this.pieces.push(data);
 				return data;
 			}
 		}, {
@@ -424,6 +426,17 @@
 			coords: {
 				x: 1757,
 				y: 204
+			}
+		},
+		'side-m-ptrbl': {
+			width: 206,
+			height: 206,
+			connectors: {
+				plugs: 'trbl'
+			},
+			coords: {
+				x: 1714,
+				y: 1673
 			}
 		} };
 

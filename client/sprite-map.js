@@ -105,4 +105,15 @@ export default {
 		x: 1757,
 		y: 204
 	}
+},
+'side-m-ptrbl': {
+	width: 206,
+	height: 206,
+	connectors: {
+		plugs: 'trbl'
+	},
+	coords: {
+		x: 1714,
+		y: 1673
+	}
 }};
