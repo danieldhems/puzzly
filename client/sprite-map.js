@@ -1,19 +1,19 @@
-export default {
-'corner-tl-srb': {
+export default [{
 	width: 124,
 	height: 161,
+	type: 'corner-tl-srb',
 	connectors: {
 		sockets: 'r',
 		plugs: 'b'
 	},
 	coords: {
-		x: 21,
+		x: 40,
 		y: 0
 	}
-},
-'corner-tl-sr-pb': {
+},{
 	width: 121,
 	height: 163,
+	type: 'corner-tl-sr-pb',
 	connectors: {
 		sockets: 'r',
 		plugs: 'b'
@@ -22,22 +22,22 @@ export default {
 		x: 286,
 		y: 0
 	}
-},
-'corner-tl-sb-pr': {
-	width: 86,
-	height: 65,
+},{
+	width: 163,
+	height: 121,
+	type: 'corner-tl-sb-pr',
 	connectors: {
 		sockets: 'b',
 		plugs: 'r'
 	},
 	coords: {
-		x: 279,
+		x: 532,
 		y: 0
 	}
-},
-'corner-tl-prb': {
-	width: 86,
-	height: 86,
+},{
+	width: 163,
+	height: 163,
+	type: 'corner-tl-prb',
 	connectors: {
 		sockets: '',
 		plugs: 'rb'
@@ -46,8 +46,10 @@ export default {
 		x: 279,
 		y: 0
 	}
-},
-'corner-bl-str': {
+},{
+	width: 121,
+	height: 121,
+	type: 'corner-bl-str',
 	connectors: {
 		sockets: '',
 		plugs: 'rb'
@@ -56,10 +58,10 @@ export default {
 		x: 408,
 		y: 0
 	}
-},
-'side-l-strb': {
-	width: 65,
-	height: 65,
+},{
+	width: 121,
+	height: 121,
+	type: 'side-l-strb',
 	connectors: {
 		sockets: 'tr',
 		plugs: ''
@@ -68,12 +70,36 @@ export default {
 		x: 537,
 		y: 0
 	}
+},{
+	width: 121,
+	height: 121,
+	type: 'side-t-srbl',
+	connectors: {
+		sockets: 'rbl',
+		plugs: ''
+	},
+	coords: {
+		x: 529,
+		y: 489
+	}
+},{
+	width: 121,
+	height: 163,
+	type: 'side-t-srl-pb',
+	connectors: {
+		sockets: 'rl',
+		plugs: 'b'
+	},
+	coords: {
+		x: 532,
+		y: 491
+	}
 },
 
-
-'side-l-stb-pr': {
+{
 	width: 165,
 	height: 121,
+	type: 'side-l-stb-pr',
 	connectors: {
 		sockets: 'tb',
 		plugs: 'r'
@@ -82,10 +108,10 @@ export default {
 		x: 40,
 		y: 245
 	}
-},
-'side-l-st-prb': {
+},{
 	width: 163,
 	height: 164,
+	type: 'side-l-st-prb',
 	connectors: {
 		sockets: 't',
 		plugs: 'rb'
@@ -94,26 +120,28 @@ export default {
 		x: 287,
 		y: 246
 	}
-},
-'side-l-ptrb': {
+},{
 	width: 163,
-	height: 205,
+	height: 20,
+	type: 'side-l-ptrb',
 	connectors: {
-		plugs: 'trb'
+		plugs: 'trb',
+		sockets: ''
 	},
 	coords: {
 		x: 1757,
 		y: 204
 	}
-},
-'side-m-ptrbl': {
+},{
 	width: 206,
 	height: 206,
+	type: 'middle-ptrbl',
 	connectors: {
-		plugs: 'trbl'
+		plugs: 'trbl',
+		sockets: ''
 	},
 	coords: {
 		x: 1714,
 		y: 1673
 	}
-}};
+}];

@@ -5,14 +5,15 @@ class Puzzly {
 	constructor(canvasId, imageUrl, numPieces){
 		this.config = {
 			pieceSize: {
-				'500': Math.sqrt(500),
+				'500': 35,
 				'1000': 30,
 				'2000': 20
 			},
 			jigsawSquareSize: 123,
 			jigsawPlugSize: 41,
 			boardBoundary: 200,
-			numPieces: 1000
+			numPiecesOnVerticalSides: 27,
+			numPiecesOnHorizontalSides: 38
 		};
 
 		this.pieces = [];
@@ -35,40 +36,126 @@ class Puzzly {
 			this.canvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
 			this.tmpCanvasWidth = this.canvas.width;
 			this.tmpCanvasHeight = this.canvas.height;
-			// drawImage(canvas, this.ctx, img, config.boardBoundary);
-
-			let jigsawPiece1 = SpriteMap['side-l-st-prb'];
-			let jigsawPiece2 = SpriteMap['corner-tl-sr-pb'];
-			let jigsawPiece3 = SpriteMap['side-l-ptrb'];
-			let jigsawPiece4 = SpriteMap['side-m-ptrbl'];
-
-			this.ctx.strokeRect(0,0,this.canvas.width, this.canvas.height);
 			
-			this.drawPiece(this.SourceImage, {x: 50, y: 50}, this.JigsawSprite, jigsawPiece1, this.config.pieceSize['500'], {x:50,y:100});
-			this.drawPiece(this.SourceImage, {x: 50, y: 24}, this.JigsawSprite, jigsawPiece2, this.config.pieceSize['500'], {x:500,y:550});
-			this.drawPiece(this.SourceImage, {x: 200, y: 24}, this.JigsawSprite, jigsawPiece3, this.config.pieceSize['500'], {x:20,y:350});
-			this.drawPiece(this.SourceImage, {x: 250, y: 24}, this.JigsawSprite, jigsawPiece4, this.config.pieceSize['500'], {x:20,y:250});
-			
-			this.makePieces(this.canvas, this.SourceImage, 500, this.config.pieceSize['500'], this.config.boardBoundary);
+			this.makePieces(this.SourceImage, 500, this.config.pieceSize['500'], this.config.boardBoundary);
 		}
 
 		window.addEventListener('click', this.onWindowClick);
 
 	}
 
+	
 
+	onWindowClick(e){
+		this.getClickTarget(e);
+	}
+
+	drawImage(canvas, ctx, img, boardBoundary){
+		var cX = canvas.offsetLeft + boardBoundary;
+		var cY = canvas.offsetTop + boardBoundary;
+
+		ctx.drawImage(img, 0, 0, img.width, img.height, cX, cY, img.width, img.height);	
+	}
+
+	makePieces(img, numPieces, pieceSize){
+
+		var boardLeft = this.canvas.offsetLeft + this.config.boardBoundary;
+		var boardTop = this.canvas.offsetTop + this.config.boardBoundary;
+
+		// prepare draw options
+		var curImgX = 0;
+		var curImgY = 0;
+		var curCanvasX = boardLeft;
+		var curCanvasY = boardTop;
+
+		let done = false;
+		let i=0;
+
+		let adjacentPieceBehind = null;
+		let adjacentPieceAbove = null;
+		let endOfRow = false;
+
+		while(!done){
+			// this.ctx.strokeStyle = '#000';
+			// this.ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
+
+			if(this.pieces.length > 0){
+				adjacentPieceBehind = this.pieces[i-1];
+			}
+			if(this.pieces.length > this.config.numPiecesOnHorizontalSides){
+				adjacentPieceAbove = this.pieces[i - this.config.numPiecesOnHorizontalSides];
+			}
+
+			// console.log(this.pieces);
+			console.log('adjacents', adjacentPieceBehind, adjacentPieceAbove);
+			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow);
+			console.log(candidatePieces);
+
+			let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
+			
+			this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
+			this.drawPiece({x: curImgX, y: curImgY}, {x: curCanvasX, y: curCanvasY}, currentPiece);
+
+			// reached last piece, start next row
+			if(this.pieces.length % this.config.numPiecesOnHorizontalSides === 0){
+				curImgX = 0;
+				curImgY += pieceSize;
+				curCanvasX = boardLeft;
+				curCanvasY += pieceSize;
+			} else {
+				curImgX += pieceSize;
+				curCanvasX += pieceSize;
+			}
+
+			if(this.pieces.length === this.config.numPiecesOnHorizontalSides * this.config.numPiecesOnVerticalSides) done = true;
+
+			i++;
+		}
+	}
 
 	// Draw puzzle piece
-	drawPiece(sourceImg, sourceImgCoords, jigsawSprite, piece, pieceSize, canvasCoords){
+	drawPiece(sourceImgCoords, canvasCoords, piece){
 
-		let dims = this.getPieceDimensions(piece, pieceSize);
+		let dims = this.getPieceDimensions(piece, this.config.pieceSize['1000']);
 
 		this.tmpCtx.save();
-		this.tmpCtx.drawImage(sourceImg, sourceImgCoords.x, sourceImgCoords.y, dims.w, dims.h, 0, 0, dims.w, dims.h);
+		this.tmpCtx.drawImage(this.SourceImage, sourceImgCoords.x, sourceImgCoords.y, dims.w, dims.h, 0, 0, dims.w, dims.h);
 		this.tmpCtx.globalCompositeOperation = 'destination-atop';
-		this.tmpCtx.drawImage(jigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, 0, 0, dims.w, dims.h);
+		this.tmpCtx.drawImage(this.JigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, 0, 0, dims.w, dims.h);
 		this.ctx.drawImage(this.tmpCanvas, canvasCoords.x, canvasCoords.y);
 		this.tmpCtx.restore();
+	}
+
+	getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow){
+		let candidatePieces = [];
+		// let plugs = lastPiece.connectors.plugs;
+		// let sockets = lastPiece.connectors.sockets;
+		if(!adjacentPieceBehind && !adjacentPieceAbove){
+			return SpriteMap.filter((o) => o.type.indexOf('corner-tl') > -1 );
+		}
+
+		if(!adjacentPieceAbove){
+			let pieceType = adjacentPieceBehind.type;
+
+			console.log(pieceType)
+			// Does lastPiece have a plug on its right side?
+			let lastPieceHasRightPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
+			// Does lastPiece have a socket on its right side?
+			let lastPieceHasRightSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
+			
+			for(let i=0, l=SpriteMap.length; i<l; i++){
+				let iterateeIsTopSide = SpriteMap[i].type.indexOf('side-t') > -1;
+				let iterateeHasLeftSocket = SpriteMap[i].connectors.sockets.indexOf('l') > -1;
+				let iterateeHasLeftPlug = SpriteMap[i].connectors.plugs.indexOf('l') > -1;
+				if(iterateeIsTopSide && lastPieceHasRightPlug && iterateeHasLeftSocket){
+					candidatePieces.push(SpriteMap[i]);
+				} else if(iterateeIsTopSide && lastPieceHasRightSocket && iterateeHasLeftPlug){
+					candidatePieces.push(SpriteMap[i]);
+				}
+			}
+		}
+
+		return candidatePieces;
 	}
 
 	getPieceDimensions(piece, pieceSize){
@@ -105,78 +192,9 @@ class Puzzly {
 		return dims;
 	}
 
-	onWindowClick(e){
-		this.getClickTarget(e);
-	}
 
-	drawImage(canvas, ctx, img, boardBoundary){
-		var cX = canvas.offsetLeft + boardBoundary;
-		var cY = canvas.offsetTop + boardBoundary;
-
-		ctx.drawImage(img, 0, 0, img.width, img.height, cX, cY, img.width, img.height);	
-	}
-
-	makePieces(canvas, img, numPieces, pieceSize, boardBoundary){
-
-		var boardLeft = this.canvas.offsetLeft + boardBoundary;
-		var boardTop = this.canvas.offsetTop + boardBoundary;
-
-		// prepare draw options
-		var curImgX = 0;
-		var curImgY = 0;
-		var curCanvasX = boardLeft;
-		var curCanvasY = boardTop;
-
-		for(var i=0;i<numPieces;i++){
-			// do draw
-
-			var initialPieceData = this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, pieceSize, i);
-
-			this.ctx.strokeStyle = '#000';
-			this.ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
-
-			// reached last piece, start next row
-			if(curImgX === img.width - pieceSize){
-				curImgX = 0;
-				curImgY += pieceSize;
-				curCanvasX = boardLeft;
-				curCanvasY += pieceSize;
-			} else {
-				curImgX += pieceSize;
-				curCanvasX += pieceSize;
-			}
-		}
-	}
-
-	getCandidatePieces(currentPiece, rowPosition, rowLength, previousRow){
-		switch(currentPiece.orientation){
-			case 'corner':
-				// next piece must:
-				// - be side or middle
-				// - be able to connect to current piece
-
-				// Is end of row
-				if(rowPosition === rowLength - 1){
-
-				}
-				//
-				else {
-					let hasPlug = currentPiece.connectors.plugs.indexOf('r');
-					let hasSocket = currentPiece.connectors.plugs.indexOf('r');
-					if(currentPiece.connectors.indexOf())
-				}
-				break;
-			case 'side':
-
-				break;
-			case 'middle':
-
-				break;
-		}
-	}
-
-	assignInitialPieceData(imgX, imgY, canvX, canvY, pieceSize, i){
-		var data = {
+	assignInitialPieceData(imgX, imgY, canvX, canvY, piece, i){
+		var data = Object.assign({
 			id: i,
 			imgX: imgX,
 			imgY: imgY,
@@ -184,7 +202,7 @@ class Puzzly {
 			currentY: canvY,
 			solvedX: canvX,
 			solvedY: canvY
-		};
+		}, piece);
 		this.pieces.push(data);
 		return data;
 	}

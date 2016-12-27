@@ -112,14 +112,15 @@
 
 			this.config = {
 				pieceSize: {
-					'500': Math.sqrt(500),
+					'500': 35,
 					'1000': 30,
 					'2000': 20
 				},
 				jigsawSquareSize: 123,
 				jigsawPlugSize: 41,
 				boardBoundary: 200,
-				numPieces: 1000
+				numPiecesOnVerticalSides: 27,
+				numPiecesOnHorizontalSides: 38
 			};
 
 			this.pieces = [];
@@ -142,41 +143,133 @@
 				_this.canvas.height = _this.SourceImage.height + _this.config.boardBoundary * 2;
 				_this.tmpCanvasWidth = _this.canvas.width;
 				_this.tmpCanvasHeight = _this.canvas.height;
-				// drawImage(canvas, this.ctx, img, config.boardBoundary);
 
-				var jigsawPiece1 = _spriteMap2.default['side-l-st-prb'];
-				var jigsawPiece2 = _spriteMap2.default['corner-tl-sr-pb'];
-				var jigsawPiece3 = _spriteMap2.default['side-l-ptrb'];
-				var jigsawPiece4 = _spriteMap2.default['side-m-ptrbl'];
-
-				_this.ctx.strokeRect(0, 0, _this.canvas.width, _this.canvas.height);
-
-				_this.drawPiece(_this.SourceImage, { x: 50, y: 50 }, _this.JigsawSprite, jigsawPiece1, _this.config.pieceSize['500'], { x: 50, y: 100 });
-				_this.drawPiece(_this.SourceImage, { x: 50, y: 24 }, _this.JigsawSprite, jigsawPiece2, _this.config.pieceSize['500'], { x: 500, y: 550 });
-				_this.drawPiece(_this.SourceImage, { x: 200, y: 24 }, _this.JigsawSprite, jigsawPiece3, _this.config.pieceSize['500'], { x: 20, y: 350 });
-				_this.drawPiece(_this.SourceImage, { x: 250, y: 24 }, _this.JigsawSprite, jigsawPiece4, _this.config.pieceSize['500'], { x: 20, y: 250 });
-
-				_this.makePieces(_this.canvas, _this.SourceImage, 500, _this.config.pieceSize['500'], _this.config.boardBoundary);
+				_this.makePieces(_this.SourceImage, 500, _this.config.pieceSize['500'], _this.config.boardBoundary);
 			};
 
 			window.addEventListener('click', this.onWindowClick);
 		}
 
-		// Draw puzzle piece
-
-
 		_createClass(Puzzly, [{
-			key: 'drawPiece',
-			value: function drawPiece(sourceImg, sourceImgCoords, jigsawSprite, piece, pieceSize, canvasCoords) {
+			key: 'onWindowClick',
+			value: function onWindowClick(e) {
+				this.getClickTarget(e);
+			}
+		}, {
+			key: 'drawImage',
+			value: function drawImage(canvas, ctx, img, boardBoundary) {
+				var cX = canvas.offsetLeft + boardBoundary;
+				var cY = canvas.offsetTop + boardBoundary;
 
-				var dims = this.getPieceDimensions(piece, pieceSize);
+				ctx.drawImage(img, 0, 0, img.width, img.height, cX, cY, img.width, img.height);
+			}
+		}, {
+			key: 'makePieces',
+			value: function makePieces(img, numPieces, pieceSize) {
+
+				var boardLeft = this.canvas.offsetLeft + this.config.boardBoundary;
+				var boardTop = this.canvas.offsetTop + this.config.boardBoundary;
+
+				// prepare draw options
+				var curImgX = 0;
+				var curImgY = 0;
+				var curCanvasX = boardLeft;
+				var curCanvasY = boardTop;
+
+				var done = false;
+				var i = 0;
+
+				var adjacentPieceBehind = null;
+				var adjacentPieceAbove = null;
+				var endOfRow = false;
+
+				while (!done) {
+					// this.ctx.strokeStyle = '#000';
+					// this.ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
+
+					if (this.pieces.length > 0) {
+						adjacentPieceBehind = this.pieces[i - 1];
+					}
+					if (this.pieces.length > this.config.numPiecesOnHorizontalSides) {
+						adjacentPieceAbove = this.pieces[i - this.config.numPiecesOnHorizontalSides];
+					}
+
+					// console.log(this.pieces);
+					console.log('adjacents', adjacentPieceBehind, adjacentPieceAbove);
+					var candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow);
+					console.log(candidatePieces);
+
+					var currentPiece = candidatePieces[Math.floor(Math.random() * candidatePieces.length)];
+
+					this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
+					this.drawPiece({ x: curImgX, y: curImgY }, { x: curCanvasX, y: curCanvasY }, currentPiece);
+
+					// reached last piece, start next row
+					if (this.pieces.length % this.config.numPiecesOnHorizontalSides === 0) {
+						curImgX = 0;
+						curImgY += pieceSize;
+						curCanvasX = boardLeft;
+						curCanvasY += pieceSize;
+					} else {
+						curImgX += pieceSize;
+						curCanvasX += pieceSize;
+					}
+
+					if (this.pieces.length === this.config.numPiecesOnHorizontalSides * this.config.numPiecesOnVerticalSides) done = true;
+
+					i++;
+				}
+			}
+
+			// Draw puzzle piece
+
+		}, {
+			key: 'drawPiece',
+			value: function drawPiece(sourceImgCoords, canvasCoords, piece) {
+
+				var dims = this.getPieceDimensions(piece, this.config.pieceSize['1000']);
 
 				this.tmpCtx.save();
-				this.tmpCtx.drawImage(sourceImg, sourceImgCoords.x, sourceImgCoords.y, dims.w, dims.h, 0, 0, dims.w, dims.h);
+				this.tmpCtx.drawImage(this.SourceImage, sourceImgCoords.x, sourceImgCoords.y, dims.w, dims.h, 0, 0, dims.w, dims.h);
 				this.tmpCtx.globalCompositeOperation = 'destination-atop';
-				this.tmpCtx.drawImage(jigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, 0, 0, dims.w, dims.h);
+				this.tmpCtx.drawImage(this.JigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, 0, 0, dims.w, dims.h);
 				this.ctx.drawImage(this.tmpCanvas, canvasCoords.x, canvasCoords.y);
 				this.tmpCtx.restore();
+			}
+		}, {
+			key: 'getCandidatePieces',
+			value: function getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow) {
+				var candidatePieces = [];
+				// let plugs = lastPiece.connectors.plugs;
+				// let sockets = lastPiece.connectors.sockets;
+				if (!adjacentPieceBehind && !adjacentPieceAbove) {
+					return _spriteMap2.default.filter(function (o) {
+						return o.type.indexOf('corner-tl') > -1;
+					});
+				}
+
+				if (!adjacentPieceAbove) {
+					var pieceType = adjacentPieceBehind.type;
+
+					console.log(pieceType);
+					// Does lastPiece have a plug on its right side?
+					var lastPieceHasRightPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
+					// Does lastPiece have a socket on its right side?
+					var lastPieceHasRightSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
+
+					for (var i = 0, l = _spriteMap2.default.length; i < l; i++) {
+						var iterateeIsTopSide = _spriteMap2.default[i].type.indexOf('side-t') > -1;
+						var iterateeHasLeftSocket = _spriteMap2.default[i].connectors.sockets.indexOf('l') > -1;
+						var iterateeHasLeftPlug = _spriteMap2.default[i].connectors.plugs.indexOf('l') > -1;
+						if (iterateeIsTopSide && lastPieceHasRightPlug && iterateeHasLeftSocket) {
+							candidatePieces.push(_spriteMap2.default[i]);
+						} else if (iterateeIsTopSide && lastPieceHasRightSocket && iterateeHasLeftPlug) {
+							candidatePieces.push(_spriteMap2.default[i]);
+						}
+					}
+				}
+
+				return candidatePieces;
 			}
 		}, {
 			key: 'getPieceDimensions',
@@ -214,55 +307,9 @@
 				return dims;
 			}
 		}, {
-			key: 'onWindowClick',
-			value: function onWindowClick(e) {
-				this.getClickTarget(e);
-			}
-		}, {
-			key: 'drawImage',
-			value: function drawImage(canvas, ctx, img, boardBoundary) {
-				var cX = canvas.offsetLeft + boardBoundary;
-				var cY = canvas.offsetTop + boardBoundary;
-
-				ctx.drawImage(img, 0, 0, img.width, img.height, cX, cY, img.width, img.height);
-			}
-		}, {
-			key: 'makePieces',
-			value: function makePieces(canvas, img, numPieces, pieceSize, boardBoundary) {
-
-				var boardLeft = this.canvas.offsetLeft + boardBoundary;
-				var boardTop = this.canvas.offsetTop + boardBoundary;
-
-				// prepare draw options
-				var curImgX = 0;
-				var curImgY = 0;
-				var curCanvasX = boardLeft;
-				var curCanvasY = boardTop;
-
-				for (var i = 0; i < numPieces; i++) {
-					// do draw
-
-					var initialPieceData = this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, pieceSize, i);
-
-					this.ctx.strokeStyle = '#000';
-					this.ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
-
-					// reached last piece, start next row
-					if (curImgX === img.width - pieceSize) {
-						curImgX = 0;
-						curImgY += pieceSize;
-						curCanvasX = boardLeft;
-						curCanvasY += pieceSize;
-					} else {
-						curImgX += pieceSize;
-						curCanvasX += pieceSize;
-					}
-				}
-			}
-		}, {
 			key: 'assignInitialPieceData',
-			value: function assignInitialPieceData(imgX, imgY, canvX, canvY, pieceSize, i) {
-				var data = {
+			value: function assignInitialPieceData(imgX, imgY, canvX, canvY, piece, i) {
+				var data = Object.assign({
 					id: i,
 					imgX: imgX,
 					imgY: imgY,
@@ -270,7 +317,7 @@
 					currentY: canvY,
 					solvedX: canvX,
 					solvedY: canvY
-				};
+				}, piece);
 				this.pieces.push(data);
 				return data;
 			}
@@ -321,124 +368,151 @@
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	exports.default = {
-		'corner-tl-srb': {
-			width: 124,
-			height: 161,
-			connectors: {
-				sockets: 'r',
-				plugs: 'b'
-			},
-			coords: {
-				x: 21,
-				y: 0
-			}
+	exports.default = [{
+		width: 124,
+		height: 161,
+		type: 'corner-tl-srb',
+		connectors: {
+			sockets: 'r',
+			plugs: 'b'
 		},
-		'corner-tl-sr-pb': {
-			width: 121,
-			height: 163,
-			connectors: {
-				sockets: 'r',
-				plugs: 'b'
-			},
-			coords: {
-				x: 286,
-				y: 0
-			}
+		coords: {
+			x: 40,
+			y: 0
+		}
+	}, {
+		width: 121,
+		height: 163,
+		type: 'corner-tl-sr-pb',
+		connectors: {
+			sockets: 'r',
+			plugs: 'b'
 		},
-		'corner-tl-sb-pr': {
-			width: 86,
-			height: 65,
-			connectors: {
-				sockets: 'b',
-				plugs: 'r'
-			},
-			coords: {
-				x: 279,
-				y: 0
-			}
+		coords: {
+			x: 286,
+			y: 0
+		}
+	}, {
+		width: 163,
+		height: 121,
+		type: 'corner-tl-sb-pr',
+		connectors: {
+			sockets: 'b',
+			plugs: 'r'
 		},
-		'corner-tl-prb': {
-			width: 86,
-			height: 86,
-			connectors: {
-				sockets: '',
-				plugs: 'rb'
-			},
-			coords: {
-				x: 279,
-				y: 0
-			}
+		coords: {
+			x: 532,
+			y: 0
+		}
+	}, {
+		width: 163,
+		height: 163,
+		type: 'corner-tl-prb',
+		connectors: {
+			sockets: '',
+			plugs: 'rb'
 		},
-		'corner-bl-str': {
-			connectors: {
-				sockets: '',
-				plugs: 'rb'
-			},
-			coords: {
-				x: 408,
-				y: 0
-			}
+		coords: {
+			x: 279,
+			y: 0
+		}
+	}, {
+		width: 121,
+		height: 121,
+		type: 'corner-bl-str',
+		connectors: {
+			sockets: '',
+			plugs: 'rb'
 		},
-		'side-l-strb': {
-			width: 65,
-			height: 65,
-			connectors: {
-				sockets: 'tr',
-				plugs: ''
-			},
-			coords: {
-				x: 537,
-				y: 0
-			}
+		coords: {
+			x: 408,
+			y: 0
+		}
+	}, {
+		width: 121,
+		height: 121,
+		type: 'side-l-strb',
+		connectors: {
+			sockets: 'tr',
+			plugs: ''
 		},
-
-		'side-l-stb-pr': {
-			width: 165,
-			height: 121,
-			connectors: {
-				sockets: 'tb',
-				plugs: 'r'
-			},
-			coords: {
-				x: 40,
-				y: 245
-			}
+		coords: {
+			x: 537,
+			y: 0
+		}
+	}, {
+		width: 121,
+		height: 121,
+		type: 'side-t-srbl',
+		connectors: {
+			sockets: 'rbl',
+			plugs: ''
 		},
-		'side-l-st-prb': {
-			width: 163,
-			height: 164,
-			connectors: {
-				sockets: 't',
-				plugs: 'rb'
-			},
-			coords: {
-				x: 287,
-				y: 246
-			}
+		coords: {
+			x: 529,
+			y: 489
+		}
+	}, {
+		width: 121,
+		height: 163,
+		type: 'side-t-srl-pb',
+		connectors: {
+			sockets: 'rl',
+			plugs: 'b'
 		},
-		'side-l-ptrb': {
-			width: 163,
-			height: 205,
-			connectors: {
-				plugs: 'trb'
-			},
-			coords: {
-				x: 1757,
-				y: 204
-			}
+		coords: {
+			x: 532,
+			y: 491
+		}
+	}, {
+		width: 165,
+		height: 121,
+		type: 'side-l-stb-pr',
+		connectors: {
+			sockets: 'tb',
+			plugs: 'r'
 		},
-		'side-m-ptrbl': {
-			width: 206,
-			height: 206,
-			connectors: {
-				plugs: 'trbl'
-			},
-			coords: {
-				x: 1714,
-				y: 1673
-			}
-		} };
+		coords: {
+			x: 40,
+			y: 245
+		}
+	}, {
+		width: 163,
+		height: 164,
+		type: 'side-l-st-prb',
+		connectors: {
+			sockets: 't',
+			plugs: 'rb'
+		},
+		coords: {
+			x: 287,
+			y: 246
+		}
+	}, {
+		width: 163,
+		height: 20,
+		type: 'side-l-ptrb',
+		connectors: {
+			plugs: 'trb',
+			sockets: ''
+		},
+		coords: {
+			x: 1757,
+			y: 204
+		}
+	}, {
+		width: 206,
+		height: 206,
+		type: 'middle-ptrbl',
+		connectors: {
+			plugs: 'trbl',
+			sockets: ''
+		},
+		coords: {
+			x: 1714,
+			y: 1673
+		}
+	}];
 
 /***/ }
 /******/ ]);
