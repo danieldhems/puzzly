@@ -193,6 +193,11 @@
 					if (this.pieces.length > this.config.numPiecesOnHorizontalSides) {
 						adjacentPieceAbove = this.pieces[i - this.config.numPiecesOnHorizontalSides];
 					}
+					if (this.pieces.length % (this.config.numPiecesOnHorizontalSides - 1) === 0) {
+						endOfRow = true;
+					} else {
+						endOfRow = false;
+					}
 
 					// console.log(this.pieces);
 					console.log('adjacents', adjacentPieceBehind, adjacentPieceAbove);
@@ -256,14 +261,18 @@
 					var lastPieceHasRightPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
 					// Does lastPiece have a socket on its right side?
 					var lastPieceHasRightSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
-
+					var iterateeIsCorrectType = void 0;
 					for (var i = 0, l = _spriteMap2.default.length; i < l; i++) {
-						var iterateeIsTopSide = _spriteMap2.default[i].type.indexOf('side-t') > -1;
+						if (endOfRow) {
+							iterateeIsCorrectType = _spriteMap2.default[i].type.indexOf('corner-tr') > -1;
+						} else {
+							iterateeIsCorrectType = _spriteMap2.default[i].type.indexOf('side-t') > -1;
+						}
 						var iterateeHasLeftSocket = _spriteMap2.default[i].connectors.sockets.indexOf('l') > -1;
 						var iterateeHasLeftPlug = _spriteMap2.default[i].connectors.plugs.indexOf('l') > -1;
-						if (iterateeIsTopSide && lastPieceHasRightPlug && iterateeHasLeftSocket) {
+						if (iterateeIsCorrectType && lastPieceHasRightPlug && iterateeHasLeftSocket) {
 							candidatePieces.push(_spriteMap2.default[i]);
-						} else if (iterateeIsTopSide && lastPieceHasRightSocket && iterateeHasLeftPlug) {
+						} else if (iterateeIsCorrectType && lastPieceHasRightSocket && iterateeHasLeftPlug) {
 							candidatePieces.push(_spriteMap2.default[i]);
 						}
 					}
@@ -413,7 +422,7 @@
 			plugs: 'rb'
 		},
 		coords: {
-			x: 279,
+			x: 774,
 			y: 0
 		}
 	}, {
@@ -463,6 +472,90 @@
 		coords: {
 			x: 532,
 			y: 491
+		}
+	}, {
+		width: 163,
+		height: 121,
+		type: 'side-t-srb-pl',
+		connectors: {
+			sockets: 'rb',
+			plugs: 'l'
+		},
+		coords: {
+			x: 490,
+			y: 1227
+		}
+	}, {
+		width: 163,
+		height: 163,
+		type: 'side-t-sr-pbl',
+		connectors: {
+			sockets: 'r',
+			plugs: 'bl'
+		},
+		coords: {
+			x: 735,
+			y: 1227
+		}
+	}, {
+		width: 206,
+		height: 121,
+		type: 'side-t-sb-prl',
+		connectors: {
+			sockets: 'b',
+			plugs: 'rl'
+		},
+		coords: {
+			x: 980,
+			y: 1227
+		}
+	}, {
+		width: 206,
+		height: 163,
+		type: 'side-t-prbl',
+		connectors: {
+			sockets: '',
+			plugs: 'rbl'
+		},
+		coords: {
+			x: 1225,
+			y: 1227
+		}
+	}, {
+		width: 163,
+		height: 121,
+		type: 'side-tr-sb-pl',
+		connectors: {
+			sockets: 'b',
+			plugs: 'l'
+		},
+		coords: {
+			x: 0,
+			y: 1227
+		}
+	}, {
+		width: 163,
+		height: 163,
+		type: 'side-t-pbl',
+		connectors: {
+			sockets: '',
+			plugs: 'bl'
+		},
+		coords: {
+			x: 241,
+			y: 1227
+		}
+	}, {
+		width: 121,
+		height: 121,
+		type: 'corner-tr-sbl',
+		connectors: {
+			sockets: 'bl',
+			plugs: ''
+		},
+		coords: {
+			x: 41,
+			y: 490
 		}
 	}, {
 		width: 165,

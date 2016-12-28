@@ -85,6 +85,11 @@ class Puzzly {
 			if(this.pieces.length > this.config.numPiecesOnHorizontalSides){
 				adjacentPieceAbove = this.pieces[i - this.config.numPiecesOnHorizontalSides];
 			}
+			if(this.pieces.length % (this.config.numPiecesOnHorizontalSides - 1) === 0){
+				endOfRow = true;
+			} else {
+				endOfRow = false;
+			}
 
 			// console.log(this.pieces);
 			console.log('adjacents', adjacentPieceBehind, adjacentPieceAbove);
@@ -142,14 +147,18 @@ class Puzzly {
 			let lastPieceHasRightPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
 			// Does lastPiece have a socket on its right side?
 			let lastPieceHasRightSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
-			
+			let iterateeIsCorrectType;
 			for(let i=0, l=SpriteMap.length; i<l; i++){
-				let iterateeIsTopSide = SpriteMap[i].type.indexOf('side-t') > -1;
+				if(endOfRow){
+					iterateeIsCorrectType = SpriteMap[i].type.indexOf('corner-tr') > -1;
+				} else {
+					iterateeIsCorrectType = SpriteMap[i].type.indexOf('side-t') > -1;
+				}
 				let iterateeHasLeftSocket = SpriteMap[i].connectors.sockets.indexOf('l') > -1;
 				let iterateeHasLeftPlug = SpriteMap[i].connectors.plugs.indexOf('l') > -1;
-				if(iterateeIsTopSide && lastPieceHasRightPlug && iterateeHasLeftSocket){
+				if(iterateeIsCorrectType && lastPieceHasRightPlug && iterateeHasLeftSocket){
 					candidatePieces.push(SpriteMap[i]);
-				} else if(iterateeIsTopSide && lastPieceHasRightSocket && iterateeHasLeftPlug){
+				} else if(iterateeIsCorrectType && lastPieceHasRightSocket && iterateeHasLeftPlug){
 					candidatePieces.push(SpriteMap[i]);
 				}
 			}
