@@ -28,5 +28,5 @@ gulp.task("webpack", function(){
 
 gulp.task("watch", [], function(){
 	gulp.watch( path.join(clientDir, '**/*.js'), ['webpack']);
-	gulp.watch( path.join(clientDir, 'index.html'), ['copy-html']);
+	gulp.watch( path.join(clientDir, 'index.html'), ['copy']);
 });

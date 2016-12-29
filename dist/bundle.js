@@ -147,19 +147,16 @@
 			this.JigsawSprite = new Image();
 			this.JigsawSprite.src = './jigsaw-sprite.png';
 
-			this.BgImage.onload = function () {
-				// this.drawBackground();
-			};
-
 			this.SourceImage.onload = function () {
 				_this.canvas.width = _this.SourceImage.width + _this.config.boardBoundary * 2;
 				_this.canvas.height = _this.SourceImage.height + _this.config.boardBoundary * 2;
-				_this.tmpCanvas.width = window.innerWidth;
-				_this.tmpCanvas.height = window.innerHeight;
-				_this.bgCanvas.width = _this.canvas.width;
-				_this.bgCanvas.height = _this.canvas.height;
+				_this.tmpCanvas.style.width = _this.canvas.width;
+				_this.tmpCanvas.style.height = _this.canvas.height;
+				_this.bgCanvas.width = _this.SourceImage.width + _this.config.boardBoundary * 2;
+				_this.bgCanvas.height = _this.SourceImage.height + _this.config.boardBoundary * 2;
 
-				_this.makePieces(_this.SourceImage, 500, _this.config.pieceSize['500'], _this.config.boardBoundary);
+				_this.drawBackground();
+				_this.makePieces(_this.SourceImage, 500, _this.config.pieceSize['500']);
 			};
 
 			window.addEventListener('click', this.onWindowClick);
@@ -200,15 +197,16 @@
 				var adjacentPieceBehind = null;
 				var adjacentPieceAbove = null;
 				var endOfRow = false;
+				var lastPiece = null;
 
 				while (!done) {
 
 					// All pieces not on top row
-					if (this.pieces.length > this.config.numPiecesOnHorizontalSides) {
+					if (this.pieces.length > this.config.numPiecesOnHorizontalSides - 1) {
 						adjacentPieceAbove = this.pieces[i - this.config.numPiecesOnHorizontalSides];
 					}
 
-					// Last piece in row
+					// Last piece in row, next piece should be a corner or right side
 					if (this.pieces.length % (this.config.numPiecesOnHorizontalSides - 1) === 0) {
 						endOfRow = true;
 					} else {
@@ -220,8 +218,8 @@
 					}
 
 					// First piece on new row
-					if (this.pieces.length % this.config.numPiecesOnHorizontalSides === 0) {
-						adjacentPieceBehind = null;
+					if (lastPiece && lastPiece.type.indexOf('corner-tr')) {
+						// adjacentPieceBehind = null;
 					}
 
 					var candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow);
@@ -229,6 +227,8 @@
 
 					this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
 					this.drawPiece({ x: curImgX, y: curImgY }, { x: curCanvasX, y: curCanvasY }, currentPiece);
+
+					lastPiece = currentPiece;
 
 					// reached last piece, start next row
 					if (this.pieces.length % this.config.numPiecesOnHorizontalSides === 0) {
@@ -264,6 +264,7 @@
 		}, {
 			key: 'drawBackground',
 			value: function drawBackground() {
+				console.log(this.BgImage.width);
 				this.bgCtx.save();
 				this.bgCtx.globalCompositeOperation = 'destination-over';
 				this.bgCtx.drawImage(this.BgImage, 0, 0, this.BgImage.width, this.BgImage.height);
@@ -274,7 +275,7 @@
 			key: 'getCandidatePieces',
 			value: function getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow) {
 				var candidatePieces = [];
-				console.log('adjacentPieceAbove', adjacentPieceAbove, 'adjacentPieceBehind', adjacentPieceBehind);
+				console.log('adjacentPieceAbove', adjacentPieceAbove, 'adjacentPieceBehind', adjacentPieceBehind, 'endOfRow', endOfRow);
 				if (!adjacentPieceBehind && !adjacentPieceAbove) {
 					return _spriteMap2.default.filter(function (o) {
 						return o.type.indexOf('corner-tl') > -1;
@@ -284,7 +285,6 @@
 				if (!adjacentPieceAbove) {
 					var pieceType = adjacentPieceBehind.type;
 
-					console.log(pieceType);
 					// Does lastPiece have a plug on its right side?
 					var lastPieceHasRightPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
 					// Does lastPiece have a socket on its right side?

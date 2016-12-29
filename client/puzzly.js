@@ -42,19 +42,16 @@ class Puzzly {
 		this.JigsawSprite = new Image();
 		this.JigsawSprite.src = './jigsaw-sprite.png';
 
-		this.BgImage.onload = () => {
-			// this.drawBackground();
-		}
-
 		this.SourceImage.onload = () => {
 			this.canvas.width = this.SourceImage.width + (this.config.boardBoundary*2);
 			this.canvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
-			this.tmpCanvas.width = window.innerWidth;
-			this.tmpCanvas.height = window.innerHeight;
-			this.bgCanvas.width = this.canvas.width;
-			this.bgCanvas.height = this.canvas.height;
+			this.tmpCanvas.style.width = this.canvas.width;
+			this.tmpCanvas.style.height = this.canvas.height;
+			this.bgCanvas.width = this.SourceImage.width + (this.config.boardBoundary*2);
+			this.bgCanvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
 
-			this.makePieces(this.SourceImage, 500, this.config.pieceSize['500'], this.config.boardBoundary);
+			this.drawBackground();
+			this.makePieces(this.SourceImage, 500, this.config.pieceSize['500']);
 		}
 
 		window.addEventListener('click', this.onWindowClick);
@@ -94,16 +91,16 @@ class Puzzly {
 		let adjacentPieceBehind = null;
 		let adjacentPieceAbove = null;
 		let endOfRow = false;
+		let lastPiece = null;
 
 		while(!done){
 
-
 			// All pieces not on top row
-			if(this.pieces.length > this.config.numPiecesOnHorizontalSides){
+			if(this.pieces.length > (this.config.numPiecesOnHorizontalSides-1)){
 				adjacentPieceAbove = this.pieces[i - this.config.numPiecesOnHorizontalSides];
 			}
 
-			// Last piece in row
+			// Last piece in row, next piece should be a corner or right side
 			if(this.pieces.length % (this.config.numPiecesOnHorizontalSides - 1) === 0){
 				endOfRow = true;
 			} else {
@@ -115,15 +112,17 @@ class Puzzly {
 			}
 
 			// First piece on new row
-			if(this.pieces.length % this.config.numPiecesOnHorizontalSides === 0){
-				adjacentPieceBehind = null;
+			if(lastPiece && lastPiece.type.indexOf('corner-tr')){
+				// adjacentPieceBehind = null;
 			}
 
 			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow);
 			let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
-			
+
 			this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
 			this.drawPiece({x: curImgX, y: curImgY}, {x: curCanvasX, y: curCanvasY}, currentPiece);
+			
+			lastPiece = currentPiece;
 
 			// reached last piece, start next row
 			if(this.pieces.length % this.config.numPiecesOnHorizontalSides === 0){
@@ -155,6 +154,7 @@ class Puzzly {
 	}
 
 	drawBackground(){
+		console.log(this.BgImage.width);
 		this.bgCtx.save();
 		this.bgCtx.globalCompositeOperation = 'destination-over';
 		this.bgCtx.drawImage(this.BgImage, 0, 0, this.BgImage.width, this.BgImage.height);
@@ -164,7 +164,7 @@ class Puzzly {
 
 	getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow){
 		let candidatePieces = [];
-		console.log('adjacentPieceAbove', adjacentPieceAbove, 'adjacentPieceBehind', adjacentPieceBehind)
+		console.log('adjacentPieceAbove', adjacentPieceAbove, 'adjacentPieceBehind', adjacentPieceBehind, 'endOfRow', endOfRow);
 		if(!adjacentPieceBehind && !adjacentPieceAbove){
 			return SpriteMap.filter((o) => o.type.indexOf('corner-tl') > -1 );
 		}
@@ -172,7 +172,6 @@ class Puzzly {
 		if(!adjacentPieceAbove){
 			let pieceType = adjacentPieceBehind.type;
 
-			console.log(pieceType)
 			// Does lastPiece have a plug on its right side?
 			let lastPieceHasRightPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
 			// Does lastPiece have a socket on its right side?
