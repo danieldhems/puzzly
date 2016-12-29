@@ -7,7 +7,7 @@ export default [{
 		plugs: 'b'
 	},
 	coords: {
-		x: 40,
+		x: 41,
 		y: 0
 	}
 },{
@@ -31,7 +31,7 @@ export default [{
 		plugs: 'r'
 	},
 	coords: {
-		x: 532,
+		x: 531,
 		y: 0
 	}
 },{
@@ -43,7 +43,7 @@ export default [{
 		plugs: 'rb'
 	},
 	coords: {
-		x: 774,
+		x: 776,
 		y: 0
 	}
 },{
@@ -51,14 +51,54 @@ export default [{
 	height: 121,
 	type: 'corner-bl-str',
 	connectors: {
-		sockets: '',
-		plugs: 'rb'
+		sockets: 'tr',
+		plugs: ''
 	},
 	coords: {
-		x: 408,
+		x: 1022,
 		y: 0
 	}
 },{
+	width: 121,
+	height: 121,
+	type: 'side-l-strb',
+	connectors: {
+		sockets: 'trb',
+		plugs: ''
+	},
+	coords: {
+		x: 1267,
+		y: 0
+	}
+},{
+	width: 121,
+	height: 163,
+	type: 'side-l-str-pb',
+	connectors: {
+		sockets: 'tr',
+		plugs: 'b'
+	},
+	coords: {
+		x: 1512,
+		y: 0
+	}
+},{
+	width: 163,
+	height: 121,
+	type: 'corner-bl-st-pr',
+	connectors: {
+		sockets: 't',
+		plugs: 'r'
+	},
+	coords: {
+		x: 1757,
+		y: 0
+	}
+},
+
+
+
+{
 	width: 121,
 	height: 121,
 	type: 'side-l-strb',
@@ -145,7 +185,7 @@ export default [{
 },{
 	width: 163,
 	height: 121,
-	type: 'side-tr-sb-pl',
+	type: 'corner-tr-sb-pl',
 	connectors: {
 		sockets: 'b',
 		plugs: 'l'
@@ -157,7 +197,7 @@ export default [{
 },{
 	width: 163,
 	height: 163,
-	type: 'side-t-pbl',
+	type: 'corner-tr-pbl',
 	connectors: {
 		sockets: '',
 		plugs: 'bl'

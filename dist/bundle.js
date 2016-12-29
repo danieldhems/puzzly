@@ -120,7 +120,11 @@
 				jigsawPlugSize: 41,
 				boardBoundary: 200,
 				numPiecesOnVerticalSides: 27,
-				numPiecesOnHorizontalSides: 38
+				numPiecesOnHorizontalSides: 38,
+				backgroundImages: [{
+					name: 'wood',
+					path: './bg-wood.jpg'
+				}]
 			};
 
 			this.pieces = [];
@@ -129,20 +133,31 @@
 
 			this.canvas = document.getElementById(canvasId);
 			this.tmpCanvas = document.getElementById('tmp-canvas');
+			this.bgCanvas = document.getElementById('tmp-canvas');
 			this.ctx = this.canvas.getContext('2d');
 			this.tmpCtx = this.tmpCanvas.getContext('2d');
+			this.bgCtx = this.bgCanvas.getContext('2d');
 
 			this.SourceImage = new Image();
 			this.SourceImage.src = imageUrl;
 
+			this.BgImage = new Image();
+			this.BgImage.src = this.config.backgroundImages[0].path;
+
 			this.JigsawSprite = new Image();
 			this.JigsawSprite.src = './jigsaw-sprite.png';
+
+			this.BgImage.onload = function () {
+				// this.drawBackground();
+			};
 
 			this.SourceImage.onload = function () {
 				_this.canvas.width = _this.SourceImage.width + _this.config.boardBoundary * 2;
 				_this.canvas.height = _this.SourceImage.height + _this.config.boardBoundary * 2;
-				_this.tmpCanvasWidth = _this.canvas.width;
-				_this.tmpCanvasHeight = _this.canvas.height;
+				_this.tmpCanvas.width = window.innerWidth;
+				_this.tmpCanvas.height = window.innerHeight;
+				_this.bgCanvas.width = _this.canvas.width;
+				_this.bgCanvas.height = _this.canvas.height;
 
 				_this.makePieces(_this.SourceImage, 500, _this.config.pieceSize['500'], _this.config.boardBoundary);
 			};
@@ -157,11 +172,14 @@
 			}
 		}, {
 			key: 'drawImage',
-			value: function drawImage(canvas, ctx, img, boardBoundary) {
-				var cX = canvas.offsetLeft + boardBoundary;
-				var cY = canvas.offsetTop + boardBoundary;
+			value: function drawImage(img, imgX, imgY, imgW, imgH, inBoardArea) {
+				if (inBoardArea) {
+					var cX = this.canvas.ObjectffsetLeft + this.config.boardBoundary;
+					var cY = this.canvas.offsetTop + this.config.boardBoundary;
+				}
 
-				ctx.drawImage(img, 0, 0, img.width, img.height, cX, cY, img.width, img.height);
+				// this.tmpCtx.drawImage(img, imgX, imgY, imgW, imgH);
+				this.ctx.drawImage(img, 0, 0, imgW, imgH);
 			}
 		}, {
 			key: 'makePieces',
@@ -184,26 +202,29 @@
 				var endOfRow = false;
 
 				while (!done) {
-					// this.ctx.strokeStyle = '#000';
-					// this.ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
 
-					if (this.pieces.length > 0) {
-						adjacentPieceBehind = this.pieces[i - 1];
-					}
+					// All pieces not on top row
 					if (this.pieces.length > this.config.numPiecesOnHorizontalSides) {
 						adjacentPieceAbove = this.pieces[i - this.config.numPiecesOnHorizontalSides];
 					}
+
+					// Last piece in row
 					if (this.pieces.length % (this.config.numPiecesOnHorizontalSides - 1) === 0) {
 						endOfRow = true;
 					} else {
 						endOfRow = false;
 					}
 
-					// console.log(this.pieces);
-					console.log('adjacents', adjacentPieceBehind, adjacentPieceAbove);
-					var candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow);
-					console.log(candidatePieces);
+					if (this.pieces.length > 0 && !endOfRow) {
+						adjacentPieceBehind = this.pieces[i - 1];
+					}
 
+					// First piece on new row
+					if (this.pieces.length % this.config.numPiecesOnHorizontalSides === 0) {
+						adjacentPieceBehind = null;
+					}
+
+					var candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow);
 					var currentPiece = candidatePieces[Math.floor(Math.random() * candidatePieces.length)];
 
 					this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
@@ -231,7 +252,6 @@
 		}, {
 			key: 'drawPiece',
 			value: function drawPiece(sourceImgCoords, canvasCoords, piece) {
-
 				var dims = this.getPieceDimensions(piece, this.config.pieceSize['1000']);
 
 				this.tmpCtx.save();
@@ -242,11 +262,19 @@
 				this.tmpCtx.restore();
 			}
 		}, {
+			key: 'drawBackground',
+			value: function drawBackground() {
+				this.bgCtx.save();
+				this.bgCtx.globalCompositeOperation = 'destination-over';
+				this.bgCtx.drawImage(this.BgImage, 0, 0, this.BgImage.width, this.BgImage.height);
+				this.ctx.drawImage(this.bgCanvas, 0, 0, this.BgImage.width, this.BgImage.height, 0, 0, this.canvas.width, this.canvas.height);
+				this.bgCtx.restore();
+			}
+		}, {
 			key: 'getCandidatePieces',
 			value: function getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow) {
 				var candidatePieces = [];
-				// let plugs = lastPiece.connectors.plugs;
-				// let sockets = lastPiece.connectors.sockets;
+				console.log('adjacentPieceAbove', adjacentPieceAbove, 'adjacentPieceBehind', adjacentPieceBehind);
 				if (!adjacentPieceBehind && !adjacentPieceAbove) {
 					return _spriteMap2.default.filter(function (o) {
 						return o.type.indexOf('corner-tl') > -1;
@@ -262,18 +290,42 @@
 					// Does lastPiece have a socket on its right side?
 					var lastPieceHasRightSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
 					var iterateeIsCorrectType = void 0;
-					for (var i = 0, l = _spriteMap2.default.length; i < l; i++) {
+
+					var _pieces = _spriteMap2.default.filter(function (o) {
 						if (endOfRow) {
-							iterateeIsCorrectType = _spriteMap2.default[i].type.indexOf('corner-tr') > -1;
+							return o.type.indexOf('corner-tr') > -1;
 						} else {
-							iterateeIsCorrectType = _spriteMap2.default[i].type.indexOf('side-t') > -1;
+							return o.type.indexOf('side-t') > -1;
 						}
-						var iterateeHasLeftSocket = _spriteMap2.default[i].connectors.sockets.indexOf('l') > -1;
-						var iterateeHasLeftPlug = _spriteMap2.default[i].connectors.plugs.indexOf('l') > -1;
-						if (iterateeIsCorrectType && lastPieceHasRightPlug && iterateeHasLeftSocket) {
-							candidatePieces.push(_spriteMap2.default[i]);
-						} else if (iterateeIsCorrectType && lastPieceHasRightSocket && iterateeHasLeftPlug) {
-							candidatePieces.push(_spriteMap2.default[i]);
+					});
+					console.log('filtered', _pieces);
+
+					for (var i = 0, l = _pieces.length; i < l; i++) {
+						var iterateeHasLeftSocket = _pieces[i].connectors.sockets.indexOf('l') > -1;
+						var iterateeHasLeftPlug = _pieces[i].connectors.plugs.indexOf('l') > -1;
+						if (lastPieceHasRightPlug && iterateeHasLeftSocket) {
+							candidatePieces.push(_pieces[i]);
+						} else if (lastPieceHasRightSocket && iterateeHasLeftPlug) {
+							candidatePieces.push(_pieces[i]);
+						}
+					}
+				} else {
+					if (!adjacentPieceBehind) {
+
+						var _pieces2 = _spriteMap2.default.filter(function (o) {
+							return o.type.indexOf('side-l') > -1;
+						});
+						var pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
+						var pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
+
+						for (var _i = 0, _l = _pieces2.length; _i < _l; _i++) {
+							var iterateeHasTopSocket = _pieces2[_i].connectors.sockets.indexOf('t') > -1;
+							var iterateeHasTopPlug = _pieces2[_i].connectors.plugs.indexOf('t') > -1;
+							if (pieceAboveHasSocket && iterateeHasTopPlug) {
+								candidatePieces.push(_pieces2[_i]);
+							} else if (pieceAboveHasPlug && iterateeHasTopSocket) {
+								candidatePieces.push(_pieces2[_i]);
+							}
 						}
 					}
 				}
@@ -386,7 +438,7 @@
 			plugs: 'b'
 		},
 		coords: {
-			x: 40,
+			x: 41,
 			y: 0
 		}
 	}, {
@@ -410,7 +462,7 @@
 			plugs: 'r'
 		},
 		coords: {
-			x: 532,
+			x: 531,
 			y: 0
 		}
 	}, {
@@ -422,7 +474,7 @@
 			plugs: 'rb'
 		},
 		coords: {
-			x: 774,
+			x: 776,
 			y: 0
 		}
 	}, {
@@ -430,11 +482,47 @@
 		height: 121,
 		type: 'corner-bl-str',
 		connectors: {
-			sockets: '',
-			plugs: 'rb'
+			sockets: 'tr',
+			plugs: ''
 		},
 		coords: {
-			x: 408,
+			x: 1022,
+			y: 0
+		}
+	}, {
+		width: 121,
+		height: 121,
+		type: 'side-l-strb',
+		connectors: {
+			sockets: 'trb',
+			plugs: ''
+		},
+		coords: {
+			x: 1267,
+			y: 0
+		}
+	}, {
+		width: 121,
+		height: 163,
+		type: 'side-l-str-pb',
+		connectors: {
+			sockets: 'tr',
+			plugs: 'b'
+		},
+		coords: {
+			x: 1512,
+			y: 0
+		}
+	}, {
+		width: 163,
+		height: 121,
+		type: 'corner-bl-st-pr',
+		connectors: {
+			sockets: 't',
+			plugs: 'r'
+		},
+		coords: {
+			x: 1757,
 			y: 0
 		}
 	}, {
@@ -524,7 +612,7 @@
 	}, {
 		width: 163,
 		height: 121,
-		type: 'side-tr-sb-pl',
+		type: 'corner-tr-sb-pl',
 		connectors: {
 			sockets: 'b',
 			plugs: 'l'
@@ -536,7 +624,7 @@
 	}, {
 		width: 163,
 		height: 163,
-		type: 'side-t-pbl',
+		type: 'corner-tr-pbl',
 		connectors: {
 			sockets: '',
 			plugs: 'bl'
