@@ -241,11 +241,10 @@
 					}
 
 					var candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow);
-					console.log('candidates', candidatePieces);
 					var currentPiece = candidatePieces[Math.floor(Math.random() * candidatePieces.length)];
 
 					this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
-					this.drawPiece({ x: curImgX, y: curImgY }, { x: curCanvasX, y: curCanvasY }, currentPiece);
+					this.drawPiece({ x: curImgX, y: curImgY }, { x: curCanvasX, y: curCanvasY }, currentPiece, pieceSize);
 
 					// reached last piece, start next row
 					if (this.pieces.length % this.config.numPiecesOnHorizontalSides === 0) {
@@ -258,6 +257,8 @@
 						curCanvasX += pieceSize;
 					}
 
+					this.ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
+
 					if (this.pieces.length === this.config.numPiecesOnHorizontalSides * this.config.numPiecesOnVerticalSides) done = true;
 
 					i++;
@@ -268,14 +269,43 @@
 
 		}, {
 			key: 'drawPiece',
-			value: function drawPiece(sourceImgCoords, canvasCoords, piece) {
-				var dims = this.getPieceDimensions(piece, this.config.pieceSize['1000']);
+			value: function drawPiece(sourceImgCoords, canvasCoords, piece, pieceSize) {
+				var dims = this.getPieceDimensions(piece, pieceSize);
+
+				var plugSizeToScale = pieceSize / this.config.jigsawSquareSize * this.config.jigsawPlugSize;
+
+				var cX = canvasCoords.x;
+				var cY = canvasCoords.y;
+				var iX = sourceImgCoords.x;
+				var iW = pieceSize;
+				var iY = sourceImgCoords.y;
+				var iH = pieceSize;
+
+				if (piece.connectors.plugs.indexOf('l') > -1) {
+					cX -= plugSizeToScale;
+					iX -= plugSizeToScale;
+					iW += plugSizeToScale;
+				}
+
+				if (piece.connectors.plugs.indexOf('t') > -1) {
+					cY -= plugSizeToScale;
+					iY -= plugSizeToScale;
+					iH += plugSizeToScale;
+				}
+
+				if (piece.connectors.plugs.indexOf('r') > -1) {
+					iW += plugSizeToScale;
+				}
+
+				if (piece.connectors.plugs.indexOf('b') > -1) {
+					iH += plugSizeToScale;
+				}
 
 				this.tmpCtx.save();
-				this.tmpCtx.drawImage(this.SourceImage, sourceImgCoords.x, sourceImgCoords.y, dims.w, dims.h, 0, 0, dims.w, dims.h);
+				this.tmpCtx.drawImage(this.SourceImage, iX, iY, iW, iH, 0, 0, iW, iH);
 				this.tmpCtx.globalCompositeOperation = 'destination-atop';
 				this.tmpCtx.drawImage(this.JigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, 0, 0, dims.w, dims.h);
-				this.ctx.drawImage(this.tmpCanvas, canvasCoords.x, canvasCoords.y);
+				this.ctx.drawImage(this.tmpCanvas, cX, cY);
 				this.tmpCtx.restore();
 			}
 		}, {
@@ -817,8 +847,8 @@
 			plugs: 'b'
 		},
 		coords: {
-			x: 756,
-			y: 735
+			x: 776,
+			y: 736
 		}
 	}, {
 		width: 122,
@@ -834,7 +864,7 @@
 		}
 	}, {
 		width: 163,
-		height: 163,
+		height: 122,
 		type: 'middle-sblt-pr',
 		connectors: {
 			sockets: 'blt',
@@ -966,7 +996,7 @@
 		}
 	}, {
 		width: 163,
-		height: 163,
+		height: 122,
 		type: 'corner-tr-sb-pl',
 		connectors: {
 			sockets: 'b',
@@ -1194,7 +1224,7 @@
 		}
 	}, {
 		width: 163,
-		height: 122,
+		height: 163,
 		type: 'middle-srb-plt',
 		connectors: {
 			sockets: 'rb',

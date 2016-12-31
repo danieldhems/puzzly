@@ -331,8 +331,8 @@ export default [{
 		plugs: 'b'
 	},
 	coords: {
-		x: 756,
-		y: 735
+		x: 776,
+		y: 736
 	}
 },{
 	width: 122,
@@ -348,7 +348,7 @@ export default [{
 	}
 },{
 	width: 163,
-	height: 163,
+	height: 122,
 	type: 'middle-sblt-pr',
 	connectors: {
 		sockets: 'blt',
@@ -480,7 +480,7 @@ export default [{
 	}
 },{
 	width: 163,
-	height: 163,
+	height: 122,
 	type: 'corner-tr-sb-pl',
 	connectors: {
 		sockets: 'b',
@@ -708,7 +708,7 @@ export default [{
 	}
 },{
 	width: 163,
-	height: 122,
+	height: 163,
 	type: 'middle-srb-plt',
 	connectors: {
 		sockets: 'rb',
