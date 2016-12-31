@@ -143,12 +143,12 @@ export default [{
 		y: 204
 	}
 },{
-	width: 163,
-	height: 205,
+	width: 122,
+	height: 206,
 	type: 'side-l-sr-ptb',
 	connectors: {
-		sockets: 't',
-		plugs: 'rb'
+		sockets: 'r',
+		plugs: 'tb'
 	},
 	coords: {
 		x: 1021,
@@ -275,8 +275,8 @@ export default [{
 		y: 490
 	}
 },{
-	width: 163,
-	height: 163,
+	width: 122,
+	height: 122,
 	type: 'side-r-sblt',
 	connectors: {
 		sockets: 'blt',
@@ -399,8 +399,8 @@ export default [{
 	height: 206,
 	type: 'side-r-sl-pbt',
 	connectors: {
-		sockets: 'bl',
-		plugs: 't'
+		sockets: 'l',
+		plugs: 'bt'
 	},
 	coords: {
 		x: 285,

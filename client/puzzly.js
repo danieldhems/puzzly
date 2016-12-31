@@ -50,7 +50,6 @@ class Puzzly {
 
 		this.preloadImages(imgs);
 
-		window.addEventListener('click', this.onWindowClick);
 
 	}
 
@@ -64,6 +63,9 @@ class Puzzly {
 
 		this.drawBackground();
 		this.makePieces(this.SourceImage, 500, this.config.pieceSize['500']);
+		window.addEventListener('click', (e) => {
+		this.getClickTarget(e);
+		});
 	}
 
 	preloadImages(imgs, cb){
@@ -118,13 +120,14 @@ class Puzzly {
 
 		while(!done){
 
+			// console.log(this.pieces)
 			// All pieces not on top row
-			if(this.pieces.length >= this.config.numPiecesOnHorizontalSides){
+			if(this.pieces.length > this.config.numPiecesOnHorizontalSides - 1){
 				adjacentPieceAbove = this.pieces[this.pieces.length - this.config.numPiecesOnHorizontalSides];
 			}
 
 			// Last piece in row, next piece should be a corner or right side
-			if(i % (this.config.numPiecesOnHorizontalSides - 1) === 0){
+			if(this.pieces.length > 1 && this.pieces.length % (this.config.numPiecesOnHorizontalSides - 1) === 0){
 				endOfRow = true;
 			} else {
 				endOfRow = false;
@@ -210,7 +213,8 @@ class Puzzly {
 
 	getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow){
 		let candidatePieces = [];
-		console.log('adjacentPieceAbove', adjacentPieceAbove, 'adjacentPieceBehind', adjacentPieceBehind, 'endOfRow', endOfRow);
+		// if(adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
+		// if(adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
 		if(!adjacentPieceBehind && !adjacentPieceAbove){
 			return SpriteMap.filter((o) => o.type.indexOf('corner-tl') > -1 );
 		}
@@ -242,13 +246,25 @@ class Puzzly {
 				}
 			}
 		} else {
+
+			let pieces = null;
+
+			if(adjacentPieceAbove.type.indexOf('corner-tr') > -1 || adjacentPieceAbove.type.indexOf('side-r') > -1){
+				pieces = SpriteMap.filter( (o) => o.type.indexOf('side-r') > -1)
+			}
+
+			if(adjacentPieceAbove.type.indexOf('side-r') > -1 && adjacentPieceBehind.type.indexOf('side-b') > -1){
+				pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-br') > -1)
+			}
+
 			// Was last piece the top right corner or right side?
 			if(adjacentPieceBehind.type.indexOf('corner-tr') > -1 || adjacentPieceBehind.type.indexOf('side-r') > -1){
 				
-				let pieces = SpriteMap.filter( (o) => o.type.indexOf('side-l') > -1);
+				pieces = SpriteMap.filter( (o) => o.type.indexOf('side-l') > -1);
+
 				let pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
 				let pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
-				
+
 				for(let i=0, l=pieces.length; i<l; i++){
 					let iterateeHasTopSocket = pieces[i].connectors.sockets.indexOf('t') > -1;
 					let iterateeHasTopPlug = pieces[i].connectors.plugs.indexOf('t') > -1;
@@ -258,40 +274,35 @@ class Puzzly {
 						candidatePieces.push(pieces[i]);
 					}
 				}
-			} else {
 
-				let pieces = null;
+				return candidatePieces;
+
+			} else {
 
 				if(adjacentPieceAbove.type.indexOf('middle') > -1 || adjacentPieceAbove.type.indexOf('side-t') > -1){
 					pieces = SpriteMap.filter( (o) => o.type.indexOf('middle') > -1);
 				}
-
-				if(endOfRow){
-					pieces = SpriteMap.filter( (o) => o.type.indexOf('side-r') > -1);
-				}
-
-				console.log(pieces);
+			}
+			
+			let pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
+			let pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
+			let pieceBehindHasSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
+			let pieceBehindHasPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
+			
+			for(let i=0, l=pieces.length; i<l; i++){
+				let iterateeHasTopSocket = pieces[i].connectors.sockets.indexOf('t') > -1;
+				let iterateeHasTopPlug = pieces[i].connectors.plugs.indexOf('t') > -1;
+				let iterateeHasLeftSocket = pieces[i].connectors.sockets.indexOf('l') > -1;
+				let iterateeHasLeftPlug = pieces[i].connectors.plugs.indexOf('l') > -1;
 				
-				let pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
-				let pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
-				let pieceBehindHasSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
-				let pieceBehindHasPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
-				
-				for(let i=0, l=pieces.length; i<l; i++){
-					let iterateeHasTopSocket = pieces[i].connectors.sockets.indexOf('t') > -1;
-					let iterateeHasTopPlug = pieces[i].connectors.plugs.indexOf('t') > -1;
-					let iterateeHasLeftSocket = pieces[i].connectors.sockets.indexOf('l') > -1;
-					let iterateeHasLeftPlug = pieces[i].connectors.plugs.indexOf('l') > -1;
-					
-					if(pieceAboveHasSocket && iterateeHasTopPlug && pieceBehindHasSocket && iterateeHasLeftPlug){
-						candidatePieces.push(pieces[i]);
-					} else if(pieceAboveHasPlug && iterateeHasTopSocket && pieceBehindHasPlug && iterateeHasLeftSocket){
-						candidatePieces.push(pieces[i]);
-					} else if(pieceAboveHasSocket && iterateeHasTopPlug && pieceBehindHasPlug && iterateeHasLeftSocket){
-						candidatePieces.push(pieces[i]);
-					} else if(pieceAboveHasPlug && iterateeHasTopSocket && pieceBehindHasSocket && iterateeHasLeftPlug){
-						candidatePieces.push(pieces[i]);
-					}
+				if(pieceAboveHasSocket && iterateeHasTopPlug && pieceBehindHasSocket && iterateeHasLeftPlug){
+					candidatePieces.push(pieces[i]);
+				} else if(pieceAboveHasPlug && iterateeHasTopSocket && pieceBehindHasPlug && iterateeHasLeftSocket){
+					candidatePieces.push(pieces[i]);
+				} else if(pieceAboveHasSocket && iterateeHasTopPlug && pieceBehindHasPlug && iterateeHasLeftSocket){
+					candidatePieces.push(pieces[i]);
+				} else if(pieceAboveHasPlug && iterateeHasTopSocket && pieceBehindHasSocket && iterateeHasLeftPlug){
+					candidatePieces.push(pieces[i]);
 				}
 			}
 		}
@@ -333,7 +344,6 @@ class Puzzly {
 		return dims;
 	}
 
-
 	assignInitialPieceData(imgX, imgY, canvX, canvY, piece, i){
 		var data = Object.assign({
 			id: i,
@@ -342,7 +352,8 @@ class Puzzly {
 			currentX: canvX,
 			currentY: canvY,
 			solvedX: canvX,
-			solvedY: canvY
+			solvedY: canvY,
+			isSolved: false
 		}, piece);
 		this.pieces.push(data);
 		return data;
@@ -351,17 +362,18 @@ class Puzzly {
 	hasCollision(source, target){
 		var pieceBoundary = {
 			top: Math.round(target.currentY),
-			right: Math.round(target.currentX) + config.pieceSize,
-			bottom: Math.round(target.currentY) + config.pieceSize,
+			right: Math.round(target.currentX) + this.config.pieceSize['500'],
+			bottom: Math.round(target.currentY) + this.config.pieceSize['500'],
 			left: Math.round(target.currentX)
 		};
+		console.log(pieceBoundary);
 		return source.x > pieceBoundary.left && source.x < pieceBoundary.right && source.y < pieceBoundary.bottom && source.y > pieceBoundary.top;
 	}
 
 	getCellByCoords(coords){
-		for(var i=pieces.length-1;i>-1;i--){
-			var piece = pieces[i];
-			if(hasCollision(coords, piece)){
+		for(var i=this.pieces.length-1;i>-1;i--){
+			var piece = this.pieces[i];
+			if(this.hasCollision(coords, piece)){
 				return piece;
 			}
 		}
@@ -373,7 +385,7 @@ class Puzzly {
 			x: e.clientX,
 			y: e.clientY
 		};
-		console.log(getCellByCoords(coords));
+		console.log(this.getCellByCoords(coords));
 	}
 }
 

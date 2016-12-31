@@ -148,13 +148,13 @@
 			var imgs = [this.SourceImage, this.BgImage, this.JigsawSprite];
 
 			this.preloadImages(imgs);
-
-			window.addEventListener('click', this.onWindowClick);
 		}
 
 		_createClass(Puzzly, [{
 			key: 'init',
 			value: function init() {
+				var _this = this;
+
 				this.canvas.width = this.SourceImage.width + this.config.boardBoundary * 2;
 				this.canvas.height = this.SourceImage.height + this.config.boardBoundary * 2;
 				this.tmpCanvas.style.width = this.canvas.width;
@@ -164,18 +164,21 @@
 
 				this.drawBackground();
 				this.makePieces(this.SourceImage, 500, this.config.pieceSize['500']);
+				window.addEventListener('click', function (e) {
+					_this.getClickTarget(e);
+				});
 			}
 		}, {
 			key: 'preloadImages',
 			value: function preloadImages(imgs, cb) {
-				var _this = this;
+				var _this2 = this;
 
 				var promises = [];
 				for (var i = 0, l = imgs.length; i < l; i++) {
 					promises.push(this.loadImage(imgs[i]));
 				}
 				Promise.all(promises).then(function () {
-					_this.init();
+					_this2.init();
 				});
 			}
 		}, {
@@ -224,13 +227,14 @@
 
 				while (!done) {
 
+					// console.log(this.pieces)
 					// All pieces not on top row
-					if (this.pieces.length >= this.config.numPiecesOnHorizontalSides) {
+					if (this.pieces.length > this.config.numPiecesOnHorizontalSides - 1) {
 						adjacentPieceAbove = this.pieces[this.pieces.length - this.config.numPiecesOnHorizontalSides];
 					}
 
 					// Last piece in row, next piece should be a corner or right side
-					if (i % (this.config.numPiecesOnHorizontalSides - 1) === 0) {
+					if (this.pieces.length > 1 && this.pieces.length % (this.config.numPiecesOnHorizontalSides - 1) === 0) {
 						endOfRow = true;
 					} else {
 						endOfRow = false;
@@ -321,7 +325,8 @@
 			key: 'getCandidatePieces',
 			value: function getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow) {
 				var candidatePieces = [];
-				console.log('adjacentPieceAbove', adjacentPieceAbove, 'adjacentPieceBehind', adjacentPieceBehind, 'endOfRow', endOfRow);
+				// if(adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
+				// if(adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
 				if (!adjacentPieceBehind && !adjacentPieceAbove) {
 					return _spriteMap2.default.filter(function (o) {
 						return o.type.indexOf('corner-tl') > -1;
@@ -337,7 +342,7 @@
 					var lastPieceHasRightSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
 					var iterateeIsCorrectType = void 0;
 
-					var _pieces = _spriteMap2.default.filter(function (o) {
+					var pieces = _spriteMap2.default.filter(function (o) {
 						if (endOfRow) {
 							return o.type.indexOf('corner-tr') > -1;
 						} else {
@@ -345,72 +350,80 @@
 						}
 					});
 
-					for (var i = 0, l = _pieces.length; i < l; i++) {
-						var iterateeHasLeftSocket = _pieces[i].connectors.sockets.indexOf('l') > -1;
-						var iterateeHasLeftPlug = _pieces[i].connectors.plugs.indexOf('l') > -1;
+					for (var i = 0, l = pieces.length; i < l; i++) {
+						var iterateeHasLeftSocket = pieces[i].connectors.sockets.indexOf('l') > -1;
+						var iterateeHasLeftPlug = pieces[i].connectors.plugs.indexOf('l') > -1;
 						if (lastPieceHasRightPlug && iterateeHasLeftSocket) {
-							candidatePieces.push(_pieces[i]);
+							candidatePieces.push(pieces[i]);
 						} else if (lastPieceHasRightSocket && iterateeHasLeftPlug) {
-							candidatePieces.push(_pieces[i]);
+							candidatePieces.push(pieces[i]);
 						}
 					}
 				} else {
+
+					var _pieces = null;
+
+					if (adjacentPieceAbove.type.indexOf('corner-tr') > -1 || adjacentPieceAbove.type.indexOf('side-r') > -1) {
+						_pieces = _spriteMap2.default.filter(function (o) {
+							return o.type.indexOf('side-r') > -1;
+						});
+					}
+
+					if (adjacentPieceAbove.type.indexOf('side-r') > -1 && adjacentPieceBehind.type.indexOf('side-b') > -1) {
+						_pieces = _spriteMap2.default.filter(function (o) {
+							return o.type.indexOf('corner-br') > -1;
+						});
+					}
+
 					// Was last piece the top right corner or right side?
 					if (adjacentPieceBehind.type.indexOf('corner-tr') > -1 || adjacentPieceBehind.type.indexOf('side-r') > -1) {
 
-						var _pieces2 = _spriteMap2.default.filter(function (o) {
+						_pieces = _spriteMap2.default.filter(function (o) {
 							return o.type.indexOf('side-l') > -1;
 						});
-						var pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
-						var pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
-
-						for (var _i = 0, _l = _pieces2.length; _i < _l; _i++) {
-							var iterateeHasTopSocket = _pieces2[_i].connectors.sockets.indexOf('t') > -1;
-							var iterateeHasTopPlug = _pieces2[_i].connectors.plugs.indexOf('t') > -1;
-							if (pieceAboveHasSocket && iterateeHasTopPlug) {
-								candidatePieces.push(_pieces2[_i]);
-							} else if (pieceAboveHasPlug && iterateeHasTopSocket) {
-								candidatePieces.push(_pieces2[_i]);
-							}
-						}
-					} else {
-
-						var _pieces3 = null;
-
-						if (adjacentPieceAbove.type.indexOf('middle') > -1 || adjacentPieceAbove.type.indexOf('side-t') > -1) {
-							_pieces3 = _spriteMap2.default.filter(function (o) {
-								return o.type.indexOf('middle') > -1;
-							});
-						}
-
-						if (endOfRow) {
-							_pieces3 = _spriteMap2.default.filter(function (o) {
-								return o.type.indexOf('side-r') > -1;
-							});
-						}
-
-						console.log(_pieces3);
 
 						var _pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
 						var _pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
-						var pieceBehindHasSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
-						var pieceBehindHasPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
 
-						for (var _i2 = 0, _l2 = _pieces3.length; _i2 < _l2; _i2++) {
-							var _iterateeHasTopSocket = _pieces3[_i2].connectors.sockets.indexOf('t') > -1;
-							var _iterateeHasTopPlug = _pieces3[_i2].connectors.plugs.indexOf('t') > -1;
-							var _iterateeHasLeftSocket = _pieces3[_i2].connectors.sockets.indexOf('l') > -1;
-							var _iterateeHasLeftPlug = _pieces3[_i2].connectors.plugs.indexOf('l') > -1;
-
-							if (_pieceAboveHasSocket && _iterateeHasTopPlug && pieceBehindHasSocket && _iterateeHasLeftPlug) {
-								candidatePieces.push(_pieces3[_i2]);
-							} else if (_pieceAboveHasPlug && _iterateeHasTopSocket && pieceBehindHasPlug && _iterateeHasLeftSocket) {
-								candidatePieces.push(_pieces3[_i2]);
-							} else if (_pieceAboveHasSocket && _iterateeHasTopPlug && pieceBehindHasPlug && _iterateeHasLeftSocket) {
-								candidatePieces.push(_pieces3[_i2]);
-							} else if (_pieceAboveHasPlug && _iterateeHasTopSocket && pieceBehindHasSocket && _iterateeHasLeftPlug) {
-								candidatePieces.push(_pieces3[_i2]);
+						for (var _i = 0, _l = _pieces.length; _i < _l; _i++) {
+							var iterateeHasTopSocket = _pieces[_i].connectors.sockets.indexOf('t') > -1;
+							var iterateeHasTopPlug = _pieces[_i].connectors.plugs.indexOf('t') > -1;
+							if (_pieceAboveHasSocket && iterateeHasTopPlug) {
+								candidatePieces.push(_pieces[_i]);
+							} else if (_pieceAboveHasPlug && iterateeHasTopSocket) {
+								candidatePieces.push(_pieces[_i]);
 							}
+						}
+
+						return candidatePieces;
+					} else {
+
+						if (adjacentPieceAbove.type.indexOf('middle') > -1 || adjacentPieceAbove.type.indexOf('side-t') > -1) {
+							_pieces = _spriteMap2.default.filter(function (o) {
+								return o.type.indexOf('middle') > -1;
+							});
+						}
+					}
+
+					var pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
+					var pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
+					var pieceBehindHasSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
+					var pieceBehindHasPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
+
+					for (var _i2 = 0, _l2 = _pieces.length; _i2 < _l2; _i2++) {
+						var _iterateeHasTopSocket = _pieces[_i2].connectors.sockets.indexOf('t') > -1;
+						var _iterateeHasTopPlug = _pieces[_i2].connectors.plugs.indexOf('t') > -1;
+						var _iterateeHasLeftSocket = _pieces[_i2].connectors.sockets.indexOf('l') > -1;
+						var _iterateeHasLeftPlug = _pieces[_i2].connectors.plugs.indexOf('l') > -1;
+
+						if (pieceAboveHasSocket && _iterateeHasTopPlug && pieceBehindHasSocket && _iterateeHasLeftPlug) {
+							candidatePieces.push(_pieces[_i2]);
+						} else if (pieceAboveHasPlug && _iterateeHasTopSocket && pieceBehindHasPlug && _iterateeHasLeftSocket) {
+							candidatePieces.push(_pieces[_i2]);
+						} else if (pieceAboveHasSocket && _iterateeHasTopPlug && pieceBehindHasPlug && _iterateeHasLeftSocket) {
+							candidatePieces.push(_pieces[_i2]);
+						} else if (pieceAboveHasPlug && _iterateeHasTopSocket && pieceBehindHasSocket && _iterateeHasLeftPlug) {
+							candidatePieces.push(_pieces[_i2]);
 						}
 					}
 				}
@@ -462,7 +475,8 @@
 					currentX: canvX,
 					currentY: canvY,
 					solvedX: canvX,
-					solvedY: canvY
+					solvedY: canvY,
+					isSolved: false
 				}, piece);
 				this.pieces.push(data);
 				return data;
@@ -472,18 +486,19 @@
 			value: function hasCollision(source, target) {
 				var pieceBoundary = {
 					top: Math.round(target.currentY),
-					right: Math.round(target.currentX) + config.pieceSize,
-					bottom: Math.round(target.currentY) + config.pieceSize,
+					right: Math.round(target.currentX) + this.config.pieceSize['500'],
+					bottom: Math.round(target.currentY) + this.config.pieceSize['500'],
 					left: Math.round(target.currentX)
 				};
+				console.log(pieceBoundary);
 				return source.x > pieceBoundary.left && source.x < pieceBoundary.right && source.y < pieceBoundary.bottom && source.y > pieceBoundary.top;
 			}
 		}, {
 			key: 'getCellByCoords',
 			value: function getCellByCoords(coords) {
-				for (var i = pieces.length - 1; i > -1; i--) {
-					var piece = pieces[i];
-					if (hasCollision(coords, piece)) {
+				for (var i = this.pieces.length - 1; i > -1; i--) {
+					var piece = this.pieces[i];
+					if (this.hasCollision(coords, piece)) {
 						return piece;
 					}
 				}
@@ -496,7 +511,7 @@
 					x: e.clientX,
 					y: e.clientY
 				};
-				console.log(getCellByCoords(coords));
+				console.log(this.getCellByCoords(coords));
 			}
 		}]);
 
@@ -659,12 +674,12 @@
 			y: 204
 		}
 	}, {
-		width: 163,
-		height: 205,
+		width: 122,
+		height: 206,
 		type: 'side-l-sr-ptb',
 		connectors: {
-			sockets: 't',
-			plugs: 'rb'
+			sockets: 'r',
+			plugs: 'tb'
 		},
 		coords: {
 			x: 1021,
@@ -791,8 +806,8 @@
 			y: 490
 		}
 	}, {
-		width: 163,
-		height: 163,
+		width: 122,
+		height: 122,
 		type: 'side-r-sblt',
 		connectors: {
 			sockets: 'blt',
@@ -915,8 +930,8 @@
 		height: 206,
 		type: 'side-r-sl-pbt',
 		connectors: {
-			sockets: 'bl',
-			plugs: 't'
+			sockets: 'l',
+			plugs: 'bt'
 		},
 		coords: {
 			x: 285,
