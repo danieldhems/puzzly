@@ -153,8 +153,6 @@
 		_createClass(Puzzly, [{
 			key: 'init',
 			value: function init() {
-				var _this = this;
-
 				this.canvas.width = this.SourceImage.width + this.config.boardBoundary * 2;
 				this.canvas.height = this.SourceImage.height + this.config.boardBoundary * 2;
 				this.tmpCanvas.style.width = this.canvas.width;
@@ -164,21 +162,18 @@
 
 				this.drawBackground();
 				this.makePieces(this.SourceImage, 500, this.config.pieceSize['500']);
-				window.addEventListener('click', function (e) {
-					_this.getClickTarget(e);
-				});
 			}
 		}, {
 			key: 'preloadImages',
 			value: function preloadImages(imgs, cb) {
-				var _this2 = this;
+				var _this = this;
 
 				var promises = [];
 				for (var i = 0, l = imgs.length; i < l; i++) {
 					promises.push(this.loadImage(imgs[i]));
 				}
 				Promise.all(promises).then(function () {
-					_this2.init();
+					_this.init();
 				});
 			}
 		}, {
@@ -224,6 +219,8 @@
 				var adjacentPieceAbove = null;
 				var endOfRow = false;
 				var lastPiece = null;
+				var rowCount = 1;
+				var finalRow = false;
 
 				while (!done) {
 
@@ -244,11 +241,19 @@
 						adjacentPieceBehind = this.pieces[i - 1];
 					}
 
-					var candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow);
+					if (rowCount === this.config.numPiecesOnVerticalSides - 1) {
+						finalRow = true;
+					}
+
+					var candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 					var currentPiece = candidatePieces[Math.floor(Math.random() * candidatePieces.length)];
 
-					this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
+					this.ctx.beginPath();
+					this.ctx.rect(curCanvasX, curCanvasY, pieceSize, pieceSize);
+					this.ctx.stroke();
+					this.ctx.addHitRegion({ id: i });
 					this.drawPiece({ x: curImgX, y: curImgY }, { x: curCanvasX, y: curCanvasY }, currentPiece, pieceSize);
+					this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
 
 					// reached last piece, start next row
 					if (this.pieces.length % this.config.numPiecesOnHorizontalSides === 0) {
@@ -256,16 +261,18 @@
 						curImgY += pieceSize;
 						curCanvasX = boardLeft;
 						curCanvasY += pieceSize;
+						rowCount++;
 					} else {
 						curImgX += pieceSize;
 						curCanvasX += pieceSize;
 					}
 
-					this.ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
-
 					if (this.pieces.length === this.config.numPiecesOnHorizontalSides * this.config.numPiecesOnVerticalSides) done = true;
 
 					i++;
+					this.canvas.addEventListener('click', function (e) {
+						console.log(e.region);
+					});
 				}
 			}
 
@@ -323,10 +330,8 @@
 			}
 		}, {
 			key: 'getCandidatePieces',
-			value: function getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow) {
+			value: function getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow) {
 				var candidatePieces = [];
-				// if(adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
-				// if(adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
 				if (!adjacentPieceBehind && !adjacentPieceAbove) {
 					return _spriteMap2.default.filter(function (o) {
 						return o.type.indexOf('corner-tl') > -1;
@@ -401,6 +406,26 @@
 						if (adjacentPieceAbove.type.indexOf('middle') > -1 || adjacentPieceAbove.type.indexOf('side-t') > -1) {
 							_pieces = _spriteMap2.default.filter(function (o) {
 								return o.type.indexOf('middle') > -1;
+							});
+						}
+					}
+
+					if (finalRow) {
+						console.log('final row');
+						if (adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
+						if (adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
+
+						if (adjacentPieceAbove.type.indexOf('side-l') > -1) {
+							_pieces = _spriteMap2.default.filter(function (o) {
+								return o.type.indexOf('corner-bl') > -1;
+							});
+						} else if (adjacentPieceAbove.type.indexOf('middle') > -1) {
+							_pieces = _spriteMap2.default.filter(function (o) {
+								return o.type.indexOf('side-b') > -1;
+							});
+						} else if (adjacentPieceAbove.type.indexOf('side-r') > -1 && adjacentPieceBehind.type.indexOf('side-b') > -1) {
+							_pieces = _spriteMap2.default.filter(function (o) {
+								return o.type.indexOf('corner-br') > -1;
 							});
 						}
 					}
@@ -490,7 +515,6 @@
 					bottom: Math.round(target.currentY) + this.config.pieceSize['500'],
 					left: Math.round(target.currentX)
 				};
-				console.log(pieceBoundary);
 				return source.x > pieceBoundary.left && source.x < pieceBoundary.right && source.y < pieceBoundary.bottom && source.y > pieceBoundary.top;
 			}
 		}, {
@@ -702,8 +726,8 @@
 		height: 163,
 		type: 'side-l-sb-ptr',
 		connectors: {
-			sockets: 't',
-			plugs: 'rb'
+			sockets: 'b',
+			plugs: 'tr'
 		},
 		coords: {
 			x: 1511,

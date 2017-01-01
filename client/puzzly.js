@@ -63,9 +63,6 @@ class Puzzly {
 
 		this.drawBackground();
 		this.makePieces(this.SourceImage, 500, this.config.pieceSize['500']);
-		window.addEventListener('click', (e) => {
-		this.getClickTarget(e);
-		});
 	}
 
 	preloadImages(imgs, cb){
@@ -117,6 +114,8 @@ class Puzzly {
 		let adjacentPieceAbove = null;
 		let endOfRow = false;
 		let lastPiece = null;
+		let rowCount = 1;
+		let finalRow = false;
 
 		while(!done){
 
@@ -137,29 +136,40 @@ class Puzzly {
 				adjacentPieceBehind = this.pieces[i-1];
 			}
 
-			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow);
+			if(rowCount === this.config.numPiecesOnVerticalSides-1){
+				finalRow = true;
+			}
+
+			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 			let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
 
-			this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
+			this.ctx.beginPath();
+			this.ctx.rect(curCanvasX, curCanvasY, pieceSize, pieceSize);
+			this.ctx.stroke();
+			this.ctx.addHitRegion({id: i});
 			this.drawPiece({x: curImgX, y: curImgY}, {x: curCanvasX, y: curCanvasY}, currentPiece, pieceSize);
-
+			this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
+			
 			// reached last piece, start next row
 			if(this.pieces.length % this.config.numPiecesOnHorizontalSides === 0){
 				curImgX = 0;
 				curImgY += pieceSize;
 				curCanvasX = boardLeft;
 				curCanvasY += pieceSize;
+				rowCount++;
 			} else {
 				curImgX += pieceSize;
 				curCanvasX += pieceSize;
 			}
 
-			this.ctx.strokeRect(curCanvasX, curCanvasY, pieceSize, pieceSize);
-
 			if(this.pieces.length === this.config.numPiecesOnHorizontalSides * this.config.numPiecesOnVerticalSides) done = true;
 
 			i++;
+		this.canvas.addEventListener('click', (e) => {
+				console.log(e.region);
+			})
 		}
+
 	}
 
 	// Draw puzzle piece
@@ -211,10 +221,8 @@ class Puzzly {
 		this.bgCtx.restore();
 	}
 
-	getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow){
+	getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow){
 		let candidatePieces = [];
-		// if(adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
-		// if(adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
 		if(!adjacentPieceBehind && !adjacentPieceAbove){
 			return SpriteMap.filter((o) => o.type.indexOf('corner-tl') > -1 );
 		}
@@ -281,6 +289,20 @@ class Puzzly {
 
 				if(adjacentPieceAbove.type.indexOf('middle') > -1 || adjacentPieceAbove.type.indexOf('side-t') > -1){
 					pieces = SpriteMap.filter( (o) => o.type.indexOf('middle') > -1);
+				}
+			}
+
+			if(finalRow){
+				console.log('final row');
+				if(adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
+				if(adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
+				
+				if(adjacentPieceAbove.type.indexOf('side-l') > -1){
+					pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-bl') > -1);	
+				} else if(adjacentPieceAbove.type.indexOf('middle') > -1){
+					pieces = SpriteMap.filter( (o) => o.type.indexOf('side-b') > -1);
+				} else if(adjacentPieceAbove.type.indexOf('side-r') > -1 && adjacentPieceBehind.type.indexOf('side-b') > -1){
+					pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-br') > -1);
 				}
 			}
 			
@@ -366,7 +388,6 @@ class Puzzly {
 			bottom: Math.round(target.currentY) + this.config.pieceSize['500'],
 			left: Math.round(target.currentX)
 		};
-		console.log(pieceBoundary);
 		return source.x > pieceBoundary.left && source.x < pieceBoundary.right && source.y < pieceBoundary.bottom && source.y > pieceBoundary.top;
 	}
 

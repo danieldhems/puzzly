@@ -171,8 +171,8 @@ export default [{
 	height: 163,
 	type: 'side-l-sb-ptr',
 	connectors: {
-		sockets: 't',
-		plugs: 'rb'
+		sockets: 'b',
+		plugs: 'tr'
 	},
 	coords: {
 		x: 1511,
