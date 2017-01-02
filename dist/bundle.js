@@ -52,11 +52,13 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+	/*
 	var form = document.forms[0];
-	form.addEventListener('submit', function (e) {
+	form.addEventListener('submit', function(e){
 		e.preventDefault();
 		upload(form);
 	});
+	*/
 
 	function onUploadSuccess(response) {
 		// Puzzly.init('canvas', response.image.path, response.numPieces);
@@ -127,7 +129,7 @@
 
 			this.pieces = [];
 
-			console.log('Initiating puzzly: ', imageUrl, numPieces);
+			// console.log('Initiating puzzly: ', imageUrl, numPieces);
 
 			this.canvas = document.getElementById(canvasId);
 			this.tmpCanvas = document.getElementById('tmp-canvas');
@@ -153,6 +155,8 @@
 		_createClass(Puzzly, [{
 			key: 'init',
 			value: function init() {
+				var _this = this;
+
 				this.canvas.width = this.SourceImage.width + this.config.boardBoundary * 2;
 				this.canvas.height = this.SourceImage.height + this.config.boardBoundary * 2;
 				this.tmpCanvas.style.width = this.canvas.width;
@@ -162,18 +166,55 @@
 
 				this.drawBackground();
 				this.makePieces(this.SourceImage, 500, this.config.pieceSize['500']);
+
+				window.addEventListener('mousedown', function (e) {
+					_this.onMouseDown(e);
+				});
+				window.addEventListener('mouseup', function (e) {
+					_this.onMouseUp();
+				});
+				window.addEventListener('mousemove', function (e) {
+					_this.onMouseMove(e);
+				});
+			}
+		}, {
+			key: 'draw',
+			value: function draw(mouseX, mouseY) {
+				this.drawBackground();
+				this.drawPiece(this.movingPiece.imgX, this.movingPiece.imgY, mouseX, mouseY, this.movingPiece, this.config.pieceSize['500']);
+			}
+		}, {
+			key: 'onMouseDown',
+			value: function onMouseDown(e) {
+				this.movingPiece = this.getClickTarget(e);
+				this.isMouseDown = true;
+			}
+		}, {
+			key: 'onMouseUp',
+			value: function onMouseUp() {
+				this.movingPiece = null;
+				this.isMouseDown = false;
+			}
+		}, {
+			key: 'onMouseMove',
+			value: function onMouseMove(e) {
+				if (this.isMouseDown) {
+					this.draw(e.clientX, e.clientY);
+					this.movingPiece.currentX = e.clientX;
+					this.movingPiece.currentY = e.clientY;
+				}
 			}
 		}, {
 			key: 'preloadImages',
 			value: function preloadImages(imgs, cb) {
-				var _this = this;
+				var _this2 = this;
 
 				var promises = [];
 				for (var i = 0, l = imgs.length; i < l; i++) {
 					promises.push(this.loadImage(imgs[i]));
 				}
 				Promise.all(promises).then(function () {
-					_this.init();
+					_this2.init();
 				});
 			}
 		}, {
@@ -247,9 +288,9 @@
 
 					var candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 					var currentPiece = candidatePieces[Math.floor(Math.random() * candidatePieces.length)];
-
-					this.drawPiece({ x: curImgX, y: curImgY }, { x: curCanvasX, y: curCanvasY }, currentPiece, pieceSize);
+					this.drawPiece(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, pieceSize);
 					this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
+
 					// reached last piece, start next row
 					if (this.pieces.length % this.config.numPiecesOnHorizontalSides === 0) {
 						curImgX = 0;
@@ -262,9 +303,9 @@
 						curCanvasX += pieceSize;
 					}
 
-					if (this.pieces.length === this.config.numPiecesOnHorizontalSides * this.config.numPiecesOnVerticalSides) done = true;
-
 					i++;
+
+					if (currentPiece.type.indexOf('corner-br') > -1) done = true;
 				}
 			}
 
@@ -272,16 +313,15 @@
 
 		}, {
 			key: 'drawPiece',
-			value: function drawPiece(sourceImgCoords, canvasCoords, piece, pieceSize) {
+			value: function drawPiece(sourceImgX, sourceImgY, canvasX, canvasY, piece, pieceSize) {
 				var dims = this.getPieceDimensions(piece, pieceSize);
-
 				var plugSizeToScale = pieceSize / this.config.jigsawSquareSize * this.config.jigsawPlugSize;
 
-				var cX = canvasCoords.x;
-				var cY = canvasCoords.y;
-				var iX = sourceImgCoords.x;
+				var cX = canvasX;
+				var cY = canvasY;
+				var iX = sourceImgX;
 				var iW = pieceSize;
-				var iY = sourceImgCoords.y;
+				var iY = sourceImgY;
 				var iH = pieceSize;
 
 				if (piece.connectors.plugs.indexOf('l') > -1) {
@@ -410,9 +450,8 @@
 
 						// ALl pieces on bottom row
 						if (finalRow) {
-							console.log('final row');
-							if (adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
-							if (adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
+							// if(adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
+							// if(adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
 
 							if (adjacentPieceAbove.type.indexOf('side-l') > -1) {
 								pieces = _spriteMap2.default.filter(function (o) {
@@ -517,6 +556,12 @@
 					imgY: imgY,
 					currentX: canvX,
 					currentY: canvY,
+					boundingBox: {
+						top: canvY,
+						right: canvX + this.config.pieceSize['500'],
+						bottom: canvY + this.config.pieceSize['500'],
+						left: canvX
+					},
 					solvedX: canvX,
 					solvedY: canvY,
 					isSolved: false
@@ -527,13 +572,7 @@
 		}, {
 			key: 'hasCollision',
 			value: function hasCollision(source, target) {
-				var pieceBoundary = {
-					top: Math.round(target.currentY),
-					right: Math.round(target.currentX) + this.config.pieceSize['500'],
-					bottom: Math.round(target.currentY) + this.config.pieceSize['500'],
-					left: Math.round(target.currentX)
-				};
-				return source.x > pieceBoundary.left && source.x < pieceBoundary.right && source.y < pieceBoundary.bottom && source.y > pieceBoundary.top;
+				return source.x > target.boundingBox.left && source.x < target.boundingBox.right && source.y < target.boundingBox.bottom && source.y > target.boundingBox.top;
 			}
 		}, {
 			key: 'getCellByCoords',
@@ -553,7 +592,7 @@
 					x: e.clientX,
 					y: e.clientY
 				};
-				console.log(this.getCellByCoords(coords));
+				return this.getCellByCoords(coords);
 			}
 		}]);
 

@@ -24,7 +24,7 @@ class Puzzly {
 
 		this.pieces = [];
 
-		console.log('Initiating puzzly: ', imageUrl, numPieces);
+		// console.log('Initiating puzzly: ', imageUrl, numPieces);
 		
 		this.canvas = document.getElementById(canvasId);
 		this.tmpCanvas = document.getElementById('tmp-canvas');
@@ -50,7 +50,6 @@ class Puzzly {
 
 		this.preloadImages(imgs);
 
-
 	}
 
 	init(){
@@ -63,6 +62,39 @@ class Puzzly {
 
 		this.drawBackground();
 		this.makePieces(this.SourceImage, 500, this.config.pieceSize['500']);
+
+		window.addEventListener('mousedown', (e) => {
+			this.onMouseDown(e);
+		});
+		window.addEventListener('mouseup', (e) => {
+			this.onMouseUp();
+		});
+		window.addEventListener('mousemove', (e) => {
+			this.onMouseMove(e);
+		});
+	}
+
+	draw(mouseX, mouseY){
+		this.drawBackground();
+		this.drawPiece(this.movingPiece.imgX, this.movingPiece.imgY, mouseX, mouseY, this.movingPiece, this.config.pieceSize['500']);
+	}
+
+	onMouseDown(e){
+		this.movingPiece = this.getClickTarget(e);
+		this.isMouseDown = true;
+	}
+
+	onMouseUp(){
+		this.movingPiece = null;
+		this.isMouseDown = false;
+	}
+
+	onMouseMove(e){
+		if(this.isMouseDown){
+			this.draw(e.clientX, e.clientY);
+			this.movingPiece.currentX = e.clientX;
+			this.movingPiece.currentY = e.clientY;
+		}
 	}
 
 	preloadImages(imgs, cb){
@@ -140,12 +172,11 @@ class Puzzly {
 				adjacentPieceBehind = this.pieces[i-1];
 			}
 
-
-			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
+			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);			
 			let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
-
-			this.drawPiece({x: curImgX, y: curImgY}, {x: curCanvasX, y: curCanvasY}, currentPiece, pieceSize);
+			this.drawPiece(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, pieceSize);
 			this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
+
 			// reached last piece, start next row
 			if(this.pieces.length % this.config.numPiecesOnHorizontalSides === 0){
 				curImgX = 0;
@@ -158,24 +189,22 @@ class Puzzly {
 				curCanvasX += pieceSize;
 			}
 
-			if(this.pieces.length === this.config.numPiecesOnHorizontalSides * this.config.numPiecesOnVerticalSides) done = true;
-
 			i++;
-		}
 
+			if(currentPiece.type.indexOf('corner-br') > -1) done = true;
+		}
 	}
 
 	// Draw puzzle piece
-	drawPiece(sourceImgCoords, canvasCoords, piece, pieceSize){
+	drawPiece(sourceImgX, sourceImgY, canvasX, canvasY, piece, pieceSize){
 		let dims = this.getPieceDimensions(piece, pieceSize);
-
 		let plugSizeToScale = pieceSize / this.config.jigsawSquareSize * this.config.jigsawPlugSize;
 
-		let cX = canvasCoords.x;
-		let cY = canvasCoords.y;
-		let iX = sourceImgCoords.x;
+		let cX = canvasX;
+		let cY = canvasY;
+		let iX = sourceImgX;
 		let iW = pieceSize;
-		let iY = sourceImgCoords.y;
+		let iY = sourceImgY;
 		let iH = pieceSize;
 
 		if(piece.connectors.plugs.indexOf('l') > -1){
@@ -292,9 +321,8 @@ class Puzzly {
 
 			// ALl pieces on bottom row
 			if(finalRow){
-				console.log('final row');
-				if(adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
-				if(adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
+				// if(adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
+				// if(adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
 				
 				if(adjacentPieceAbove.type.indexOf('side-l') > -1){
 					pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-bl') > -1);	
@@ -329,7 +357,6 @@ class Puzzly {
 			let pieceBehindHasSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
 			let pieceBehindHasPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
 
-			
 			for(let i=0, l=pieces.length; i<l; i++){
 				let iterateeHasTopSocket = pieces[i].connectors.sockets.indexOf('t') > -1;
 				let iterateeHasTopPlug = pieces[i].connectors.plugs.indexOf('t') > -1;
@@ -392,6 +419,12 @@ class Puzzly {
 			imgY: imgY,
 			currentX: canvX,
 			currentY: canvY,
+			boundingBox: {
+				top: canvY,
+				right: canvX + this.config.pieceSize['500'],
+				bottom: canvY + this.config.pieceSize['500'],
+				left: canvX
+			},
 			solvedX: canvX,
 			solvedY: canvY,
 			isSolved: false
@@ -401,13 +434,7 @@ class Puzzly {
 	}
 
 	hasCollision(source, target){
-		var pieceBoundary = {
-			top: Math.round(target.currentY),
-			right: Math.round(target.currentX) + this.config.pieceSize['500'],
-			bottom: Math.round(target.currentY) + this.config.pieceSize['500'],
-			left: Math.round(target.currentX)
-		};
-		return source.x > pieceBoundary.left && source.x < pieceBoundary.right && source.y < pieceBoundary.bottom && source.y > pieceBoundary.top;
+		return source.x > target.boundingBox.left && source.x < target.boundingBox.right && source.y < target.boundingBox.bottom && source.y > target.boundingBox.top;
 	}
 
 	getCellByCoords(coords){
@@ -425,7 +452,7 @@ class Puzzly {
 			x: e.clientX,
 			y: e.clientY
 		};
-		console.log(this.getCellByCoords(coords));
+		return this.getCellByCoords(coords);
 	}
 }
 

@@ -1,10 +1,12 @@
 import Puzzly from './puzzly';
 
+/*
 var form = document.forms[0];
 form.addEventListener('submit', function(e){
 	e.preventDefault();
 	upload(form);
 });
+*/
 
 function onUploadSuccess(response){
 	// Puzzly.init('canvas', response.image.path, response.numPieces);
