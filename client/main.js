@@ -30,4 +30,4 @@ function upload(form){
 	});
 }
 
-new Puzzly('canvas', './hl.jpg', 1);
+new Puzzly('canvas', './halflife-3-2.jpg', 1);

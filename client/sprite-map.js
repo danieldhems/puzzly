@@ -335,8 +335,8 @@ export default [{
 		y: 736
 	}
 },{
-	width: 122,
-	height: 163,
+	width: 163,
+	height: 122,
 	type: 'side-b-slt-pr',
 	connectors: {
 		sockets: 'lt',
@@ -735,8 +735,8 @@ export default [{
 	height: 163,
 	type: 'side-b-prlt',
 	connectors: {
-		sockets: 'tr',
-		plugs: 'l'
+		sockets: '',
+		plugs: 'trl'
 	},
 	coords: {
 		x: 1225,

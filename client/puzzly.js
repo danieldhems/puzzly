@@ -132,24 +132,20 @@ class Puzzly {
 				endOfRow = false;
 			}
 
-			if(this.pieces.length > 0){
-				adjacentPieceBehind = this.pieces[i-1];
-			}
-
 			if(rowCount === this.config.numPiecesOnVerticalSides-1){
 				finalRow = true;
 			}
 
+			if(this.pieces.length > 0){
+				adjacentPieceBehind = this.pieces[i-1];
+			}
+
+
 			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 			let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
 
-			this.ctx.beginPath();
-			this.ctx.rect(curCanvasX, curCanvasY, pieceSize, pieceSize);
-			this.ctx.stroke();
-			this.ctx.addHitRegion({id: i});
 			this.drawPiece({x: curImgX, y: curImgY}, {x: curCanvasX, y: curCanvasY}, currentPiece, pieceSize);
 			this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
-			
 			// reached last piece, start next row
 			if(this.pieces.length % this.config.numPiecesOnHorizontalSides === 0){
 				curImgX = 0;
@@ -165,9 +161,6 @@ class Puzzly {
 			if(this.pieces.length === this.config.numPiecesOnHorizontalSides * this.config.numPiecesOnVerticalSides) done = true;
 
 			i++;
-		this.canvas.addEventListener('click', (e) => {
-				console.log(e.region);
-			})
 		}
 
 	}
@@ -223,10 +216,14 @@ class Puzzly {
 
 	getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow){
 		let candidatePieces = [];
+		let pieces = null;
+
+		// Top left corner piece
 		if(!adjacentPieceBehind && !adjacentPieceAbove){
 			return SpriteMap.filter((o) => o.type.indexOf('corner-tl') > -1 );
 		}
 
+		// First row pieces
 		if(!adjacentPieceAbove){
 			let pieceType = adjacentPieceBehind.type;
 
@@ -236,7 +233,7 @@ class Puzzly {
 			let lastPieceHasRightSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
 			let iterateeIsCorrectType;
 
-			let pieces = SpriteMap.filter( (o) => {
+			pieces = SpriteMap.filter( (o) => {
 				if(endOfRow){
 					return o.type.indexOf('corner-tr') > -1;
 				} else {
@@ -253,20 +250,22 @@ class Puzzly {
 					candidatePieces.push(pieces[i]);
 				}
 			}
-		} else {
+		}
+		// All piece after top row
+		else {
 
-			let pieces = null;
-
+			// Last piece of each row, should be right side
 			if(adjacentPieceAbove.type.indexOf('corner-tr') > -1 || adjacentPieceAbove.type.indexOf('side-r') > -1){
 				pieces = SpriteMap.filter( (o) => o.type.indexOf('side-r') > -1)
 			}
 
+			// Very last piece, should be corner bottom right
 			if(adjacentPieceAbove.type.indexOf('side-r') > -1 && adjacentPieceBehind.type.indexOf('side-b') > -1){
 				pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-br') > -1)
 			}
 
-			// Was last piece the top right corner or right side?
-			if(adjacentPieceBehind.type.indexOf('corner-tr') > -1 || adjacentPieceBehind.type.indexOf('side-r') > -1){
+			// First piece of each row, should be left side
+			if(!finalRow && (adjacentPieceBehind.type.indexOf('corner-tr') > -1 || adjacentPieceBehind.type.indexOf('side-r') > -1)){
 				
 				pieces = SpriteMap.filter( (o) => o.type.indexOf('side-l') > -1);
 
@@ -284,14 +283,14 @@ class Puzzly {
 				}
 
 				return candidatePieces;
-
-			} else {
-
-				if(adjacentPieceAbove.type.indexOf('middle') > -1 || adjacentPieceAbove.type.indexOf('side-t') > -1){
-					pieces = SpriteMap.filter( (o) => o.type.indexOf('middle') > -1);
-				}
 			}
 
+			// All middle pieces
+			if(adjacentPieceAbove.type.indexOf('middle') > -1 || adjacentPieceAbove.type.indexOf('side-t') > -1){
+				pieces = SpriteMap.filter( (o) => o.type.indexOf('middle') > -1);
+			}
+
+			// ALl pieces on bottom row
 			if(finalRow){
 				console.log('final row');
 				if(adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
@@ -299,9 +298,28 @@ class Puzzly {
 				
 				if(adjacentPieceAbove.type.indexOf('side-l') > -1){
 					pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-bl') > -1);	
-				} else if(adjacentPieceAbove.type.indexOf('middle') > -1){
+
+					let pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
+					let pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
+
+					for(let i=0, l=pieces.length; i<l; i++){
+						let iterateeHasTopSocket = pieces[i].connectors.sockets.indexOf('t') > -1;
+						let iterateeHasTopPlug = pieces[i].connectors.plugs.indexOf('t') > -1;
+						if(pieceAboveHasSocket && iterateeHasTopPlug){
+							candidatePieces.push(pieces[i]);
+						} else if(pieceAboveHasPlug && iterateeHasTopSocket){
+							candidatePieces.push(pieces[i]);
+						}
+					}
+
+					 return candidatePieces;
+				}
+				
+				if(adjacentPieceAbove.type.indexOf('middle') > -1){
 					pieces = SpriteMap.filter( (o) => o.type.indexOf('side-b') > -1);
-				} else if(adjacentPieceAbove.type.indexOf('side-r') > -1 && adjacentPieceBehind.type.indexOf('side-b') > -1){
+				}
+
+				if(adjacentPieceAbove.type.indexOf('side-r') > -1 && adjacentPieceBehind.type.indexOf('side-b') > -1){
 					pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-br') > -1);
 				}
 			}
@@ -310,6 +328,7 @@ class Puzzly {
 			let pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
 			let pieceBehindHasSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
 			let pieceBehindHasPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
+
 			
 			for(let i=0, l=pieces.length; i<l; i++){
 				let iterateeHasTopSocket = pieces[i].connectors.sockets.indexOf('t') > -1;
