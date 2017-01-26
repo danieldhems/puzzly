@@ -134,8 +134,8 @@ class Puzzly {
 		var boardTop = this.canvas.offsetTop + this.config.boardBoundary;
 
 		// prepare draw options
-		var curImgX = 0;
-		var curImgY = 0;
+		var curImgX = 300;
+		var curImgY = 300;
 		var curCanvasX = boardLeft;
 		var curCanvasY = boardTop;
 
@@ -149,7 +149,7 @@ class Puzzly {
 		let rowCount = 1;
 		let finalRow = false;
 
-		while(!done){
+		while(i<1){
 
 			// console.log(this.pieces)
 			// All pieces not on top row
@@ -195,26 +195,49 @@ class Puzzly {
 		}
 	}
 
-	// Draw puzzle piece
-	drawPiece(sourceImgX, sourceImgY, canvasX, canvasY, piece, pieceSize){
-		let dims = this.getPieceDimensions(piece, pieceSize);
+	getCanvasCoordsAndDimensionsForPiece(x,y,piece, pieceSize){
+		const scale = pieceSize / this.config.jigsawSquareSize;
+		let w,h = pieceSize;
+		if(piece.connectors.plugs.length === 1){
+			if(piece.connectors.plugs === 'l' || piece.connectors.plugs === 'r' ){
+				w = pieceSize + (this.config.jigsawPlugSize * scale);
+				h = pieceSize;
+			}
+			if(piece.connectors.plugs === 't' || piece.connectors.plugs === 'b' ){
+				h = pieceSize + (this.config.jigsawPlugSize * scale);
+				w = pieceSize;
+			}
+		} else {
+			if(piece.connectors.plugs.indexOf('l') > -1){
+				w += this.config.jigsawPlugSize * scale;
+				x -= plugSizeToScale;
+			}
+			if(piece.connectors.plugs.indexOf('r') > -1){
+				w += this.config.jigsawPlugSize * scale;
+			}
+			if(piece.connectors.plugs.indexOf('t') > -1){
+				h += this.config.jigsawPlugSize * scale;
+				y -= plugSizeToScale;
+			}
+			if(piece.connectors.plugs.indexOf('b') > -1){
+				h += this.config.jigsawPlugSize * scale;
+			}
+		}
+
+		return {
+			x,y,w,h
+		}
+	}
+
+	getImageCoordsAndDimensionsForPiece(iX,iY,pieceSize,piece){
 		let plugSizeToScale = pieceSize / this.config.jigsawSquareSize * this.config.jigsawPlugSize;
-
-		let cX = canvasX;
-		let cY = canvasY;
-		let iX = sourceImgX;
-		let iW = pieceSize;
-		let iY = sourceImgY;
-		let iH = pieceSize;
-
+		let iW,iH = pieceSize;
 		if(piece.connectors.plugs.indexOf('l') > -1){
-			cX -= plugSizeToScale;
 			iX -= plugSizeToScale;
 			iW += plugSizeToScale;
 		}
 
 		if(piece.connectors.plugs.indexOf('t') > -1){
-			cY -= plugSizeToScale;
 			iY -= plugSizeToScale;
 			iH += plugSizeToScale;
 		}
@@ -226,12 +249,36 @@ class Puzzly {
 		if(piece.connectors.plugs.indexOf('b') > -1){
 			iH += plugSizeToScale;
 		}
+		return {
+			x: iX,
+			y: iY,
+			w: iW,
+			h: iH
+		}	
+	}
 
+	getImgData(sourceImgData, pieceData){
 		this.tmpCtx.save();
-		this.tmpCtx.drawImage(this.SourceImage, iX, iY, iW, iH, 0, 0, iW, iH);
+		this.tmpCtx.drawImage(this.SourceImage, sourceImgData.x, sourceImgData.y, sourceImgData.w, sourceImgData.h, 0, 0, sourceImgData.w, sourceImgData.h);
 		this.tmpCtx.globalCompositeOperation = 'destination-atop';
-		this.tmpCtx.drawImage(this.JigsawSprite, piece.coords.x, piece.coords.y, piece.width, piece.height, 0, 0, dims.w, dims.h);
-		this.ctx.drawImage(this.tmpCanvas, cX, cY);
+		this.tmpCtx.drawImage(this.JigsawSprite, pieceData.x, pieceData.y, pieceData.width, pieceData.height, 0, 0, sourceImgData.w, sourceImgData.h);
+		return this.tmpCtx.getImageData(0,0,pieceData.width,pieceData.height);
+	}
+
+	// Draw puzzle piece
+	drawPiece(sourceImgX, sourceImgY, canvasX, canvasY, piece, pieceSize){
+		let plugSizeToScale = pieceSize / this.config.jigsawSquareSize * this.config.jigsawPlugSize;
+
+		const pieceData = this.getCanvasCoordsAndDimensionsForPiece(canvasX, canvasY, piece, pieceSize);
+		const imgData = this.getImageCoordsAndDimensionsForPiece(sourceImgX, sourceImgY, pieceSize, piece)
+
+		if(!piece.imgData){
+			piece.imgData = this.getImgData(imgData, pieceData);
+		}
+
+		console.log(piece.imgData)
+
+		this.ctx.putImageData(piece.imgData, canvasX, canvasY);
 		this.tmpCtx.restore();
 	}
 
