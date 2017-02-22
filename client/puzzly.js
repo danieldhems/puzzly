@@ -1,4 +1,5 @@
-import SpriteMap from './sprite-map'; 
+import SpriteMap from './sprite-map';
+import PuzzlePiece from './puzzle-piece';
 
 class Puzzly {
 
@@ -25,7 +26,7 @@ class Puzzly {
 		this.pieces = [];
 
 		// console.log('Initiating puzzly: ', imageUrl, numPieces);
-		
+
 		this.canvas = document.getElementById(canvasId);
 		this.tmpCanvas = document.getElementById('tmp-canvas');
 		this.bgCanvas = document.getElementById('tmp-canvas');
@@ -60,17 +61,22 @@ class Puzzly {
 		this.bgCanvas.width = this.SourceImage.width + (this.config.boardBoundary*2);
 		this.bgCanvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
 
-		this.drawBackground();
-		this.makePieces(this.SourceImage, 500, this.config.pieceSize['500']);
+
+		// this.drawBackground();
+		PuzzlePiece.plugTBLsocketR(this.ctx);
+
+		this.ctx.clip();
+
+		// this.makePieces(this.SourceImage, 500, this.config.pieceSize['500']);
 
 		window.addEventListener('mousedown', (e) => {
-			this.onMouseDown(e);
+			// this.onMouseDown(e);
 		});
 		window.addEventListener('mouseup', (e) => {
-			this.onMouseUp();
+			// this.onMouseUp();
 		});
 		window.addEventListener('mousemove', (e) => {
-			this.onMouseMove(e);
+			// this.onMouseMove(e);
 		});
 	}
 
@@ -125,7 +131,7 @@ class Puzzly {
 		}
 
 		// this.tmpCtx.drawImage(img, imgX, imgY, imgW, imgH);
-		this.ctx.drawImage(img, 0, 0, imgW, imgH)	
+		this.ctx.drawImage(img, 0, 0, imgW, imgH)
 	}
 
 	makePieces(img, numPieces, pieceSize){
@@ -172,7 +178,7 @@ class Puzzly {
 				adjacentPieceBehind = this.pieces[i-1];
 			}
 
-			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);			
+			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 			let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
 			this.drawPiece(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, pieceSize);
 			this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
@@ -254,7 +260,7 @@ class Puzzly {
 			y: iY,
 			w: iW,
 			h: iH
-		}	
+		}
 	}
 
 	getImgData(sourceImgData, pieceData){
@@ -272,19 +278,38 @@ class Puzzly {
 		const pieceData = this.getCanvasCoordsAndDimensionsForPiece(canvasX, canvasY, piece, pieceSize);
 		const imgData = this.getImageCoordsAndDimensionsForPiece(sourceImgX, sourceImgY, pieceSize, piece)
 
-		if(!piece.imgData){
-			piece.imgData = this.getImgData(imgData, pieceData);
-		}
+		this.tmpCtx.drawImage(this.JigsawSprite, pieceData.x, pieceData.y, pieceData.width, pieceData.height, 0, 0, sourceImgData.w, sourceImgData.h);
 
-		console.log(piece.imgData)
+		this.tmpCtx.beginPath();
+    this.tmpCtx.moveTo(200,200);
+    this.tmpCtx.lineTo(275,200);
+    this.tmpCtx.quadraticCurveTo(250,150,300,150);
+    this.tmpCtx.quadraticCurveTo(350,150,325,200);
+    this.tmpCtx.lineTo(400,200);
+    this.tmpCtx.lineTo(400,275);
+    this.tmpCtx.quadraticCurveTo(450,250,450,300);
+    this.tmpCtx.quadraticCurveTo(450,350,400,325);
+    this.tmpCtx.lineTo(400,400);
+    this.tmpCtx.lineTo(325,400);
+    this.tmpCtx.quadraticCurveTo(350,450,300,450);
+    this.tmpCtx.quadraticCurveTo(250,450,275,400);
+    this.tmpCtx.lineTo(200,400);
+    this.tmpCtx.lineTo(200,325);
+    this.tmpCtx.quadraticCurveTo(150,350,150,300);
+    this.tmpCtx.quadraticCurveTo(150,250,200,275);
+    this.tmpCtx.lineTo(200,200);
+		this.tmpCtx.closePath();
+		this.tmpCtx.stroke();
 
-		this.ctx.putImageData(piece.imgData, canvasX, canvasY);
+		this.tmpCtx.clip();
+
+		this.ctx.drawImage(this.tmpCanvas, canvasX, canvasY);
 		this.tmpCtx.restore();
 	}
 
 	drawBackground(){
 		this.bgCtx.save();
-		this.bgCtx.globalCompositeOperation = 'destination-over';
+		// this.bgCtx.globalCompositeOperation = 'destination-over';
 		this.bgCtx.drawImage(this.BgImage, 0, 0, this.BgImage.width, this.BgImage.height);
 		this.ctx.drawImage(this.bgCanvas, 0, 0, this.BgImage.width, this.BgImage.height, 0, 0, this.canvas.width, this.canvas.height);
 		this.bgCtx.restore();
@@ -342,7 +367,7 @@ class Puzzly {
 
 			// First piece of each row, should be left side
 			if(!finalRow && (adjacentPieceBehind.type.indexOf('corner-tr') > -1 || adjacentPieceBehind.type.indexOf('side-r') > -1)){
-				
+
 				pieces = SpriteMap.filter( (o) => o.type.indexOf('side-l') > -1);
 
 				let pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
@@ -370,9 +395,9 @@ class Puzzly {
 			if(finalRow){
 				// if(adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
 				// if(adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
-				
+
 				if(adjacentPieceAbove.type.indexOf('side-l') > -1){
-					pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-bl') > -1);	
+					pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-bl') > -1);
 
 					let pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
 					let pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
@@ -389,7 +414,7 @@ class Puzzly {
 
 					 return candidatePieces;
 				}
-				
+
 				if(adjacentPieceAbove.type.indexOf('middle') > -1){
 					pieces = SpriteMap.filter( (o) => o.type.indexOf('side-b') > -1);
 				}
@@ -398,7 +423,7 @@ class Puzzly {
 					pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-br') > -1);
 				}
 			}
-			
+
 			let pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
 			let pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
 			let pieceBehindHasSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
@@ -409,7 +434,7 @@ class Puzzly {
 				let iterateeHasTopPlug = pieces[i].connectors.plugs.indexOf('t') > -1;
 				let iterateeHasLeftSocket = pieces[i].connectors.sockets.indexOf('l') > -1;
 				let iterateeHasLeftPlug = pieces[i].connectors.plugs.indexOf('l') > -1;
-				
+
 				if(pieceAboveHasSocket && iterateeHasTopPlug && pieceBehindHasSocket && iterateeHasLeftPlug){
 					candidatePieces.push(pieces[i]);
 				} else if(pieceAboveHasPlug && iterateeHasTopSocket && pieceBehindHasPlug && iterateeHasLeftSocket){
