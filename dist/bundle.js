@@ -166,8 +166,9 @@
 				this.bgCanvas.width = this.SourceImage.width + this.config.boardBoundary * 2;
 				this.bgCanvas.height = this.SourceImage.height + this.config.boardBoundary * 2;
 
+				var p = new _puzzlePiece2.default({ debug: true });
 				// this.drawBackground();
-				_puzzlePiece2.default.plugTBLsocketR(this.ctx);
+				p.plugBLsocketTR(this.ctx);
 
 				this.ctx.clip();
 
@@ -1472,11 +1473,17 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var puzzlePiece = function () {
-	  function puzzlePiece(opts) {
+	  function puzzlePiece() {
+	    var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+	      debug: false
+	    };
+
 	    _classCallCheck(this, puzzlePiece);
+
+	    this.debug = opts.debug;
 	  }
 
-	  _createClass(puzzlePiece, null, [{
+	  _createClass(puzzlePiece, [{
 	    key: "plugTRBL",
 	    value: function plugTRBL(ctx) {
 	      ctx.beginPath();
@@ -1484,42 +1491,74 @@
 	      ctx.lineTo(275, 200);
 	      ctx.quadraticCurveTo(250, 150, 300, 150);
 	      ctx.quadraticCurveTo(350, 150, 325, 200);
+	      if (this.debug) {
+	        ctx.fillRect(250, 150, 5, 5);
+	        ctx.fillRect(350, 150, 5, 5);
+	      }
 	      ctx.lineTo(400, 200);
 	      ctx.lineTo(400, 275);
 	      ctx.quadraticCurveTo(450, 250, 450, 300);
 	      ctx.quadraticCurveTo(450, 350, 400, 325);
+	      if (this.debug) {
+	        ctx.fillRect(450, 250, 5, 5);
+	        ctx.fillRect(450, 350, 5, 5);
+	      }
 	      ctx.lineTo(400, 400);
 	      ctx.lineTo(325, 400);
 	      ctx.quadraticCurveTo(350, 450, 300, 450);
 	      ctx.quadraticCurveTo(250, 450, 275, 400);
+	      if (this.debug) {
+	        ctx.fillRect(350, 450, 5, 5);
+	        ctx.fillRect(250, 450, 5, 5);
+	      }
 	      ctx.lineTo(200, 400);
 	      ctx.lineTo(200, 325);
 	      ctx.quadraticCurveTo(150, 350, 150, 300);
 	      ctx.quadraticCurveTo(150, 250, 200, 275);
+	      if (this.debug) {
+	        ctx.fillRect(150, 350, 5, 5);
+	        ctx.fillRect(150, 250, 5, 5);
+	      }
 	      ctx.lineTo(200, 200);
 	      ctx.closePath();
 	      ctx.stroke();
 	    }
 	  }, {
-	    key: "plugTBLsocketR",
-	    value: function plugTBLsocketR(ctx) {
+	    key: "plugTBsocketRL",
+	    value: function plugTBsocketRL(ctx) {
 	      ctx.beginPath();
 	      ctx.moveTo(200, 200);
 	      ctx.lineTo(275, 200);
 	      ctx.quadraticCurveTo(250, 150, 300, 150);
 	      ctx.quadraticCurveTo(350, 150, 325, 200);
+	      if (this.debug) {
+	        ctx.fillRect(250, 150, 5, 5);
+	        ctx.fillRect(350, 150, 5, 5);
+	      }
 	      ctx.lineTo(400, 200);
 	      ctx.lineTo(400, 275);
 	      ctx.quadraticCurveTo(350, 250, 350, 300);
 	      ctx.quadraticCurveTo(350, 350, 400, 325);
+	      if (this.debug) {
+	        ctx.fillRect(350, 250, 5, 5);
+	        ctx.fillRect(350, 350, 5, 5);
+	      }
 	      ctx.lineTo(400, 400);
 	      ctx.lineTo(325, 400);
 	      ctx.quadraticCurveTo(350, 450, 300, 450);
 	      ctx.quadraticCurveTo(250, 450, 275, 400);
+	      if (this.debug) {
+	        ctx.fillRect(350, 450, 5, 5);
+	        ctx.fillRect(250, 450, 5, 5);
+	      }
 	      ctx.lineTo(200, 400);
 	      ctx.lineTo(200, 325);
 	      ctx.quadraticCurveTo(150, 350, 150, 300);
 	      ctx.quadraticCurveTo(150, 250, 200, 275);
+	      if (this.debug) {
+	        ctx.fillRect(150, 350, 5, 5);
+	        ctx.fillRect(150, 250, 5, 5);
+	      }
 	      ctx.lineTo(200, 200);
 	      ctx.closePath();
 	      ctx.stroke();
@@ -1551,6 +1590,8 @@
 	  }, {
 	    key: "plugBLsocketTR",
 	    value: function plugBLsocketTR(ctx) {
+	      console.log(this.debug);
+
 	      ctx.beginPath();
 	      ctx.moveTo(200, 200);
 	      ctx.lineTo(275, 200);

@@ -62,8 +62,9 @@ class Puzzly {
 		this.bgCanvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
 
 
+		const p = new PuzzlePiece({debug: true});
 		// this.drawBackground();
-		PuzzlePiece.plugTBLsocketR(this.ctx);
+		p.plugTRBL(this.ctx);
 
 		this.ctx.clip();
 
