@@ -1,4 +1,3 @@
-import SpriteMap from './sprite-map';
 import PuzzlePiece from './puzzle-piece';
 
 class Puzzly {
@@ -62,9 +61,9 @@ class Puzzly {
 		this.bgCanvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
 
 
-		const p = new PuzzlePiece({debug: true});
+		const p = new PuzzlePiece(this.ctx, {debug: true});
 		// this.drawBackground();
-		p.plugTRBL(this.ctx);
+		p.plugTRBL();
 
 		this.ctx.clip();
 

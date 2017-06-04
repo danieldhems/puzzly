@@ -98,11 +98,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _spriteMap = __webpack_require__(2);
-
-	var _spriteMap2 = _interopRequireDefault(_spriteMap);
-
-	var _puzzlePiece = __webpack_require__(3);
+	var _puzzlePiece = __webpack_require__(2);
 
 	var _puzzlePiece2 = _interopRequireDefault(_puzzlePiece);
 
@@ -166,9 +162,9 @@
 				this.bgCanvas.width = this.SourceImage.width + this.config.boardBoundary * 2;
 				this.bgCanvas.height = this.SourceImage.height + this.config.boardBoundary * 2;
 
-				var p = new _puzzlePiece2.default({ debug: true });
+				var p = new _puzzlePiece2.default(this.ctx, { debug: true });
 				// this.drawBackground();
-				p.plugBLsocketTR(this.ctx);
+				p.plugTRBL();
 
 				this.ctx.clip();
 
@@ -446,7 +442,7 @@
 
 				// Top left corner piece
 				if (!adjacentPieceBehind && !adjacentPieceAbove) {
-					return _spriteMap2.default.filter(function (o) {
+					return SpriteMap.filter(function (o) {
 						return o.type.indexOf('corner-tl') > -1;
 					});
 				}
@@ -461,7 +457,7 @@
 					var lastPieceHasRightSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
 					var iterateeIsCorrectType = void 0;
 
-					pieces = _spriteMap2.default.filter(function (o) {
+					pieces = SpriteMap.filter(function (o) {
 						if (endOfRow) {
 							return o.type.indexOf('corner-tr') > -1;
 						} else {
@@ -484,14 +480,14 @@
 
 						// Last piece of each row, should be right side
 						if (adjacentPieceAbove.type.indexOf('corner-tr') > -1 || adjacentPieceAbove.type.indexOf('side-r') > -1) {
-							pieces = _spriteMap2.default.filter(function (o) {
+							pieces = SpriteMap.filter(function (o) {
 								return o.type.indexOf('side-r') > -1;
 							});
 						}
 
 						// Very last piece, should be corner bottom right
 						if (adjacentPieceAbove.type.indexOf('side-r') > -1 && adjacentPieceBehind.type.indexOf('side-b') > -1) {
-							pieces = _spriteMap2.default.filter(function (o) {
+							pieces = SpriteMap.filter(function (o) {
 								return o.type.indexOf('corner-br') > -1;
 							});
 						}
@@ -499,7 +495,7 @@
 						// First piece of each row, should be left side
 						if (!finalRow && (adjacentPieceBehind.type.indexOf('corner-tr') > -1 || adjacentPieceBehind.type.indexOf('side-r') > -1)) {
 
-							pieces = _spriteMap2.default.filter(function (o) {
+							pieces = SpriteMap.filter(function (o) {
 								return o.type.indexOf('side-l') > -1;
 							});
 
@@ -521,7 +517,7 @@
 
 						// All middle pieces
 						if (adjacentPieceAbove.type.indexOf('middle') > -1 || adjacentPieceAbove.type.indexOf('side-t') > -1) {
-							pieces = _spriteMap2.default.filter(function (o) {
+							pieces = SpriteMap.filter(function (o) {
 								return o.type.indexOf('middle') > -1;
 							});
 						}
@@ -532,7 +528,7 @@
 							// if(adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
 
 							if (adjacentPieceAbove.type.indexOf('side-l') > -1) {
-								pieces = _spriteMap2.default.filter(function (o) {
+								pieces = SpriteMap.filter(function (o) {
 									return o.type.indexOf('corner-bl') > -1;
 								});
 
@@ -553,13 +549,13 @@
 							}
 
 							if (adjacentPieceAbove.type.indexOf('middle') > -1) {
-								pieces = _spriteMap2.default.filter(function (o) {
+								pieces = SpriteMap.filter(function (o) {
 									return o.type.indexOf('side-b') > -1;
 								});
 							}
 
 							if (adjacentPieceAbove.type.indexOf('side-r') > -1 && adjacentPieceBehind.type.indexOf('side-b') > -1) {
-								pieces = _spriteMap2.default.filter(function (o) {
+								pieces = SpriteMap.filter(function (o) {
 									return o.type.indexOf('corner-br') > -1;
 								});
 							}
@@ -683,785 +679,6 @@
 /* 2 */
 /***/ function(module, exports) {
 
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-	exports.default = [{
-		width: 122,
-		height: 122,
-		type: 'corner-tl-srb',
-		connectors: {
-			sockets: 'rb',
-			plugs: ''
-		},
-		coords: {
-			x: 40,
-			y: 0
-		}
-	}, {
-		width: 122,
-		height: 163,
-		type: 'corner-tl-sr-pb',
-		connectors: {
-			sockets: 'r',
-			plugs: 'b'
-		},
-		coords: {
-			x: 285,
-			y: 0
-		}
-	}, {
-		width: 163,
-		height: 122,
-		type: 'corner-tl-sb-pr',
-		connectors: {
-			sockets: 'b',
-			plugs: 'r'
-		},
-		coords: {
-			x: 530,
-			y: 0
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'corner-tl-prb',
-		connectors: {
-			sockets: '',
-			plugs: 'rb'
-		},
-		coords: {
-			x: 777,
-			y: 0
-		}
-	}, {
-		width: 122,
-		height: 122,
-		type: 'corner-bl-str',
-		connectors: {
-			sockets: 'tr',
-			plugs: ''
-		},
-		coords: {
-			x: 1022,
-			y: 0
-		}
-	}, {
-		width: 122,
-		height: 122,
-		type: 'side-l-strb',
-		connectors: {
-			sockets: 'trb',
-			plugs: ''
-		},
-		coords: {
-			x: 1266,
-			y: 0
-		}
-	}, {
-		width: 122,
-		height: 163,
-		type: 'side-l-str-pb',
-		connectors: {
-			sockets: 'tr',
-			plugs: 'b'
-		},
-		coords: {
-			x: 1510,
-			y: 0
-		}
-	}, {
-		width: 163,
-		height: 122,
-		type: 'corner-bl-st-pr',
-		connectors: {
-			sockets: 't',
-			plugs: 'r'
-		},
-		coords: {
-			x: 1756,
-			y: 0
-		}
-	}, {
-		width: 163,
-		height: 122,
-		type: 'side-l-stb-pr',
-		connectors: {
-			sockets: 'tb',
-			plugs: 'r'
-		},
-		coords: {
-			x: 40,
-			y: 244
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'side-l-st-prb',
-		connectors: {
-			sockets: 't',
-			plugs: 'rb'
-		},
-		coords: {
-			x: 285,
-			y: 244
-		}
-	}, {
-		width: 122,
-		height: 163,
-		type: 'corner-bl-pt-sr',
-		connectors: {
-			sockets: 'r',
-			plugs: 't'
-		},
-		coords: {
-			x: 531,
-			y: 204
-		}
-	}, {
-		width: 122,
-		height: 163,
-		type: 'side-l-pt-srb',
-		connectors: {
-			sockets: 'rb',
-			plugs: 't'
-		},
-		coords: {
-			x: 776,
-			y: 204
-		}
-	}, {
-		width: 122,
-		height: 206,
-		type: 'side-l-sr-ptb',
-		connectors: {
-			sockets: 'r',
-			plugs: 'tb'
-		},
-		coords: {
-			x: 1021,
-			y: 204
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'corner-bl-ptr',
-		connectors: {
-			sockets: '',
-			plugs: 'tr'
-		},
-		coords: {
-			x: 1267,
-			y: 204
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'side-l-sb-ptr',
-		connectors: {
-			sockets: 'b',
-			plugs: 'tr'
-		},
-		coords: {
-			x: 1511,
-			y: 204
-		}
-	}, {
-		width: 163,
-		height: 206,
-		type: 'side-l-ptrb',
-		connectors: {
-			sockets: '',
-			plugs: 'trb'
-		},
-		coords: {
-			x: 1757,
-			y: 204
-		}
-	}, {
-		width: 122,
-		height: 122,
-		type: 'corner-tr-sbl',
-		connectors: {
-			sockets: 'bl',
-			plugs: ''
-		},
-		coords: {
-			x: 40,
-			y: 490
-		}
-	}, {
-		width: 122,
-		height: 163,
-		type: 'corner-tr-pb-sl',
-		connectors: {
-			sockets: 'l',
-			plugs: 'b'
-		},
-		coords: {
-			x: 285,
-			y: 490
-		}
-	}, {
-		width: 122,
-		height: 122,
-		type: 'side-t-srbl',
-		connectors: {
-			sockets: 'rbl',
-			plugs: ''
-		},
-		coords: {
-			x: 530,
-			y: 490
-		}
-	}, {
-		width: 122,
-		height: 163,
-		type: 'side-t-srl-pb',
-		connectors: {
-			sockets: 'rl',
-			plugs: 'b'
-		},
-		coords: {
-			x: 776,
-			y: 490
-		}
-	}, {
-		width: 163,
-		height: 122,
-		type: 'side-t-sbl-pr',
-		connectors: {
-			sockets: 'bl',
-			plugs: 'r'
-		},
-		coords: {
-			x: 1022,
-			y: 490
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'side-l-sl-prb',
-		connectors: {
-			sockets: 'l',
-			plugs: 'rb'
-		},
-		coords: {
-			x: 1266,
-			y: 490
-		}
-	}, {
-		width: 122,
-		height: 122,
-		type: 'corner-br-slt',
-		connectors: {
-			sockets: 'lt',
-			plugs: ''
-		},
-		coords: {
-			x: 1512,
-			y: 490
-		}
-	}, {
-		width: 122,
-		height: 122,
-		type: 'side-r-sblt',
-		connectors: {
-			sockets: 'blt',
-			plugs: ''
-		},
-		coords: {
-			x: 1757,
-			y: 490
-		}
-	}, {
-		width: 122,
-		height: 163,
-		type: 'side-r-slt-pb',
-		connectors: {
-			sockets: 'lt',
-			plugs: 'b'
-		},
-		coords: {
-			x: 40,
-			y: 735
-		}
-	}, {
-		width: 122,
-		height: 122,
-		type: 'side-b-sltr',
-		connectors: {
-			sockets: 'ltr',
-			plugs: ''
-		},
-		coords: {
-			x: 285,
-			y: 735
-		}
-	}, {
-		width: 122,
-		height: 122,
-		type: 'middle-strbl',
-		connectors: {
-			sockets: 'trbl',
-			plugs: ''
-		},
-		coords: {
-			x: 530,
-			y: 735
-		}
-	}, {
-		width: 122,
-		height: 163,
-		type: 'middle-sltr-pb',
-		connectors: {
-			sockets: 'ltr',
-			plugs: 'b'
-		},
-		coords: {
-			x: 776,
-			y: 736
-		}
-	}, {
-		width: 163,
-		height: 122,
-		type: 'side-b-slt-pr',
-		connectors: {
-			sockets: 'lt',
-			plugs: 'r'
-		},
-		coords: {
-			x: 1021,
-			y: 735
-		}
-	}, {
-		width: 163,
-		height: 122,
-		type: 'middle-sblt-pr',
-		connectors: {
-			sockets: 'blt',
-			plugs: 'r'
-		},
-		coords: {
-			x: 1266,
-			y: 735
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'middle-slt-prb',
-		connectors: {
-			sockets: 'lt',
-			plugs: 'rb'
-		},
-		coords: {
-			x: 1512,
-			y: 735
-		}
-	}, {
-		width: 122,
-		height: 163,
-		type: 'corner-br-sl-pt',
-		connectors: {
-			sockets: 'l',
-			plugs: 't'
-		},
-		coords: {
-			x: 1757,
-			y: 694
-		}
-	}, {
-		width: 122,
-		height: 163,
-		type: 'side-r-sbl-pt',
-		connectors: {
-			sockets: 'bl',
-			plugs: 't'
-		},
-		coords: {
-			x: 40,
-			y: 940
-		}
-	}, {
-		width: 122,
-		height: 206,
-		type: 'side-r-sl-pbt',
-		connectors: {
-			sockets: 'l',
-			plugs: 'bt'
-		},
-		coords: {
-			x: 285,
-			y: 940
-		}
-	}, {
-		width: 122,
-		height: 163,
-		type: 'side-b-srb-pt',
-		connectors: {
-			sockets: 'rb',
-			plugs: 't'
-		},
-		coords: {
-			x: 285,
-			y: 940
-		}
-	}, {
-		width: 122,
-		height: 163,
-		type: 'middle-srbl-pt',
-		connectors: {
-			sockets: 'rbl',
-			plugs: 't'
-		},
-		coords: {
-			x: 776,
-			y: 940
-		}
-	}, {
-		width: 122,
-		height: 206,
-		type: 'middle-srl-pbt',
-		connectors: {
-			sockets: 'rl',
-			plugs: 'bt'
-		},
-		coords: {
-			x: 1021,
-			y: 940
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'side-b-sl-ptr',
-		connectors: {
-			sockets: 'l',
-			plugs: 'tr'
-		},
-		coords: {
-			x: 1266,
-			y: 940
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'middle-sbl-ptr',
-		connectors: {
-			sockets: 'bl',
-			plugs: 'tr'
-		},
-		coords: {
-			x: 1512,
-			y: 940
-		}
-	}, {
-		width: 163,
-		height: 206,
-		type: 'middle-sl-ptrb',
-		connectors: {
-			sockets: 'l',
-			plugs: 'trb'
-		},
-		coords: {
-			x: 1757,
-			y: 940
-		}
-	}, {
-		width: 163,
-		height: 122,
-		type: 'corner-tr-sb-pl',
-		connectors: {
-			sockets: 'b',
-			plugs: 'l'
-		},
-		coords: {
-			x: 0,
-			y: 1225
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'corner-tr-pbl',
-		connectors: {
-			sockets: '',
-			plugs: 'bl'
-		},
-		coords: {
-			x: 244,
-			y: 1225
-		}
-	}, {
-		width: 163,
-		height: 122,
-		type: 'side-t-srb-pl',
-		connectors: {
-			sockets: 'rb`',
-			plugs: 'l'
-		},
-		coords: {
-			x: 490,
-			y: 1225
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'side-t-sr-pbl',
-		connectors: {
-			sockets: 'r',
-			plugs: 'bl'
-		},
-		coords: {
-			x: 735,
-			y: 1225
-		}
-	}, {
-		width: 206,
-		height: 122,
-		type: 'side-t-sb-plr',
-		connectors: {
-			sockets: 'b',
-			plugs: 'lr'
-		},
-		coords: {
-			x: 980,
-			y: 1225
-		}
-	}, {
-		width: 206,
-		height: 163,
-		type: 'side-t-prbl',
-		connectors: {
-			sockets: '',
-			plugs: 'rbl'
-		},
-		coords: {
-			x: 1225,
-			y: 1225
-		}
-	}, {
-		width: 162,
-		height: 122,
-		type: 'corner-br-st-pl',
-		connectors: {
-			sockets: 't',
-			plugs: 'l'
-		},
-		coords: {
-			x: 1470,
-			y: 1225
-		}
-	}, {
-		width: 163,
-		height: 122,
-		type: 'side-r-stb-pl',
-		connectors: {
-			sockets: 'tb',
-			plugs: 'l'
-		},
-		coords: {
-			x: 1716,
-			y: 1225
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'side-r-st-pbl',
-		connectors: {
-			sockets: 't',
-			plugs: 'bl'
-		},
-		coords: {
-			x: 0,
-			y: 1470
-		}
-	}, {
-		width: 163,
-		height: 122,
-		type: 'side-b-str-pl',
-		connectors: {
-			sockets: 'tr',
-			plugs: 'l'
-		},
-		coords: {
-			x: 244,
-			y: 1470
-		}
-	}, {
-		width: 163,
-		height: 122,
-		type: 'middle-strb-pl',
-		connectors: {
-			sockets: 'trb',
-			plugs: 'l'
-		},
-		coords: {
-			x: 490,
-			y: 1470
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'middle-str-pbl',
-		connectors: {
-			sockets: 'tr',
-			plugs: 'bl'
-		},
-		coords: {
-			x: 734,
-			y: 1470
-		}
-	}, {
-		width: 206,
-		height: 122,
-		type: 'side-b-st-prl',
-		connectors: {
-			sockets: 't',
-			plugs: 'rl'
-		},
-		coords: {
-			x: 980,
-			y: 1470
-		}
-	}, {
-		width: 206,
-		height: 122,
-		type: 'middle-stb-prl',
-		connectors: {
-			sockets: 'tb',
-			plugs: 'rl'
-		},
-		coords: {
-			x: 1225,
-			y: 1470
-		}
-	}, {
-		width: 206,
-		height: 163,
-		type: 'middle-st-prbl',
-		connectors: {
-			sockets: 't',
-			plugs: 'rbl'
-		},
-		coords: {
-			x: 1470,
-			y: 1470
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'borner-br-plt',
-		connectors: {
-			sockets: '',
-			plugs: 'lt'
-		},
-		coords: {
-			x: 1716,
-			y: 1430
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'side-r-sb-plt',
-		connectors: {
-			sockets: 'b',
-			plugs: 'lt'
-		},
-		coords: {
-			x: 0,
-			y: 1675
-		}
-	}, {
-		width: 163,
-		height: 206,
-		type: 'side-r-pblt',
-		connectors: {
-			sockets: '',
-			plugs: 'blt'
-		},
-		coords: {
-			x: 244,
-			y: 1675
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'side-b-sr-plt',
-		connectors: {
-			sockets: 'r',
-			plugs: 'lt'
-		},
-		coords: {
-			x: 490,
-			y: 1675
-		}
-	}, {
-		width: 163,
-		height: 163,
-		type: 'middle-srb-plt',
-		connectors: {
-			sockets: 'rb',
-			plugs: 'lt'
-		},
-		coords: {
-			x: 735,
-			y: 1675
-		}
-	}, {
-		width: 163,
-		height: 206,
-		type: 'middle-sr-pblt',
-		connectors: {
-			sockets: 'r',
-			plugs: 'blt`'
-		},
-		coords: {
-			x: 980,
-			y: 1675
-		}
-	}, {
-		width: 206,
-		height: 163,
-		type: 'side-b-prlt',
-		connectors: {
-			sockets: '',
-			plugs: 'trl'
-		},
-		coords: {
-			x: 1225,
-			y: 1675
-		}
-	}, {
-		width: 206,
-		height: 163,
-		type: 'middle-sb-prlt',
-		connectors: {
-			sockets: 'b',
-			plugs: 'rlt'
-		},
-		coords: {
-			x: 1470,
-			y: 1675
-		}
-	}, {
-		width: 206,
-		height: 206,
-		type: 'middle-prblt',
-		connectors: {
-			sockets: '',
-			plugs: 'rblt'
-		},
-		coords: {
-			x: 1716,
-			y: 1675
-		}
-	}];
-
-/***/ },
-/* 3 */
-/***/ function(module, exports) {
-
 	"use strict";
 
 	Object.defineProperty(exports, "__esModule", {
@@ -1473,145 +690,175 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var puzzlePiece = function () {
-	  function puzzlePiece() {
-	    var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+	  function puzzlePiece(ctx) {
+	    var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
 	      debug: false
+
 	    };
 
 	    _classCallCheck(this, puzzlePiece);
 
+	    console.log(opts);
 	    this.debug = opts.debug;
+	    this.ctx = ctx;
 	  }
 
 	  _createClass(puzzlePiece, [{
 	    key: "plugTRBL",
-	    value: function plugTRBL(ctx) {
-	      ctx.beginPath();
-	      ctx.moveTo(200, 200);
-	      ctx.lineTo(275, 200);
-	      ctx.quadraticCurveTo(250, 150, 300, 150);
-	      ctx.quadraticCurveTo(350, 150, 325, 200);
+	    value: function plugTRBL(startAt) {
+	      this.ctx.beginPath();
+	      this.ctx.moveTo(200, 200);
+	      this.ctx.lineTo(275, 200);
+	      // top plug geometry
+	      // values are relative to current x,y position
+	      // first curve
+	      // control point is {x: -25, y: -50}
+	      // end point is {x: +25, y: -50}
+	      this.ctx.quadraticCurveTo(250, 150, 300, 150);
+	      // second curve
+	      // control point is {x: +75, y: -50}
+	      // end point is {x: +50, y: ==}
+	      this.ctx.quadraticCurveTo(350, 150, 325, 200);
 	      if (this.debug) {
-	        ctx.fillRect(250, 150, 5, 5);
-	        ctx.fillRect(350, 150, 5, 5);
+	        this.ctx.fillRect(250, 150, 5, 5);
+	        this.ctx.fillRect(350, 150, 5, 5);
 	      }
-	      ctx.lineTo(400, 200);
-	      ctx.lineTo(400, 275);
-	      ctx.quadraticCurveTo(450, 250, 450, 300);
-	      ctx.quadraticCurveTo(450, 350, 400, 325);
+	      this.ctx.lineTo(400, 200);
+	      this.ctx.lineTo(400, 275);
+	      // right plug geometry
+	      // values are relative to current x,y position
+	      // control point is {x: +50, y: -25}
+	      // end point is {x: +50, y: +25}
+	      this.ctx.quadraticCurveTo(450, 250, 450, 300);
+	      // second curve
+	      // control point is {x: +50, y: +25}
+	      // end point is {x: ==, y: +50}
+	      this.ctx.quadraticCurveTo(450, 350, 400, 325);
 	      if (this.debug) {
-	        ctx.fillRect(450, 250, 5, 5);
-	        ctx.fillRect(450, 350, 5, 5);
+	        this.ctx.fillRect(450, 250, 5, 5);
+	        this.ctx.fillRect(450, 350, 5, 5);
 	      }
-	      ctx.lineTo(400, 400);
-	      ctx.lineTo(325, 400);
-	      ctx.quadraticCurveTo(350, 450, 300, 450);
-	      ctx.quadraticCurveTo(250, 450, 275, 400);
+	      this.ctx.lineTo(400, 400);
+	      this.ctx.lineTo(325, 400);
+	      // bottom plug geometry
+	      // first curve
+	      // control point is {x: +25, y: +50}
+	      // end point is {x: -25, y: +50}
+	      this.ctx.quadraticCurveTo(350, 450, 300, 450);
+	      // second curve
+	      // control point is {x: -75, y: +50}
+	      // end point is {x: -50, y: ==}
+	      this.ctx.quadraticCurveTo(250, 450, 275, 400);
 	      if (this.debug) {
-	        ctx.fillRect(350, 450, 5, 5);
-	        ctx.fillRect(250, 450, 5, 5);
+	        this.ctx.fillRect(350, 450, 5, 5);
+	        this.ctx.fillRect(250, 450, 5, 5);
 	      }
-	      ctx.lineTo(200, 400);
-	      ctx.lineTo(200, 325);
-	      ctx.quadraticCurveTo(150, 350, 150, 300);
-	      ctx.quadraticCurveTo(150, 250, 200, 275);
+	      this.ctx.lineTo(200, 400);
+	      this.ctx.lineTo(200, 325);
+	      // left plug geometry
+	      // first curve
+	      // control point is {x: -50, y: -25}
+	      // end point is {x: -50, y: -25}
+	      this.ctx.quadraticCurveTo(150, 350, 150, 300);
+	      // second curve
+	      // control point is {x: -50, y: -75}
+	      // end point is {x: ==, y: -50}
+	      this.ctx.quadraticCurveTo(150, 250, 200, 275);
 	      if (this.debug) {
-	        ctx.fillRect(150, 350, 5, 5);
-	        ctx.fillRect(150, 250, 5, 5);
+	        this.ctx.fillRect(150, 350, 5, 5);
+	        this.ctx.fillRect(150, 250, 5, 5);
 	      }
-	      ctx.lineTo(200, 200);
-	      ctx.closePath();
-	      ctx.stroke();
+	      this.ctx.lineTo(200, 200);
+	      this.ctx.closePath();
+	      this.ctx.stroke();
 	    }
 	  }, {
 	    key: "plugTBsocketRL",
-	    value: function plugTBsocketRL(ctx) {
-	      ctx.beginPath();
-	      ctx.moveTo(200, 200);
-	      ctx.lineTo(275, 200);
-	      ctx.quadraticCurveTo(250, 150, 300, 150);
-	      ctx.quadraticCurveTo(350, 150, 325, 200);
+	    value: function plugTBsocketRL() {
+	      this.ctx.beginPath();
+	      this.ctx.moveTo(200, 200);
+	      this.ctx.lineTo(275, 200);
+	      this.ctx.quadraticCurveTo(250, 150, 300, 150);
+	      this.ctx.quadraticCurveTo(350, 150, 325, 200);
 	      if (this.debug) {
-	        ctx.fillRect(250, 150, 5, 5);
-	        ctx.fillRect(350, 150, 5, 5);
+	        this.ctx.fillRect(250, 150, 5, 5);
+	        this.ctx.fillRect(350, 150, 5, 5);
 	      }
-	      ctx.lineTo(400, 200);
-	      ctx.lineTo(400, 275);
-	      ctx.quadraticCurveTo(350, 250, 350, 300);
-	      ctx.quadraticCurveTo(350, 350, 400, 325);
+	      this.ctx.lineTo(400, 200);
+	      this.ctx.lineTo(400, 275);
+	      this.ctx.quadraticCurveTo(350, 250, 350, 300);
+	      this.ctx.quadraticCurveTo(350, 350, 400, 325);
 	      if (this.debug) {
-	        ctx.fillRect(350, 250, 5, 5);
-	        ctx.fillRect(350, 350, 5, 5);
+	        this.ctx.fillRect(350, 250, 5, 5);
+	        this.ctx.fillRect(350, 350, 5, 5);
 	      }
-	      ctx.lineTo(400, 400);
-	      ctx.lineTo(325, 400);
-	      ctx.quadraticCurveTo(350, 450, 300, 450);
-	      ctx.quadraticCurveTo(250, 450, 275, 400);
+	      this.ctx.lineTo(400, 400);
+	      this.ctx.lineTo(325, 400);
+	      this.ctx.quadraticCurveTo(350, 450, 300, 450);
+	      this.ctx.quadraticCurveTo(250, 450, 275, 400);
 	      if (this.debug) {
-	        ctx.fillRect(350, 450, 5, 5);
-	        ctx.fillRect(250, 450, 5, 5);
+	        this.ctx.fillRect(350, 450, 5, 5);
+	        this.ctx.fillRect(250, 450, 5, 5);
 	      }
-	      ctx.lineTo(200, 400);
-	      ctx.lineTo(200, 325);
-	      ctx.quadraticCurveTo(150, 350, 150, 300);
-	      ctx.quadraticCurveTo(150, 250, 200, 275);
+	      this.ctx.lineTo(200, 400);
+	      this.ctx.lineTo(200, 325);
+	      this.ctx.quadraticCurveTo(150, 350, 150, 300);
+	      this.ctx.quadraticCurveTo(150, 250, 200, 275);
 	      if (this.debug) {
-	        ctx.fillRect(150, 350, 5, 5);
-	        ctx.fillRect(150, 250, 5, 5);
+	        this.ctx.fillRect(150, 350, 5, 5);
+	        this.ctx.fillRect(150, 250, 5, 5);
 	      }
-	      ctx.lineTo(200, 200);
-	      ctx.closePath();
-	      ctx.stroke();
+	      this.ctx.lineTo(200, 200);
+	      this.ctx.closePath();
+	      this.ctx.stroke();
 	    }
 	  }, {
 	    key: "plugRBLsocketT",
-	    value: function plugRBLsocketT(ctx) {
-	      ctx.beginPath();
-	      ctx.moveTo(200, 200);
-	      ctx.lineTo(275, 200);
-	      ctx.quadraticCurveTo(250, 250, 300, 250);
-	      ctx.quadraticCurveTo(350, 250, 325, 200);
-	      ctx.lineTo(400, 200);
-	      ctx.lineTo(400, 275);
-	      ctx.quadraticCurveTo(450, 250, 450, 300);
-	      ctx.quadraticCurveTo(450, 350, 400, 325);
-	      ctx.lineTo(400, 400);
-	      ctx.lineTo(325, 400);
-	      ctx.quadraticCurveTo(350, 450, 300, 450);
-	      ctx.quadraticCurveTo(250, 450, 275, 400);
-	      ctx.lineTo(200, 400);
-	      ctx.lineTo(200, 325);
-	      ctx.quadraticCurveTo(150, 350, 150, 300);
-	      ctx.quadraticCurveTo(150, 250, 200, 275);
-	      ctx.lineTo(200, 200);
-	      ctx.closePath();
-	      ctx.stroke();
+	    value: function plugRBLsocketT() {
+	      this.ctx.beginPath();
+	      this.ctx.moveTo(200, 200);
+	      this.ctx.lineTo(275, 200);
+	      this.ctx.quadraticCurveTo(250, 250, 300, 250);
+	      this.ctx.quadraticCurveTo(350, 250, 325, 200);
+	      this.ctx.lineTo(400, 200);
+	      this.ctx.lineTo(400, 275);
+	      this.ctx.quadraticCurveTo(450, 250, 450, 300);
+	      this.ctx.quadraticCurveTo(450, 350, 400, 325);
+	      this.ctx.lineTo(400, 400);
+	      this.ctx.lineTo(325, 400);
+	      this.ctx.quadraticCurveTo(350, 450, 300, 450);
+	      this.ctx.quadraticCurveTo(250, 450, 275, 400);
+	      this.ctx.lineTo(200, 400);
+	      this.ctx.lineTo(200, 325);
+	      this.ctx.quadraticCurveTo(150, 350, 150, 300);
+	      this.ctx.quadraticCurveTo(150, 250, 200, 275);
+	      this.ctx.lineTo(200, 200);
+	      this.ctx.closePath();
+	      this.ctx.stroke();
 	    }
 	  }, {
 	    key: "plugBLsocketTR",
-	    value: function plugBLsocketTR(ctx) {
-	      console.log(this.debug);
-
-	      ctx.beginPath();
-	      ctx.moveTo(200, 200);
-	      ctx.lineTo(275, 200);
-	      ctx.quadraticCurveTo(250, 250, 300, 250);
-	      ctx.quadraticCurveTo(350, 250, 325, 200);
-	      ctx.lineTo(400, 200);
-	      ctx.lineTo(400, 275);
-	      ctx.quadraticCurveTo(350, 250, 350, 300);
-	      ctx.quadraticCurveTo(350, 350, 400, 325);
-	      ctx.lineTo(400, 400);
-	      ctx.lineTo(325, 400);
-	      ctx.quadraticCurveTo(350, 450, 300, 450);
-	      ctx.quadraticCurveTo(250, 450, 275, 400);
-	      ctx.lineTo(200, 400);
-	      ctx.lineTo(200, 325);
-	      ctx.quadraticCurveTo(150, 350, 150, 300);
-	      ctx.quadraticCurveTo(150, 250, 200, 275);
-	      ctx.lineTo(200, 200);
-	      ctx.closePath();
-	      ctx.stroke();
+	    value: function plugBLsocketTR() {
+	      this.ctx.beginPath();
+	      this.ctx.moveTo(200, 200);
+	      this.ctx.lineTo(275, 200);
+	      this.ctx.quadraticCurveTo(250, 250, 300, 250);
+	      this.ctx.quadraticCurveTo(350, 250, 325, 200);
+	      this.ctx.lineTo(400, 200);
+	      this.ctx.lineTo(400, 275);
+	      this.ctx.quadraticCurveTo(350, 250, 350, 300);
+	      this.ctx.quadraticCurveTo(350, 350, 400, 325);
+	      this.ctx.lineTo(400, 400);
+	      this.ctx.lineTo(325, 400);
+	      this.ctx.quadraticCurveTo(350, 450, 300, 450);
+	      this.ctx.quadraticCurveTo(250, 450, 275, 400);
+	      this.ctx.lineTo(200, 400);
+	      this.ctx.lineTo(200, 325);
+	      this.ctx.quadraticCurveTo(150, 350, 150, 300);
+	      this.ctx.quadraticCurveTo(150, 250, 200, 275);
+	      this.ctx.lineTo(200, 200);
+	      this.ctx.closePath();
+	      this.ctx.stroke();
 	    }
 	  }]);
 
