@@ -6,7 +6,7 @@ var app = express();
 
 // var db = require('./database.js');
 
-app.use('/', express.static('./dist'));
+app.use('/', express.static('./client'));
 app.use('/uploads', express.static('./uploads'));
 
 app.use(bodyParser.urlencoded({ uploadDir: path.join(__dirname, 'uploads'), keepExtensions: true, extended: true }));

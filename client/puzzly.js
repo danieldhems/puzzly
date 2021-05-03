@@ -1,19 +1,9 @@
-import PuzzlePiece from './puzzle-piece';
-
 class Puzzly {
 
 	constructor(canvasId, imageUrl, numPieces){
 		this.config = {
-			pieceSize: {
-				'500': 35,
-				'1000': 30,
-				'2000': 20
-			},
-			jigsawSquareSize: 123,
-			jigsawPlugSize: 41,
+			scale: .5,
 			boardBoundary: 200,
-			numPiecesOnVerticalSides: 27,
-			numPiecesOnHorizontalSides: 38,
 			backgroundImages: [
 				{
 					name: 'wood',
@@ -24,15 +14,18 @@ class Puzzly {
 
 		this.pieces = [];
 
-		// console.log('Initiating puzzly: ', imageUrl, numPieces);
+		this.numPieces = numPieces;
+
+		console.log('Initiating puzzly: ', imageUrl, numPieces);
 
 		this.canvas = document.getElementById(canvasId);
 		this.tmpCanvas = document.getElementById('tmp-canvas');
-		this.bgCanvas = document.getElementById('tmp-canvas');
+		this.bgCanvas = document.getElementById('bg-canvas');
 		this.ctx = this.canvas.getContext('2d');
 		this.tmpCtx = this.tmpCanvas.getContext('2d');
 		this.bgCtx = this.bgCanvas.getContext('2d');
 
+		this.loadedImages = [];
 		this.SourceImage = new Image();
 		this.SourceImage.src = imageUrl;
 
@@ -45,48 +38,135 @@ class Puzzly {
 		const imgs = [
 			this.SourceImage,
 			this.BgImage,
-			this.JigsawSprite
+			this.JigsawSprite,
 		];
 
-		this.preloadImages(imgs);
-
+		this.preloadImages(imgs).then( () => {
+			this.init()
+		})
 	}
 
 	init(){
+		console.log(this)
+
 		this.canvas.width = this.SourceImage.width + (this.config.boardBoundary*2);
 		this.canvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
-		this.tmpCanvas.style.width = this.canvas.width;
-		this.tmpCanvas.style.height = this.canvas.height;
+		this.tmpCanvas.width = 0;
+		this.tmpCanvas.height = 0;
 		this.bgCanvas.width = this.SourceImage.width + (this.config.boardBoundary*2);
 		this.bgCanvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
+	
+		this.tmpCanvasCtx = this.tmpCanvas.getContext("2d");
 
+		// Width / height of a single segment based on the total area of the src image divided by the number of pieces the user wants
+		this.segmentSize = Math.sqrt(this.loadedImages[1].width * this.loadedImages[1].height / this.numPieces);
+		this.piecesPerSide = Math.sqrt(this.numPieces)
 
-		const p = new PuzzlePiece(this.ctx, {debug: true});
-		// this.drawBackground();
-		p.plugTRBL();
+		console.log(this.loadedImages)
+		// this.diceImage(this.numPieces);
 
-		this.ctx.clip();
+		this.tmpCanvas.width = this.tmpCanvas.height = this.segmentSize;
+		this.tmpCanvasParent = this.tmpCanvas.parentNode;
+		this.tmpCanvasParent.width = this.tmpCanvas.height = this.segmentSize;
+		console.log(this.loadedImages[1])
 
-		// this.makePieces(this.SourceImage, 500, this.config.pieceSize['500']);
+		this.tmpCanvasParent.style.top = this.tmpCanvas.style.top = 0;
+		this.tmpCanvasParent.style.left = this.tmpCanvas.style.left = 0;
 
+		this.jigsawShapeSpans = {
+			small: 122,
+			medium: 165,
+			large: 208
+		};
+		
+		this.SpriteMap = [
+			{x: 40, y: 0, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [0,  -1, -1, 0], id: 1},
+			{x: 285, y: 0, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [0, -1, 1, 0], id: 2},
+			{x: 531, y: 0, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [0, -1, 1, 0], id: 3},
+			{x: 777, y: 0, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [0, 1, 1, 0], id: 4},
+			{x: 1020, y: 0, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [-1, -1, 0, 0], id: 5},
+			{x: 1266, y: 0, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [-1, -1, -1, 0], id: 6},
+			{x: 1511, y: 0, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [-1, -1, 1, 0], id: 7},
+			{x: 1756, y: 0, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1, 1, 0, 0], id: 8},
+			
+			{x: 40, y: 243, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1,  1, -1, 0], id: 9},
+			{x: 285, y: 243, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [-1, 1, 1, 0], id: 10},
+			{x: 531, y: 201, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1, -1, 0, 0], id: 11},
+			{x: 777, y: 201, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1, -1, -1, 0], id: 12},
+			{x: 1020, y: 201, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.large, type: [1, -1, 1, 0], id: 13},
+			{x: 1266, y: 201, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1, 1, 0, 0], id: 14},
+			{x: 1511, y: 201, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.large, type: [1, 1, -1, 0], id: 15},
+			{x: 1756, y: 201, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.large, type: [1, 1, 1, 0], id: 16},
+			{x: 40, y: 490, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [0,  0, -1, -1], id: 17},
+			{x: 285, y: 490, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [0,  0, 1, -1], id: 18},
+			{x: 531, y: 490, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [0,  -1, -1, -1], id: 19},
+			{x: 777, y: 490, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [0,  -1, 1, -1], id: 20},
+			{x: 1020, y: 490, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [0,  1, -1, -1], id: 21},
+			{x: 1266, y: 490, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [0,  1, 1, -1], id: 22},
+			{x: 1511, y: 490, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [-1,  0, 0, -1], id: 23},
+			{x: 1756, y: 490, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [-1,  0, -1, -1], id: 24},
+			{x: 40, y: 733, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [-1,  0, 1, -1], id: 25},
+			{x: 285, y: 733, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [-1,  -1, 0, -1], id: 26},
+			{x: 531, y: 733, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [-1,  -1, -1, -1], id: 27},
+			{x: 777, y: 733, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [-1,  -1, 1, -1], id: 28},
+			{x: 1020, y: 733, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [-1,  1, 0, -1], id: 29},
+			{x: 1266, y: 733, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1,  1, -1, -1], id: 30},
+			{x: 1511, y: 733, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [-1,  1, 1, -1], id: 31},
+			{x: 1756, y: 691, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1,  0, 0, -1], id: 32},
+		];
+		
+		this.drawPiece(32);
+		
 		window.addEventListener('mousedown', (e) => {
-			// this.onMouseDown(e);
+			this.onMouseDown(e);
 		});
 		window.addEventListener('mouseup', (e) => {
-			// this.onMouseUp();
+			this.onMouseUp();
 		});
 		window.addEventListener('mousemove', (e) => {
-			// this.onMouseMove(e);
+			this.onMouseMove(e);
 		});
 	}
+	
+	drawPiece(id) {
+		const piece = this.SpriteMap.find( p => p.id === id);
+		this.tmpCanvasCtx.drawImage(this.SourceImage, 0, 0, this.segmentSize, this.segmentSize, 0, 0, this.segmentSize, this.segmentSize);
+		this.tmpCanvasCtx.globalCompositeOperation = 'destination-atop';
+		this.tmpCanvasCtx.drawImage(
+			this.JigsawSprite,
+			piece.x,
+			piece.y,
+			piece.w,
+			piece.h,
+			0, 
+			0, 
+			piece.w,
+			piece.h,
+		);
+	}
 
-	draw(mouseX, mouseY){
-		this.drawBackground();
-		this.drawPiece(this.movingPiece.imgX, this.movingPiece.imgY, mouseX, mouseY, this.movingPiece, this.config.pieceSize['500']);
+	diceImage() {
+		const img = this.loadedImages[0];
+
+		// Create data set for all diced segments
+		const segmentArray = [];
+		let curX = 0;
+		let curY = 0;
+		let sData = {};
+
+		for(let i=0, l = segmentArray.length; segmentArray.length < this.numPieces; i++){
+
+			sData.x = curX;
+			sData.y = curY;
+
+
+			segmentArray.push()
+		}
 	}
 
 	onMouseDown(e){
-		this.movingPiece = this.getClickTarget(e);
+		// this.movingPiece = this.getClickTarget(e);
+		this.movingPiece = e.target;
 		this.isMouseDown = true;
 	}
 
@@ -97,26 +177,25 @@ class Puzzly {
 
 	onMouseMove(e){
 		if(this.isMouseDown){
-			this.draw(e.clientX, e.clientY);
-			this.movingPiece.currentX = e.clientX;
-			this.movingPiece.currentY = e.clientY;
+			// this.draw(e.clientX, e.clientY);
+			this.movingPiece.style.left = e.clientX + "px";
+			this.movingPiece.style.top = e.clientY + "px";
 		}
 	}
 
 	preloadImages(imgs, cb){
 		let promises = [];
 		for(let i=0,l=imgs.length;i<l;i++){
-			promises.push(this.loadImage(imgs[i]));
+			promises.push(this.loadImage(imgs[i]).then(imgData => this.loadedImages.push(imgData)));
 		}
-		Promise.all(promises).then( () => {
-			this.init()
-		})
+		
+		return Promise.all(promises)
 	}
 
 	loadImage(img){
 		return new Promise( (resolve, reject) => {
-			img.onload = () => {
-				resolve(img);
+			img.onload = img => {
+				resolve(img.path[0]);
 			};
 			img.onerror = () => {
 				reject(img);
@@ -134,7 +213,9 @@ class Puzzly {
 		this.ctx.drawImage(img, 0, 0, imgW, imgH)
 	}
 
-	makePieces(img, numPieces, pieceSize){
+
+
+	makePieces(){
 
 		var boardLeft = this.canvas.offsetLeft + this.config.boardBoundary;
 		var boardTop = this.canvas.offsetTop + this.config.boardBoundary;
@@ -155,22 +236,21 @@ class Puzzly {
 		let rowCount = 1;
 		let finalRow = false;
 
-		while(i<1){
+		while(i<this.numPieces){
 
-			// console.log(this.pieces)
 			// All pieces not on top row
-			if(this.pieces.length > this.config.numPiecesOnHorizontalSides - 1){
-				adjacentPieceAbove = this.pieces[this.pieces.length - this.config.numPiecesOnHorizontalSides];
+			if(this.pieces.length > this.piecesPerSide - 1){
+				adjacentPieceAbove = this.pieces[this.pieces.length - this.piecesPerSide];
 			}
 
 			// Last piece in row, next piece should be a corner or right side
-			if(this.pieces.length > 1 && this.pieces.length % (this.config.numPiecesOnHorizontalSides - 1) === 0){
+			if(this.pieces.length > 1 && this.pieces.length % (this.piecesPerSide - 1) === 0){
 				endOfRow = true;
 			} else {
 				endOfRow = false;
 			}
 
-			if(rowCount === this.config.numPiecesOnVerticalSides-1){
+			if(rowCount === this.piecesPerSide-1){
 				finalRow = true;
 			}
 
@@ -180,11 +260,11 @@ class Puzzly {
 
 			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 			let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
-			this.drawPiece(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, pieceSize);
+			// this.drawPiece(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, pieceSize);
 			this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
 
 			// reached last piece, start next row
-			if(this.pieces.length % this.config.numPiecesOnHorizontalSides === 0){
+			if(this.pieces.length % this.piecesPerSide === 0){
 				curImgX = 0;
 				curImgY += pieceSize;
 				curCanvasX = boardLeft;
@@ -198,40 +278,6 @@ class Puzzly {
 			i++;
 
 			if(currentPiece.type.indexOf('corner-br') > -1) done = true;
-		}
-	}
-
-	getCanvasCoordsAndDimensionsForPiece(x,y,piece, pieceSize){
-		const scale = pieceSize / this.config.jigsawSquareSize;
-		let w,h = pieceSize;
-		if(piece.connectors.plugs.length === 1){
-			if(piece.connectors.plugs === 'l' || piece.connectors.plugs === 'r' ){
-				w = pieceSize + (this.config.jigsawPlugSize * scale);
-				h = pieceSize;
-			}
-			if(piece.connectors.plugs === 't' || piece.connectors.plugs === 'b' ){
-				h = pieceSize + (this.config.jigsawPlugSize * scale);
-				w = pieceSize;
-			}
-		} else {
-			if(piece.connectors.plugs.indexOf('l') > -1){
-				w += this.config.jigsawPlugSize * scale;
-				x -= plugSizeToScale;
-			}
-			if(piece.connectors.plugs.indexOf('r') > -1){
-				w += this.config.jigsawPlugSize * scale;
-			}
-			if(piece.connectors.plugs.indexOf('t') > -1){
-				h += this.config.jigsawPlugSize * scale;
-				y -= plugSizeToScale;
-			}
-			if(piece.connectors.plugs.indexOf('b') > -1){
-				h += this.config.jigsawPlugSize * scale;
-			}
-		}
-
-		return {
-			x,y,w,h
 		}
 	}
 
@@ -271,48 +317,9 @@ class Puzzly {
 		return this.tmpCtx.getImageData(0,0,pieceData.width,pieceData.height);
 	}
 
-	// Draw puzzle piece
-	drawPiece(sourceImgX, sourceImgY, canvasX, canvasY, piece, pieceSize){
-		let plugSizeToScale = pieceSize / this.config.jigsawSquareSize * this.config.jigsawPlugSize;
-
-		const pieceData = this.getCanvasCoordsAndDimensionsForPiece(canvasX, canvasY, piece, pieceSize);
-		const imgData = this.getImageCoordsAndDimensionsForPiece(sourceImgX, sourceImgY, pieceSize, piece)
-
-		this.tmpCtx.drawImage(this.JigsawSprite, pieceData.x, pieceData.y, pieceData.width, pieceData.height, 0, 0, sourceImgData.w, sourceImgData.h);
-
-		this.tmpCtx.beginPath();
-    this.tmpCtx.moveTo(200,200);
-    this.tmpCtx.lineTo(275,200);
-    this.tmpCtx.quadraticCurveTo(250,150,300,150);
-    this.tmpCtx.quadraticCurveTo(350,150,325,200);
-    this.tmpCtx.lineTo(400,200);
-    this.tmpCtx.lineTo(400,275);
-    this.tmpCtx.quadraticCurveTo(450,250,450,300);
-    this.tmpCtx.quadraticCurveTo(450,350,400,325);
-    this.tmpCtx.lineTo(400,400);
-    this.tmpCtx.lineTo(325,400);
-    this.tmpCtx.quadraticCurveTo(350,450,300,450);
-    this.tmpCtx.quadraticCurveTo(250,450,275,400);
-    this.tmpCtx.lineTo(200,400);
-    this.tmpCtx.lineTo(200,325);
-    this.tmpCtx.quadraticCurveTo(150,350,150,300);
-    this.tmpCtx.quadraticCurveTo(150,250,200,275);
-    this.tmpCtx.lineTo(200,200);
-		this.tmpCtx.closePath();
-		this.tmpCtx.stroke();
-
-		this.tmpCtx.clip();
-
-		this.ctx.drawImage(this.tmpCanvas, canvasX, canvasY);
-		this.tmpCtx.restore();
-	}
-
 	drawBackground(){
-		this.bgCtx.save();
-		// this.bgCtx.globalCompositeOperation = 'destination-over';
 		this.bgCtx.drawImage(this.BgImage, 0, 0, this.BgImage.width, this.BgImage.height);
 		this.ctx.drawImage(this.bgCanvas, 0, 0, this.BgImage.width, this.BgImage.height, 0, 0, this.canvas.width, this.canvas.height);
-		this.bgCtx.restore();
 	}
 
 	getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow){
@@ -524,7 +531,7 @@ class Puzzly {
 			x: e.clientX,
 			y: e.clientY
 		};
-		return this.getCellByCoords(coords);
+		// return this.getCellByCoords(coords);
 	}
 }
 

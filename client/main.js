@@ -1,4 +1,4 @@
-import Puzzly from './puzzly';
+import Puzzly from './puzzly.js';
 
 /*
 var form = document.forms[0];
@@ -32,4 +32,4 @@ function upload(form){
 	});
 }
 
-new Puzzly('canvas', './halflife-3-2.jpg', 1);
+new Puzzly('canvas', './halflife-3-2.jpg', 48);
