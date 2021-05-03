@@ -113,9 +113,42 @@ class Puzzly {
 			{x: 1266, y: 733, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1,  1, -1, -1], id: 30},
 			{x: 1511, y: 733, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [-1,  1, 1, -1], id: 31},
 			{x: 1756, y: 691, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1,  0, 0, -1], id: 32},
+			// Fifth row actual x value = 976
+			{x: 40, y: 934, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1,  0, -1, -1], id: 33},
+			{x: 285, y: 934, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.large, type: [1,  0, 1, -1], id: 34},
+			{x: 531, y: 934, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1,  -1, 0, -1], id: 35},
+			{x: 777, y: 934, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1,  -1, -1, -1], id: 36},
+			{x: 1020, y: 934, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.large, type: [1,  -1, 1, -1], id: 37},
+			{x: 1266, y: 934, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1,  1, 0, -1], id: 38},
+			{x: 1511, y: 934, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1,  1, -1, -1], id: 39},
+			{x: 1756, y: 934, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.large, type: [1,  1, 1, -1], id: 40},
+			{x: 0, y: 1225, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [0, 0, -1, 1], id: 41},
+			{x: 245, y: 1225, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [0, 0, 1, 1], id: 42},
+			{x: 491, y: 1225, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [0, -1, -1, 1], id: 43},
+			{x: 737, y: 1225, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [0, -1, 1, 1], id: 44},
+			{x: 980, y: 1225, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.small, type: [0, 1, -1, 1], id: 45},
+			{x: 1226, y: 1225, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.medium, type: [0, 1, 1, 1], id: 46},
+			{x: 1471, y: 1225, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1, 0, 0, 1], id: 47},
+			{x: 1716, y: 1225, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1, 0, -1, 1], id: 48},
+			{x: 0, y: 1470, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [-1, 0, 1, 1], id: 49},
+			{x: 245, y: 1470, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1, -1, 0, 1], id: 50},
+			{x: 491, y: 1470, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1, -1, -1, 1], id: 51},
+			{x: 737, y: 1470, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [-1, -1, 1, 1], id: 52},
+			{x: 980, y: 1470, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.small, type: [-1, 1, 0, 1], id: 53},
+			{x: 1226, y: 1470, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.small, type: [-1, 1, -1, 1], id: 54},
+			{x: 1471, y: 1470, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.medium, type: [-1, 1, 1, 1], id: 55},
+			{x: 1716, y: 1430, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1, 0, 0, 1], id: 56},
+			{x: 0, y: 1674, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1, 0, -1, 1], id: 57},
+			{x: 245, y: 1674, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.large, type: [1, 0, 1, 1], id: 58},
+			{x: 491, y: 1674, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1, -1, 0, 1], id: 59},
+			{x: 737, y: 1674, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1, -1, -1, 1], id: 60},
+			{x: 980, y: 1674, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.large, type: [1, -1, 1, 1], id: 61},
+			{x: 1226, y: 1674, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.medium, type: [1, 1, 0, 1], id: 62},
+			{x: 1471, y: 1674, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.medium, type: [1, 1, -1, 1], id: 63},
+			{x: 1716, y: 1674, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.large, type: [1, 1, 1, 1], id: 64},
 		];
 		
-		this.drawPiece(32);
+		this.drawPiece(64);
 		
 		window.addEventListener('mousedown', (e) => {
 			this.onMouseDown(e);
