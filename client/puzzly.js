@@ -2,7 +2,7 @@ class Puzzly {
 
 	constructor(canvasId, imageUrl, numPieces){
 		this.config = {
-			scale: .5,
+			scale: .2,
 			boardBoundary: 200,
 			backgroundImages: [
 				{
@@ -16,14 +16,8 @@ class Puzzly {
 
 		this.numPieces = numPieces;
 
-		console.log('Initiating puzzly: ', imageUrl, numPieces);
-
 		this.canvas = document.getElementById(canvasId);
-		this.tmpCanvas = document.getElementById('tmp-canvas');
-		this.bgCanvas = document.getElementById('bg-canvas');
 		this.ctx = this.canvas.getContext('2d');
-		this.tmpCtx = this.tmpCanvas.getContext('2d');
-		this.bgCtx = this.bgCanvas.getContext('2d');
 
 		this.loadedImages = [];
 		this.SourceImage = new Image();
@@ -47,37 +41,22 @@ class Puzzly {
 	}
 
 	init(){
-		console.log(this)
-
 		this.canvas.width = this.SourceImage.width + (this.config.boardBoundary*2);
 		this.canvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
-		this.tmpCanvas.width = 0;
-		this.tmpCanvas.height = 0;
-		this.bgCanvas.width = this.SourceImage.width + (this.config.boardBoundary*2);
-		this.bgCanvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
 	
-		this.tmpCanvasCtx = this.tmpCanvas.getContext("2d");
-
 		// Width / height of a single segment based on the total area of the src image divided by the number of pieces the user wants
 		this.segmentSize = Math.sqrt(this.loadedImages[1].width * this.loadedImages[1].height / this.numPieces);
 		this.piecesPerSide = Math.sqrt(this.numPieces)
 
-		console.log(this.loadedImages)
 		// this.diceImage(this.numPieces);
-
-		this.tmpCanvas.width = this.tmpCanvas.height = this.segmentSize;
-		this.tmpCanvasParent = this.tmpCanvas.parentNode;
-		this.tmpCanvasParent.width = this.tmpCanvas.height = this.segmentSize;
-		console.log(this.loadedImages[1])
-
-		this.tmpCanvasParent.style.top = this.tmpCanvas.style.top = 0;
-		this.tmpCanvasParent.style.left = this.tmpCanvas.style.left = 0;
 
 		this.jigsawShapeSpans = {
 			small: 122,
 			medium: 165,
 			large: 208
 		};
+
+		this.drawBackground();
 		
 		this.SpriteMap = [
 			{x: 40, y: 0, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [0,  -1, -1, 0], id: 1},
@@ -148,7 +127,10 @@ class Puzzly {
 			{x: 1716, y: 1674, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.large, type: [1, 1, 1, 1], id: 64},
 		];
 		
-		this.drawPiece(64);
+		this.drawPiece(64, 0, 0, 0, 0);
+		this.drawPiece(40, 200, 0, 300, 0);
+
+		this.makePieces();
 		
 		window.addEventListener('mousedown', (e) => {
 			this.onMouseDown(e);
@@ -161,11 +143,22 @@ class Puzzly {
 		});
 	}
 	
-	drawPiece(id) {
+	drawPiece(id, sourceX, sourceY, pageX, pageY) {
 		const piece = this.SpriteMap.find( p => p.id === id);
-		this.tmpCanvasCtx.drawImage(this.SourceImage, 0, 0, this.segmentSize, this.segmentSize, 0, 0, this.segmentSize, this.segmentSize);
-		this.tmpCanvasCtx.globalCompositeOperation = 'destination-atop';
-		this.tmpCanvasCtx.drawImage(
+		const canvasEl = document.createElement("canvas");
+		document.body.appendChild(canvasEl)
+		canvasEl.id = "canvas-" + id;
+		canvasEl.width = piece.w;
+		canvasEl.height = piece.h;
+		canvasEl.style.position = "absolute";
+		canvasEl.style.left = pageX + "px";
+		canvasEl.style.top = pageY + "px";
+
+		const cvctx = canvasEl.getContext("2d");
+
+		cvctx.drawImage(this.SourceImage, sourceX, sourceY, this.segmentSize, this.segmentSize, 0, 0, this.segmentSize, this.segmentSize);
+		cvctx.globalCompositeOperation = 'destination-atop';
+		cvctx.drawImage(
 			this.JigsawSprite,
 			piece.x,
 			piece.y,
@@ -173,8 +166,8 @@ class Puzzly {
 			piece.h,
 			0, 
 			0, 
-			piece.w,
-			piece.h,
+			piece.w * this.config.scale,
+			piece.h * this.config.scale,
 		);
 	}
 
@@ -198,19 +191,20 @@ class Puzzly {
 	}
 
 	onMouseDown(e){
-		// this.movingPiece = this.getClickTarget(e);
 		this.movingPiece = e.target;
+		this.movingPiece.style.zIndex = 2;
+		this.movingPieceXOffset = this.movingPiece.offsetLeft;
 		this.isMouseDown = true;
 	}
-
+	
 	onMouseUp(){
+		this.movingPiece.style.zIndex = 1;
 		this.movingPiece = null;
 		this.isMouseDown = false;
 	}
 
 	onMouseMove(e){
 		if(this.isMouseDown){
-			// this.draw(e.clientX, e.clientY);
 			this.movingPiece.style.left = e.clientX + "px";
 			this.movingPiece.style.top = e.clientY + "px";
 		}
@@ -253,9 +247,11 @@ class Puzzly {
 		var boardLeft = this.canvas.offsetLeft + this.config.boardBoundary;
 		var boardTop = this.canvas.offsetTop + this.config.boardBoundary;
 
+		console.log(boardLeft, boardTop)
+
 		// prepare draw options
-		var curImgX = 300;
-		var curImgY = 300;
+		var curImgX = boardLeft;
+		var curImgY = boardTop;
 		var curCanvasX = boardLeft;
 		var curCanvasY = boardTop;
 
@@ -270,7 +266,6 @@ class Puzzly {
 		let finalRow = false;
 
 		while(i<this.numPieces){
-
 			// All pieces not on top row
 			if(this.pieces.length > this.piecesPerSide - 1){
 				adjacentPieceAbove = this.pieces[this.pieces.length - this.piecesPerSide];
@@ -292,20 +287,21 @@ class Puzzly {
 			}
 
 			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
+			console.log(candidatePieces)
 			let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
-			// this.drawPiece(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, pieceSize);
+			console.log(candidatePieces)
 			this.assignInitialPieceData(curImgX, curImgY, curCanvasX, curCanvasY, currentPiece, i);
 
 			// reached last piece, start next row
 			if(this.pieces.length % this.piecesPerSide === 0){
 				curImgX = 0;
-				curImgY += pieceSize;
+				curImgY += this.config.pieceSize;
 				curCanvasX = boardLeft;
-				curCanvasY += pieceSize;
+				curCanvasY += this.config.pieceSize;
 				rowCount++;
 			} else {
-				curImgX += pieceSize;
-				curCanvasX += pieceSize;
+				curImgX += this.config.segmentSize;
+				curCanvasX += this.config.segmentSize;
 			}
 
 			i++;
@@ -351,8 +347,49 @@ class Puzzly {
 	}
 
 	drawBackground(){
-		this.bgCtx.drawImage(this.BgImage, 0, 0, this.BgImage.width, this.BgImage.height);
-		this.ctx.drawImage(this.bgCanvas, 0, 0, this.BgImage.width, this.BgImage.height, 0, 0, this.canvas.width, this.canvas.height);
+		this.ctx.drawImage(this.BgImage, 0, 0, this.BgImage.width, this.BgImage.height, 0, 0, this.canvas.width, this.canvas.height);
+	}
+
+	isTopLeftCorner(piece) {
+		return piece.type[0] === 0 && piece.type[3] === 0;
+	}
+
+	isTopSide(piece) {
+		return piece.type[0] === 0;
+	}
+
+	isTopRightCorner(piece) {
+		return piece.type[0] === 0 && piece.type[1] === 0;
+	}
+
+	isLeftSide(piece) {
+		return piece.type[4] === 0;
+	}
+
+	isInnerPiece(piece) {
+		return piece.type[0] !== 0 && piece.type[1] !== 0 && piece.type[2] !== 0 && piece.type[3] !== 0;
+	}
+
+	isRightSide(piece) {
+		return piece.type[1] === 0;
+	}
+
+	isBottomLeftCorner(piece) {
+		return piece.type[2] === 0 && piece.type[3] === 0;
+	}
+
+	isBottomSide(piece) {
+		return piece.type[2] === 0;
+	}
+
+	isBottomRightCorner(piece) {
+		return piece.type[1] === 0 && piece.type[2] === 0;
+	}
+
+	has(piece, connector, side){
+		const c = connector === "plug" ? 1 : connector === "socket" ? -1 : null;
+		const s = side === "top" ? 0 : side === "right" ? 1 : side === "bottom" ? 2 : side === "left" ? 3 : null;
+		return c && s && piece.type[s] === c;
 	}
 
 	getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow){
@@ -361,30 +398,28 @@ class Puzzly {
 
 		// Top left corner piece
 		if(!adjacentPieceBehind && !adjacentPieceAbove){
-			return SpriteMap.filter((o) => o.type.indexOf('corner-tl') > -1 );
+			return this.SpriteMap.filter((piece) => this.isTopLeftCorner(piece));
 		}
 
 		// First row pieces
 		if(!adjacentPieceAbove){
-			let pieceType = adjacentPieceBehind.type;
 
 			// Does lastPiece have a plug on its right side?
-			let lastPieceHasRightPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
+			let lastPieceHasRightPlug = has(adjacentPieceBehind, "plug", "right");
 			// Does lastPiece have a socket on its right side?
-			let lastPieceHasRightSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
-			let iterateeIsCorrectType;
+			let lastPieceHasRightSocket = has(adjacentPieceBehind, "socket", "right");
 
-			pieces = SpriteMap.filter( (o) => {
+			pieces = this.SpriteMap.filter( (o) => {
 				if(endOfRow){
-					return o.type.indexOf('corner-tr') > -1;
+					return this.isRightSide(o);
 				} else {
-					return o.type.indexOf('side-t') > -1;
+					return this.isTopSide(o);
 				}
 			});
 
 			for(let i=0, l=pieces.length; i<l; i++){
-				let iterateeHasLeftSocket = pieces[i].connectors.sockets.indexOf('l') > -1;
-				let iterateeHasLeftPlug = pieces[i].connectors.plugs.indexOf('l') > -1;
+				let iterateeHasLeftSocket = this.has(pieces[i], "socket", "left");
+				let iterateeHasLeftPlug = this.has(pieces[i], "plug", "left");
 				if(lastPieceHasRightPlug && iterateeHasLeftSocket){
 					candidatePieces.push(pieces[i]);
 				} else if(lastPieceHasRightSocket && iterateeHasLeftPlug){
@@ -396,19 +431,19 @@ class Puzzly {
 		else {
 
 			// Last piece of each row, should be right side
-			if(adjacentPieceAbove.type.indexOf('corner-tr') > -1 || adjacentPieceAbove.type.indexOf('side-r') > -1){
-				pieces = SpriteMap.filter( (o) => o.type.indexOf('side-r') > -1)
+			if(this.isTopRightCorner(adjacentPieceAbove) || this.isRightSide(adjacentPieceAbove)){
+				pieces = SpriteMap.filter( (o) => this.isRightSide(o))
 			}
 
 			// Very last piece, should be corner bottom right
-			if(adjacentPieceAbove.type.indexOf('side-r') > -1 && adjacentPieceBehind.type.indexOf('side-b') > -1){
-				pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-br') > -1)
+			if(this.isBottomRightCorner(adjacentPieceAbove)){
+				pieces = SpriteMap.filter( (o) => this.isBottomRightCorner(o))
 			}
 
 			// First piece of each row, should be left side
-			if(!finalRow && (adjacentPieceBehind.type.indexOf('corner-tr') > -1 || adjacentPieceBehind.type.indexOf('side-r') > -1)){
+			if(!finalRow && ((adjacentPieceBehind.type[0] === 0 && adjacentPieceBehind.type[1] === 0) || adjacentPieceBehind.type[1] === 0)){
 
-				pieces = SpriteMap.filter( (o) => o.type.indexOf('side-l') > -1);
+				pieces = this.SpriteMap.filter( (o) => o.type[3] === 0);
 
 				let pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
 				let pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
@@ -437,7 +472,7 @@ class Puzzly {
 				// if(adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
 
 				if(adjacentPieceAbove.type.indexOf('side-l') > -1){
-					pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-bl') > -1);
+					pieces = this.SpriteMap.filter( (o) => o.type.indexOf('corner-bl') > -1);
 
 					let pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
 					let pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
@@ -456,11 +491,11 @@ class Puzzly {
 				}
 
 				if(adjacentPieceAbove.type.indexOf('middle') > -1){
-					pieces = SpriteMap.filter( (o) => o.type.indexOf('side-b') > -1);
+					pieces = this.SpriteMap.filter( (o) => o.type.indexOf('side-b') > -1);
 				}
 
 				if(adjacentPieceAbove.type.indexOf('side-r') > -1 && adjacentPieceBehind.type.indexOf('side-b') > -1){
-					pieces = SpriteMap.filter( (o) => o.type.indexOf('corner-br') > -1);
+					pieces = this.SpriteMap.filter( (o) => o.type.indexOf('corner-br') > -1);
 				}
 			}
 
@@ -533,8 +568,8 @@ class Puzzly {
 			currentY: canvY,
 			boundingBox: {
 				top: canvY,
-				right: canvX + this.config.pieceSize['500'],
-				bottom: canvY + this.config.pieceSize['500'],
+				right: canvX + this.config.segmentSize,
+				bottom: canvY + this.config.segmentSize,
 				left: canvX
 			},
 			solvedX: canvX,
