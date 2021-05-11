@@ -1,3 +1,5 @@
+import { SpriteMap, JigsawShapeSpans } from "./jigsaw.js";
+
 class Puzzly {
 
 	constructor(canvasId, imageUrl, numPieces){
@@ -55,85 +57,12 @@ class Puzzly {
 
 		// this.diceImage(this.numPieces);
 
-		this.jigsawShapeSpans = {
-			small: 122,
-			medium: 165,
-			large: 208
-		};
+		
 
 
 		console.log(this.config)
 
 		this.drawBackground();
-		
-		this.SpriteMap = [
-			{x: 40, y: 0, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [0,  -1, -1, 0], id: 1},
-			{x: 285, y: 0, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [0, -1, 1, 0], id: 2},
-			{x: 531, y: 0, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [0, 1, -1, 0], id: 3},
-			{x: 777, y: 0, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [0, 1, 1, 0], id: 4},
-			{x: 1020, y: 0, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [-1, -1, 0, 0], id: 5},
-			{x: 1266, y: 0, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [-1, -1, -1, 0], id: 6},
-			{x: 1511, y: 0, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [-1, -1, 1, 0], id: 7},
-			{x: 1756, y: 0, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1, 1, 0, 0], id: 8},
-			
-			{x: 40, y: 243, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1,  1, -1, 0], id: 9},
-			{x: 285, y: 243, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [-1, 1, 1, 0], id: 10},
-			{x: 531, y: 201, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1, -1, 0, 0], id: 11},
-			{x: 777, y: 201, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1, -1, -1, 1], id: 12},
-			{x: 1020, y: 201, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.large, type: [1, -1, 1, 1], id: 13},
-			{x: 1266, y: 201, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1, 1, 0, 1], id: 14},
-			{x: 1511, y: 201, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.large, type: [1, 1, -1, 1], id: 15},
-			{x: 1756, y: 201, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.large, type: [1, 1, 1, 0], id: 16},
-			{x: 40, y: 490, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [0,  0, -1, -1], id: 17},
-			{x: 285, y: 490, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [0,  0, 1, -1], id: 18},
-			{x: 531, y: 490, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [0,  -1, -1, -1], id: 19},
-			{x: 777, y: 490, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [0,  -1, 1, -1], id: 20},
-			{x: 1020, y: 490, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [0,  1, -1, -1], id: 21},
-			{x: 1266, y: 490, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [0,  1, 1, -1], id: 22},
-			{x: 1511, y: 490, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [-1,  0, 0, -1], id: 23},
-			{x: 1756, y: 490, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [-1,  0, -1, -1], id: 24},
-			{x: 40, y: 733, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [-1,  0, 1, -1], id: 25},
-			{x: 285, y: 733, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [-1,  -1, 0, -1], id: 26},
-			{x: 531, y: 733, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.small, type: [-1,  -1, -1, -1], id: 27},
-			{x: 777, y: 733, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [-1,  -1, 1, -1], id: 28},
-			{x: 1020, y: 733, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [-1,  1, 0, -1], id: 29},
-			{x: 1266, y: 733, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1,  1, -1, -1], id: 30},
-			{x: 1511, y: 733, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [-1,  1, 1, -1], id: 31},
-			{x: 1756, y: 691, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1,  0, 0, -1], id: 32},
-			// Fifth row actual x value = 976
-			{x: 40, y: 934, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1,  0, -1, -1], id: 33},
-			{x: 285, y: 934, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.large, type: [1,  0, 1, -1], id: 34},
-			{x: 531, y: 934, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1,  -1, 0, -1], id: 35},
-			{x: 777, y: 934, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.medium, type: [1,  -1, -1, -1], id: 36},
-			{x: 1020, y: 934, w: this.jigsawShapeSpans.small, h: this.jigsawShapeSpans.large, type: [1,  -1, 1, -1], id: 37},
-			{x: 1266, y: 934, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1,  1, 0, -1], id: 38},
-			{x: 1511, y: 934, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1,  1, -1, -1], id: 39},
-			{x: 1756, y: 934, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.large, type: [1,  1, 1, -1], id: 40},
-			{x: 0, y: 1225, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [0, 0, -1, 1], id: 41},
-			{x: 245, y: 1225, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [0, 0, 1, 1], id: 42},
-			{x: 491, y: 1225, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [0, -1, -1, 1], id: 43},
-			{x: 737, y: 1225, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [0, -1, 1, 1], id: 44},
-			{x: 980, y: 1225, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.small, type: [0, 1, -1, 1], id: 45},
-			{x: 1226, y: 1225, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.medium, type: [0, 1, 1, 1], id: 46},
-			{x: 1471, y: 1225, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1, 0, 0, 1], id: 47},
-			{x: 1716, y: 1225, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1, 0, -1, 1], id: 48},
-			{x: 0, y: 1470, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [-1, 0, 1, 1], id: 49},
-			{x: 245, y: 1470, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1, -1, 0, 1], id: 50},
-			{x: 491, y: 1470, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.small, type: [-1, -1, -1, 1], id: 51},
-			{x: 737, y: 1470, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [-1, -1, 1, 1], id: 52},
-			{x: 980, y: 1470, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.small, type: [-1, 1, 0, 1], id: 53},
-			{x: 1226, y: 1470, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.small, type: [-1, 1, -1, 1], id: 54},
-			{x: 1471, y: 1470, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.medium, type: [-1, 1, 1, 1], id: 55},
-			{x: 1716, y: 1430, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1, 0, 0, 1], id: 56},
-			{x: 0, y: 1674, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1, 0, -1, 1], id: 57},
-			{x: 245, y: 1674, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.large, type: [1, 0, 1, 1], id: 58},
-			{x: 491, y: 1674, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1, -1, 0, 1], id: 59},
-			{x: 737, y: 1674, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.medium, type: [1, -1, -1, 1], id: 60},
-			{x: 980, y: 1674, w: this.jigsawShapeSpans.medium, h: this.jigsawShapeSpans.large, type: [1, -1, 1, 1], id: 61},
-			{x: 1226, y: 1674, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.medium, type: [1, 1, 0, 1], id: 62},
-			{x: 1471, y: 1674, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.medium, type: [1, 1, -1, 1], id: 63},
-			{x: 1716, y: 1674, w: this.jigsawShapeSpans.large, h: this.jigsawShapeSpans.large, type: [1, 1, 1, 1], id: 64},
-		];
 		
 		this.makePieces();
 		
@@ -188,23 +117,7 @@ class Puzzly {
 		);
 	}
 
-	diceImage() {
-		const img = this.loadedImages[0];
 
-		// Create data set for all diced segments
-		const segmentArray = [];
-		let curX = 0;
-		let curY = 0;
-		let sData = {};
-
-		for(let i=0, l = segmentArray.length; segmentArray.length < this.numPieces; i++){
-
-			sData.x = curX;
-			sData.y = curY;
-
-			segmentArray.push()
-		}
-	}
 
 	onMouseDown(e){
 		this.movingPiece = e.target;
@@ -247,14 +160,70 @@ class Puzzly {
 		})
 	}
 
-	drawImage(img, imgX, imgY, imgW, imgH, inBoardArea){
-		if(inBoardArea){
-			var cX = this.canvas.ObjectffsetLeft + this.config.boardBoundary;
-			var cY = this.canvas.offsetTop + this.config.boardBoundary;
+	getCompatiblePieces(pieceAbove, pieceBehind, pieces){
+		let pieceAboveHasPlug,
+			pieceAboveHasSocket,
+			pieceBehindHasPlug,
+			pieceBehindHasSocket;
+
+		if(pieceAbove){
+			pieceAboveHasSocket = this.has(pieceAbove, "socket", "bottom");
+			pieceAboveHasPlug = this.has(pieceAbove, "plug", "bottom");
 		}
 
-		// this.tmpCtx.drawImage(img, imgX, imgY, imgW, imgH);
-		this.ctx.drawImage(img, 0, 0, imgW, imgH)
+		if(pieceBehind){
+			pieceBehindHasSocket = this.has(pieceBehind, "socket", "right");
+			pieceBehindHasPlug = this.has(pieceBehind, "plug", "right");
+		}
+
+		let thisPieceHasLeftSocket,
+			thisPieceHasLeftPlug,
+			thisPieceHasTopSocket,
+			thisPieceHasTopPlug;
+
+		const candidatePieces = [];
+
+		for(let i=0, l=pieces.length; i<l; i++){
+			if(pieceAbove){
+				thisPieceHasTopSocket = this.has(pieces[i], "socket", "top");
+				thisPieceHasTopPlug = this.has(pieces[i], "plug", "top");
+			}
+
+			if(pieceBehind){
+				thisPieceHasLeftSocket = this.has(pieces[i], "socket", "left");
+				thisPieceHasLeftPlug = this.has(pieces[i], "plug", "left");
+			}
+			
+			if(pieceAbove && !pieceBehind){
+				if(pieceAboveHasSocket && thisPieceHasTopPlug){
+					candidatePieces.push(pieces[i]);
+				} else if(pieceAboveHasPlug && thisPieceHasTopSocket){
+					candidatePieces.push(pieces[i]);
+				}
+			}
+
+			if(!pieceAbove && pieceBehind){
+				if(pieceBehindHasPlug && thisPieceHasLeftSocket){
+					candidatePieces.push(pieces[i]);
+				} else if(pieceBehindHasSocket && thisPieceHasLeftPlug){
+					candidatePieces.push(pieces[i]);
+				}
+			}
+
+			if(pieceAbove && pieceBehind){
+				if(pieceBehindHasSocket && thisPieceHasLeftPlug && pieceAboveHasPlug && thisPieceHasTopSocket){
+					candidatePieces.push(pieces[i]);
+				} else if(pieceBehindHasPlug && thisPieceHasLeftSocket && pieceAboveHasSocket && thisPieceHasTopPlug){
+					candidatePieces.push(pieces[i]);
+				} else if(pieceBehindHasSocket && thisPieceHasLeftPlug && pieceAboveHasSocket && thisPieceHasTopPlug){
+					candidatePieces.push(pieces[i]);
+				} else if(pieceBehindHasPlug && thisPieceHasLeftSocket && pieceAboveHasPlug && thisPieceHasTopSocket){
+					candidatePieces.push(pieces[i]);
+				}
+			}
+		}
+
+		return candidatePieces;
 	}
 
 	makePieces(){
@@ -274,7 +243,6 @@ class Puzzly {
 		let adjacentPieceBehind = null;
 		let adjacentPieceAbove = null;
 		let endOfRow = false;
-		let lastPiece = null;
 		let rowCount = 1;
 		let finalRow = false;
 
@@ -291,7 +259,7 @@ class Puzzly {
 				endOfRow = false;
 			}
 
-			if(rowCount === this.config.piecesPerSide-1){
+			if(rowCount === this.config.piecesPerSide){
 				finalRow = true;
 			}
 
@@ -303,9 +271,7 @@ class Puzzly {
 				adjacentPieceBehind = null;
 			}
 
-			// console.log(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow)
 			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
-			// console.log(candidatePieces)
 			let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
 			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, currentPiece, i);
 
@@ -321,10 +287,10 @@ class Puzzly {
 				rowCount++;
 			} else {
 				if(this.has(currentPiece, "socket", "right")){
-					curImgX += this.jigsawShapeSpans.small;
+					curImgX += JigsawShapeSpans.small;
 				}
 				if(this.has(currentPiece, "plug", "right")){
-					curImgX += this.jigsawShapeSpans.small
+					curImgX += JigsawShapeSpans.small
 				}
 				curPageX += this.config.segmentSize;
 			}
@@ -362,7 +328,7 @@ class Puzzly {
 	}
 
 	isRightSide(piece) {
-		return piece ? piece.type[1] === 0 : false;
+		return piece && piece.type[0] !== 0 && piece.type[1] === 0 && piece.type[2] !== 0;
 	}
 
 	isBottomLeftCorner(piece) {
@@ -370,7 +336,7 @@ class Puzzly {
 	}
 
 	isBottomSide(piece) {
-		return piece.type[2] === 0;
+		return piece.type[1] !== 0 && piece.type[2] === 0 && piece.type[3] !== 0;
 	}
 
 	isBottomRightCorner(piece) {
@@ -385,23 +351,17 @@ class Puzzly {
 	}
 
 	getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow){
-		let candidatePieces = [];
-		let pieces = null;
+		let pieces = [];
+		console.log("need last piece?", this.isRightSide(adjacentPieceAbove) && this.isBottomSide(adjacentPieceBehind))
 
 		// Top left corner piece
 		if(!adjacentPieceBehind && !adjacentPieceAbove){
-			return this.SpriteMap.filter((piece) => this.isTopLeftCorner(piece));
+			return SpriteMap.filter((piece) => this.isTopLeftCorner(piece));
 		}
 
 		// First row pieces
 		if(!adjacentPieceAbove){
-			
-			// Does lastPiece have a plug on its right side?
-			let lastPieceHasRightPlug = this.has(adjacentPieceBehind, "plug", "right");
-			// Does lastPiece have a socket on its right side?
-			let lastPieceHasRightSocket = this.has(adjacentPieceBehind, "socket", "right");
-
-			pieces = this.SpriteMap.filter( (o) => {
+			pieces = SpriteMap.filter( (o) => {
 				if(endOfRow){
 					return this.isTopRightCorner(o);
 				} else {
@@ -409,152 +369,47 @@ class Puzzly {
 				}
 			});
 
-			for(let i=0, l=pieces.length; i<l; i++){
-				let iterateeHasLeftSocket = this.has(pieces[i], "socket", "left");
-				let iterateeHasLeftPlug = this.has(pieces[i], "plug", "left");
-				if(lastPieceHasRightPlug && iterateeHasLeftSocket){
-					candidatePieces.push(pieces[i]);
-				} else if(lastPieceHasRightSocket && iterateeHasLeftPlug){
-					candidatePieces.push(pieces[i]);
-				}
+			return this.getCompatiblePieces(false, adjacentPieceBehind, pieces);
+		}
+		// All pieces after top row
+		else {
+			
+			// Last piece of each row, should be right side
+			if(this.isTopRightCorner(adjacentPieceAbove) || (!finalRow && this.isRightSide(adjacentPieceAbove))){
+				pieces = SpriteMap.filter( (o) => this.isRightSide(o));
+				return this.getCompatiblePieces(adjacentPieceAbove, adjacentPieceBehind, pieces)
+			}
+			
+			// First piece of each row, should be left side
+			if(this.isTopLeftCorner(adjacentPieceAbove) || (!finalRow && this.isLeftSide(adjacentPieceAbove))){
+				pieces = SpriteMap.filter( (o) => this.isLeftSide(o));
+				return this.getCompatiblePieces(adjacentPieceAbove, null, pieces)
+			}
+			
+			// All middle pieces
+			if((!finalRow && this.isInnerPiece(adjacentPieceAbove)) || this.isTopSide(adjacentPieceAbove)){
+				pieces = SpriteMap.filter( (o) => this.isInnerPiece(o));
+				return this.getCompatiblePieces(adjacentPieceAbove, adjacentPieceBehind, pieces)
 			}
 
-			return candidatePieces;
-		}
-		// All piece after top row
-		else {
-			console.log(adjacentPieceAbove)
-			// Last piece of each row, should be right side
-			if(this.isTopRightCorner(adjacentPieceAbove) || this.isRightSide(adjacentPieceAbove)){
-				pieces = this.SpriteMap.filter( (o) => this.isRightSide(o));
-
-				let pieceAboveHasSocket = this.has(adjacentPieceAbove, "socket", "bottom");
-				let pieceAboveHasPlug = this.has(adjacentPieceAbove, "plug", "bottom");
-				
-				for(let i=0, l=pieces.length; i<l; i++){
-					let iterateeHasTopSocket = this.has(pieces[i], "socket", "top");
-					let iterateeHasTopPlug = this.has(pieces[i], "plug", "top");
-					if(pieceAboveHasSocket && iterateeHasTopPlug){
-						candidatePieces.push(pieces[i]);
-					} else if(pieceAboveHasPlug && iterateeHasTopSocket){
-						candidatePieces.push(pieces[i]);
-					}
-				}
-				
-				return candidatePieces;
+			// All pieces on bottom row
+			if(finalRow && this.isLeftSide(adjacentPieceAbove)){
+				pieces = SpriteMap.filter( (o) => this.isBottomLeftCorner(o));
+				return this.getCompatiblePieces(adjacentPieceAbove, null, pieces)
+			}
+			
+			if(this.isInnerPiece(adjacentPieceAbove) && (this.isBottomLeftCorner(adjacentPieceBehind) || this.isBottomSide(adjacentPieceBehind))){
+				pieces = SpriteMap.filter( (o) => this.isBottomSide(o));
+				return this.getCompatiblePieces(adjacentPieceAbove, adjacentPieceBehind, pieces)
 			}
 
 			// Very last piece, should be corner bottom right
-			if(this.isBottomRightCorner(adjacentPieceAbove)){
-				pieces = this.SpriteMap.filter( (o) => this.isBottomRightCorner(o))
-			}
-
-			// First piece of each row, should be left side
-			if(!finalRow && !adjacentPieceBehind){
-				pieces = this.SpriteMap.filter( (o) => this.isLeftSide(o));
-				
-				let pieceAboveHasSocket = this.has(adjacentPieceAbove, "socket", "bottom");
-				let pieceAboveHasPlug = this.has(adjacentPieceAbove, "plug", "bottom");
-				
-				for(let i=0, l=pieces.length; i<l; i++){
-					let iterateeHasTopSocket = this.has(pieces[i], "socket", "top");
-					let iterateeHasTopPlug = this.has(pieces[i], "plug", "top");
-					if(pieceAboveHasSocket && iterateeHasTopPlug){
-						candidatePieces.push(pieces[i]);
-					} else if(pieceAboveHasPlug && iterateeHasTopSocket){
-						candidatePieces.push(pieces[i]);
-					}
-				}
-				
-				return candidatePieces;
-			}
-			
-			console.log(adjacentPieceAbove)
-			// All middle pieces
-			if(this.isInnerPiece(adjacentPieceAbove) || this.isTopSide(adjacentPieceAbove)){
-				pieces = this.SpriteMap.filter( (o) => this.isInnerPiece(o));
-
-				let pieceBehindHasSocket = this.has(adjacentPieceBehind, "socket", "right");
-				let pieceBehindHasPlug = this.has(adjacentPieceBehind, "plug", "right");
-				let pieceAboveHasSocket = this.has(adjacentPieceAbove, "socket", "bottom");
-				let pieceAboveHasPlug = this.has(adjacentPieceAbove, "plug", "bottom");
-
-				for(let i=0, l=pieces.length; i<l; i++){
-					let iterateeHasLeftSocket = this.has(pieces[i], "socket", "left");
-					let iterateeHasLeftPlug = this.has(pieces[i], "plug", "left");
-					let iterateeHasTopSocket = this.has(pieces[i], "socket", "top");
-					let iterateeHasTopPlug = this.has(pieces[i], "plug", "top");
-					if(pieceBehindHasSocket && iterateeHasLeftPlug && pieceAboveHasPlug && iterateeHasTopSocket){
-						candidatePieces.push(pieces[i]);
-					} else if(pieceBehindHasPlug && iterateeHasLeftSocket && pieceAboveHasSocket && iterateeHasTopPlug){
-						candidatePieces.push(pieces[i]);
-					} else if(pieceBehindHasSocket && iterateeHasLeftPlug && pieceAboveHasSocket && iterateeHasTopPlug){
-						candidatePieces.push(pieces[i]);
-					} else if(pieceBehindHasPlug && iterateeHasLeftSocket && pieceAboveHasPlug && iterateeHasTopSocket){
-						candidatePieces.push(pieces[i]);
-					}
-				}
-				
-				return candidatePieces;
-			}
-
-			// ALl pieces on bottom row
-			if(finalRow){
-				// if(adjacentPieceAbove) console.log('adjacentPieceAbove', adjacentPieceAbove.type, adjacentPieceAbove.id);
-				// if(adjacentPieceBehind) console.log('adjacentPieceBehind', adjacentPieceBehind.type, adjacentPieceBehind.id);
-
-				if(this.isLeftSide(adjacentPieceAbove)){
-					pieces = this.SpriteMap.filter( (o) => this.isBottomLeftCorner(o));
-
-					let pieceAboveHasSocket = this.has(adjacentPieceAbove, "socket", "bottom");
-					let pieceAboveHasPlug = this.has(adjacentPieceAbove, "plug", "bottom");
-
-					for(let i=0, l=pieces.length; i<l; i++){
-						let iterateeHasTopSocket = this.has(pieces[i], "socket", "top");
-						let iterateeHasTopPlug = this.has(pieces[i], "plug", "top");
-						if(pieceAboveHasSocket && iterateeHasTopPlug){
-							candidatePieces.push(pieces[i]);
-						} else if(pieceAboveHasPlug && iterateeHasTopSocket){
-							candidatePieces.push(pieces[i]);
-						}
-					}
-
-					 return candidatePieces;
-				}
-
-				if(this.isInnerPiece(adjacentPieceAbove)){
-					pieces = this.SpriteMap.filter( (o) => this.isBottomSide(o));
-				}
-
-				if(this.isRightSide(adjacentPieceAbove)){
-					pieces = this.SpriteMap.filter( (o) => this.isBottomRightCorner(o));
-				}
-			}
-
-			let pieceAboveHasSocket = adjacentPieceAbove.connectors.sockets.indexOf('b') > -1;
-			let pieceAboveHasPlug = adjacentPieceAbove.connectors.plugs.indexOf('b') > -1;
-			let pieceBehindHasSocket = adjacentPieceBehind.connectors.sockets.indexOf('r') > -1;
-			let pieceBehindHasPlug = adjacentPieceBehind.connectors.plugs.indexOf('r') > -1;
-
-			for(let i=0, l=pieces.length; i<l; i++){
-				let iterateeHasTopSocket = pieces[i].connectors.sockets.indexOf('t') > -1;
-				let iterateeHasTopPlug = pieces[i].connectors.plugs.indexOf('t') > -1;
-				let iterateeHasLeftSocket = pieces[i].connectors.sockets.indexOf('l') > -1;
-				let iterateeHasLeftPlug = pieces[i].connectors.plugs.indexOf('l') > -1;
-
-				if(pieceAboveHasSocket && iterateeHasTopPlug && pieceBehindHasSocket && iterateeHasLeftPlug){
-					candidatePieces.push(pieces[i]);
-				} else if(pieceAboveHasPlug && iterateeHasTopSocket && pieceBehindHasPlug && iterateeHasLeftSocket){
-					candidatePieces.push(pieces[i]);
-				} else if(pieceAboveHasSocket && iterateeHasTopPlug && pieceBehindHasPlug && iterateeHasLeftSocket){
-					candidatePieces.push(pieces[i]);
-				} else if(pieceAboveHasPlug && iterateeHasTopSocket && pieceBehindHasSocket && iterateeHasLeftPlug){
-					candidatePieces.push(pieces[i]);
-				}
+			if(this.isRightSide(adjacentPieceAbove) && this.isBottomSide(adjacentPieceBehind)){
+				console.log("getting bottom right corner")
+				pieces = SpriteMap.filter( (o) => this.isBottomRightCorner(o));
+				return this.getCompatiblePieces(adjacentPieceAbove, adjacentPieceBehind, pieces)
 			}
 		}
-
-		return candidatePieces;
 	}
 
 	assignInitialPieceData(imgX, imgY, canvX, canvY, piece, i){
