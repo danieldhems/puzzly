@@ -246,7 +246,7 @@ class Puzzly {
 		let rowCount = 1;
 		let finalRow = false;
 
-		while(i<this.config.numberOfPieces){
+		while(i<=this.config.numberOfPieces){
 			// All pieces not on top row
 			if(this.pieces.length > this.config.piecesPerSide - 1){
 				adjacentPieceAbove = this.pieces[this.pieces.length - this.config.piecesPerSide];
@@ -271,6 +271,8 @@ class Puzzly {
 				adjacentPieceBehind = null;
 			}
 
+			console.log(adjacentPieceAbove, adjacentPieceBehind)
+			console.log("need last piece?", this.isRightSide(adjacentPieceAbove) && this.isBottomSide(adjacentPieceBehind))
 			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 			let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
 			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, currentPiece, i);
@@ -296,10 +298,6 @@ class Puzzly {
 			}
 
 			i++;
-
-			if(this.isBottomRightCorner(currentPiece)) {
-				done = true;
-			}
 		}
 	}
 
@@ -392,7 +390,6 @@ class Puzzly {
 				return this.getCompatiblePieces(adjacentPieceAbove, adjacentPieceBehind, pieces)
 			}
 
-			// All pieces on bottom row
 			if(finalRow && this.isLeftSide(adjacentPieceAbove)){
 				pieces = SpriteMap.filter( (o) => this.isBottomLeftCorner(o));
 				return this.getCompatiblePieces(adjacentPieceAbove, null, pieces)
