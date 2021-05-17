@@ -32,4 +32,4 @@ function upload(form){
 	});
 }
 
-new Puzzly('canvas', './halflife-3-2.jpg', 48);
+new Puzzly('canvas', './halflife-3-2.jpg', 256);

@@ -4,7 +4,7 @@ class Puzzly {
 
 	constructor(canvasId, imageUrl, numPieces){
 		this.config = {
-			scale: .5,
+			scale: 1,
 			blowUp: false,
 			boardBoundary: 200,
 			backgroundImages: [
@@ -52,17 +52,12 @@ class Puzzly {
 		this.config.originalPictureSize = `${this.SourceImage.width} x ${this.SourceImage.width}`;
 	
 		// Width / height of a single segment based on the total area of the src image divided by the number of pieces the user wants
-		this.config.segmentSize = Math.round(Math.sqrt(this.SourceImage.width * this.SourceImage.height / this.config.numberOfPieces));
-		this.config.piecesPerSide = Math.round(Math.sqrt(this.numPieces));
+		this.config.piecesPerSide = 20;
 
-		// this.diceImage(this.numPieces);
-
-		
-
+		// Base square size before connectors are applied
+		this.config.pieceWidth = this.config.pieceHeight = 100;
 
 		console.log(this.config)
-
-		this.drawBackground();
 		
 		this.makePieces();
 		
@@ -76,17 +71,57 @@ class Puzzly {
 			this.onMouseMove(e);
 		});
 	}
+
+	getPieceWidthAndHeightWithConnectors(piece){
+		let actualWidth, actualHeight;
+		const connectorRatio = this.config.connectorSize / JigsawShapeSpans.small * 100;
+		const connectorSize = this.config.pieceWidth / connectorRatio;
+		console.log(connectorRatio, connectorSize)
+
+		switch(piece._w){
+			case JigsawShapeSpans.small:
+				actualWidth = this.config.pieceWidth;
+				break;
+			case JigsawShapeSpans.medium:
+				actualWidth = this.config.pieceWidth + connectorSize;
+				break;
+			case JigsawShapeSpans.large:
+				actualWidth = this.config.pieceWidth + (connectorSize * 2);
+				break;
+			default:;
+		}
+
+		switch(piece._h){
+			case JigsawShapeSpans.small:
+				actualHeight = this.config.pieceHeight;
+				break;
+			case JigsawShapeSpans.medium:
+				actualHeight = this.config.pieceHeight + connectorSize;
+				break;
+			case JigsawShapeSpans.large:
+				actualHeight = this.config.pieceHeight + (connectorSize * 2);
+				break;
+			default:;
+		}
+
+		return {
+			width: actualWidth,
+			height: actualHeight,
+		}
+	}
 	
 	drawPiece(piece) {
+		console.log(piece)
 		const canvasEl = document.createElement("canvas");
 		document.body.appendChild(canvasEl)
-		canvasEl.id = "canvas-" + piece.id;
+		canvasEl.id = "canvas-" + piece._shape_id;
 		canvasEl.setAttribute('data-jigsaw-type', piece.type.join(","))
 		canvasEl.setAttribute('data-imgX', piece.imgX)
 		canvasEl.setAttribute('data-imgy', piece.imgY)
-		canvasEl.width = piece.w * this.config.scale;
-		canvasEl.height = piece.h * this.config.scale;
+		canvasEl.width = piece.imgW;
+		canvasEl.height = piece.imgH;
 		canvasEl.style.position = "absolute";
+
 		canvasEl.style.left = piece.pageX + "px";
 		canvasEl.style.top = piece.pageY + "px";
 
@@ -96,24 +131,24 @@ class Puzzly {
 			this.SourceImage,
 			piece.imgX,
 			piece.imgY,
-			this.config.segmentSize,
-			this.config.segmentSize,
+			piece.imgW,
+			piece.imgH,
 			0,
 			0,
-			this.config.segmentSize * this.config.scale,
-			this.config.segmentSize * this.config.scale
+			piece.imgW,
+			piece.imgH,
 		);
 		cvctx.globalCompositeOperation = 'destination-atop';
 		cvctx.drawImage(
 			this.JigsawSprite,
 			piece.x,
 			piece.y,
-			piece.w,
-			piece.h,
+			piece._w,
+			piece._h,
 			0, 
 			0, 
-			piece.w * this.config.scale,
-			piece.h * this.config.scale,
+			piece.imgW,
+			piece.imgH,
 		);
 	}
 
@@ -246,7 +281,7 @@ class Puzzly {
 		let rowCount = 1;
 		let finalRow = false;
 
-		while(i<=this.config.numberOfPieces){
+		while(!done){
 			// All pieces not on top row
 			if(this.pieces.length > this.config.piecesPerSide - 1){
 				adjacentPieceAbove = this.pieces[this.pieces.length - this.config.piecesPerSide];
@@ -271,8 +306,6 @@ class Puzzly {
 				adjacentPieceBehind = null;
 			}
 
-			console.log(adjacentPieceAbove, adjacentPieceBehind)
-			console.log("need last piece?", this.isRightSide(adjacentPieceAbove) && this.isBottomSide(adjacentPieceBehind))
 			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 			let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
 			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, currentPiece, i);
@@ -283,26 +316,24 @@ class Puzzly {
 			// reached last piece, start next row
 			if(this.pieces.length % this.config.piecesPerSide === 0){
 				curImgX = 0;
-				curImgY += currentPiece.h;
+				curImgY += currentPiece.imgH;
 				curPageX = boardLeft;
-				curPageY += currentPiece.h;
+				curPageY += this.config.pieceHeight;
 				rowCount++;
 			} else {
 				if(this.has(currentPiece, "socket", "right")){
-					curImgX += JigsawShapeSpans.small;
+					curImgX += currentPiece.imgW;
 				}
 				if(this.has(currentPiece, "plug", "right")){
-					curImgX += JigsawShapeSpans.small
+					curImgX += currentPiece.imgW - this.config.connectorSize
 				}
-				curPageX += this.config.segmentSize;
+				curPageX += this.config.pieceWidth;
 			}
+
+			if(this.isBottomRightCorner(currentPiece)) done = true;
 
 			i++;
 		}
-	}
-
-	drawBackground(){
-		this.ctx.drawImage(this.BgImage, 0, 0, this.BgImage.width, this.BgImage.height, 0, 0, this.canvas.width, this.canvas.height);
 	}
 
 	isTopLeftCorner(piece) {
@@ -350,7 +381,6 @@ class Puzzly {
 
 	getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow){
 		let pieces = [];
-		console.log("need last piece?", this.isRightSide(adjacentPieceAbove) && this.isBottomSide(adjacentPieceBehind))
 
 		// Top left corner piece
 		if(!adjacentPieceBehind && !adjacentPieceAbove){
@@ -402,7 +432,6 @@ class Puzzly {
 
 			// Very last piece, should be corner bottom right
 			if(this.isRightSide(adjacentPieceAbove) && this.isBottomSide(adjacentPieceBehind)){
-				console.log("getting bottom right corner")
 				pieces = SpriteMap.filter( (o) => this.isBottomRightCorner(o));
 				return this.getCompatiblePieces(adjacentPieceAbove, adjacentPieceBehind, pieces)
 			}
@@ -410,39 +439,22 @@ class Puzzly {
 	}
 
 	assignInitialPieceData(imgX, imgY, canvX, canvY, piece, i){
-		const scaledConnectorOffset = this.config.connectorSize * this.config.scale;
+		const pieceDimensions = this.getPieceWidthAndHeightWithConnectors(piece);
+
 		return Object.assign({
 			id: i,
 			imgX: imgX,
 			imgY: imgY,
-			pageX: this.config.blowUp ? (canvX * this.config.scale) + 10 : canvX * this.config.scale,
-			pageY: this.config.blowUp ? (canvY * this.config.scale) + 10 : canvY * this.config.scale,
-			solvedX: canvX - scaledConnectorOffset,
-			solvedY: canvY - scaledConnectorOffset,
+			imgW: pieceDimensions.width,
+			imgH: pieceDimensions.height,
+			pageX: this.config.blowUp ? canvX + 20 : canvX,
+			pageY: this.config.blowUp ? canvY + 20 : canvY,
 			isSolved: false
 		}, piece);
 	}
 
 	hasCollision(source, target){
 		return source.x > target.boundingBox.left && source.x < target.boundingBox.right && source.y < target.boundingBox.bottom && source.y > target.boundingBox.top;
-	}
-
-	getCellByCoords(coords){
-		for(var i=this.pieces.length-1;i>-1;i--){
-			var piece = this.pieces[i];
-			if(this.hasCollision(coords, piece)){
-				return piece;
-			}
-		}
-		return null;
-	}
-
-	getClickTarget(e){
-		var coords = {
-			x: e.clientX,
-			y: e.clientY
-		};
-		// return this.getCellByCoords(coords);
 	}
 }
 
