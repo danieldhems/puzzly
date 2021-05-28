@@ -2,7 +2,7 @@
 export const JigsawShapeSpans = {
     small: 122,
     medium: 165,
-    large: 208
+    large: 207
 };
 
 export const SpriteMap = [
