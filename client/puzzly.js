@@ -70,7 +70,7 @@ class Puzzly {
 		this.config.connectorRatio = JigsawShapeSpans.small / 100 * this.config.jigsawSpriteConnectorSize;
 		this.config.connectorSize = this.config.puzzleSize.small.pieceSize / 100 * this.config.connectorRatio;
 
-		this.config.selectedPuzzleSize = "medium";
+		this.config.selectedPuzzleSize = "small";
 
 		console.log(this.config)
 		
@@ -156,6 +156,19 @@ class Puzzly {
 			piece.imgW,
 			piece.imgH,
 		);
+	}
+
+	checkCollision(piece1, piece2){
+
+	}
+
+	hasConnection(piece){
+		if(Utils.isTopLeftCorner(piece)){
+			const connectingPieceToRight = this.pieces.find((p) => p.id === 1);
+			const connectingPieceToBottom = this.pieces[this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal];
+
+			// const boundingBoxToRight = piece.
+		}
 	}
 
 	onMouseDown(e){
@@ -323,7 +336,6 @@ class Puzzly {
 			let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 			let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
 			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, currentPiece, i);
-
 			this.pieces.push(currentPiece);
 			this.drawPiece(currentPiece);
 
@@ -335,7 +347,6 @@ class Puzzly {
 				curPageX = boardLeft;
 				
 				const firstPieceOnRowAbove = this.pieces[this.pieces.length - piecesPerSideHorizontal];
-				console.log("first piece on row above", firstPieceOnRowAbove)
 				
 				if(Utils.has(firstPieceOnRowAbove, "socket", "bottom")){
 					curImgY += pieceSize - this.config.connectorSize;
@@ -376,6 +387,9 @@ class Puzzly {
 			if(Utils.isBottomRightCorner(currentPiece)) done = true;
 
 		}
+
+		this.assignPieceConnections();
+		console.log(this.pieces)
 	}
 
 	getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow){
@@ -438,6 +452,70 @@ class Puzzly {
 		}
 	}
 
+	getConnectingPieceIds(piece){
+		const pieceAboveId = piece.id - this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal;
+		const pieceBelowId = piece.id + this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal;
+		if(Utils.isTopLeftCorner(piece)){
+			return {
+				right: piece.id + 1,
+				bottom: pieceBelowId,
+			}
+		}
+		if(Utils.isTopSide(piece)){
+			return {
+				left: piece.id - 1,
+				right: piece.id + 1,
+				bottom: pieceBelowId,
+			}
+		}
+		if(Utils.isTopRightCorner(piece)){
+			return {
+				left: piece.id - 1,
+				bottom: pieceBelowId,
+			}
+		}
+		if(Utils.isLeftSide(piece)){
+			return {
+				top: pieceAboveId,
+				right: piece.id + 1,
+				bottom: pieceBelowId,
+			}
+		}
+		if(Utils.isInnerPiece(piece)){
+			return {
+				top: pieceAboveId,
+				right: piece.id + 1,
+				bottom: pieceBelowId,
+				left: piece.id - 1
+			}
+		}
+		if(Utils.isRightSide(piece)){
+			return {
+				top: pieceAboveId,
+				left: piece.id - 1,
+				bottom: pieceBelowId,
+			}
+		}
+		if(Utils.isBottomLeftCorner(piece)){
+			return {
+				top: pieceAboveId,
+				right: piece.id + 1,
+			}
+		}
+		if(Utils.isBottomSide(piece)){
+			return {
+				left: piece.id - 1,
+				right: piece.id + 1,
+			}
+		}
+		if(Utils.isBottomRightCorner(piece)){
+			return {
+				top: pieceAboveId,
+				left: piece.id - 1,
+			}
+		}
+	}
+
 	assignInitialPieceData(imgX, imgY, canvX, canvY, piece, i){
 		const pieceDimensions = this.getPieceWidthAndHeightWithConnectors(piece);
 
@@ -449,8 +527,12 @@ class Puzzly {
 			imgH: pieceDimensions.height, 
 			pageX: this.config.blowUp ? canvX + 20 : canvX,
 			pageY: this.config.blowUp ? canvY + 20 : canvY,
-			isSolved: false
+			isSolved: false,
 		}, piece);
+	}
+
+	assignPieceConnections(){
+		this.pieces.forEach(p => p.connectsTo = this.getConnectingPieceIds(p));
 	}
 
 	hasCollision(source, target){
