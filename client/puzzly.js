@@ -17,6 +17,7 @@ class Puzzly {
 			segmentSize: null,
 			piecesPerSide: null,
 			jigsawSpriteConnectorSize: 30,
+			jigsawSpriteConnectorDistanceFromCorner: 40,
 			puzzleSize: {
 				small: {
 					piecesPerSideHorizontal: 10,
@@ -69,6 +70,8 @@ class Puzzly {
 
 		this.config.connectorRatio = JigsawShapeSpans.small / 100 * this.config.jigsawSpriteConnectorSize;
 		this.config.connectorSize = this.config.puzzleSize.small.pieceSize / 100 * this.config.connectorRatio;
+		this.config.connectorDistanceFromCornerRatio = JigsawShapeSpans.small / 100 * this.config.jigsawSpriteConnectorDistanceFromCorner;
+		this.config.connectorDistanceFromCorner = this.config.puzzleSize.small.pieceSize / 100 * this.config.connectorDistanceFromCornerRatio;
 
 		this.config.selectedPuzzleSize = "small";
 
@@ -533,6 +536,50 @@ class Puzzly {
 
 	assignPieceConnections(){
 		this.pieces.forEach(p => p.connectsTo = this.getConnectingPieceIds(p));
+	}
+
+	getConnectorBoundingBox(piece, side){
+		switch(side){
+			case "left":
+				return {
+					top: piece.offsetTop + this.config.connectorDistanceFromCorner,
+					right: piece.offsetLeft + this.config.connectorSize,
+					bottom: piece.offsetTop + this.config.connectorDistanceFromCorner + this.config.connectorSize,
+					left: piece.offsetLeft,
+				}
+			case "right":
+				return {
+					top: piece.offsetTop + this.config.connectorDistanceFromCorner,
+					right: piece.offsetLeft + piece.imgW,
+					bottom: piece.offsetLeft + this.config.connectorDistanceFromCorner + this.config.connectorSize,
+					left: piece.offsetLeft + piece.imgW - this.config.connectorSize,
+				}
+			case "bottom":
+				return {
+					top: piece.offsetTop + piece.imgH - this.config.connectorSize,
+					right: piece.offsetLeft + piece.imgW - this.config.connectorDistanceFromCorner,
+					bottom: piece.offsetTop + piece.imgH,
+					left: piece.offsetLeft + this.config.connectorDistanceFromCornere,
+				}
+			case "top":
+				return {
+					top: piece.offsetTop,
+					right: piece.offsetLeft + piece.imgW - this.config.connectorDistanceFromCorner,
+					bottom: piece.offsetTop + this.config.connectorSize,
+					left: piece.offsetLeft + this.config.connectorDistanceFromCorner,
+				}
+		}
+	}
+
+	checkCollision(piece){
+		if(Utils.isTopLeftCorner(piece)){
+			const connectingPieceToRight = this.pieces.find(p => p.id === piece.id + 1);
+			const connectingPieceToBottom = this.pieces.find(p => p.id === piece.id + this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
+			const thisPieceRightConnectorBoundingBox = this.getConnectorBoundingBox(piece, "right");
+			const thisPieceBottomConnectorBoundingBox = this.getConnectorBoundingBox(piece, "bottom");
+			const connectingPieceToRightLeftSideConnectorBoundingBox = this.getConnectorBoundingBox(connectingPieceToRight, "left");
+			const connectingPieceToBottomTopSideConnectorBoundingBox = this.getConnectorBoundingBox(connectingPieceToBottom, "top");
+		}
 	}
 
 	hasCollision(source, target){
