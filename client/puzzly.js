@@ -607,7 +607,7 @@ class Puzzly {
 	}
 
 	hasCollision(source, target){
-		return (source.top >= target.top || source.bottom <= target.bottom) && source.right >= target.left && source.top <= target.bottom && source.right <= target.right;
+		return (source.top >= target.top && source.top < target.bottom && source.right >= target.left && source.right < target.right) || (source.bottom <= target.bottom && source.bottom > target.top && source.right >= target.left && source.right < target.right);
 	}
 
 	getElementByPieceId(id){
