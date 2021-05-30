@@ -544,19 +544,34 @@ class Puzzly {
 		switch(side){
 			case "left":
 				return {
-					top: piece.pageY + this.config.connectorDistanceFromCorner,
-					right: piece.pageX + this.config.connectorSize,
-					bottom: piece.pageY + this.config.connectorDistanceFromCorner + this.config.connectorSize,
-					left: piece.pageX,
+					plug: {
+						top: piece.pageY + this.config.connectorDistanceFromCorner,
+						right: piece.pageX + this.config.connectorSize,
+						bottom: piece.pageY + this.config.connectorDistanceFromCorner + this.config.connectorSize,
+						left: piece.pageX,
+					},
+					socket: {
+						top: piece.pageY + this.config.connectorDistanceFromCorner,
+						right: piece.pageX + this.config.connectorSize,
+						bottom: piece.pageY + this.config.connectorDistanceFromCorner + this.config.connectorSize,
+						left: piece.pageX,
+					}
 				}
 			case "right":
-				const points = {
-					top: piece.pageY + this.config.connectorDistanceFromCorner,
-					right: piece.pageX + piece.imgW,
-					bottom: piece.pageY + this.config.connectorDistanceFromCorner + this.config.connectorSize,
-					left: piece.pageX + piece.imgW - this.config.connectorSize,
+				return {
+					plug: {
+						top: piece.pageY + this.config.connectorDistanceFromCorner,
+						right: piece.pageX + piece.imgW,
+						bottom: piece.pageY + this.config.connectorDistanceFromCorner + this.config.connectorSize,
+						left: piece.pageX + piece.imgW - this.config.connectorSize,
+					},
+					socket: {
+						top: piece.pageY + this.config.connectorDistanceFromCorner,
+						right: piece.pageX + piece.imgW,
+						bottom: piece.pageY + this.config.connectorDistanceFromCorner + this.config.connectorSize,
+						left: piece.pageX + piece.imgW - this.config.connectorSize,
+					}
 				}
-				return points;
 			case "bottom":
 				return {
 					top: piece.pageY + piece.imgH - this.config.connectorSize,
@@ -594,7 +609,7 @@ class Puzzly {
 			const targetPieceToRightLeftSideConnectorBoundingBox = this.getConnectorBoundingBox(targetPieceToRight, "left");
 			const targetPieceToBottomTopSideConnectorBoundingBox = this.getConnectorBoundingBox(targetPieceToBottom, "top");
 
-			if(this.hasCollision(thisPieceRightConnectorBoundingBox, targetPieceToRightLeftSideConnectorBoundingBox)){
+			if(this.hasCollision(thisPieceRightConnectorBoundingBox.plug, targetPieceToRightLeftSideConnectorBoundingBox.socket) || this.hasCollision(thisPieceRightConnectorBoundingBox.socket, targetPieceToRightLeftSideConnectorBoundingBox.plug)){
 				return "right";
 			}
 
@@ -628,7 +643,7 @@ class Puzzly {
 				const thisPiece = this.getPieceByElement(el);
 				const connectingPiece = this.getPieceById(thisPiece.id + 1);
 				
-				const leftPos = Utils.has(thisPiece, "plug", "right") ? connectingPiece.pageX - thisPiece.imgW + this.config.connectorSize : thisPiece.ingW;
+				const leftPos = Utils.has(thisPiece, "plug", "right") ? connectingPiece.pageX - thisPiece.imgW + this.config.connectorSize : connectingPiece.pageX - thisPiece.imgW + this.config.connectorSize;
 
 				el.style.left = leftPos + "px";
 
