@@ -347,16 +347,7 @@ class Puzzly {
 				curPageX = boardLeft;
 				
 				const firstPieceOnRowAbove = this.pieces[this.pieces.length - piecesPerSideHorizontal];
-				
-				if(Utils.has(firstPieceOnRowAbove, "socket", "bottom")){
-					curImgY += pieceSize - this.config.connectorSize;
-					// curPageY += pieceSize - this.config.connectorSize;
-				}
-				
-				if(Utils.has(firstPieceOnRowAbove, "plug", "bottom")){
-					curImgY += pieceSize;
-					// curPageY += pieceSize;
-				}
+				curImgY = firstPieceOnRowAbove.imgY + firstPieceOnRowAbove.imgH - this.config.connectorSize;
 
 				curPageY += pieceSize *1.5;
 				rowCount++;
