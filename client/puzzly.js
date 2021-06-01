@@ -1,4 +1,3 @@
-import e from "express";
 import { SpriteMap, JigsawShapeSpans } from "./jigsaw.js";
 import Utils from "./utils.js";
 class Puzzly {
@@ -526,7 +525,6 @@ class Puzzly {
 			imgH: pieceDimensions.height, 
 			pageX: this.config.blowUp ? canvX + 20 : canvX,
 			pageY: this.config.blowUp ? canvY + 20 : canvY,
-			isSolved: false,
 		}, piece);
 	}
 
@@ -632,26 +630,6 @@ class Puzzly {
 		source.right <= target.left || source.bottom <= target.top);
 	}
 
-	drawGuide(top, right, bottom, left){
-		this.ctx.strokeStyle = "black";
-		this.ctx.beginPath(left, top);
-		this.ctx.lineTo(left +10, top);
-		this.ctx.stroke();
-		// this.ctx.closePath();
-		this.ctx.beginPath(right, top);
-		this.ctx.lineTo(right +1, top);
-		this.ctx.stroke();
-		// this.ctx.closePath();
-		this.ctx.beginPath(right, bottom);
-		this.ctx.lineTo(right +1, top);
-		this.ctx.stroke();
-		// this.ctx.closePath();
-		this.ctx.beginPath(left, bottom);
-		this.ctx.lineTo(left +1, top);
-		this.ctx.stroke();
-		// this.ctx.closePath();
-	}
-
 	getElementByPieceId(id){
 		return document.querySelectorAll(`[data-piece-id='${id}']`)[0];
 	}
@@ -664,17 +642,18 @@ class Puzzly {
 		return this.pieces.find(p => p.id === id);
 	}
 
+	
+
 	snapPiece(el, connection){
-		let thisPiece, connectingPiece, leftPos, topPos;
+		let thisPiece, connectingPiece, newPos = {};
 		switch(connection){
 			case "right":
 				thisPiece = this.getPieceByElement(el);
 				connectingPiece = this.getPieceById(thisPiece.id + 1);
 
-				const newPos = {};
 				newPos.left = connectingPiece.pageX - thisPiece.imgW + this.config.connectorSize,
 				
-				el.style.left = newPos + "px";
+				el.style.left = newPos.left + "px";
 
 				if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
 					newPos.top = connectingPiece.pageY;
@@ -689,7 +668,32 @@ class Puzzly {
 				}
 
 				el.style.top = newPos.top + "px";
-				this.updatePiecePosition(thisPiece, newPos);
+				this.updatePiecePosition(el, newPos);
+
+				break;
+
+			case "left":
+				thisPiece = this.getPieceByElement(el);
+				connectingPiece = this.getPieceById(thisPiece.id - 1);
+
+				newPos.left = connectingPiece.pageX + connectingPiece.imgW - this.config.connectorSize,
+				
+				el.style.left = newPos.left + "px";
+
+				if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
+					newPos.top = connectingPiece.pageY;
+				} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
+					newPos.top = (connectingPiece.pageY - this.config.connectorSize);
+				} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
+					newPos.top = (connectingPiece.pageY + this.config.connectorSize);
+				} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
+					newPos.top = connectingPiece.pageY;
+				} else {
+					newPos.top = connectingPiece.pageY;
+				}
+
+				el.style.top = newPos.top + "px";
+				this.updatePiecePosition(el, newPos);
 
 				break;
 			
@@ -697,38 +701,48 @@ class Puzzly {
 				thisPiece = this.getPieceByElement(el);
 				connectingPiece = this.getPieceById(thisPiece.id + this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
 
-				el.style.top = connectingPiece.pageY - thisPiece.imgH + this.config.connectorSize + "px";
+				newPos.top = connectingPiece.pageY - thisPiece.imgH + this.config.connectorSize;
+				el.style.top = newPos.top + "px";
 
 				if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
-					el.style.left = connectingPiece.pageX + "px";
+					newPos.left = connectingPiece.pageX;
 				} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
-					el.style.left = (connectingPiece.pageX - this.config.connectorSize) + "px";
+					newPos.left = (connectingPiece.pageX - this.config.connectorSize);
 				} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
-					el.style.left = (connectingPiece.pageX + this.config.connectorSize) + "px";
+					newPos.left = (connectingPiece.pageX + this.config.connectorSize);
 				} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
-					el.style.left = connectingPiece.pageX + "px";
+					newPos.left = connectingPiece.pageX;
 				} else {
-					el.style.left = connectingPiece.pageX + "px";
+					newPos.left = connectingPiece.pageX;
 				}
+
+				el.style.left = newPos.left + "px";
+				this.updatePiecePosition(el, newPos);
+
 				break;
 
 			case "top":
 				thisPiece = this.getPieceByElement(el);
 				connectingPiece = this.getPieceById(thisPiece.id - this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
 
-				el.style.top = topPos + "px";
+				newPos.top = connectingPiece.pageY + connectingPiece.imgH - this.config.connectorSize
+				el.style.top = newPos.top + "px";
 
 				if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
-					el.style.left = connectingPiece.pageX + "px";
+					newPos.left = connectingPiece.pageX;
 				} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
-					el.style.left = (connectingPiece.pageX - this.config.connectorSize) + "px";
+					newPos.left = (connectingPiece.pageX - this.config.connectorSize);
 				} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
-					el.style.left = (connectingPiece.pageX + this.config.connectorSize) + "px";
+					newPos.left = (connectingPiece.pageX + this.config.connectorSize);
 				} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
-					el.style.left = connectingPiece.pageX + "px";
+					newPos.left = connectingPiece.pageX;
 				} else {
-					el.style.left = connectingPiece.pageX + "px";
+					newPos.left = connectingPiece.pageX;
 				}
+
+				el.style.left = newPos.left + "px";
+				this.updatePiecePosition(el, newPos);
+				
 				break;
 		}
 	}
