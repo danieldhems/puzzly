@@ -37,6 +37,8 @@ class Puzzly {
 		this.numPieces = numPieces;
 		this.canvas = document.getElementById(canvasId);
 		this.ctx = this.canvas.getContext('2d');
+		this.groupCounter = 0;
+		this.movingPieces = [];
 
 		this.loadedImages = [];
 		this.SourceImage = new Image();
@@ -164,37 +166,109 @@ class Puzzly {
 
 	onMouseDown(e){
 		if(e.target.className === "puzzle-piece"){
-			this.movingPieceElement = e.target;
-			this.movingPiece = this.pieces.find(p => p.id === parseInt(e.target.getAttribute("data-piece-id")));
-			this.movingPieceElement.style.zIndex = 2;
+			const thisPiece = this.pieces.find(p => p.id === parseInt(e.target.getAttribute("data-piece-id")));
+			if(thisPiece.group !== undefined){
+				this.pieces.filter(p => {
+					let element, diffX, diffY;
+
+					if(p.group === thisPiece.group){
+						element = this.getElementByPieceId(p.id);
+						diffX = e.clientX - element.offsetLeft;
+						diffY = e.clientY - element.offsetTop;
+						
+						this.movingPieces.push({
+							...p,
+							element,
+							diffX,
+							diffY,
+						})
+					}
+				});
+
+			} else {
+				this.movingPieces = [{
+					...thisPiece,
+					element: e.target,
+					diffX: e.clientX - e.target.offsetLeft,
+					diffY: e.clientY - e.target.offsetTop,
+				}]
+			}
+
+			this.mouseMoveFunc = this.onMouseMove(this.movingPieces)
+			
+			// this.movingPieceElement.style.zIndex = 2;
 			this.isMouseDown = true;
 	
-			let diffX = e.clientX - this.movingPieceElement.offsetLeft;
-			let diffY = e.clientY - this.movingPieceElement.offsetTop;
-	
-			this.mouseMoveFunc = this.onMouseMove(diffX, diffY, this.movingPieceElement)
-			
 			window.addEventListener('mousemove', this.mouseMoveFunc);
 			window.addEventListener('mouseup', this.onMouseUp.bind(this));
 		}
 	}
-	
-	onMouseUp(){
-		this.movingPieceElement.style.zIndex = 1;
-		this.isMouseDown = false;
-		const connection = this.checkConnections(this.movingPiece);
 
-		if(connection){
-			this.snapPiece(this.movingPieceElement, connection)
+	updatePiecePositionsByDiff(diff, pieces){
+		console.log(diff)
+		pieces.map(p => {
+			const diffTopOperand = diff.top.charAt(0);
+			const diffLeftOperand = diff.left.charAt(0);
+			const newPosTop = diffTopOperand === "+" ? p.pageY + diff.top : p.pageY - diff.top;
+			const newPosLeft = diffLeftOperand === "+" ? p.pageX + diff.left : p.pageX - diff.left;
+			
+			p.element.style.top = newPosTop + "px";
+			p.element.style.left = newPosLeft + "px";
+			
+			return {
+				...p,
+				element: p.element,
+				pageY: newPosTop,
+				pageX: newPosLeft,
+			}
+		})
+	}
+	
+	onMouseUp(e){
+		const element = e.target;
+		this.isMouseDown = false;
+		let hasConnection = false, connection, i = 0;
+
+		if(this.movingPieces.length > 1){
+			while(!hasConnection){
+				const piece = this.movingPieces[i];
+				connection = this.checkConnections(piece.element);
+				if(connection){
+					const diff = this.snapPiece(piece.element, connection)
+					const trailingPieces = this.movingPieces.filter( p => p.id !== i);
+					this.updatePiecePositionsByDiff(diff, trailingPieces);
+					hasConnection = true;
+				}
+				i++;
+			}
+		} else {
+			connection = this.checkConnections(element);
+			if(connection){
+				this.snapPiece(element, connection);
+			}
+			
+			const newPos = {
+				top: element.offsetTop,
+				left: element.offsetLeft,
+			}
+			
+			this.updatePiecePosition(element, newPos)
 		}
+
+		this.movingPieces = [];
+
+		console.log(this.pieces)
+		
 		window.removeEventListener('mousemove', this.mouseMoveFunc)
 	}
 
-	onMouseMove(diffX, diffY, dragEl){	
+	onMouseMove(piecesToMove){
 		return function(e){
-			dragEl.style.left = e.clientX - diffX + "px";
-			dragEl.style.top = e.clientY - diffY + "px";
-			this.updatePiecePosition(dragEl)
+			piecesToMove.forEach( p => {
+				p.element.style.left = e.clientX - p.diffX + "px";
+				p.element.style.top = e.clientY - p.diffY + "px";
+				this.updatePiecePosition(p.element)
+			})
 		}.bind(this)
 	}
 
@@ -565,7 +639,8 @@ class Puzzly {
 		piece.pageY = el.offsetTop;
 	}
 
-	checkConnections(piece){
+	checkConnections(el){
+		const piece = this.getPieceByElement(el);
 		const hasRightConnector = Utils.has(piece, "plug", "right") || Utils.has(piece, "socket", "right");
 		const hasBottomConnector = Utils.has(piece, "plug", "bottom") || Utils.has(piece, "socket", "bottom");
 		const hasLeftConnector = Utils.has(piece, "plug", "left") || Utils.has(piece, "socket", "left");
@@ -633,17 +708,18 @@ class Puzzly {
 		return this.pieces.find(p => p.id === id);
 	}
 
-	
-
 	snapPiece(el, connection){
-		let thisPiece, connectingPiece, newPos = {};
+		let thisPiece, connectingPiece, newPos = {}, oldPos = {};
+
+		thisPiece = this.getPieceByElement(el);
+		oldPos.top = thisPiece.pageY;
+		oldPos.left = thisPiece.pageX;
+
 		switch(connection){
 			case "right":
-				thisPiece = this.getPieceByElement(el);
 				connectingPiece = this.getPieceById(thisPiece.id + 1);
 
 				newPos.left = connectingPiece.pageX - thisPiece.imgW + this.config.connectorSize,
-				
 				el.style.left = newPos.left + "px";
 
 				if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
@@ -659,16 +735,13 @@ class Puzzly {
 				}
 
 				el.style.top = newPos.top + "px";
-				this.updatePiecePosition(el, newPos);
 
 				break;
 
 			case "left":
-				thisPiece = this.getPieceByElement(el);
 				connectingPiece = this.getPieceById(thisPiece.id - 1);
 
 				newPos.left = connectingPiece.pageX + connectingPiece.imgW - this.config.connectorSize,
-				
 				el.style.left = newPos.left + "px";
 
 				if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
@@ -684,12 +757,10 @@ class Puzzly {
 				}
 
 				el.style.top = newPos.top + "px";
-				this.updatePiecePosition(el, newPos);
 
 				break;
 			
 			case "bottom":
-				thisPiece = this.getPieceByElement(el);
 				connectingPiece = this.getPieceById(thisPiece.id + this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
 
 				newPos.top = connectingPiece.pageY - thisPiece.imgH + this.config.connectorSize;
@@ -708,12 +779,10 @@ class Puzzly {
 				}
 
 				el.style.left = newPos.left + "px";
-				this.updatePiecePosition(el, newPos);
 
 				break;
 
 			case "top":
-				thisPiece = this.getPieceByElement(el);
 				connectingPiece = this.getPieceById(thisPiece.id - this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
 
 				newPos.top = connectingPiece.pageY + connectingPiece.imgH - this.config.connectorSize
@@ -732,9 +801,42 @@ class Puzzly {
 				}
 
 				el.style.left = newPos.left + "px";
-				this.updatePiecePosition(el, newPos);
 				
 				break;
+		}
+		
+		this.updatePiecePosition(el, newPos);
+	
+		if(connectingPiece.group === undefined){
+			this.createGroup(thisPiece, connectingPiece);
+		} else {
+			this.addToGroup(thisPiece, connectingPiece.group)
+		}
+
+		const diff = {
+			top: oldPos.top < newPos.top
+				? `+${newPos.top - oldPos.top}`
+				: `-${oldPos.top - newPos.top}`,
+			left: oldPos.left < newPos.left
+				? `+${newPos.left - oldPos.left}`
+				: `-${oldPos.left - newPos.left}`,
+		}
+
+		return diff;
+	}
+
+	createGroup(pieceA, pieceB){
+		const groupId = this.groupCounter++
+		console.log("creating group", groupId)
+		pieceA.group = pieceB.group = groupId;
+	}
+
+	addToGroup(piece, group){
+		piece.group = group;
+
+		const piecesInGroup = this.pieces.filter(p => p.group === group);
+		if(piecesInGroup.length > 1){
+			piecesInGroup.map(p => p.group = group)
 		}
 	}
 }
