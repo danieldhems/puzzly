@@ -178,7 +178,6 @@ class Puzzly {
 						
 						this.movingPieces.push({
 							...p,
-							element,
 							diffX,
 							diffY,
 						})
@@ -188,7 +187,6 @@ class Puzzly {
 			} else {
 				this.movingPieces = [{
 					...thisPiece,
-					element: e.target,
 					diffX: e.clientX - e.target.offsetLeft,
 					diffY: e.clientY - e.target.offsetTop,
 				}]
@@ -204,20 +202,28 @@ class Puzzly {
 		}
 	}
 
+	setElementAttribute(el, attr, value){
+		el.setAttribute(attr, value);
+	}
+
 	updatePiecePositionsByDiff(diff, pieces){
 		console.log(diff)
-		pieces.map(p => {
+		pieces = pieces.forEach(p => {
 			const diffTopOperand = diff.top.charAt(0);
+			const diffTopValue = parseInt(diff.top)
 			const diffLeftOperand = diff.left.charAt(0);
-			const newPosTop = diffTopOperand === "+" ? p.pageY + diff.top : p.pageY - diff.top;
-			const newPosLeft = diffLeftOperand === "+" ? p.pageX + diff.left : p.pageX - diff.left;
+			const diffLeftValue = parseInt(diff.left)
+
+			const element = this.getElementByPieceId(p.id);
+
+			const newPosTop = diffTopOperand === "+" ? element.offsetTop + diffTopValue : element.offsetTop - diffTopValue;
+			const newPosLeft = diffLeftOperand === "+" ? element.offsetLeft + diffLeftValue : element.offsetLeft - diffLeftValue;
 			
-			p.element.style.top = newPosTop + "px";
-			p.element.style.left = newPosLeft + "px";
+			element.style.top = newPosTop + "px";
+			element.style.left = newPosLeft + "px";
 			
 			return {
 				...p,
-				element: p.element,
 				pageY: newPosTop,
 				pageX: newPosLeft,
 			}
@@ -228,13 +234,16 @@ class Puzzly {
 		const element = e.target;
 		this.isMouseDown = false;
 		let hasConnection = false, connection, i = 0;
-
+		
 		if(this.movingPieces.length > 1){
 			while(!hasConnection){
+				console.log("check", i)
+
 				const piece = this.movingPieces[i];
-				connection = this.checkConnections(piece.element);
+				const element = this.getElementByPieceId(piece.id);
+				connection = this.checkConnections(element);
 				if(connection){
-					const diff = this.snapPiece(piece.element, connection)
+					const diff = this.snapPiece(element, connection)
 					const trailingPieces = this.movingPieces.filter( p => p.id !== i);
 					this.updatePiecePositionsByDiff(diff, trailingPieces);
 					hasConnection = true;
@@ -252,22 +261,24 @@ class Puzzly {
 				left: element.offsetLeft,
 			}
 			
-			this.updatePiecePosition(element, newPos)
+			const piece = this.getPieceByElement(element);
+			this.updatePiecePosition(element)
 		}
 
 		this.movingPieces = [];
 
-		console.log(this.pieces)
-		
 		window.removeEventListener('mousemove', this.mouseMoveFunc)
 	}
 
 	onMouseMove(piecesToMove){
 		return function(e){
 			piecesToMove.forEach( p => {
-				p.element.style.left = e.clientX - p.diffX + "px";
-				p.element.style.top = e.clientY - p.diffY + "px";
-				this.updatePiecePosition(p.element)
+				const element = this.getElementByPieceId(p.id);
+				const newPosTop = e.clientY - p.diffY;
+				const newPosLeft = e.clientX - p.diffX;
+				element.style.top = newPosTop + "px";
+				element.style.left = newPosLeft + "px";
+				this.updatePiecePosition(element)
 			})
 		}.bind(this)
 	}
@@ -634,7 +645,7 @@ class Puzzly {
 
 	updatePiecePosition(el){
 		const pid = parseInt(el.getAttribute('data-piece-id'));
-		const piece = this.pieces.find(p => p.id === pid)
+		const piece = this.pieces.find(p => p.id === pid);
 		piece.pageX = el.offsetLeft;
 		piece.pageY = el.offsetTop;
 	}
@@ -646,47 +657,60 @@ class Puzzly {
 		const hasLeftConnector = Utils.has(piece, "plug", "left") || Utils.has(piece, "socket", "left");
 		const hasTopConnector = Utils.has(piece, "plug", "top") || Utils.has(piece, "socket", "top");
 		
+		const shouldCompare = targetPiece => piece.group === undefined || piece.group !== targetPiece.group;
+
 		if(hasRightConnector){
 			const targetPiece = this.pieces.find(p => p.id === piece.id + 1);
-			const thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(piece, "right");
-			const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "left");
+			if(shouldCompare(targetPiece)){
+				const thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(piece, "right");
+				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "left");
 
-			if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-				console.log("right")
-				return "right";
+				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
+					console.log("right")
+					return "right";
+				}
 			}
 		}
 
 		if(hasBottomConnector){
 			const targetPiece = this.pieces.find(p => p.id === piece.id + this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
-			const thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(piece, "bottom");
-			const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "top");
 
-			if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-				console.log("bottom")
-				return "bottom";
+			if(shouldCompare(targetPiece)){
+				const thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(piece, "bottom");
+				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "top");
+
+				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
+					console.log("bottom")
+					return "bottom";
+				}
 			}
 		}
 
 		if(hasLeftConnector){
 			const targetPiece = this.pieces.find(p => p.id === piece.id - 1);
-			const thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(piece, "left");
-			const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "right");
 
-			if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-				console.log("left")
-				return "left";
+			if(shouldCompare(targetPiece)){
+				const thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(piece, "left");
+				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "right");
+
+				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
+					console.log("left")
+					return "left";
+				}
 			}
 		}
 
 		if(hasTopConnector){
 			const targetPiece = this.pieces.find(p => p.id === piece.id - this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
-			const thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(piece, "top");
-			const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "bottom");
 
-			if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-				console.log("top")
-				return "top";
+			if(shouldCompare(targetPiece)){
+				const thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(piece, "top");
+				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "bottom");
+
+				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
+					console.log("top")
+					return "top";
+				}
 			}
 		}
 	}
@@ -805,9 +829,9 @@ class Puzzly {
 				break;
 		}
 		
-		this.updatePiecePosition(el, newPos);
+		this.updatePiecePosition(el);
 	
-		if(connectingPiece.group === undefined){
+		if(thisPiece.group === undefined && connectingPiece.group === undefined){
 			this.createGroup(thisPiece, connectingPiece);
 		} else {
 			this.addToGroup(thisPiece, connectingPiece.group)
@@ -826,18 +850,20 @@ class Puzzly {
 	}
 
 	createGroup(pieceA, pieceB){
+		console.log("create group")
 		const groupId = this.groupCounter++
-		console.log("creating group", groupId)
 		pieceA.group = pieceB.group = groupId;
+		this.setElementAttribute(this.getElementByPieceId(pieceA.id), "data-group", groupId)
+		this.setElementAttribute(this.getElementByPieceId(pieceB.id), "data-group", groupId)
 	}
-
+	
 	addToGroup(piece, group){
 		piece.group = group;
-
-		const piecesInGroup = this.pieces.filter(p => p.group === group);
-		if(piecesInGroup.length > 1){
-			piecesInGroup.map(p => p.group = group)
-		}
+		const pieces = this.pieces.filter(p => p.group === piece.group);
+		pieces.forEach(p => {
+			p.group = group;
+			this.setElementAttribute(this.getElementByPieceId(piece.id), "data-group", group)
+		})
 	}
 }
 
