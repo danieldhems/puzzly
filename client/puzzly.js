@@ -167,8 +167,8 @@ class Puzzly {
 	onMouseDown(e){
 		if(e.target.className === "puzzle-piece"){
 			const thisPiece = this.pieces.find(p => p.id === parseInt(e.target.getAttribute("data-piece-id")));
-			if(thisPiece.group !== undefined){
-				this.pieces.filter(p => {
+			if(thisPiece.group !== undefined && thisPiece.group > -1){
+				this.pieces.forEach(p => {
 					let element, diffX, diffY;
 
 					if(p.group === thisPiece.group){
@@ -192,6 +192,7 @@ class Puzzly {
 				}]
 			}
 
+			console.log(this.movingPieces)
 			this.mouseMoveFunc = this.onMouseMove(this.movingPieces)
 			
 			// this.movingPieceElement.style.zIndex = 2;
@@ -229,24 +230,26 @@ class Puzzly {
 			}
 		})
 	}
-	
-	onMouseUp(e){
-		const element = e.target;
-		this.isMouseDown = false;
-		let hasConnection = false, connection, i = 0;
-		
-		if(this.movingPieces.length > 1){
-			while(!hasConnection){
-				console.log("check", i)
 
+	onMouseUp(e){
+		this.isMouseDown = false;
+		const element = e.target;
+		let hasConnection = false, noneFound = false, connection, i = 0;
+		if(this.movingPieces.length > 1){
+			while(!hasConnection && !noneFound){
 				const piece = this.movingPieces[i];
 				const element = this.getElementByPieceId(piece.id);
 				connection = this.checkConnections(element);
 				if(connection){
-					const diff = this.snapPiece(element, connection)
+					const diff = this.snapPiece(element, connection);
+					console.log(piece)
 					const trailingPieces = this.movingPieces.filter( p => p.id !== i);
 					this.updatePiecePositionsByDiff(diff, trailingPieces);
 					hasConnection = true;
+				}
+
+				if(i === this.movingPieces.length - 1 && !hasConnection){
+					noneFound = true;
 				}
 				i++;
 			}
@@ -609,24 +612,26 @@ class Puzzly {
 	}
 
 	getConnectorBoundingBox(piece, side){
+		const hasRightPlug = Utils.has(piece, "plug", "right");
+		const hasLeftPlug = Utils.has(piece, "plug", "left");
+		const hasTopPlug = Utils.has(piece, "plug", "top");
+		const hasBottomPlug = Utils.has(piece, "plug", "bottom");
 		switch(side){
 			case "left":
 				return {
-					top: piece.pageY + this.config.connectorDistanceFromCorner,
+					top: piece.pageY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
 					right: piece.pageX + this.config.connectorSize,
-					bottom: piece.pageY + this.config.connectorDistanceFromCorner + this.config.connectorSize,
+					bottom: piece.pageY + piece.imgH - (hasBottomPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
 					left: piece.pageX,
 				}
 			case "right":
 				return {
-					top: piece.pageY + this.config.connectorDistanceFromCorner,
+					top: piece.pageY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
 					right: piece.pageX + piece.imgW,
-					bottom: piece.pageY + this.config.connectorDistanceFromCorner + this.config.connectorSize,
+					bottom: piece.pageY + piece.imgH - (hasBottomPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
 					left: piece.pageX + piece.imgW - this.config.connectorSize,
 				}
 			case "bottom":
-				const hasRightPlug = Utils.has(piece, "plug", "right");
-				const hasLeftPlug = Utils.has(piece, "plug", "left");
 				return {
 					top: piece.pageY + piece.imgH - this.config.connectorSize,
 					right: piece.pageX + piece.imgW - (hasRightPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
@@ -636,9 +641,9 @@ class Puzzly {
 			case "top":
 				return {
 					top: piece.pageY,
-					right: piece.pageX + piece.imgW - this.config.connectorDistanceFromCorner,
+					right: piece.pageX + piece.imgW - (hasRightPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
 					bottom: piece.pageY + this.config.connectorSize,
-					left: piece.pageX + this.config.connectorDistanceFromCorner,
+					left: piece.pageX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
 				}
 		}
 	}
@@ -666,7 +671,7 @@ class Puzzly {
 				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "left");
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-					console.log("right")
+					console.log("right", piece)
 					return "right";
 				}
 			}
@@ -680,7 +685,7 @@ class Puzzly {
 				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "top");
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-					console.log("bottom")
+					console.log("bottom", piece)
 					return "bottom";
 				}
 			}
@@ -694,7 +699,7 @@ class Puzzly {
 				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "right");
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-					console.log("left")
+					console.log("left", piece)
 					return "left";
 				}
 			}
@@ -708,7 +713,7 @@ class Puzzly {
 				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "bottom");
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-					console.log("top")
+					console.log("top", piece)
 					return "top";
 				}
 			}
@@ -830,12 +835,7 @@ class Puzzly {
 		}
 		
 		this.updatePiecePosition(el);
-	
-		if(thisPiece.group === undefined && connectingPiece.group === undefined){
-			this.createGroup(thisPiece, connectingPiece);
-		} else {
-			this.addToGroup(thisPiece, connectingPiece.group)
-		}
+		this.group(thisPiece, connectingPiece);
 
 		const diff = {
 			top: oldPos.top < newPos.top
@@ -849,20 +849,49 @@ class Puzzly {
 		return diff;
 	}
 
+	group(pieceA, pieceB){
+		if(pieceA.group === undefined && pieceB.group === undefined){
+			this.createGroup(pieceA, pieceB);
+		} else if(pieceA.group > -1 && pieceB.group === undefined){
+			this.addToGroup(pieceB, pieceA.group)
+		} else if(pieceA.group === undefined && pieceB.group > -1){
+			this.addToGroup(pieceA, pieceB.group)
+		} else {
+			this.mergeGroups(pieceA, pieceB)
+		}
+	}
+
 	createGroup(pieceA, pieceB){
-		console.log("create group")
 		const groupId = this.groupCounter++
 		pieceA.group = pieceB.group = groupId;
 		this.setElementAttribute(this.getElementByPieceId(pieceA.id), "data-group", groupId)
 		this.setElementAttribute(this.getElementByPieceId(pieceB.id), "data-group", groupId)
 	}
-	
+
 	addToGroup(piece, group){
 		piece.group = group;
-		const pieces = this.pieces.filter(p => p.group === piece.group);
-		pieces.forEach(p => {
+		this.setElementAttribute(this.getElementByPieceId(piece.id), "data-group", group)
+
+		const otherPiecesInFormerGroup = this.pieces.filter(p => p.group === piece.group);
+		if(otherPiecesInFormerGroup.length){
+			this.addPiecesToGroup(otherPiecesInFormerGroup, group)
+		}
+	}
+
+	mergeGroups(pieceA, pieceB){
+		const piecesInGroupA = this.pieces.filter(p => p.group === pieceA.group);
+		const piecesInGroupB = this.pieces.filter(p => p.group === pieceB.group);
+		if(piecesInGroupA.length > piecesInGroupB.length){
+			this.addToGroup(pieceB, pieceA.group);
+		} else {
+			this.addToGroup(pieceA, pieceB.group);
+		}
+	}
+
+	addPiecesToGroup(pieces, group){
+		pieces = pieces.forEach(p => {
 			p.group = group;
-			this.setElementAttribute(this.getElementByPieceId(piece.id), "data-group", group)
+			this.setElementAttribute(this.getElementByPieceId(p.id), "data-group", group)
 		})
 	}
 }
