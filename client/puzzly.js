@@ -31,6 +31,7 @@ class Puzzly {
 				},
 			},
 			selectedPuzzleSize: null,
+			collisionTolerance: 10,
 		};
 
 		this.pieces = [];
@@ -79,11 +80,17 @@ class Puzzly {
 
 		console.log(this.config)
 		
+		this.drawBackground();
 		this.makePieces();
 		
 		window.addEventListener('mousedown', (e) => {
 			this.onMouseDown(e);
 		});
+	}
+
+	drawBackground(){
+		const image = this.BgImage;
+		this.ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, image.width, image.height);
 	}
 
 	getPieceWidthAndHeightWithConnectors(piece){
@@ -165,7 +172,7 @@ class Puzzly {
 	}
 
 	onMouseDown(e){
-		if(e.target.className === "puzzle-piece"){
+		if(e.which === 1 && e.target.className === "puzzle-piece"){
 			const thisPiece = this.pieces.find(p => p.id === parseInt(e.target.getAttribute("data-piece-id")));
 			if(thisPiece.group !== undefined && thisPiece.group > -1){
 				this.pieces.forEach(p => {
@@ -192,7 +199,6 @@ class Puzzly {
 				}]
 			}
 
-			console.log(this.movingPieces)
 			this.mouseMoveFunc = this.onMouseMove(this.movingPieces)
 			
 			// this.movingPieceElement.style.zIndex = 2;
@@ -208,32 +214,35 @@ class Puzzly {
 	}
 
 	updatePiecePositionsByDiff(diff, pieces){
-		console.log(diff)
-		pieces = pieces.forEach(p => {
-			const diffTopOperand = diff.top.charAt(0);
-			const diffTopValue = parseInt(diff.top)
-			const diffLeftOperand = diff.left.charAt(0);
-			const diffLeftValue = parseInt(diff.left)
-
-			const element = this.getElementByPieceId(p.id);
-
-			const newPosTop = diffTopOperand === "+" ? element.offsetTop + diffTopValue : element.offsetTop - diffTopValue;
-			const newPosLeft = diffLeftOperand === "+" ? element.offsetLeft + diffLeftValue : element.offsetLeft - diffLeftValue;
-			
-			element.style.top = newPosTop + "px";
-			element.style.left = newPosLeft + "px";
-			
-			return {
-				...p,
-				pageY: newPosTop,
-				pageX: newPosLeft,
+		const pieceIDs = pieces.map(p => p.id);
+		this.pieces = this.pieces.map(p => {
+			if(pieceIDs.includes(p.id)){
+				const diffTopOperand = diff.top.charAt(0);
+				const diffTopValue = diff.top.substr(1);
+				const diffLeftOperand = diff.left.charAt(0);
+				const diffLeftValue = diff.left.substr(1);
+	
+				const element = this.getElementByPieceId(p.id);
+	
+				const newPosTop = diffTopOperand === "+" ? element.offsetTop + parseInt(diffTopValue) : element.offsetTop - parseInt(diffTopValue);
+				const newPosLeft = diffLeftOperand === "+" ? element.offsetLeft + parseInt(diffLeftValue) : element.offsetLeft - parseInt(diffLeftValue);
+				
+				element.style.top = newPosTop + "px";
+				element.style.left = newPosLeft + "px";
+				
+				return {
+					...p,
+					pageY: newPosTop,
+					pageX: newPosLeft,
+				}
 			}
+			return p;
 		})
 	}
 
 	onMouseUp(e){
+		const el = e.target;
 		this.isMouseDown = false;
-		const element = e.target;
 		let hasConnection = false, noneFound = false, connection, i = 0;
 		if(this.movingPieces.length > 1){
 			while(!hasConnection && !noneFound){
@@ -242,8 +251,7 @@ class Puzzly {
 				connection = this.checkConnections(element);
 				if(connection){
 					const diff = this.snapPiece(element, connection);
-					console.log(piece)
-					const trailingPieces = this.movingPieces.filter( p => p.id !== i);
+					const trailingPieces = this.movingPieces.filter( p => p.id !== piece.id);
 					this.updatePiecePositionsByDiff(diff, trailingPieces);
 					hasConnection = true;
 				}
@@ -254,23 +262,24 @@ class Puzzly {
 				i++;
 			}
 		} else {
-			connection = this.checkConnections(element);
+			connection = this.checkConnections(el);
 			if(connection){
-				this.snapPiece(element, connection);
+				this.snapPiece(el, connection);
 			}
 			
 			const newPos = {
-				top: element.offsetTop,
-				left: element.offsetLeft,
+				top: el.offsetTop,
+				left: el.offsetLeft,
 			}
 			
-			const piece = this.getPieceByElement(element);
-			this.updatePiecePosition(element)
+			const piece = this.getPieceByElement(e.target);
+			this.updatePiecePosition(el)
 		}
 
 		this.movingPieces = [];
 
-		window.removeEventListener('mousemove', this.mouseMoveFunc)
+		window.removeEventListener('mousemove', this.mouseMoveFunc);
+		window.removeEventListener('mouseup', this.onMouseUp);
 	}
 
 	onMouseMove(piecesToMove){
@@ -619,31 +628,31 @@ class Puzzly {
 		switch(side){
 			case "left":
 				return {
-					top: piece.pageY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					right: piece.pageX + this.config.connectorSize,
-					bottom: piece.pageY + piece.imgH - (hasBottomPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					left: piece.pageX,
+					top: piece.pageY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) - this.config.collisionTolerance,
+					right: piece.pageX + this.config.connectorSize + this.config.collisionTolerance,
+					bottom: piece.pageY + piece.imgH - (hasBottomPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.collisionTolerance,
+					left: piece.pageX - this.config.collisionTolerance,
 				}
 			case "right":
 				return {
-					top: piece.pageY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					right: piece.pageX + piece.imgW,
-					bottom: piece.pageY + piece.imgH - (hasBottomPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					left: piece.pageX + piece.imgW - this.config.connectorSize,
+					top: piece.pageY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) - this.config.collisionTolerance,
+					right: piece.pageX + piece.imgW + this.config.collisionTolerance,
+					bottom: piece.pageY + piece.imgH - (hasBottomPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.collisionTolerance,
+					left: piece.pageX + piece.imgW - this.config.connectorSize - this.config.collisionTolerance,
 				}
 			case "bottom":
 				return {
-					top: piece.pageY + piece.imgH - this.config.connectorSize,
-					right: piece.pageX + piece.imgW - (hasRightPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					bottom: piece.pageY + piece.imgH,
-					left: piece.pageX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					top: piece.pageY + piece.imgH - this.config.connectorSize - this.config.collisionTolerance,
+					right: piece.pageX + piece.imgW - (hasRightPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.collisionTolerance,
+					bottom: piece.pageY + piece.imgH + this.config.collisionTolerance,
+					left: piece.pageX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) - this.config.collisionTolerance,
 				}
 			case "top":
 				return {
-					top: piece.pageY,
-					right: piece.pageX + piece.imgW - (hasRightPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					bottom: piece.pageY + this.config.connectorSize,
-					left: piece.pageX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					top: piece.pageY - this.config.collisionTolerance,
+					right: piece.pageX + piece.imgW - (hasRightPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.collisionTolerance,
+					bottom: piece.pageY + this.config.connectorSize + this.config.collisionTolerance,
+					left: piece.pageX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) - this.config.collisionTolerance,
 				}
 		}
 	}
@@ -671,7 +680,7 @@ class Puzzly {
 				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "left");
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-					console.log("right", piece)
+					// console.log("right", piece)
 					return "right";
 				}
 			}
@@ -685,7 +694,7 @@ class Puzzly {
 				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "top");
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-					console.log("bottom", piece)
+					// console.log("bottom", piece)
 					return "bottom";
 				}
 			}
@@ -699,7 +708,7 @@ class Puzzly {
 				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "right");
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-					console.log("left", piece)
+					// console.log("left", piece)
 					return "left";
 				}
 			}
@@ -713,7 +722,7 @@ class Puzzly {
 				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "bottom");
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-					console.log("top", piece)
+					// console.log("top", piece)
 					return "top";
 				}
 			}
@@ -813,8 +822,9 @@ class Puzzly {
 
 			case "top":
 				connectingPiece = this.getPieceById(thisPiece.id - this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
+				const connectingEl = this.getElementByPieceId(connectingPiece.id);
 
-				newPos.top = connectingPiece.pageY + connectingPiece.imgH - this.config.connectorSize
+				newPos.top = connectingEl.offsetTop + connectingEl.height - this.config.connectorSize
 				el.style.top = newPos.top + "px";
 
 				if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
