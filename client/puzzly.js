@@ -5,7 +5,7 @@ class Puzzly {
 	constructor(canvasId, imageUrl, numPieces){
 		this.config = {
 			scale: 1,
-			boardBoundary: 200,
+			boardBoundary: 800,
 			backgroundImages: [
 				{
 					name: 'wood',
@@ -62,8 +62,7 @@ class Puzzly {
 	}
 
 	init(){
-		this.canvas.width = this.SourceImage.width + (this.config.boardBoundary*2);
-		this.canvas.height = this.SourceImage.height + (this.config.boardBoundary*2);
+		
 
 		this.config.originalPictureSize = `${this.SourceImage.width} x ${this.SourceImage.width}`;
 		
@@ -82,13 +81,17 @@ class Puzzly {
 		this.puzzleConfigQuickAccess = this.config.puzzleSize[this.config.selectedPuzzleSize];
 		this.boardBoundingBox = {
 			top: this.config.boardBoundary,
-			right: this.puzzleConfigQuickAccess.pieceSize * this.puzzleConfigQuickAccess.piecesPerSideHorizontal,
+			right: this.config.boardBoundary + (this.puzzleConfigQuickAccess.pieceSize * this.puzzleConfigQuickAccess.piecesPerSideHorizontal),
 			left: this.config.boardBoundary,
-			bottom: this.puzzleConfigQuickAccess.pieceSize * this.puzzleConfigQuickAccess.piecesPerSideVertical,
+			bottom: this.config.boardBoundary + this.puzzleConfigQuickAccess.pieceSize * this.puzzleConfigQuickAccess.piecesPerSideVertical,
 		};
 		this.largestPieceSpan = this.puzzleConfigQuickAccess.pieceSize + (this.config.connectorSize * 2);
 		
+		this.canvas.width = this.boardBoundingBox.right + this.config.boardBoundary * 2;
+		this.canvas.height = this.boardBoundingBox.bottom + this.config.boardBoundary * 2;
+
 		this.drawBackground();
+		this.drawBoardArea();
 		this.makePieces();
 		
 		window.addEventListener('mousedown', (e) => {
@@ -98,7 +101,7 @@ class Puzzly {
 
 	drawBackground(){
 		const image = this.BgImage;
-		this.ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, image.width, image.height);
+		this.ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, this.canvas.width, this.canvas.height);
 	}
 
 	getPieceWidthAndHeightWithConnectors(piece){
@@ -636,30 +639,42 @@ class Puzzly {
 			case "right":
 				return {
 					top: 0,
-					right: window.innerWidth,
-					bottom: window.innerHeight,
-					left: this.boardBoundingBox.right,
+					right: this.canvas.width,
+					bottom: this.canvas.height,
+					left: this.config.boardBoundary + this.boardBoundingBox.right,
 				}
 			case "bottom":
 				return {
-					top: this.boardBoundingBox.bottom,
+					top: this.config.boardBoundary + this.boardBoundingBox.bottom,
 					right: this.boardBoundingBox.right,
-					bottom: window.innerHeight,
+					bottom: this.canvas.height,
 					left: this.boardBoundingBox.left,
 				}
 			case "left":
 				return {
 					top: 0,
 					right: this.boardBoundingBox.left,
-					bottom: window.innerHeight,
+					bottom: this.canvas.width,
 					left: 0,
 				}
 		}
 	}
 
+	drawBoardArea(){
+		const element = document.createElement('div');
+		element.id = "board-area";
+		element.style.position = "absolute";
+		element.style.top = this.boardBoundingBox.top + "px";
+		element.style.left = this.boardBoundingBox.left + "px";
+		element.style.border = "3px groove #222";
+		element.style.zIndex = 10;
+		element.style.width = this.boardBoundingBox.right + "px";
+		element.style.height = this.boardBoundingBox.bottom + "px";
+		document.body.appendChild(element);
+	}
+
 	getRandomPositionOutsideBoardArea(piece, sector){
 		const randSectorBoundingBox = this.getSectorBoundingBox(sector);
-
 		return {
 			left: this.getRandomInt(randSectorBoundingBox.left, randSectorBoundingBox.right - this.largestPieceSpan),
 			top: this.getRandomInt(randSectorBoundingBox.top, randSectorBoundingBox.bottom - this.largestPieceSpan),
