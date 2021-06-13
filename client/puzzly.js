@@ -5,7 +5,6 @@ class Puzzly {
 	constructor(canvasId, imageUrl, numPieces){
 		this.config = {
 			scale: 1,
-			blowUp: true,
 			boardBoundary: 200,
 			backgroundImages: [
 				{
@@ -79,6 +78,15 @@ class Puzzly {
 		this.config.selectedPuzzleSize = "small";
 
 		console.log(this.config)
+
+		this.puzzleConfigQuickAccess = this.config.puzzleSize[this.config.selectedPuzzleSize];
+		this.boardBoundingBox = {
+			top: this.config.boardBoundary,
+			right: this.puzzleConfigQuickAccess.pieceSize * this.puzzleConfigQuickAccess.piecesPerSideHorizontal,
+			left: this.config.boardBoundary,
+			bottom: this.puzzleConfigQuickAccess.pieceSize * this.puzzleConfigQuickAccess.piecesPerSideVertical,
+		};
+		this.largestPieceSpan = this.puzzleConfigQuickAccess.pieceSize + (this.config.connectorSize * 2);
 		
 		this.drawBackground();
 		this.makePieces();
@@ -602,17 +610,75 @@ class Puzzly {
 		}
 	}
 
+	/**
+	* Returns a random integer between min (inclusive) and max (inclusive).
+	* The value is no lower than min (or the next integer greater than min
+	* if min isn't an integer) and no greater than max (or the next integer
+	* lower than max if max isn't an integer).
+	* Using Math.round() will give you a non-uniform distribution!
+	*/
+	getRandomInt(min, max) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+	getSectorBoundingBox(sector){
+		const chosen = sector === 1 ? "top" : sector === 2 ? "right" : sector === 3 ? "bottom" : sector === 4 ? "left" : "";
+		switch(chosen){
+			case "top":
+				return {
+					top: 0,
+					right: this.boardBoundingBox.right,
+					bottom: this.config.boardBoundary,
+					left: this.config.boardBoundary,
+				}
+			case "right":
+				return {
+					top: 0,
+					right: window.innerWidth,
+					bottom: window.innerHeight,
+					left: this.boardBoundingBox.right,
+				}
+			case "bottom":
+				return {
+					top: this.boardBoundingBox.bottom,
+					right: this.boardBoundingBox.right,
+					bottom: window.innerHeight,
+					left: this.boardBoundingBox.left,
+				}
+			case "left":
+				return {
+					top: 0,
+					right: this.boardBoundingBox.left,
+					bottom: window.innerHeight,
+					left: 0,
+				}
+		}
+	}
+
+	getRandomPositionOutsideBoardArea(piece, sector){
+		const randSectorBoundingBox = this.getSectorBoundingBox(sector);
+
+		return {
+			left: this.getRandomInt(randSectorBoundingBox.left, randSectorBoundingBox.right - this.largestPieceSpan),
+			top: this.getRandomInt(randSectorBoundingBox.top, randSectorBoundingBox.bottom - this.largestPieceSpan),
+		}
+	}
+
 	assignInitialPieceData(imgX, imgY, canvX, canvY, piece, i){
 		const pieceDimensions = this.getPieceWidthAndHeightWithConnectors(piece);
-
+		const randPos = this.getRandomPositionOutsideBoardArea(piece, this.getRandomInt(1,4));
 		return Object.assign({
 			id: i,
 			imgX: imgX,
 			imgY: imgY,
 			imgW: pieceDimensions.width,
 			imgH: pieceDimensions.height, 
-			pageX: this.config.blowUp ? canvX + 20 : canvX,
-			pageY: this.config.blowUp ? canvY + 20 : canvY,
+			pageXDebug: canvX,
+			pageYDebug: canvY,
+			pageX: randPos.left,
+			pageY: randPos.top,
 		}, piece);
 	}
 
