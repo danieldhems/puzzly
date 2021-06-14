@@ -795,26 +795,26 @@ class Puzzly {
 	getTopRightCornerBoundingBox(){
 		return {
 			top: this.config.boardBoundary,
-			right: this.boardBoundingBox.right,
+			right: this.canvasWidth - this.config.boardBoundary,
 			bottom: this.config.boardBoundary + this.largestPieceSpan,
-			left: this.boardBoundingBox.right - this.largestPieceSpan,
+			left: this.canvasWidth - this.config.boardBoundary - this.largestPieceSpan,
 		}
 	}
 
 	getBottomRightCornerBoundingBox(){
 		return {
-			top: this.boardBoundingBox.bottom - this.largestPieceSpan,
-			right: this.boardBoundingBox.right,
-			bottom: this.boardBoundingBox.bottom,
-			left: this.boardBoundingBox.right - this.largestPieceSpan,
+			top: this.canvasHeight - this.config.boardBoundary - this.largestPieceSpan,
+			right: this.canvasWidth - this.config.boardBoundary,
+			bottom: this.canvasHeight - this.config.boardBoundary,
+			left: this.canvasWidth - this.config.boardBoundary - this.largestPieceSpan,
 		}
 	}
 
 	getBottomLeftCornerBoundingBox(){
 		return {
-			top: this.boardBoundingBox.bottom - this.largestPieceSpan,
+			top: this.canvasHeight - this.config.boardBoundary - this.largestPieceSpan,
 			right: this.config.boardBoundary + this.largestPieceSpan,
-			bottom: this.boardBoundingBox.bottom,
+			bottom: this.canvasHeight - this.config.boardBoundary,
 			left: this.config.boardBoundary,
 		}
 	}
@@ -1045,6 +1045,19 @@ if(this.hasCollision(pieceBoundingBox, this.getBottomLeftCornerBoundingBox())){
 			case "top-left":
 				el.style.top = this.config.boardBoundary + "px";
 				el.style.left = this.config.boardBoundary + "px";
+				break;
+			case "top-right":
+				el.style.top = this.config.boardBoundary + "px";
+				el.style.left = this.canvasWidth - this.config.boardBoundary - thisPiece.imgW + "px";
+				break;
+			case "bottom-right":
+				el.style.top = this.canvasHeight - this.config.boardBoundary - thisPiece.imgH + "px";
+				el.style.left = this.canvasWidth - this.config.boardBoundary - thisPiece.imgW + "px";
+				break;
+			case "bottom-left":
+				el.style.top = this.canvasHeight - this.config.boardBoundary - thisPiece.imgH + "px";
+				el.style.left = this.config.boardBoundary + "px";
+				break;
 		}
 		
 		this.updatePiecePosition(el);
@@ -1063,6 +1076,7 @@ if(this.hasCollision(pieceBoundingBox, this.getBottomLeftCornerBoundingBox())){
 	}
 
 	group(pieceA, pieceB){
+		if(!pieceB) return;
 		if(pieceA.group === undefined && pieceB.group === undefined){
 			this.createGroup(pieceA, pieceB);
 		} else if(pieceA.group > -1 && pieceB.group === undefined){
