@@ -5,6 +5,7 @@ class Puzzly {
 	constructor(canvasId, imageUrl, numPieces){
 		this.config = {
 			scale: 1,
+			debug: true,
 			boardBoundary: 800,
 			backgroundImages: [
 				{
@@ -154,9 +155,10 @@ class Puzzly {
 		canvasEl.width = piece.imgW;
 		canvasEl.height = piece.imgH;
 		canvasEl.style.position = "absolute";
+		canvasEl.style.zIndex = 100;
 
-		canvasEl.style.left = piece.pageX + "px";
-		canvasEl.style.top = piece.pageY + "px";
+		canvasEl.style.left = (this.config.debug ? piece.pageXDebug : piece.pageX) + "px";
+		canvasEl.style.top = (this.config.debug ? piece.pageYDebug : piece.pageY) + "px";
 
 		const cvctx = canvasEl.getContext("2d");
 
@@ -190,6 +192,9 @@ class Puzzly {
 		if(e.which === 1){
 			if(e.target.className === "puzzle-piece"){
 				const thisPiece = this.pieces.find(p => p.id === parseInt(e.target.getAttribute("data-piece-id")));
+				if(thisPiece.isSolved){
+					return;
+				}
 				if(thisPiece.group !== undefined && thisPiece.group > -1){
 					this.pieces.forEach(p => {
 
@@ -302,10 +307,16 @@ class Puzzly {
 					const piece = this.movingPieces[i];
 					const element = this.getElementByPieceId(piece.id);
 					connection = this.checkConnections(element);
+
 					if(connection){
 						const diff = this.snapPiece(element, connection);
 						const trailingPieces = this.movingPieces.filter( p => p.id !== piece.id);
 						this.updatePiecePositionsByDiff(diff, trailingPieces);
+
+						if(this.isCornerConnection(connection) || this.shouldMarkAsSolved(this.movingPieces)){
+							this.markAsSolved(this.movingPieces);
+						}
+
 						hasConnection = true;
 					}
 	
@@ -318,8 +329,11 @@ class Puzzly {
 				const element = this.getElementByPieceId(this.movingPieces[0].id);
 				connection = this.checkConnections(element);
 				if(connection){
-					console.log(connection)
 					this.snapPiece(element, connection);
+					const updatedPiece = this.getPieceByElement(element);
+					if(this.isCornerConnection(connection) && this.shouldMarkAsSolved([updatedPiece])){
+						this.markAsSolved([updatedPiece]);
+					}
 				}
 				
 				const newPos = {
@@ -329,13 +343,53 @@ class Puzzly {
 				
 				this.updatePiecePosition(element)
 			}
-	
+
 			this.movingPieces = [];
 		}
 
 		window.removeEventListener('mousemove', this.moveCanvas);
 		window.removeEventListener('mousemove', this.mouseMoveFunc);
 		window.removeEventListener('mouseup', this.onMouseUp);
+	}
+
+	isCornerConnection(str){
+		return str === "top-left" || str === "top-right" || str === "bottom-right" || str === "bottom-left";
+	}
+
+	shouldMarkAsSolved(pieces){
+		if(pieces.length === 1){
+			return Utils.isCornerPiece(pieces[0]) || this.pieces.filter(p => p.group === pieces[0].group).some(p => Utils.isCornerPiece(p) && p.isSolved)
+		} else {
+			pieces.some(p => Utils.isCornerPiece(p) && p.isSolved)
+		}
+	}
+
+	markAsSolved(pieces){
+		console.log("marking as solved", pieces)
+		let hasGroup;
+		let group;
+		let pieceIds;
+
+		if(pieces.length > 1){
+			hasGroup = true;
+			group = pieces[0].group;
+			pieceIds = pieces.map(p => p.id);
+		}
+		
+
+		this.pieces = this.pieces.map(p => {
+			if(hasGroup ? p.group === group : p.id === pieces[0].id){
+				const el = this.getElementByPieceId(p.id);
+				el.setAttribute("data-is-solved", true);
+				return {
+					...p,
+					isSolved: true
+				}
+			}
+			return p;
+		})
+
+		console.log(this.pieces)
 	}
 
 	onMouseMove(piecesToMove){
@@ -473,7 +527,7 @@ class Puzzly {
 				endOfRow = false;
 			}
 
-			if(rowCount === piecesPerSideVertical - 1){
+			if(rowCount === piecesPerSideVertical){
 				finalRow = true;
 			}
 
@@ -712,7 +766,7 @@ class Puzzly {
 		element.style.top = this.boardBoundingBox.top + "px";
 		element.style.left = this.boardBoundingBox.left + "px";
 		element.style.border = "3px groove #222";
-		element.style.zIndex = 10;
+		element.style.zIndex = 2;
 		element.style.width = this.boardBoundingBox.right + "px";
 		element.style.height = this.boardBoundingBox.bottom + "px";
 		this.canvas.appendChild(element);
@@ -900,31 +954,30 @@ class Puzzly {
 		}
 
 		const pieceBoundingBox = this.getPieceBoundingBox(piece);
-		console.log(pieceBoundingBox)
 
 		if(Utils.isTopLeftCorner(piece)){
 			console.log("checking top left corner", this.getTopLeftCornerBoundingBox())
-if(this.hasCollision(pieceBoundingBox, this.getTopLeftCornerBoundingBox())){
-	return "top-left";
-}
+			if(this.hasCollision(pieceBoundingBox, this.getTopLeftCornerBoundingBox())){
+				return "top-left";
+			}
 		}
 		if(Utils.isTopRightCorner(piece)){
 			console.log("checking top right", this.getTopRightCornerBoundingBox())
-if(this.hasCollision(pieceBoundingBox, this.getTopRightCornerBoundingBox())){
-	return "top-right";
-}
+			if(this.hasCollision(pieceBoundingBox, this.getTopRightCornerBoundingBox())){
+				return "top-right";
+			}
 		}
 		if(Utils.isBottomRightCorner(piece)){
 			console.log("checking bototm right", this.getBottomRightCornerBoundingBox())
-if(this.hasCollision(pieceBoundingBox, this.getBottomRightCornerBoundingBox())){
-	return "bottom-right";
-}
+			if(this.hasCollision(pieceBoundingBox, this.getBottomRightCornerBoundingBox())){
+				return "bottom-right";
+			}
 		}
 		if(Utils.isBottomLeftCorner(piece)){
 			console.log("chekcing bottom left", this.getBottomLeftCornerBoundingBox())
-if(this.hasCollision(pieceBoundingBox, this.getBottomLeftCornerBoundingBox())){
-	return "bottom-left";
-}
+			if(this.hasCollision(pieceBoundingBox, this.getBottomLeftCornerBoundingBox())){
+				return "bottom-left";
+			}
 		}
 	}
 
@@ -1043,20 +1096,28 @@ if(this.hasCollision(pieceBoundingBox, this.getBottomLeftCornerBoundingBox())){
 				break;
 
 			case "top-left":
-				el.style.top = this.config.boardBoundary + "px";
-				el.style.left = this.config.boardBoundary + "px";
+				newPos.top = this.config.boardBoundary;
+				newPos.left = this.config.boardBoundary;
+				el.style.top = newPos.top + "px";
+				el.style.left = newPos.left + "px";
 				break;
 			case "top-right":
-				el.style.top = this.config.boardBoundary + "px";
-				el.style.left = this.canvasWidth - this.config.boardBoundary - thisPiece.imgW + "px";
+				newPos.top = this.config.boardBoundary;
+				newPos.left = this.canvasWidth - this.config.boardBoundary - thisPiece.imgW;
+				el.style.top = newPos.top + "px";
+				el.style.left = newPos.left + "px";
 				break;
 			case "bottom-right":
-				el.style.top = this.canvasHeight - this.config.boardBoundary - thisPiece.imgH + "px";
-				el.style.left = this.canvasWidth - this.config.boardBoundary - thisPiece.imgW + "px";
+				newPos.top = this.canvasHeight - this.config.boardBoundary - thisPiece.imgH;
+				newPos.left = this.canvasWidth - this.config.boardBoundary - thisPiece.imgW;
+				el.style.top = newPos.top + "px";
+				el.style.left = newPos.left + "px";
 				break;
 			case "bottom-left":
-				el.style.top = this.canvasHeight - this.config.boardBoundary - thisPiece.imgH + "px";
-				el.style.left = this.config.boardBoundary + "px";
+				newPos.top = this.canvasHeight - this.config.boardBoundary - thisPiece.imgH;
+				newPos.left = this.config.boardBoundary;
+				el.style.top = newPos.top + "px";
+				el.style.left = newPos.left + "px";
 				break;
 		}
 		
@@ -1096,29 +1157,50 @@ if(this.hasCollision(pieceBoundingBox, this.getBottomLeftCornerBoundingBox())){
 	}
 
 	addToGroup(piece, group){
+		const otherPiecesInFormerGroup = this.pieces.filter(p => p.id !== piece.id && piece.group !== undefined && p.group === piece.group);
 		piece.group = group;
-		this.setElementAttribute(this.getElementByPieceId(piece.id), "data-group", group)
-
-		const otherPiecesInFormerGroup = this.pieces.filter(p => p.group === piece.group);
-		if(otherPiecesInFormerGroup.length){
+		if(this.isGroupSolved(group)){
+			piece.isSolved = true;
+			this.setElementAttribute(this.getElementByPieceId(piece.id), "data-is-solved", true)
+		}
+		if(otherPiecesInFormerGroup.length > 0){
 			this.addPiecesToGroup(otherPiecesInFormerGroup, group)
 		}
 	}
-
+	
 	mergeGroups(pieceA, pieceB){
 		const piecesInGroupA = this.pieces.filter(p => p.group === pieceA.group);
 		const piecesInGroupB = this.pieces.filter(p => p.group === pieceB.group);
 		if(piecesInGroupA.length > piecesInGroupB.length){
-			this.addToGroup(pieceB, pieceA.group);
+			this.addPiecesToGroup(piecesInGroupB, pieceA.group);
 		} else {
-			this.addToGroup(pieceA, pieceB.group);
+			this.addPiecesToGroup(piecesInGroupA, pieceB.group);
 		}
 	}
 
+	isGroupSolved(group){
+		return this.pieces.some(p => p.group === group && p.isSolved);
+	}
+	
 	addPiecesToGroup(pieces, group){
-		pieces = pieces.forEach(p => {
-			p.group = group;
-			this.setElementAttribute(this.getElementByPieceId(p.id), "data-group", group)
+		console.log("adding pieces to group", pieces, group)
+		const pieceIds = pieces.map(p => p.id);
+		const isGroupSolved = this.isGroupSolved(group);
+		this.pieces = this.pieces.map(p => {
+			if(pieceIds.includes(p.id)){
+				let update = {
+					...p,
+					group,
+				}
+				if(isGroupSolved){
+					update.isSolved = true;
+				}
+				this.setElementAttribute(this.getElementByPieceId(p.id), "data-group", group)
+				this.setElementAttribute(this.getElementByPieceId(p.id), "data-is-solved", true)
+
+				return update;
+			}
+			return p;
 		})
 	}
 }
