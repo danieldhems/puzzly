@@ -66,10 +66,6 @@ class Puzzly {
 
 	init(){
 		this.config.originalPictureSize = `${this.SourceImage.width} x ${this.SourceImage.width}`;
-		
-		// Base square size before connectors are applied
-		this.config.pieceWidth = this.config.pieceHeight = this.SourceImage.width / this.config.piecesPerSide;
-
 		this.config.connectorRatio = JigsawShapeSpans.small / 100 * this.config.jigsawSpriteConnectorSize;
 		this.config.connectorSize = this.config.puzzleSize.small.pieceSize / 100 * this.config.connectorRatio;
 		this.config.connectorDistanceFromCornerRatio = JigsawShapeSpans.small / 100 * this.config.jigsawSpriteConnectorDistanceFromCorner;
@@ -80,16 +76,22 @@ class Puzzly {
 		console.log(this.config)
 
 		this.puzzleConfigQuickAccess = this.config.puzzleSize[this.config.selectedPuzzleSize];
+		console.log(this.puzzleConfigQuickAccess)
 		this.largestPieceSpan = this.puzzleConfigQuickAccess.pieceSize + (this.config.connectorSize * 2);
 		this.boardBoundingBox = {
 			top: this.config.boardBoundary,
-			right: this.config.boardBoundary + (this.puzzleConfigQuickAccess.pieceSize * this.puzzleConfigQuickAccess.piecesPerSideHorizontal),
+			right: this.config.boardBoundary + (this.puzzleConfigQuickAccess.piecesPerSideHorizontal * this.puzzleConfigQuickAccess.pieceSize),
 			left: this.config.boardBoundary,
-			bottom: this.config.boardBoundary + (this.puzzleConfigQuickAccess.pieceSize * this.puzzleConfigQuickAccess.piecesPerSideVertical),
+			bottom: this.config.boardBoundary + (this.puzzleConfigQuickAccess.piecesPerSideVertical * this.puzzleConfigQuickAccess.pieceSize),
 		};
+
+		this.boardSize = {
+			width: this.puzzleConfigQuickAccess.piecesPerSideHorizontal * this.puzzleConfigQuickAccess.pieceSize,
+			height: this.puzzleConfigQuickAccess.piecesPerSideVertical * this.puzzleConfigQuickAccess.pieceSize,
+		}
 		
-		this.canvas.style.width = this.boardBoundingBox.right + this.config.boardBoundary * 2 + "px";
-		this.canvas.style.height = this.boardBoundingBox.bottom + this.config.boardBoundary * 2 + "px";
+		this.canvas.style.width = this.boardSize.width + this.config.boardBoundary * 2 + "px";
+		this.canvas.style.height = this.boardSize.height + this.config.boardBoundary * 2 + "px";
 
 		this.canvasWidth = parseInt(this.canvas.style.width);
 		this.canvasHeight = parseInt(this.canvas.style.height);
@@ -767,8 +769,8 @@ class Puzzly {
 		element.style.left = this.boardBoundingBox.left + "px";
 		element.style.border = "3px groove #222";
 		element.style.zIndex = 2;
-		element.style.width = this.boardBoundingBox.right + "px";
-		element.style.height = this.boardBoundingBox.bottom + "px";
+		element.style.width = this.boardSize.width + "px";
+		element.style.height = this.boardSize.height + "px";
 		this.canvas.appendChild(element);
 	}
 
@@ -1152,17 +1154,33 @@ class Puzzly {
 	createGroup(pieceA, pieceB){
 		const groupId = this.groupCounter++
 		pieceA.group = pieceB.group = groupId;
+		if(pieceB.isSolved){
+			pieceA.isSolved = true;
+		}
 		this.setElementAttribute(this.getElementByPieceId(pieceA.id), "data-group", groupId)
 		this.setElementAttribute(this.getElementByPieceId(pieceB.id), "data-group", groupId)
 	}
 
 	addToGroup(piece, group){
 		const otherPiecesInFormerGroup = this.pieces.filter(p => p.id !== piece.id && piece.group !== undefined && p.group === piece.group);
-		piece.group = group;
-		if(this.isGroupSolved(group)){
-			piece.isSolved = true;
-			this.setElementAttribute(this.getElementByPieceId(piece.id), "data-is-solved", true)
-		}
+
+		this.pieces = this.pieces.map(p => {
+			let update;
+			if(p.id === piece.id){
+				console.log("updating piece", p)
+				update = {
+					...p,
+					group,
+				}
+				if(this.isGroupSolved(group)){
+					update.isSolved = true;
+					this.setElementAttribute(this.getElementByPieceId(piece.id), "data-is-solved", true)
+				}
+				return update;
+			}
+			return p;
+		});
+
 		if(otherPiecesInFormerGroup.length > 0){
 			this.addPiecesToGroup(otherPiecesInFormerGroup, group)
 		}
