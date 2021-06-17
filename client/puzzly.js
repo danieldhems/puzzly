@@ -16,7 +16,7 @@ class Puzzly {
 			numberOfPieces: numPieces,
 			segmentSize: null,
 			piecesPerSide: null,
-			jigsawSpriteConnectorSize: 30,
+			jigsawSpriteConnectorSize: 40,
 			jigsawSpriteConnectorDistanceFromCorner: 40,
 			puzzleSize: {
 				small: {
@@ -28,6 +28,11 @@ class Puzzly {
 					piecesPerSideHorizontal: 20,
 					piecesPerSideVertical: 15,
 					pieceSize: 90,
+				},
+				large: {
+					piecesPerSideHorizontal: 27,
+					piecesPerSideVertical: 20,
+					pieceSize: 30,
 				},
 			},
 			selectedPuzzleSize: null,
@@ -65,18 +70,16 @@ class Puzzly {
 	}
 
 	init(){
+		this.config.selectedPuzzleSize = "large";
 		this.config.originalPictureSize = `${this.SourceImage.width} x ${this.SourceImage.width}`;
-		this.config.connectorRatio = JigsawShapeSpans.small / 100 * this.config.jigsawSpriteConnectorSize;
-		this.config.connectorSize = this.config.puzzleSize.small.pieceSize / 100 * this.config.connectorRatio;
+		this.config.connectorRatio = this.config.jigsawSpriteConnectorSize / JigsawShapeSpans.small * 100;
+		this.config.connectorSize = this.config.puzzleSize[this.config.selectedPuzzleSize].pieceSize / 100 * this.config.connectorRatio;
 		this.config.connectorDistanceFromCornerRatio = JigsawShapeSpans.small / 100 * this.config.jigsawSpriteConnectorDistanceFromCorner;
 		this.config.connectorDistanceFromCorner = this.config.puzzleSize.small.pieceSize / 100 * this.config.connectorDistanceFromCornerRatio;
-
-		this.config.selectedPuzzleSize = "small";
 
 		console.log(this.config)
 
 		this.puzzleConfigQuickAccess = this.config.puzzleSize[this.config.selectedPuzzleSize];
-		console.log(this.puzzleConfigQuickAccess)
 		this.largestPieceSpan = this.puzzleConfigQuickAccess.pieceSize + (this.config.connectorSize * 2);
 		this.boardBoundingBox = {
 			top: this.config.boardBoundary,
@@ -112,7 +115,6 @@ class Puzzly {
 
 	getPieceWidthAndHeightWithConnectors(piece){
 		let actualWidth, actualHeight;
-
 		switch(piece._w){
 			case JigsawShapeSpans.small:
 				actualWidth = this.config.puzzleSize[this.config.selectedPuzzleSize].pieceSize;
@@ -147,7 +149,8 @@ class Puzzly {
 	
 	drawPiece(piece) {
 		const canvasEl = document.createElement("canvas");
-		this.canvas.appendChild(canvasEl)
+		this.canvas.appendChild(canvasEl);
+
 		canvasEl.id = "canvas-" + piece._shape_id;
 		canvasEl.className = "puzzle-piece";
 		canvasEl.setAttribute('data-jigsaw-type', piece.type.join(","))
@@ -159,8 +162,8 @@ class Puzzly {
 		canvasEl.style.position = "absolute";
 		canvasEl.style.zIndex = 100;
 
-		canvasEl.style.left = (this.config.debug ? piece.pageXDebug : piece.pageX) + "px";
-		canvasEl.style.top = (this.config.debug ? piece.pageYDebug : piece.pageY) + "px";
+		canvasEl.style.left = piece.pageX + "px";
+		canvasEl.style.top = piece.pageY + "px";
 
 		const cvctx = canvasEl.getContext("2d");
 
@@ -367,7 +370,6 @@ class Puzzly {
 	}
 
 	markAsSolved(pieces){
-		console.log("marking as solved", pieces)
 		let hasGroup;
 		let group;
 		let pieceIds;
@@ -390,8 +392,6 @@ class Puzzly {
 			}
 			return p;
 		})
-
-		console.log(this.pieces)
 	}
 
 	onMouseMove(piecesToMove){
@@ -402,7 +402,7 @@ class Puzzly {
 				const newPosLeft = e.clientX - p.diffX;
 				element.style.top = newPosTop + "px";
 				element.style.left = newPosLeft + "px";
-				this.updatePiecePosition(element)
+				this.updatePiecePosition(element);
 			})
 		}.bind(this)
 	}
@@ -791,10 +791,8 @@ class Puzzly {
 			imgY: imgY,
 			imgW: pieceDimensions.width,
 			imgH: pieceDimensions.height, 
-			pageXDebug: canvX,
-			pageYDebug: canvY,
-			pageX: randPos.left,
-			pageY: randPos.top,
+			pageX: this.config.debug ? canvX : randPos.left,
+			pageY: this.config.debug ? canvY : randPos.top,
 		}, piece);
 	}
 
@@ -907,7 +905,7 @@ class Puzzly {
 				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "left");
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-					// console.log("right", piece)
+					console.log("right", piece)
 					return "right";
 				}
 			}
@@ -921,7 +919,7 @@ class Puzzly {
 				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "top");
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-					// console.log("bottom", piece)
+					console.log("bottom", piece)
 					return "bottom";
 				}
 			}
@@ -935,7 +933,7 @@ class Puzzly {
 				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "right");
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-					// console.log("left", piece)
+					console.log("left", piece)
 					return "left";
 				}
 			}
@@ -949,7 +947,7 @@ class Puzzly {
 				const targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetPiece, "bottom");
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
-					// console.log("top", piece)
+					console.log("top", piece)
 					return "top";
 				}
 			}
@@ -958,25 +956,25 @@ class Puzzly {
 		const pieceBoundingBox = this.getPieceBoundingBox(piece);
 
 		if(Utils.isTopLeftCorner(piece)){
-			console.log("checking top left corner", this.getTopLeftCornerBoundingBox())
+			// console.log("checking top left corner", this.getTopLeftCornerBoundingBox())
 			if(this.hasCollision(pieceBoundingBox, this.getTopLeftCornerBoundingBox())){
 				return "top-left";
 			}
 		}
 		if(Utils.isTopRightCorner(piece)){
-			console.log("checking top right", this.getTopRightCornerBoundingBox())
+			// console.log("checking top right", this.getTopRightCornerBoundingBox())
 			if(this.hasCollision(pieceBoundingBox, this.getTopRightCornerBoundingBox())){
 				return "top-right";
 			}
 		}
 		if(Utils.isBottomRightCorner(piece)){
-			console.log("checking bototm right", this.getBottomRightCornerBoundingBox())
+			// console.log("checking bototm right", this.getBottomRightCornerBoundingBox())
 			if(this.hasCollision(pieceBoundingBox, this.getBottomRightCornerBoundingBox())){
 				return "bottom-right";
 			}
 		}
 		if(Utils.isBottomLeftCorner(piece)){
-			console.log("chekcing bottom left", this.getBottomLeftCornerBoundingBox())
+			// console.log("chekcing bottom left", this.getBottomLeftCornerBoundingBox())
 			if(this.hasCollision(pieceBoundingBox, this.getBottomLeftCornerBoundingBox())){
 				return "bottom-left";
 			}
@@ -1167,7 +1165,6 @@ class Puzzly {
 		this.pieces = this.pieces.map(p => {
 			let update;
 			if(p.id === piece.id){
-				console.log("updating piece", p)
 				update = {
 					...p,
 					group,
@@ -1201,7 +1198,6 @@ class Puzzly {
 	}
 	
 	addPiecesToGroup(pieces, group){
-		console.log("adding pieces to group", pieces, group)
 		const pieceIds = pieces.map(p => p.id);
 		const isGroupSolved = this.isGroupSolved(group);
 		this.pieces = this.pieces.map(p => {
