@@ -70,7 +70,7 @@ class Puzzly {
 	}
 
 	init(){
-		this.config.selectedPuzzleSize = "medium";
+		this.config.selectedPuzzleSize = "small";
 		this.config.originalPictureSize = `${this.SourceImage.width} x ${this.SourceImage.width}`;
 
 		this.config.connectorRatio = this.config.jigsawSpriteConnectorSize / JigsawShapeSpans.small * 100;
@@ -372,6 +372,7 @@ class Puzzly {
 	}
 
 	markAsSolved(pieces){
+		console.log(pieces)
 		let hasGroup;
 		let group;
 		let pieceIds;
@@ -384,7 +385,7 @@ class Puzzly {
 		
 
 		this.pieces = this.pieces.map(p => {
-			if(hasGroup ? p.group === group : p.id === pieces[0].id){
+			if(hasGroup && p.group === group || p.id === pieces[0].id){
 				const el = this.getElementByPieceId(p.id);
 				el.setAttribute("data-is-solved", true);
 				return {
@@ -1126,6 +1127,8 @@ class Puzzly {
 				: `-${oldPos.left - newPos.left}`,
 		}
 
+		console.log(this.checkCompletion());
+
 		return diff;
 	}
 
@@ -1162,6 +1165,9 @@ class Puzzly {
 					...p,
 					group,
 				}
+
+				this.setElementAttribute(this.getElementByPieceId(piece.id), "data-group", group)
+
 				if(this.isGroupSolved(group)){
 					update.isSolved = true;
 					this.setElementAttribute(this.getElementByPieceId(piece.id), "data-is-solved", true)
@@ -1170,6 +1176,11 @@ class Puzzly {
 			}
 			return p;
 		});
+
+		if(piece.isSolved){
+			const piecesInGroup = this.pieces.filter(p => p.group === group);
+			this.markAsSolved(piecesInGroup)
+		}
 
 		if(otherPiecesInFormerGroup.length > 0){
 			this.addPiecesToGroup(otherPiecesInFormerGroup, group)
@@ -1189,17 +1200,19 @@ class Puzzly {
 	isGroupSolved(group){
 		return this.pieces.some(p => p.group === group && p.isSolved);
 	}
-	
+
 	addPiecesToGroup(pieces, group){
 		const pieceIds = pieces.map(p => p.id);
-		const isGroupSolved = this.isGroupSolved(group);
+		const newGroupPieceIds = this.pieces.filter(p => p.group === group).map(p => p.id);
+		const isThisGroupSolved = this.isGroupSolved(group);
+		const isFormerGroupSolved = this.isGroupSolved(pieces[0].group)
 		this.pieces = this.pieces.map(p => {
-			if(pieceIds.includes(p.id)){
+			if(pieceIds.includes(p.id) || newGroupPieceIds.includes(p.id)){
 				let update = {
 					...p,
 					group,
 				}
-				if(isGroupSolved){
+				if(isThisGroupSolved || isFormerGroupSolved){
 					update.isSolved = true;
 				}
 				this.setElementAttribute(this.getElementByPieceId(p.id), "data-group", group)
@@ -1209,6 +1222,10 @@ class Puzzly {
 			}
 			return p;
 		})
+	}
+
+	checkCompletion(){
+		return this.pieces.filter(p => p.isSolved).length === this.pieces.length;
 	}
 }
 
