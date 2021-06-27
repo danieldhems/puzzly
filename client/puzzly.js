@@ -298,7 +298,7 @@ class Puzzly {
 		})
 	}
 
-	onMouseUp(e){
+	async onMouseUp(e){
 		const el = e.target;
 		this.isMouseDown = false;
 
@@ -350,6 +350,8 @@ class Puzzly {
 				
 				this.updatePiecePosition(element)
 			}
+
+			await this.save();
 
 			this.movingPieces = [];
 		}
@@ -1226,6 +1228,16 @@ class Puzzly {
 
 	checkCompletion(){
 		return this.pieces.filter(p => p.isSolved).length === this.pieces.length;
+	}
+
+	async save(){
+		fetch('/api/puzzle/1', {
+			method: 'put',
+			headers: {
+				'Content-Type': 'Application/json'
+			},
+			body: JSON.stringify(this.movingPieces)
+		})
 	}
 }
 

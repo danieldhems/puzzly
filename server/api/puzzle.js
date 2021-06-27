@@ -1,7 +1,24 @@
 var path = require('path');
 var router = require('express').Router();
 var multer = require('multer');
-var puzzle = require('../model/puzzle.js');
+
+const MongoClient = require('mongodb').MongoClient;
+const assert = require('assert')
+
+// Connection URL
+const url = 'mongodb://localhost:27017';
+
+// Database Name
+const dbName = 'puzzly';
+
+const collectionName = 'puzzles'
+
+// Create a new MongoClient
+const client = new MongoClient(url);
+
+let db, collection;
+
+// Use connect method to connect to the Server
 
 var storage = multer.diskStorage({
 	destination: function(req, file, cb){
@@ -29,26 +46,32 @@ var api = {
 				numPieces: numPieces,
 				createdAt: Date.now()
 			};
-			var newPuzzle = new puzzle(data);
-			newPuzzle.save( function(err, doc){
-				if(err) console.log(err);
-				console.log('new document saved: ', doc)
-				res.send(doc);
-			});
+			
 		});
 
 	},
 	read: function(req, res){
 		
-		
 	},
 	update: function(req, res){
+		console.log("saving")
 		var data = req.body;
 		var id = req.params.id;
-		db.query('UPDATE `agents` SET ? WHERE `id` = ?', [data, id], function(err, result){
-			if(err) throw new Error(err);
-			console.log(result);
+
+		client.connect().then((client, err) => {
+			assert.strictEqual(err, undefined);
+			db = client.db(dbName);
+			collection = db.collection(collectionName);
+
+			const query = { id }
+
+		  collection.findOneAndUpdate(query, data, function(err, result){
+			  if(err) throw new Error(err);
+			  console.log(result);
+		  });
+		  res.send(200)
 		});
+
 	},
 	destroy: function(req, res){
 		var id = req.params.id;
@@ -64,6 +87,7 @@ var api = {
 router.get('/', api.read);
 router.get('/:id', api.read);
 router.post('/', upload, api.create);
+router.put('/:id', api.update);
 router.delete('/:id', api.destroy);
 
 module.exports = router;

@@ -4,15 +4,16 @@ var	bodyParser = require('body-parser');
 
 var app = express();
 
-// var db = require('./database.js');
+var db = require('./database.js');
 
 app.use('/', express.static('./client'));
 app.use('/uploads', express.static('./uploads'));
 
 app.use(bodyParser.urlencoded({ uploadDir: path.join(__dirname, 'uploads'), keepExtensions: true, extended: true }));
+app.use(bodyParser.json());
 
 // Configure API endpoints
-app.use('/api/new', require('./api/new.js'));
+app.use('/api/puzzle', require('./api/puzzle.js'));
 
 // Configure base URL for home page
 app.get('/', function(req, res){
