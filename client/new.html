@@ -1,0 +1,29 @@
+<!doctype html>
+<html style="height: 100%;">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <base href="/">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-container">
+        <div class="form-container">
+            <form id="form" enctype="multipart/form-data">
+                <div class="form-control">
+                    <label for="upload">Choose your image</label>
+                    <input name="image" id="upload" type="file" value="No file chosen" />
+                </div>
+                <div class="form-control">
+                    <input type="submit" value="upload" />
+                </div>
+            </form>
+        </div>
+        <div id="canvas"></div>
+    </div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

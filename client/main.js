@@ -1,35 +1,33 @@
 import Puzzly from './puzzly.js';
 
-/*
 var form = document.forms[0];
 form.addEventListener('submit', function(e){
 	e.preventDefault();
-	upload(form);
+	upload();
 });
-*/
 
 function onUploadSuccess(response){
-	// Puzzly.init('canvas', response.image.path, response.numPieces);
+	console.log(response)
 }
 
 function onUploadFailure(response){
 	console.log(response);
 }
 
-function upload(form){
+function upload(){
+	const image = document.querySelector('[type=file]').files;
+	
+	const fd = new FormData();
+	fd.append('files[]', image[0])
 
-	var fd = new FormData(form);
-
-	fetch('/api/new', {
+	fetch('/api/puzzle', {
 		body: fd,
-		method: 'POST'
-	}).then( function(r){
-		return r.json();
-	}).then( function(d){
+		method: 'POST',
+	})
+	.then( response => response.json() )
+	.then( function(d){
 		onUploadSuccess(d);
 	}).catch( function(err){
 		onUploadFailure(err);
 	});
 }
-
-new Puzzly('canvas', './halflife-3-2.jpg', 100);

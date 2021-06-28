@@ -5,7 +5,7 @@ const assert = require('assert')
 const url = 'mongodb://localhost:27017';
 
 // Database Name
-const dbName = 'puzzly';
+const db = 'puzzly';
 
 const collection = 'puzzles'
 
@@ -14,8 +14,9 @@ const client = new MongoClient(url);
 
 // Use connect method to connect to the Server
 client.connect().then((client, err) => {
-    console.log(client, err)
-    assert.strictEqual(err, undefined)
+    assert.strictEqual(err, undefined);
+    const db = client.db(db);
+    const collection = db.use(collection);
   console.log("Connected successfully to server");
 });
 

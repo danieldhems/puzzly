@@ -1,6 +1,5 @@
 var path = require('path');
 var router = require('express').Router();
-var multer = require('multer');
 
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert')
@@ -18,37 +17,36 @@ const client = new MongoClient(url);
 
 let db, collection;
 
-// Use connect method to connect to the Server
-
-var storage = multer.diskStorage({
-	destination: function(req, file, cb){
-		cb(null, './uploads');
-	},
-	filename: function(req, file, cb){
-		cb(null, file.originalname);
-	}	
-});
-
-var upload = multer({storage: storage}).single('image');
-
 var api = {
-	create: function(req, res){
-		var numPieces = parseInt(req.body.numPieces,10);
-		upload(req, res, function(err){
-			if(err) res.send('error uploading file');
-			var file = req.file;
-			var data = {
-				image: {
-					name: file.originalname,
-					path: file.path
-				},
-				pieces: {},
-				numPieces: numPieces,
-				createdAt: Date.now()
-			};
-			
-		});
-
+	create: async function(req, res){
+		try {
+			if(!req.files) {
+				res.send({
+					status: false,
+					message: 'No file uploaded'
+				});
+			} else {
+				//Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
+				let image = req.files['files[]'];
+				console.log(image)
+				
+				//Use the mv() method to place the file in upload directory (i.e. "uploads")
+				image.mv('./uploads/' + image.name);
+	
+				//send response
+				res.send({
+					status: true,
+					message: 'File is uploaded',
+					data: {
+						name: image.name,
+						mimetype: image.mimetype,
+						size: image.size
+					}
+				});
+			}
+		} catch (err) {
+			res.status(500).send(err);
+		}	
 	},
 	read: function(req, res){
 		
@@ -86,7 +84,7 @@ var api = {
 // Set API CRUD endpoints
 router.get('/', api.read);
 router.get('/:id', api.read);
-router.post('/', upload, api.create);
+router.post('/', api.create);
 router.put('/:id', api.update);
 router.delete('/:id', api.destroy);
 
