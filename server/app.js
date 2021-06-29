@@ -17,6 +17,7 @@ app.use(fileUpload({
 
 // Configure API endpoints
 app.use('/api/puzzle', require('./api/puzzle.js'));
+app.use('/api/upload', require('./api/upload.js'));
 
 // Configure base URL for home page
 app.get('/', function(req, res){

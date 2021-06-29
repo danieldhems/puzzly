@@ -18,35 +18,8 @@ const client = new MongoClient(url);
 let db, collection;
 
 var api = {
-	create: async function(req, res){
-		try {
-			if(!req.files) {
-				res.send({
-					status: false,
-					message: 'No file uploaded'
-				});
-			} else {
-				//Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
-				let image = req.files['files[]'];
-				console.log(image)
-				
-				//Use the mv() method to place the file in upload directory (i.e. "uploads")
-				image.mv('./uploads/' + image.name);
-	
-				//send response
-				res.send({
-					status: true,
-					message: 'File is uploaded',
-					data: {
-						name: image.name,
-						mimetype: image.mimetype,
-						size: image.size
-					}
-				});
-			}
-		} catch (err) {
-			res.status(500).send(err);
-		}	
+	create: function(req, res){
+			
 	},
 	read: function(req, res){
 		

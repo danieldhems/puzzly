@@ -1,10 +1,8 @@
 import { SpriteMap, JigsawShapeSpans } from "./jigsaw.js";
 import Utils from "./utils.js";
 class Puzzly {
-
-	constructor(canvasId, imageUrl, numPieces){
+	constructor(canvasId, imageUrl){
 		this.config = {
-			scale: 1,
 			debug: true,
 			boardBoundary: 800,
 			backgroundImages: [
@@ -13,34 +11,14 @@ class Puzzly {
 					path: './bg-wood.jpg'
 				}
 			],
-			numberOfPieces: numPieces,
-			segmentSize: null,
-			piecesPerSide: null,
 			jigsawSpriteConnectorSize: 40,
 			jigsawSpriteConnectorDistanceFromCorner: 40,
-			puzzleSize: {
-				small: {
-					piecesPerSideHorizontal: 10,
-					piecesPerSideVertical: 7,
-					pieceSize: 120,
-				},
-				medium: {
-					piecesPerSideHorizontal: 20,
-					piecesPerSideVertical: 15,
-					pieceSize: 90,
-				},
-				large: {
-					piecesPerSideHorizontal: 27,
-					piecesPerSideVertical: 20,
-					pieceSize: 30,
-				},
-			},
+			
 			selectedPuzzleSize: null,
 			collisionTolerance: 10,
 		};
 
 		this.pieces = [];
-		this.numPieces = numPieces;
 		this.canvas = document.getElementById(canvasId);
 		this.canvas.style.position = "absolute";
 		this.canvas.style.top = 0;
@@ -111,7 +89,6 @@ class Puzzly {
 	}
 
 	drawBackground(){
-		// this.ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, this.canvas.width, this.canvas.height);
 		this.canvas.style.backgroundImage = `url(${this.BgImage.src})`;
 	}
 

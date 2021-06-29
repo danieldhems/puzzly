@@ -3,3 +3,14 @@ body {
     background-color: #000;
     color: #fff;
 }
+
+#canvas {
+    position: relative;
+}
+
+#canvas > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 3px solid;
+}
