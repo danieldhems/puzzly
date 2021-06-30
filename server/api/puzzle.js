@@ -19,10 +19,38 @@ let db, collection;
 
 var api = {
 	create: function(req, res){
-			
+		client.connect().then((client, err) => {
+			assert.strictEqual(err, undefined);
+			db = client.db(dbName);
+			collection = db.collection(collectionName);
+
+			const data = req.body;
+			console.log(data)
+
+		  collection.insertOne(data, function(err, result){
+			  if(err) throw new Error(err);
+			  console.log(result)
+			  res.status(200).send({
+				  ...result.ops[0]
+			  })
+		  });
+		});
 	},
 	read: function(req, res){
-		
+		const puzzleId = req.body.puzzleId;
+
+		client.connect().then((client, err) => {
+			assert.strictEqual(err, undefined);
+			db = client.db(dbName);
+			collection = db.collection(collectionName);
+
+			const query = { id: puzzleId }
+
+		  collection.findOne(query, function(err, result){
+			  if(err) throw new Error(err);
+			  res.send(200, result)
+		  });
+		});
 	},
 	update: function(req, res){
 		console.log("saving")

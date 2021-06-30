@@ -39,7 +39,7 @@ imageUploadForm.addEventListener('submit', function(e){
 
 puzzleSelectionForm.addEventListener('submit', function(e){
 	e.preventDefault();
-	// createPuzzle();
+	createPuzzle();
 });
 
 function onUploadSuccess(response){
@@ -69,5 +69,24 @@ function upload(){
 		onUploadSuccess(d);
 	}).catch( function(err){
 		onUploadFailure(err);
+	});
+}
+
+function createPuzzle(){
+	const puzzleSize = document.querySelector('[name=puzzle-size]').selected;
+	const userInput = {
+		puzzleSize,
+	}
+
+	fetch('/api/puzzle', {
+		body: JSON.stringify(userInput),
+		method: 'POST',
+	})
+	.then( response => response.json() )
+	.then( function(response){
+		const puzzleId = response.puzzleId;
+		window.location.href = `puzzle?id=${puzzleId}`;
+	}).catch( function(err){
+		console.log(err);
 	});
 }

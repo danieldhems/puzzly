@@ -1,0 +1,41 @@
+<!doctype html>
+<html style="height: 100%;">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <base href="/">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body style="margin: 0;">
+    <div class="forms-wrapper">
+      <div class="form-container">
+          <form enctype="multipart/form-data">
+              <div class="form-control">
+                  <label for="upload">Choose your image</label>
+                  <input name="image" id="upload" type="file" value="No file chosen" />
+              </div>
+              <div class="form-control">
+                  <label for="upload">Choose puzzle size</label>
+                  <select name="puzzle-size">
+                      <option value="">Select</option>
+                      <option value="small">Small</option>
+                      <option value="medium">Medium</option>
+                      <option value="large">Large</option>
+                  </select>
+              </div>
+              <div class="form-control">
+                  <input type="submit" value="Create puzzle" />
+              </div>
+          </form>
+      </div>
+      <div id="image-preview">
+          <div id="image-crop"></div>
+      </div>
+  </div>
+    <div id="canvas"></div>
+    <script type="module" src="./puzzly.js"></script>
+  </body>
+</html>

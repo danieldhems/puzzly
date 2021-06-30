@@ -4,11 +4,11 @@ body {
     color: #fff;
 }
 
-#canvas {
+#image-preview {
     position: relative;
 }
 
-#canvas > div {
+#image-crop {
     position: absolute;
     top: 0;
     left: 0;

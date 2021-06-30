@@ -8,20 +8,20 @@ var app = express();
 app.use('/', express.static('./client'));
 app.use('/uploads', express.static('./uploads'));
 
-app.use(bodyParser.urlencoded({ uploadDir: path.join(__dirname, 'uploads'), keepExtensions: true, extended: true }));
-app.use(bodyParser.json());
 app.use(fileUpload({
-    createParentPath: true,
+	createParentPath: true,
 	debug: true
 }));
+app.use(bodyParser.urlencoded({ uploadDir: path.join(__dirname, 'uploads'), keepExtensions: true, extended: true }));
+app.use(bodyParser.json());
 
 // Configure API endpoints
 app.use('/api/puzzle', require('./api/puzzle.js'));
 app.use('/api/upload', require('./api/upload.js'));
 
 // Configure base URL for home page
-app.get('/', function(req, res){
-	res.sendFile(path.join(__dirname, '../client/index.html'));
+app.get('/puzzle', function(req, res){
+	res.sendFile(path.join(__dirname, '../client/puzzle.html'));
 });
 
 app.get('/new', function(req, res){

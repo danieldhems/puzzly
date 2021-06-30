@@ -1,5 +1,116 @@
 import { SpriteMap, JigsawShapeSpans } from "./jigsaw.js";
 import Utils from "./utils.js";
+
+const puzzleSizes = {
+	small: {
+		piecesPerSideHorizontal: 10,
+		piecesPerSideVertical: 7,
+		pieceSize: 120,
+	},
+	medium: {
+		piecesPerSideHorizontal: 15,
+		piecesPerSideVertical: 12,
+		pieceSize: 90,
+	},
+	large: {
+		piecesPerSideHorizontal: 27,
+		piecesPerSideVertical: 20,
+		pieceSize: 60,
+	},
+};
+
+var imageUpload = document.querySelector('#upload');
+var imageCrop = document.querySelector('#image-crop');
+var submit = document.querySelector('[type=submit]');
+
+const puzzleSizeField = document.querySelector("[name='puzzle-size']");
+
+puzzleSizeField && puzzleSizeField.addEventListener('change', function(e){
+	e.preventDefault();
+	const selection = puzzleSizes[e.target.value];
+	const width = selection.piecesPerSideHorizontal * selection.pieceSize;
+	const height = selection.piecesPerSideVertical * selection.pieceSize;
+	imageCrop.style.width = width + "px";
+	imageCrop.style.height = height + "px";
+});
+
+imageUpload.addEventListener('change', function(e){
+	e.preventDefault();
+	upload();
+});
+
+submit.addEventListener('click', function(e){
+	e.preventDefault();
+	createPuzzle();
+});
+
+function onUploadSuccess(response){
+	const imagePreviewEl = document.querySelector('#image-preview');
+	const imageEl = document.createElement('img');
+	imageEl.src = response.data.path;
+	imagePreviewEl.appendChild(imageEl);
+
+}
+
+function onUploadFailure(response){
+	console.log(response);
+}
+
+function upload(){
+	const image = document.querySelector('[type=file]').files;
+	
+	const fd = new FormData();
+	fd.append('files[]', image[0])
+
+	fetch('/api/upload', {
+		body: fd,
+		method: 'POST',
+	})
+	.then( response => response.json() )
+	.then( function(d){
+		onUploadSuccess(d);
+	}).catch( function(err){
+		onUploadFailure(err);
+	});
+}
+
+function createPuzzle(){
+	const puzzleSize = document.querySelector('[name=puzzle-size]').value;
+	const userInput = {
+		puzzleSize,
+	}
+
+	fetch('/api/puzzle', {
+		body: JSON.stringify(userInput),
+		method: 'POST',
+		headers: {
+			'content-type': 'application/json'
+		}
+	})
+	.then( response => response.json() )
+	.then( function(response){
+		const puzzleId = response.puzzleId;
+		// window.location.href = `puzzle?id=${puzzleId}`;
+	}).catch( function(err){
+		console.log(err);
+	});
+}
+
+function getQueryStringValue (key) {  
+	return decodeURIComponent(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + encodeURIComponent(key).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));  
+}
+
+document.body.onload = function(){
+	const puzzleId = getQueryStringValue('id');
+	console.log(puzzleId)
+
+	if(puzzleId){
+		fetch(`/api/puzzle/${puzzleId}`)
+		.then( response => response.json())
+		.then( response => console.log(response) )
+	}
+}
+
 class Puzzly {
 	constructor(canvasId, imageUrl){
 		this.config = {
@@ -42,14 +153,15 @@ class Puzzly {
 			this.JigsawSprite,
 		];
 
+		this.init()
 		this.preloadImages(imgs).then( () => {
-			this.init()
 		})
+		
 	}
-
+	
 	init(){
-		this.config.selectedPuzzleSize = "small";
-		this.config.originalPictureSize = `${this.SourceImage.width} x ${this.SourceImage.width}`;
+		// this.config.selectedPuzzleSize = "small";
+		// this.config.originalPictureSize = `${this.SourceImage.width} x ${this.SourceImage.width}`;
 
 		this.config.connectorRatio = this.config.jigsawSpriteConnectorSize / JigsawShapeSpans.small * 100;
 		this.config.connectorSize = this.config.puzzleSize[this.config.selectedPuzzleSize].pieceSize / 100 * this.config.connectorRatio;
