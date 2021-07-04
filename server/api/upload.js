@@ -20,7 +20,7 @@ async function upload(req, res){
                 status: true,
                 message: 'File is uploaded',
                 data: {
-                    path: './uploads/' + image.name,
+                    path: image.name,
                     mimetype: image.mimetype,
                     size: image.size
                 }

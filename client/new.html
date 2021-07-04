@@ -10,38 +10,7 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="page-container">
-        <div class="form-container">
-            <form id="image-upload" enctype="multipart/form-data">
-                <div class="form-control">
-                    <label for="upload">Choose your image</label>
-                    <input name="image" id="upload" type="file" value="No file chosen" />
-                </div>
-                <div class="form-control">
-                    <input type="submit" value="Upload picture" />
-                </div>
-            </form>
-        </div>
-        <div class="form-container">
-            <form id="puzzle-selection">
-                <div class="form-control">
-                    <label for="upload">Choose puzzle size</label>
-                    <select name="puzzle-size">
-                        <option value="">Select</option>
-                        <option value="small">Small</option>
-                        <option value="medium">Medium</option>
-                        <option value="large">Large</option>
-                    </select>
-                </div>
-                <div class="form-control">
-                    <input type="submit" value="Create puzzle" />
-                </div>
-            </form>
-        </div>
-        <div id="canvas">
-            <div id="image-crop"></div>
-        </div>
-    </div>
+    
     <script type="module" src="./puzzly.js"></script>
   </body>
 </html>

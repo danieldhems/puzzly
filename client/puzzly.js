@@ -1,6 +1,8 @@
 import { SpriteMap, JigsawShapeSpans } from "./jigsaw.js";
 import Utils from "./utils.js";
 
+const uploadDir = './uploads/';
+
 const puzzleSizes = {
 	small: {
 		piecesPerSideHorizontal: 10,
@@ -20,8 +22,11 @@ const puzzleSizes = {
 };
 
 var imageUpload = document.querySelector('#upload');
+var newPuzzleForm = document.querySelector('#form-container');
 var imageCrop = document.querySelector('#image-crop');
 var submit = document.querySelector('[type=submit]');
+
+let imagePath;
 
 const puzzleSizeField = document.querySelector("[name='puzzle-size']");
 
@@ -47,9 +52,9 @@ submit.addEventListener('click', function(e){
 function onUploadSuccess(response){
 	const imagePreviewEl = document.querySelector('#image-preview');
 	const imageEl = document.createElement('img');
-	imageEl.src = response.data.path;
+	imageEl.src = uploadDir + response.data.path;
 	imagePreviewEl.appendChild(imageEl);
-
+	imagePath = response.data.path;
 }
 
 function onUploadFailure(response){
@@ -78,6 +83,7 @@ function createPuzzle(){
 	const puzzleSize = document.querySelector('[name=puzzle-size]').value;
 	const userInput = {
 		puzzleSize,
+		imagePath,
 	}
 
 	fetch('/api/puzzle', {
@@ -89,30 +95,44 @@ function createPuzzle(){
 	})
 	.then( response => response.json() )
 	.then( function(response){
-		const puzzleId = response.puzzleId;
-		// window.location.href = `puzzle?id=${puzzleId}`;
+		const puzzleId = response._id;
+		insertUrlParam('puzzleId', puzzleId)
+		newPuzzleForm.style.display = 'none';
+		new Puzzly('canvas', puzzleId, imagePath, response.puzzleSize)
 	}).catch( function(err){
 		console.log(err);
 	});
 }
 
-function getQueryStringValue (key) {  
+function insertUrlParam(key, value) {
+    if (history.pushState) {
+        let searchParams = new URLSearchParams(window.location.search);
+        searchParams.set(key, value);
+        let newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?' + searchParams.toString();
+        window.history.pushState({path: newurl}, '', newurl);
+    }
+}
+
+function getQueryStringValue (key) { 
 	return decodeURIComponent(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + encodeURIComponent(key).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));  
 }
 
 document.body.onload = function(){
-	const puzzleId = getQueryStringValue('id');
+	const puzzleId = getQueryStringValue('puzzleId');
 	console.log(puzzleId)
 
 	if(puzzleId){
 		fetch(`/api/puzzle/${puzzleId}`)
-		.then( response => response.json())
-		.then( response => console.log(response) )
+		.then( response => response.json() )
+		.then( response => {
+			new Puzzly('canvas', puzzleId, response.imagePath, response.puzzleSize, response.pieces)
+		})
 	}
 }
 
 class Puzzly {
-	constructor(canvasId, imageUrl){
+	constructor(canvasId, puzzleId, imagePath, puzzleSize, progress = []){
+		console.log(canvasId, puzzleId, imagePath, puzzleSize)
 		this.config = {
 			debug: true,
 			boardBoundary: 800,
@@ -124,12 +144,13 @@ class Puzzly {
 			],
 			jigsawSpriteConnectorSize: 40,
 			jigsawSpriteConnectorDistanceFromCorner: 40,
-			
-			selectedPuzzleSize: null,
+			selectedPuzzleSize: puzzleSize,
 			collisionTolerance: 10,
 		};
 
 		this.pieces = [];
+		this.puzzleId = puzzleId;
+		this.progress = progress;
 		this.canvas = document.getElementById(canvasId);
 		this.canvas.style.position = "absolute";
 		this.canvas.style.top = 0;
@@ -139,7 +160,7 @@ class Puzzly {
 
 		this.loadedImages = [];
 		this.SourceImage = new Image();
-		this.SourceImage.src = imageUrl;
+		this.SourceImage.src = uploadDir + imagePath;
 
 		this.BgImage = new Image();
 		this.BgImage.src = this.config.backgroundImages[0].path;
@@ -153,25 +174,22 @@ class Puzzly {
 			this.JigsawSprite,
 		];
 
-		this.init()
 		this.preloadImages(imgs).then( () => {
+			this.init()
 		})
-		
 	}
 	
 	init(){
-		// this.config.selectedPuzzleSize = "small";
-		// this.config.originalPictureSize = `${this.SourceImage.width} x ${this.SourceImage.width}`;
-
-		this.config.connectorRatio = this.config.jigsawSpriteConnectorSize / JigsawShapeSpans.small * 100;
-		this.config.connectorSize = this.config.puzzleSize[this.config.selectedPuzzleSize].pieceSize / 100 * this.config.connectorRatio;
-		this.config.connectorDistanceFromCornerRatio = this.config.jigsawSpriteConnectorDistanceFromCorner / JigsawShapeSpans.small * 100;
-
-		this.config.connectorDistanceFromCorner = this.config.puzzleSize[this.config.selectedPuzzleSize].pieceSize / 100 * this.config.connectorDistanceFromCornerRatio;
-
 		console.log(this.config)
 
-		this.puzzleConfigQuickAccess = this.config.puzzleSize[this.config.selectedPuzzleSize];
+		this.config.connectorRatio = this.config.jigsawSpriteConnectorSize / JigsawShapeSpans.small * 100;
+		this.config.connectorSize = puzzleSizes[this.config.selectedPuzzleSize].pieceSize / 100 * this.config.connectorRatio;
+		this.config.connectorDistanceFromCornerRatio = this.config.jigsawSpriteConnectorDistanceFromCorner / JigsawShapeSpans.small * 100;
+
+		this.config.connectorDistanceFromCorner = puzzleSizes[this.config.selectedPuzzleSize].pieceSize / 100 * this.config.connectorDistanceFromCornerRatio;
+
+
+		this.puzzleConfigQuickAccess = puzzleSizes[this.config.selectedPuzzleSize];
 		this.largestPieceSpan = this.puzzleConfigQuickAccess.pieceSize + (this.config.connectorSize * 2);
 		this.boardBoundingBox = {
 			top: this.config.boardBoundary,
@@ -193,7 +211,14 @@ class Puzzly {
 
 		this.drawBackground();
 		this.drawBoardArea();
-		this.makePieces();
+		
+		if(this.progress.length){
+			this.pieces = this.progress;
+			this.pieces.map(p => this.drawPiece(p))
+		} else {
+			this.makePieces();
+			this.save(this.pieces)
+		}
 		
 		window.addEventListener('mousedown', (e) => {
 			this.onMouseDown(e);
@@ -208,26 +233,26 @@ class Puzzly {
 		let actualWidth, actualHeight;
 		switch(piece._w){
 			case JigsawShapeSpans.small:
-				actualWidth = this.config.puzzleSize[this.config.selectedPuzzleSize].pieceSize;
+				actualWidth = puzzleSizes[this.config.selectedPuzzleSize].pieceSize;
 				break;
 			case JigsawShapeSpans.medium:
-				actualWidth = this.config.puzzleSize[this.config.selectedPuzzleSize].pieceSize + this.config.connectorSize;
+				actualWidth = puzzleSizes[this.config.selectedPuzzleSize].pieceSize + this.config.connectorSize;
 				break;
 			case JigsawShapeSpans.large:
-				actualWidth = this.config.puzzleSize[this.config.selectedPuzzleSize].pieceSize + (this.config.connectorSize * 2);
+				actualWidth = puzzleSizes[this.config.selectedPuzzleSize].pieceSize + (this.config.connectorSize * 2);
 				break;
 			default:;
 		}
 
 		switch(piece._h){
 			case JigsawShapeSpans.small:
-				actualHeight = this.config.puzzleSize[this.config.selectedPuzzleSize].pieceSize;
+				actualHeight = puzzleSizes[this.config.selectedPuzzleSize].pieceSize;
 				break;
 			case JigsawShapeSpans.medium:
-				actualHeight = this.config.puzzleSize[this.config.selectedPuzzleSize].pieceSize + this.config.connectorSize;
+				actualHeight = puzzleSizes[this.config.selectedPuzzleSize].pieceSize + this.config.connectorSize;
 				break;
 			case JigsawShapeSpans.large:
-				actualHeight = this.config.puzzleSize[this.config.selectedPuzzleSize].pieceSize + (this.config.connectorSize * 2);
+				actualHeight = puzzleSizes[this.config.selectedPuzzleSize].pieceSize + (this.config.connectorSize * 2);
 				break;
 			default:;
 		}
@@ -440,7 +465,7 @@ class Puzzly {
 				this.updatePiecePosition(element)
 			}
 
-			await this.save();
+			await this.save(this.movingPieces);
 
 			this.movingPieces = [];
 		}
@@ -463,7 +488,6 @@ class Puzzly {
 	}
 
 	markAsSolved(pieces){
-		console.log(pieces)
 		let hasGroup;
 		let group;
 		let pieceIds;
@@ -608,8 +632,8 @@ class Puzzly {
 		let rowCount = 1;
 		let finalRow = false;
 
-		const piecesPerSideHorizontal = this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal;
-		const piecesPerSideVertical = this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideVertical;
+		const piecesPerSideHorizontal = puzzleSizes[this.config.selectedPuzzleSize].piecesPerSideHorizontal;
+		const piecesPerSideVertical = puzzleSizes[this.config.selectedPuzzleSize].piecesPerSideVertical;
 
 		while(!done){
 			// All pieces not on top row
@@ -643,7 +667,7 @@ class Puzzly {
 			this.pieces.push(currentPiece);
 			this.drawPiece(currentPiece);
 
-			const pieceSize = this.config.puzzleSize[this.config.selectedPuzzleSize].pieceSize;
+			const pieceSize = puzzleSizes[this.config.selectedPuzzleSize].pieceSize;
 
 			// reached last piece, start next row
 			if(this.pieces.length % piecesPerSideHorizontal === 0){
@@ -744,8 +768,8 @@ class Puzzly {
 	}
 
 	getConnectingPieceIds(piece){
-		const pieceAboveId = piece.id - this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal;
-		const pieceBelowId = piece.id + this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal;
+		const pieceAboveId = piece.id - puzzleSizes[this.config.selectedPuzzleSize].piecesPerSideHorizontal;
+		const pieceBelowId = piece.id + puzzleSizes[this.config.selectedPuzzleSize].piecesPerSideHorizontal;
 		if(Utils.isTopLeftCorner(piece)){
 			return {
 				right: piece.id + 1,
@@ -879,6 +903,7 @@ class Puzzly {
 		const pieceDimensions = this.getPieceWidthAndHeightWithConnectors(piece);
 		const randPos = this.getRandomPositionOutsideBoardArea(piece, this.getRandomInt(1,4));
 		return Object.assign({
+			puzzleId: this.puzzleId,
 			id: i,
 			imgX: imgX,
 			imgY: imgY,
@@ -1004,7 +1029,7 @@ class Puzzly {
 		}
 
 		if(hasBottomConnector){
-			const targetPiece = this.pieces.find(p => p.id === piece.id + this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
+			const targetPiece = this.pieces.find(p => p.id === piece.id + puzzleSizes[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
 
 			if(shouldCompare(targetPiece)){
 				const thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(piece, "bottom");
@@ -1030,7 +1055,7 @@ class Puzzly {
 		}
 
 		if(hasTopConnector){
-			const targetPiece = this.pieces.find(p => p.id === piece.id - this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
+			const targetPiece = this.pieces.find(p => p.id === piece.id - puzzleSizes[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
 
 			if(shouldCompare(targetPiece)){
 				const thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(piece, "top");
@@ -1136,7 +1161,7 @@ class Puzzly {
 				break;
 			
 			case "bottom":
-				connectingPiece = this.getPieceById(thisPiece.id + this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
+				connectingPiece = this.getPieceById(thisPiece.id + puzzleSizes[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
 
 				newPos.top = connectingPiece.pageY - thisPiece.imgH + this.config.connectorSize;
 				el.style.top = newPos.top + "px";
@@ -1158,7 +1183,7 @@ class Puzzly {
 				break;
 
 			case "top":
-				connectingPiece = this.getPieceById(thisPiece.id - this.config.puzzleSize[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
+				connectingPiece = this.getPieceById(thisPiece.id - puzzleSizes[this.config.selectedPuzzleSize].piecesPerSideHorizontal);
 				const connectingEl = this.getElementByPieceId(connectingPiece.id);
 
 				newPos.top = connectingEl.offsetTop + connectingEl.height - this.config.connectorSize
@@ -1319,13 +1344,13 @@ class Puzzly {
 		return this.pieces.filter(p => p.isSolved).length === this.pieces.length;
 	}
 
-	async save(){
-		fetch('/api/puzzle/1', {
+	async save(pieces){
+		fetch(`/api/puzzle/${this.puzzleId}`, {
 			method: 'put',
 			headers: {
 				'Content-Type': 'Application/json'
 			},
-			body: JSON.stringify(this.movingPieces)
+			body: JSON.stringify(pieces)
 		})
 	}
 }

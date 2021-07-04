@@ -2,6 +2,7 @@ var path = require('path');
 var	express = require('express');
 var	bodyParser = require('body-parser');
 var fileUpload = require('express-fileupload');
+var puzzleApi = require('./api/puzzle.js');
 
 var app = express();
 
@@ -16,16 +17,14 @@ app.use(bodyParser.urlencoded({ uploadDir: path.join(__dirname, 'uploads'), keep
 app.use(bodyParser.json());
 
 // Configure API endpoints
-app.use('/api/puzzle', require('./api/puzzle.js'));
+app.use('/api/puzzle', puzzleApi.router);
 app.use('/api/upload', require('./api/upload.js'));
 
 // Configure base URL for home page
-app.get('/puzzle', function(req, res){
-	res.sendFile(path.join(__dirname, '../client/puzzle.html'));
+app.get('/', function(req, res){
+	res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
-app.get('/new', function(req, res){
-	res.sendFile(path.join(__dirname, '../client/new.html'));
-});
+// puzzleApi.clean();
 
 module.exports = app;
