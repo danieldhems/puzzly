@@ -212,7 +212,7 @@ class Puzzly {
 		this.drawBackground();
 		this.drawBoardArea();
 		
-		if(this.progress.length){
+		if(this.progress.length > 0){
 			this.pieces = this.progress;
 			this.pieces.map(p => this.drawPiece(p))
 		} else {
@@ -317,6 +317,7 @@ class Puzzly {
 					return;
 				}
 				if(thisPiece.group !== undefined && thisPiece.group > -1){
+					console.log("is in group")
 					this.pieces.forEach(p => {
 
 						if(p.group === thisPiece.group){
@@ -350,6 +351,8 @@ class Puzzly {
 				this.canvasDiffY = e.clientY - element.offsetTop;
 			}
 
+console.group(this.movingPieces)
+			
 			this.mouseMoveFunc = this.onMouseMove(this.movingPieces)
 
 			this.isMouseDown = true;
@@ -461,12 +464,11 @@ class Puzzly {
 					top: el.offsetTop,
 					left: el.offsetLeft,
 				}
-				
-				this.updatePiecePosition(element)
+
+				const updatedPiece = this.pieces.find(p => p.id === this.movingPieces[0].id)
+				this.save([updatedPiece])
 			}
-
-			await this.save(this.movingPieces);
-
+			
 			this.movingPieces = [];
 		}
 
@@ -613,7 +615,7 @@ class Puzzly {
 	}
 
 	makePieces(){
-
+console.log("making pieces")
 		var boardLeft = this.canvas.offsetLeft + this.config.boardBoundary;
 		var boardTop = this.canvas.offsetTop + this.config.boardBoundary;
 
@@ -1003,8 +1005,16 @@ class Puzzly {
 	updatePiecePosition(el){
 		const pid = parseInt(el.getAttribute('data-piece-id'));
 		const piece = this.pieces.find(p => p.id === pid);
-		piece.pageX = el.offsetLeft;
-		piece.pageY = el.offsetTop;
+		this.pieces = this.pieces.map(p => {
+			if(p.id === piece.id){
+				return {
+					...p,
+					pageX: el.offsetLeft,
+					pageY: el.offsetTop,
+				}
+			}
+			return p;
+		})
 	}
 
 	checkConnections(el){
@@ -1263,10 +1273,21 @@ class Puzzly {
 
 	createGroup(pieceA, pieceB){
 		const groupId = this.groupCounter++
-		pieceA.group = pieceB.group = groupId;
-		if(pieceB.isSolved){
-			pieceA.isSolved = true;
-		}
+		this.pieces = this.pieces.map(p => {
+			if(p.id === pieceA.id || p.id === pieceB.id){
+				const update = {
+					...p,
+					group: groupId
+				}
+				if(p.id === pieceA && pieceB.isSolved){
+					update.isSolved = true;
+				}
+				return update;
+			}
+			return p;
+		})
+
+		console.log(this.pieces)
 		this.setElementAttribute(this.getElementByPieceId(pieceA.id), "data-group", groupId)
 		this.setElementAttribute(this.getElementByPieceId(pieceB.id), "data-group", groupId)
 	}
@@ -1345,6 +1366,7 @@ class Puzzly {
 	}
 
 	async save(pieces){
+		console.log("saving pieces", pieces)
 		fetch(`/api/puzzle/${this.puzzleId}`, {
 			method: 'put',
 			headers: {

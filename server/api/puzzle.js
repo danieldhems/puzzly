@@ -43,7 +43,6 @@ var api = {
 
 		  collection.insertOne(data, function(err, result){
 			  if(err) throw new Error(err);
-			  console.log(result)
 			  res.status(200).send({
 				  ...result.ops[0]
 			  })
@@ -56,12 +55,19 @@ var api = {
 		client.connect().then( async (client, err) => {
 			assert.strictEqual(err, undefined);
 			db = client.db(dbName);
-			collection = db.collection(piecesCollection);
+			const puzzles = db.collection(puzzlesCollection);
+			const pieces = db.collection(piecesCollection);
 
-			const query = { puzzleId: new ObjectID(puzzleId) }
-			console.log("retrieving puzzle", query)
+			const puzzleQuery = { _id: new ObjectID(puzzleId) }
+			const piecesQuery = { puzzleId: puzzleId }
 
-		  const result = await collection.findOne(query);
+		  const puzzle = await puzzles.findOne(puzzleQuery);
+		  const piecesResult = await pieces.find(piecesQuery).toArray();
+
+		  const result = {
+			  ...puzzle,
+			  pieces: piecesResult
+		  }
 		  console.log(result)
 			res.status(200).send(result)
 		});
@@ -73,35 +79,40 @@ var api = {
 		client.connect().then(async (client, err) => {
 			assert.strictEqual(err, undefined);
 			db = client.db(dbName);
-			collection = db.collection(collectionName);
-
-			let query, update, options;
+			
+			collection = db.collection(piecesCollection);
+			let query;
 			
 			if(data.length === 1){
-				query = { puzzleId: new ObjectID(id), id: data.id }
+				query = { _id: new ObjectID(data[0]._id) }
 
-				// console.log("query", query)
-				// console.log("update", update)
-				piecesCollection.replaceOne(query, data[0], options, function(err, result){
+				console.log("replacing", data[0])
+				delete data[0]._id;
+				collection.replaceOne(query, data[0], function(err, result){
 					if(err) throw new Error(err);
-					console.log(result);
-					res.status(200).send()
+					console.log("updated piece", result);
+					res.status(200).send();
 				});
 			} else {
 				query = { _id: new ObjectID(id) }
 
 				const result = await collection.find(query).toArray();
-				console.log("found documents with id", id, result)
 
 				if(!result.pieces){
-					update = { $set: { "pieces": data } };
+					collection.insertMany(data, function(err, result){
+						if(err) throw new Error(err);
+						res.send(200)
+					});
+				} else {
+					console.log("updating pieces", d)
+					data.map(async d => {
+						await collection.findOneAndUpdate({id: d.id}, d, function(err, result){
+							if(err) throw new Error(err);
+							console.log(result.ops);
+						});
+						res.send(200)
+					})
 				}
-				
-				collection.updateOne(query, update, function(err, result){
-					if(err) throw new Error(err);
-					console.log(result);
-					res.send(200)
-				});
 			}
 		});
 
