@@ -119,7 +119,6 @@ function getQueryStringValue (key) {
 
 document.body.onload = function(){
 	const puzzleId = getQueryStringValue('puzzleId');
-	console.log(puzzleId)
 
 	if(puzzleId){
 		fetch(`/api/puzzle/${puzzleId}`)
@@ -132,7 +131,6 @@ document.body.onload = function(){
 
 class Puzzly {
 	constructor(canvasId, puzzleId, imagePath, puzzleSize, progress = []){
-		console.log(canvasId, puzzleId, imagePath, puzzleSize)
 		this.config = {
 			debug: true,
 			boardBoundary: 800,
@@ -317,7 +315,6 @@ class Puzzly {
 					return;
 				}
 				if(thisPiece.group !== undefined && thisPiece.group > -1){
-					console.log("is in group")
 					this.pieces.forEach(p => {
 
 						if(p.group === thisPiece.group){
@@ -350,8 +347,6 @@ class Puzzly {
 				this.canvasDiffX = e.clientX - element.offsetLeft;
 				this.canvasDiffY = e.clientY - element.offsetTop;
 			}
-
-console.group(this.movingPieces)
 			
 			this.mouseMoveFunc = this.onMouseMove(this.movingPieces)
 
@@ -415,9 +410,10 @@ console.group(this.movingPieces)
 		})
 	}
 
-	async onMouseUp(e){
+	onMouseUp(e){
 		const el = e.target;
 		this.isMouseDown = false;
+		let pieces;
 
 		if(this.isCanvasMoving){
 			this.isCanvasMoving = false;
@@ -447,8 +443,12 @@ console.group(this.movingPieces)
 					if(i === this.movingPieces.length - 1 && !hasConnection){
 						noneFound = true;
 					}
+					
 					i++;
 				}
+
+				const pieceIds = this.movingPieces.map(p => p._id);
+				pieces = this.pieces.filter(p => pieceIds.includes(p._id));
 			} else {
 				const element = this.getElementByPieceId(this.movingPieces[0].id);
 				connection = this.checkConnections(element);
@@ -458,17 +458,22 @@ console.group(this.movingPieces)
 					if(this.isCornerConnection(connection) && this.shouldMarkAsSolved([updatedPiece])){
 						this.markAsSolved([updatedPiece]);
 					}
-				}
-				
-				const newPos = {
-					top: el.offsetTop,
-					left: el.offsetLeft,
+					// If we've created a new group, update both pieces in persistence
+					if(updatedPiece.group > -1){
+						pieces = this.pieces.filter(p => p.group > -1 && p.group === updatedPiece.group);
+					} else {
+						pieces = [updatedPiece]
+					}
 				}
 
-				const updatedPiece = this.pieces.find(p => p.id === this.movingPieces[0].id)
-				this.save([updatedPiece])
+				if(!pieces){
+					let piece = this.movingPieces[0];
+					this.updatePiecePosition(this.getElementByPieceId(piece.id));
+					pieces = [this.getPieceById(piece.id)];
+				}
 			}
-			
+			console.log(pieces)
+			this.save(pieces)
 			this.movingPieces = [];
 		}
 
@@ -615,7 +620,6 @@ console.group(this.movingPieces)
 	}
 
 	makePieces(){
-console.log("making pieces")
 		var boardLeft = this.canvas.offsetLeft + this.config.boardBoundary;
 		var boardTop = this.canvas.offsetTop + this.config.boardBoundary;
 
@@ -1253,8 +1257,6 @@ console.log("making pieces")
 				: `-${oldPos.left - newPos.left}`,
 		}
 
-		console.log(this.checkCompletion());
-
 		return diff;
 	}
 
@@ -1287,7 +1289,6 @@ console.log("making pieces")
 			return p;
 		})
 
-		console.log(this.pieces)
 		this.setElementAttribute(this.getElementByPieceId(pieceA.id), "data-group", groupId)
 		this.setElementAttribute(this.getElementByPieceId(pieceB.id), "data-group", groupId)
 	}
@@ -1366,7 +1367,6 @@ console.log("making pieces")
 	}
 
 	async save(pieces){
-		console.log("saving pieces", pieces)
 		fetch(`/api/puzzle/${this.puzzleId}`, {
 			method: 'put',
 			headers: {
