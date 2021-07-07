@@ -314,7 +314,7 @@ class Puzzly {
 				if(thisPiece.isSolved){
 					return;
 				}
-				if(thisPiece.group !== undefined && thisPiece.group > -1){
+				if(thisPiece.group !== undefined && thisPiece.group !== null && thisPiece.group > -1){
 					this.pieces.forEach(p => {
 
 						if(p.group === thisPiece.group){

@@ -68,7 +68,7 @@ var api = {
 			  ...puzzle,
 			  pieces: piecesResult
 		  }
-		  console.log(result)
+
 			res.status(200).send(result)
 		});
 	},
@@ -81,38 +81,29 @@ var api = {
 			db = client.db(dbName);
 			
 			collection = db.collection(piecesCollection);
-			let query;
+			let query, update;
 			
 			if(data.length === 1){
 				query = { _id: new ObjectID(data[0]._id) }
 
-				console.log("replacing", data[0])
-				delete data[0]._id;
-				collection.replaceOne(query, data[0], function(err, result){
+				let { pageX, pageY, isSolved, group } = data[0];
+				update = { "$set": {pageX, pageY, isSolved, group} };
+
+				collection.updateOne(query, update, function(err, result){
 					if(err) throw new Error(err);
-					console.log("updated piece", result);
 					res.status(200).send();
 				});
 			} else {
-				query = { _id: new ObjectID(id) }
-
-				const result = await collection.find(query).toArray();
-
-				if(!result.pieces){
-					collection.insertMany(data, function(err, result){
+				data.forEach(d => {
+					query = { puzzleId: d.puzzleId, id: d.id }
+					let { pageX, pageY, isSolved, group } = d;
+					update = { "$set": {pageX, pageY, isSolved, group} };
+					collection.updateOne(query, update, function(err, result){
 						if(err) throw new Error(err);
-						res.send(200)
+						console.log(result)
 					});
-				} else {
-					console.log("updating pieces", d)
-					data.map(async d => {
-						await collection.findOneAndUpdate({id: d.id}, d, function(err, result){
-							if(err) throw new Error(err);
-							console.log(result.ops);
-						});
-						res.send(200)
-					})
-				}
+				});
+				res.send(200)
 			}
 		});
 
