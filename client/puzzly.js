@@ -84,6 +84,7 @@ function createPuzzle(){
 	const userInput = {
 		puzzleSize,
 		imagePath,
+		groupCounter: 0,
 	}
 
 	fetch('/api/puzzle', {
@@ -124,13 +125,13 @@ document.body.onload = function(){
 		fetch(`/api/puzzle/${puzzleId}`)
 		.then( response => response.json() )
 		.then( response => {
-			new Puzzly('canvas', puzzleId, response.imagePath, response.puzzleSize, response.pieces)
+			new Puzzly('canvas', puzzleId, response.imagePath, response.puzzleSize, response.groupCounter, response.pieces)
 		})
 	}
 }
 
 class Puzzly {
-	constructor(canvasId, puzzleId, imagePath, puzzleSize, progress = []){
+	constructor(canvasId, puzzleId, imagePath, puzzleSize, groupCounter = 0, progress = []){
 		this.config = {
 			debug: true,
 			boardBoundary: 800,
@@ -153,7 +154,7 @@ class Puzzly {
 		this.canvas.style.position = "absolute";
 		this.canvas.style.top = 0;
 		this.canvas.style.left = 0;
-		this.groupCounter = 0;
+		this.groupCounter = groupCounter;
 		this.movingPieces = [];
 
 		this.loadedImages = [];
@@ -179,7 +180,7 @@ class Puzzly {
 	
 	init(){
 		console.log(this.config)
-
+this.incrementGroupCounter()
 		this.config.connectorRatio = this.config.jigsawSpriteConnectorSize / JigsawShapeSpans.small * 100;
 		this.config.connectorSize = puzzleSizes[this.config.selectedPuzzleSize].pieceSize / 100 * this.config.connectorRatio;
 		this.config.connectorDistanceFromCornerRatio = this.config.jigsawSpriteConnectorDistanceFromCorner / JigsawShapeSpans.small * 100;
@@ -1273,6 +1274,18 @@ class Puzzly {
 		}
 	}
 
+	incrementGroupCounter(){
+		fetch(`/api/puzzle/${this.puzzleId}`, {
+			method: 'put',
+			headers: {
+				'Content-Type': 'Application/json'
+			},
+			body: JSON.stringify({
+				groupCounter: this.groupCounter
+			})
+		})
+	}
+
 	createGroup(pieceA, pieceB){
 		const groupId = this.groupCounter++
 		this.pieces = this.pieces.map(p => {
@@ -1291,6 +1304,8 @@ class Puzzly {
 
 		this.setElementAttribute(this.getElementByPieceId(pieceA.id), "data-group", groupId)
 		this.setElementAttribute(this.getElementByPieceId(pieceB.id), "data-group", groupId)
+
+		this.incrementGroupCounter()
 	}
 
 	addToGroup(piece, group){

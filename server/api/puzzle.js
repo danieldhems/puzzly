@@ -80,31 +80,41 @@ var api = {
 			assert.strictEqual(err, undefined);
 			db = client.db(dbName);
 			
-			collection = db.collection(piecesCollection);
+			let puzzles = db.collection(puzzlesCollection);
+			let pieces = db.collection(piecesCollection);
 			let query, update;
 			
-			if(data.length === 1){
-				query = { _id: new ObjectID(data[0]._id) }
-
-				let { pageX, pageY, isSolved, group } = data[0];
-				update = { "$set": {pageX, pageY, isSolved, group} };
-
-				collection.updateOne(query, update, function(err, result){
-					if(err) throw new Error(err);
-					res.status(200).send();
-				});
-			} else {
-				data.forEach(d => {
-					query = { puzzleId: d.puzzleId, id: d.id }
-					let { pageX, pageY, isSolved, group } = d;
+			if(Array.isArray(data)){
+				if(data.length === 1){
+					query = { _id: new ObjectID(data[0]._id) }
+	
+					let { pageX, pageY, isSolved, group } = data[0];
 					update = { "$set": {pageX, pageY, isSolved, group} };
-					collection.updateOne(query, update, function(err, result){
+	
+					pieces.updateOne(query, update, function(err, result){
 						if(err) throw new Error(err);
-						console.log(result)
 					});
-				});
-				res.send(200)
+				} else {
+					data.forEach(d => {
+						query = { puzzleId: d.puzzleId, id: d.id }
+						let { pageX, pageY, isSolved, group } = d;
+						update = { "$set": {pageX, pageY, isSolved, group} };
+						pieces.updateOne(query, update, function(err, result){
+							if(err) throw new Error(err);
+							console.log(result)
+						});
+					});
+				}
 			}
+			
+			if(data.groupCounter !== undefined && data.groupCounter !== null){
+				puzzles.findOneAndUpdate({_id: new ObjectID(id)}, {$inc: { groupCounter: 1 }}, function(err, result) {
+					if(err) throw new Error(err);
+					console.log(result)
+				})
+			}
+
+			res.send(200)
 		});
 
 	},
