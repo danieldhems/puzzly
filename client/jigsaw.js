@@ -21,7 +21,7 @@ export const SpriteMap = [
 	{x: 776, y: 201, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.medium, type: [1, -1, -1, 0], _shape_id: 12},
 	{x: 1020, y: 201, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.large, type: [1, -1, 1, 0], _shape_id: 13},
 	{x: 1260, y: 201, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [1, 1, 0, 0], _shape_id: 14},
-	{x: 1511, y: 205, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.large, type: [1, 1, -1, 0], _shape_id: 15},
+	{x: 1511, y: 205, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [1, 1, -1, 0], _shape_id: 15},
 	{x: 1754, y: 203, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.large, type: [1, 1, 1, 0], _shape_id: 16},
 
 	{x: 40, y: 490, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.small, type: [0,  0, -1, -1], _shape_id: 17},
