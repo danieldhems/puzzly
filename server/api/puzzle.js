@@ -88,20 +88,19 @@ var api = {
 				if(data.length === 1){
 					query = { _id: new ObjectID(data[0]._id) }
 	
-					let { pageX, pageY, isSolved, group } = data[0];
-					update = { "$set": {pageX, pageY, isSolved, group} };
-	
+					let { id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, isSolved, group, type, connectsTo } = data[0];
+					update = { "$set": {id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, group, type, connectsTo, isSolved} };
 					pieces.updateOne(query, update, function(err, result){
 						if(err) throw new Error(err);
 					});
 				} else {
 					data.forEach(d => {
 						query = { puzzleId: d.puzzleId, id: d.id }
-						let { pageX, pageY, isSolved, group } = d;
-						update = { "$set": {pageX, pageY, isSolved, group} };
-						pieces.updateOne(query, update, function(err, result){
+						let { id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, isSolved, group, type, connectsTo } = d;
+						console.log(d)
+						update = { "$set": {id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, group, type, connectsTo, isSolved} };
+						pieces.updateOne(query, update, {upsert: true}, function(err, result){
 							if(err) throw new Error(err);
-							console.log(result)
 						});
 					});
 				}

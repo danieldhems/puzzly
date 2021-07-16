@@ -1,7 +1,7 @@
 
 export const JigsawShapeSpans = {
     small: 120,
-    medium: 163,
+    medium: 164,
     large: 205
 };
 
@@ -9,9 +9,9 @@ export const SpriteMap = [
 	{x: 40, y: 0, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.small, type: [0,  -1, -1, 0], _shape_id: 1},
 	{x: 284, y: 0, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.medium, type: [0, -1, 1, 0], _shape_id: 2},
 	{x: 530, y: 0, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.small, type: [0, 1, -1, 0], _shape_id: 3},
-	{x: 776, y: 0, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [0, 1, 1, 0], _shape_id: 4},
+	{x: 774, y: -2, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [0, 1, 1, 0], _shape_id: 4},
 	{x: 1020, y: 0, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.small, type: [-1, -1, 0, 0], _shape_id: 5},
-	{x: 1265, y: 0, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.small, type: [-1, -1, -1, 0], _shape_id: 6},
+	{x: 1265, y: 2, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.small, type: [-1, -1, -1, 0], _shape_id: 6},
 	{x: 1511, y: 0, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.medium, type: [-1, -1, 1, 0], _shape_id: 7},
 	{x: 1757, y: 0, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.small, type: [-1, 1, 0, 0], _shape_id: 8},
 	
@@ -21,15 +21,15 @@ export const SpriteMap = [
 	{x: 776, y: 201, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.medium, type: [1, -1, -1, 0], _shape_id: 12},
 	{x: 1020, y: 201, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.large, type: [1, -1, 1, 0], _shape_id: 13},
 	{x: 1260, y: 201, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [1, 1, 0, 0], _shape_id: 14},
-	{x: 1511, y: 201, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.large, type: [1, 1, -1, 0], _shape_id: 15},
-	{x: 1757, y: 201, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.large, type: [1, 1, 1, 0], _shape_id: 16},
+	{x: 1511, y: 205, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.large, type: [1, 1, -1, 0], _shape_id: 15},
+	{x: 1754, y: 203, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.large, type: [1, 1, 1, 0], _shape_id: 16},
 
 	{x: 40, y: 490, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.small, type: [0,  0, -1, -1], _shape_id: 17},
 	{x: 285, y: 490, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.medium, type: [0,  0, 1, -1], _shape_id: 18},
 	{x: 531, y: 490, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.small, type: [0,  -1, -1, -1], _shape_id: 19},
 	{x: 777, y: 490, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.medium, type: [0,  -1, 1, -1], _shape_id: 20},
 	{x: 1020, y: 490, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.small, type: [0,  1, -1, -1], _shape_id: 21},
-	{x: 1266, y: 490, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [0,  1, 1, -1], _shape_id: 22},
+	{x: 1266, y: 489, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [0,  1, 1, -1], _shape_id: 22},
 	{x: 1511, y: 490, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.small, type: [-1,  0, 0, -1], _shape_id: 23},
 	{x: 1756, y: 490, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.small, type: [-1,  0, -1, -1], _shape_id: 24},
 
@@ -49,7 +49,7 @@ export const SpriteMap = [
 	{x: 1019, y: 939, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.large, type: [1,  -1, 1, -1], _shape_id: 37},
 	{x: 1266, y: 939, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [1,  1, 0, -1], _shape_id: 38},
 	{x: 1511, y: 939, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [1,  1, -1, -1], _shape_id: 39},
-	{x: 1756, y: 939, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.large, type: [1,  1, 1, -1], _shape_id: 40},
+	{x: 1759, y: 939, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.large, type: [1,  1, 1, -1], _shape_id: 40},
 	
 	{x: 0, y: 1225, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.small, type: [0, 0, -1, 1], _shape_id: 41},
 	{x: 245, y: 1225, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [0, 0, 1, 1], _shape_id: 42},

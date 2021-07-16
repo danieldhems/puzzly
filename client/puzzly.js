@@ -156,7 +156,6 @@ class Puzzly {
 		this.canvas.style.left = 0;
 		this.groupCounter = groupCounter;
 		this.movingPieces = [];
-
 		this.loadedImages = [];
 		this.SourceImage = new Image();
 		this.SourceImage.src = uploadDir + imagePath;
@@ -180,7 +179,7 @@ class Puzzly {
 	
 	init(){
 		console.log(this.config)
-this.incrementGroupCounter()
+
 		this.config.connectorRatio = this.config.jigsawSpriteConnectorSize / JigsawShapeSpans.small * 100;
 		this.config.connectorSize = puzzleSizes[this.config.selectedPuzzleSize].pieceSize / 100 * this.config.connectorRatio;
 		this.config.connectorDistanceFromCornerRatio = this.config.jigsawSpriteConnectorDistanceFromCorner / JigsawShapeSpans.small * 100;
@@ -266,7 +265,7 @@ this.incrementGroupCounter()
 		const canvasEl = document.createElement("canvas");
 		this.canvas.appendChild(canvasEl);
 
-		canvasEl.id = "canvas-" + piece._shape_id;
+		canvasEl.id = "canvas-" + piece.shapeId;
 		canvasEl.className = "puzzle-piece";
 		canvasEl.setAttribute('data-jigsaw-type', piece.type.join(","))
 		canvasEl.setAttribute('data-piece-id', piece.id)
@@ -282,6 +281,8 @@ this.incrementGroupCounter()
 
 		const cvctx = canvasEl.getContext("2d");
 
+		const sprite = SpriteMap.find(s => s._shape_id === piece.shapeId);
+
 		cvctx.drawImage(
 			this.SourceImage,
 			piece.imgX,
@@ -296,10 +297,10 @@ this.incrementGroupCounter()
 		cvctx.globalCompositeOperation = 'destination-atop';
 		cvctx.drawImage(
 			this.JigsawSprite,
-			piece.x,
-			piece.y,
-			piece._w,
-			piece._h,
+			sprite.x,
+			sprite.y,
+			sprite._w,
+			sprite._h,
 			0, 
 			0, 
 			piece.imgW,
@@ -459,6 +460,7 @@ this.incrementGroupCounter()
 					if(this.isCornerConnection(connection) && this.shouldMarkAsSolved([updatedPiece])){
 						this.markAsSolved([updatedPiece]);
 					}
+
 					// If we've created a new group, update both pieces in persistence
 					if(updatedPiece.group > -1){
 						pieces = this.pieces.filter(p => p.group > -1 && p.group === updatedPiece.group);
@@ -473,7 +475,7 @@ this.incrementGroupCounter()
 					pieces = [this.getPieceById(piece.id)];
 				}
 			}
-			console.log(pieces)
+
 			this.save(pieces)
 			this.movingPieces = [];
 		}
@@ -529,7 +531,6 @@ this.incrementGroupCounter()
 				element.style.top = newPosTop + "px";
 				element.style.left = newPosLeft + "px";
 				this.updatePiecePosition(element);
-				this.checkConnections(element)
 			})
 		}.bind(this)
 	}
@@ -911,11 +912,12 @@ this.incrementGroupCounter()
 		const randPos = this.getRandomPositionOutsideBoardArea(piece, this.getRandomInt(1,4));
 		return Object.assign({
 			puzzleId: this.puzzleId,
+			shapeId: piece._shape_id,
 			id: i,
 			imgX: imgX,
 			imgY: imgY,
 			imgW: pieceDimensions.width,
-			imgH: pieceDimensions.height, 
+			imgH: pieceDimensions.height,
 			pageX: this.config.debug ? canvX : randPos.left,
 			pageY: this.config.debug ? canvY : randPos.top,
 		}, piece);
@@ -1029,7 +1031,7 @@ this.incrementGroupCounter()
 		const hasLeftConnector = Utils.has(piece, "plug", "left") || Utils.has(piece, "socket", "left");
 		const hasTopConnector = Utils.has(piece, "plug", "top") || Utils.has(piece, "socket", "top");
 
-		const shouldCompare = targetPiece => piece.group === undefined || piece.group !== targetPiece.group;
+		const shouldCompare = targetPiece => piece.group === undefined || piece.group === null || piece.group !== targetPiece.group;
 
 		if(hasRightConnector){
 			const targetPiece = this.pieces.find(p => p.id === piece.id + 1);
@@ -1261,13 +1263,17 @@ this.incrementGroupCounter()
 		return diff;
 	}
 
+	isNumber(val){
+		return val !== undefined && val !== null && Number.isInteger(val);
+	}
+
 	group(pieceA, pieceB){
 		if(!pieceB) return;
-		if(pieceA.group === undefined && pieceB.group === undefined){
+		if(!this.isNumber(pieceA.group) && !this.isNumber(pieceB.group)){
 			this.createGroup(pieceA, pieceB);
-		} else if(pieceA.group > -1 && pieceB.group === undefined){
+		} else if(pieceA.group > -1 && !this.isNumber(pieceB.group)){
 			this.addToGroup(pieceB, pieceA.group)
-		} else if(pieceA.group === undefined && pieceB.group > -1){
+		} else if(!this.isNumber(pieceA.group) && pieceB.group > -1){
 			this.addToGroup(pieceA, pieceB.group)
 		} else {
 			this.mergeGroups(pieceA, pieceB)
@@ -1275,7 +1281,7 @@ this.incrementGroupCounter()
 	}
 
 	incrementGroupCounter(){
-		fetch(`/api/puzzle/${this.puzzleId}`, {
+		return fetch(`/api/puzzle/${this.puzzleId}`, {
 			method: 'put',
 			headers: {
 				'Content-Type': 'Application/json'
@@ -1287,7 +1293,7 @@ this.incrementGroupCounter()
 	}
 
 	createGroup(pieceA, pieceB){
-		const groupId = this.groupCounter++
+		const groupId = this.groupCounter++;
 		this.pieces = this.pieces.map(p => {
 			if(p.id === pieceA.id || p.id === pieceB.id){
 				const update = {
@@ -1304,12 +1310,11 @@ this.incrementGroupCounter()
 
 		this.setElementAttribute(this.getElementByPieceId(pieceA.id), "data-group", groupId)
 		this.setElementAttribute(this.getElementByPieceId(pieceB.id), "data-group", groupId)
-
 		this.incrementGroupCounter()
 	}
 
 	addToGroup(piece, group){
-		const otherPiecesInFormerGroup = this.pieces.filter(p => p.id !== piece.id && piece.group !== undefined && p.group === piece.group);
+		const otherPiecesInFormerGroup = this.pieces.filter(p => p.id !== piece.id && piece.group !== undefined && piece.group !== null && p.group === piece.group);
 
 		this.pieces = this.pieces.map(p => {
 			let update;
@@ -1381,13 +1386,33 @@ this.incrementGroupCounter()
 		return this.pieces.filter(p => p.isSolved).length === this.pieces.length;
 	}
 
+	getPieceDataForPersistence(piece){
+		return {
+			puzzleId: this.puzzleId,
+			shapeId: piece.shapeId,
+			id: piece.id,
+			_id: piece._id,
+			imgX: piece.imgX,
+			imgY: piece.imgY,
+			imgW: piece.imgW,
+			imgH: piece.imgH,
+			pageX: piece.pageX,
+			pageY: piece.pageY,
+			type: piece.type,
+			group: piece.group,
+			connectsTo: piece.connectsTo,
+			isSolved: piece.isSolved,
+		}
+	}
+
 	async save(pieces){
+		const payload = pieces.map( p => this.getPieceDataForPersistence(p))
 		fetch(`/api/puzzle/${this.puzzleId}`, {
 			method: 'put',
 			headers: {
 				'Content-Type': 'Application/json'
 			},
-			body: JSON.stringify(pieces)
+			body: JSON.stringify(payload)
 		})
 	}
 }
