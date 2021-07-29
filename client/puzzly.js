@@ -83,6 +83,8 @@ imageCrop && imageCrop.addEventListener('mousedown', function(e){
 	const diffX = e.clientX - el.offsetLeft;
 	const diffY = e.clientY - el.offsetTop;
 	PuzzlyCreator.imageCrop = {
+		currX: el.offsetLeft,
+		currY: el.offsetTop,
 		diffX,
 		diffY,
 		width: el.clientWidth,
@@ -98,11 +100,16 @@ imageCrop && imageCrop.addEventListener('mousedown', function(e){
 function onImageCropMove(e){
 	const newX = e.clientX - PuzzlyCreator.imageCrop.diffX;
 	const newY = e.clientY - PuzzlyCreator.imageCrop.diffY;
-	const elBoundingBox = imageCrop.getBoundingClientRect();
+	const elBoundingBox = {
+		top: newY,
+		right: newX + imageCrop.clientWidth,
+		bottom: newY + imageCrop.clientHeight,
+		left: newX
+	};
 	const containerBoundingBox = imagePreviewEl.getBoundingClientRect();
-	console.log(containerBoundingBox)
-	console.log(elBoundingBox)
-	if(elBoundingBox.left >= containerBoundingBox.left && elBoundingBox.right <= containerBoundingBox.right && elBoundingBox.top >= containerBoundingBox.top && elBoundingBox.bottom <= containerBoundingBox.bottom){
+console.log(elBoundingBox)
+console.log(containerBoundingBox)
+	if(elBoundingBox.left >= 0 && elBoundingBox.right <= containerBoundingBox.width && elBoundingBox.top >= 0 && elBoundingBox.bottom <= containerBoundingBox.height){
 		imageCrop.style.top = newY + "px";
 		imageCrop.style.left = newX + "px";
 	}
@@ -121,7 +128,7 @@ submit.addEventListener('click', function(e){
 
 function onUploadSuccess(response){
 	imageUploadCtrlEl.style.display = "none";
-	puzzleShapeCtrlEl.style.display = "flex";
+	puzzleCropCtrlEl.style.display = "flex";
 	
 	const imageEl = document.createElement('img');
 	imageEl.src = uploadDir + response.data.path;
