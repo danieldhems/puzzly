@@ -78,6 +78,29 @@ puzzleSizeField && puzzleSizeField.addEventListener('change', function(e){
 	PuzzlyCreator.selectedSize = e.target.value;
 });
 
+const imageCropDragHandles = document.querySelectorAll('.image-crop-drag-handle');
+const imageCropDragHandleTL = document.querySelector('#image-crop-drag-handle-tl');
+const imageCropDragHandleTR = document.querySelector('#image-crop-drag-handle-tr');
+const imageCropDragHandleBR = document.querySelector('#image-crop-drag-handle-br');
+const imageCropDragHandleBL = document.querySelector('#image-crop-drag-handle-bl');
+
+function setImageCropDragHandles(){
+	console.log(imageCrop.clientX, imageCrop.clientY, imageCrop.clientWidth, imageCrop.clientHeight)
+
+	const imageCropBoundingBox = imageCrop.getBoundingClientRect();
+	imageCropDragHandleTL.style.top = imageCropBoundingBox.top - imageCropDragHandleTL.clientHeight + "px";
+	imageCropDragHandleTL.style.left = imageCropBoundingBox.left - imageCropDragHandleTL.clientWidth + "px";
+	
+	imageCropDragHandleTR.style.top = imageCropBoundingBox.top - imageCropDragHandleTL.clientHeight + "px";
+	imageCropDragHandleTR.style.left = imageCropBoundingBox.left + imageCropBoundingBox.width + "px";
+	
+	imageCropDragHandleBR.style.top = imageCropBoundingBox.bottom + "px";
+	imageCropDragHandleBR.style.left = imageCropBoundingBox.right + "px";
+
+	imageCropDragHandleBL.style.top = imageCropBoundingBox.top + imageCropBoundingBox.height + "px";
+	imageCropDragHandleBL.style.left = imageCropBoundingBox.left - imageCropDragHandleBL.clientWidth + "px";
+}
+
 imageCrop && imageCrop.addEventListener('mousedown', function(e){
 	const el = e.target;
 	const diffX = e.clientX - el.offsetLeft;
@@ -107,14 +130,84 @@ function onImageCropMove(e){
 		left: newX
 	};
 	const containerBoundingBox = imagePreviewEl.getBoundingClientRect();
-console.log(elBoundingBox)
-console.log(containerBoundingBox)
 	if(elBoundingBox.left >= 0 && elBoundingBox.right <= containerBoundingBox.width && elBoundingBox.top >= 0 && elBoundingBox.bottom <= containerBoundingBox.height){
 		imageCrop.style.top = newY + "px";
 		imageCrop.style.left = newX + "px";
+		setImageCropDragHandles()
 	}
 }
 
+
+
+const onImageCropDragHandleMouseDown = e => {
+	const el = e.target;
+	const handleId = el.id.substr(el.id.lastIndexOf('-') + 1);
+	const diffX = e.clientX - el.offsetLeft;
+	const diffY = e.clientY - el.offsetTop;
+	PuzzlyCreator.imageCropDragHandle = {
+		isMouseDown: true,
+		currX: el.offsetLeft,
+		currY: el.offsetTop,
+		diffX,
+		diffY,
+		width: el.clientWidth,
+		height: el.clientHeight,
+		imageCropWidth: imageCrop.clientWidth,
+		imageCropHeight: imageCrop.clientHeight,
+		imageCropOffsetLeft: imageCrop.offsetLeft,
+		imageCropOffsetTop: parseInt(imageCrop.style.top),
+	};
+
+	console.log(PuzzlyCreator.imageCropDragHandle)
+
+	el.addEventListener('mousemove', e => onImageCropDragHandleMove(e, handleId));
+}
+
+window.addEventListener('mouseup', function(e){
+	if(PuzzlyCreator.imageCropDragHandle?.isMouseDown){
+		PuzzlyCreator.imageCropDragHandle.isMouseDown = false;
+		imageCropDragHandles.forEach( el => {
+			el.removeEventListener('mousemove', onImageCropDragHandleMove);
+		})
+	}
+})
+
+const onImageCropDragHandleMove = (e, handleId) => {
+	if(PuzzlyCreator.imageCropDragHandle.isMouseDown){
+		const newX = e.clientX - PuzzlyCreator.imageCropDragHandle.diffX;
+		const newY = e.clientY - PuzzlyCreator.imageCropDragHandle.diffY;
+
+		e.target.style.left = newX + "px";
+		e.target.style.top = newY + "px";
+		
+		// console.log('handle', e.target.getBoundingClientRect())
+		// console.log('imageCrop', imageCrop.getBoundingClientRect())
+		const handleBoundingBox = e.target.getBoundingClientRect();
+		const imageCropBoundingBox = imageCrop.getBoundingClientRect();
+
+		if(handleId === 'tl'){
+			imageCrop.style.left = handleBoundingBox.right + "px";
+			imageCrop.style.top = handleBoundingBox.bottom + "px";
+			imageCropDragHandleTR.style.top = newY + "px";
+			imageCropDragHandleBL.style.left = newX + "px";
+		}
+
+		imageCrop.style.width = PuzzlyCreator.imageCropDragHandle.imageCropWidth + (PuzzlyCreator.imageCropDragHandle.imageCropOffsetLeft - handleBoundingBox.right) + "px";
+
+		console.log(PuzzlyCreator.imageCropDragHandle.imageCropHeight, PuzzlyCreator.imageCropDragHandle.imageCropOffsetTop, handleBoundingBox.bottom)
+		imageCrop.style.height = PuzzlyCreator.imageCropDragHandle.imageCropHeight + (PuzzlyCreator.imageCropDragHandle.imageCropOffsetTop - handleBoundingBox.bottom) + "px";
+
+		if(PuzzlyCreator.selectedShape === "Square"){
+		} else {
+			// e.target.style.top = newY + "px";
+			// e.target.style.left = newX + "px";
+		}
+	}
+}
+
+imageCropDragHandles.forEach(el => {
+	el.addEventListener('mousedown', onImageCropDragHandleMouseDown)
+})
 
 imageUpload.addEventListener('change', function(e){
 	e.preventDefault();
@@ -128,8 +221,13 @@ submit.addEventListener('click', function(e){
 
 function onUploadSuccess(response){
 	imageUploadCtrlEl.style.display = "none";
+
 	puzzleCropCtrlEl.style.display = "flex";
-	
+	imageCrop.style.display = "block";
+	imageCropDragHandles.forEach(el => el.style.display = "block")
+
+	setImageCropDragHandles();
+
 	const imageEl = document.createElement('img');
 	imageEl.src = uploadDir + response.data.path;
 	imagePreviewEl.appendChild(imageEl);
