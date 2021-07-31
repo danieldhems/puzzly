@@ -85,8 +85,6 @@ const imageCropDragHandleBR = document.querySelector('#image-crop-drag-handle-br
 const imageCropDragHandleBL = document.querySelector('#image-crop-drag-handle-bl');
 
 function setImageCropDragHandles(){
-	console.log(imageCrop.clientX, imageCrop.clientY, imageCrop.clientWidth, imageCrop.clientHeight)
-
 	const imageCropBoundingBox = imageCrop.getBoundingClientRect();
 	imageCropDragHandleTL.style.top = imageCropBoundingBox.top - imageCropDragHandleTL.clientHeight + "px";
 	imageCropDragHandleTL.style.left = imageCropBoundingBox.left - imageCropDragHandleTL.clientWidth + "px";
@@ -152,13 +150,12 @@ const onImageCropDragHandleMouseDown = e => {
 		diffY,
 		width: el.clientWidth,
 		height: el.clientHeight,
+		imageCropBoundingBox: imageCrop.getBoundingClientRect(),
 		imageCropWidth: imageCrop.clientWidth,
 		imageCropHeight: imageCrop.clientHeight,
 		imageCropOffsetLeft: imageCrop.offsetLeft,
 		imageCropOffsetTop: parseInt(imageCrop.style.top),
 	};
-
-	console.log(PuzzlyCreator.imageCropDragHandle)
 
 	el.addEventListener('mousemove', e => onImageCropDragHandleMove(e, handleId));
 }
@@ -180,22 +177,39 @@ const onImageCropDragHandleMove = (e, handleId) => {
 		e.target.style.left = newX + "px";
 		e.target.style.top = newY + "px";
 		
-		// console.log('handle', e.target.getBoundingClientRect())
-		// console.log('imageCrop', imageCrop.getBoundingClientRect())
 		const handleBoundingBox = e.target.getBoundingClientRect();
-		const imageCropBoundingBox = imageCrop.getBoundingClientRect();
 
 		if(handleId === 'tl'){
 			imageCrop.style.left = handleBoundingBox.right + "px";
 			imageCrop.style.top = handleBoundingBox.bottom + "px";
 			imageCropDragHandleTR.style.top = newY + "px";
 			imageCropDragHandleBL.style.left = newX + "px";
+			imageCrop.style.width = PuzzlyCreator.imageCropDragHandle.imageCropWidth + (PuzzlyCreator.imageCropDragHandle.imageCropOffsetLeft - handleBoundingBox.right) + "px";
+			imageCrop.style.height = PuzzlyCreator.imageCropDragHandle.imageCropHeight + (PuzzlyCreator.imageCropDragHandle.imageCropOffsetTop - parseInt(imageCrop.style.top)) + "px";
 		}
 
-		imageCrop.style.width = PuzzlyCreator.imageCropDragHandle.imageCropWidth + (PuzzlyCreator.imageCropDragHandle.imageCropOffsetLeft - handleBoundingBox.right) + "px";
+		if(handleId === 'tr'){
+			imageCrop.style.top = handleBoundingBox.bottom + "px";
+			imageCropDragHandleTL.style.top = newY + "px";
+			imageCropDragHandleBR.style.left = newX + "px";
+			imageCrop.style.width = PuzzlyCreator.imageCropDragHandle.imageCropWidth + (newX - PuzzlyCreator.imageCropDragHandle.imageCropBoundingBox.right) + "px";
+			imageCrop.style.height = PuzzlyCreator.imageCropDragHandle.imageCropHeight + (PuzzlyCreator.imageCropDragHandle.imageCropOffsetTop - parseInt(imageCrop.style.top)) + "px";
+		}
 
-		console.log(PuzzlyCreator.imageCropDragHandle.imageCropHeight, PuzzlyCreator.imageCropDragHandle.imageCropOffsetTop, handleBoundingBox.bottom)
-		imageCrop.style.height = PuzzlyCreator.imageCropDragHandle.imageCropHeight + (PuzzlyCreator.imageCropDragHandle.imageCropOffsetTop - handleBoundingBox.bottom) + "px";
+		if(handleId === 'br'){
+			imageCropDragHandleTR.style.left = newX + "px";
+			imageCropDragHandleBL.style.top = newY + "px";
+			imageCrop.style.width = PuzzlyCreator.imageCropDragHandle.imageCropWidth + (newX - PuzzlyCreator.imageCropDragHandle.imageCropBoundingBox.right) + "px";
+			imageCrop.style.height = PuzzlyCreator.imageCropDragHandle.imageCropHeight + (newY - PuzzlyCreator.imageCropDragHandle.imageCropBoundingBox.bottom) + "px";
+		}
+
+		if(handleId === 'bl'){
+			imageCrop.style.left = handleBoundingBox.right + "px";
+			imageCropDragHandleTL.style.left = newX + "px";
+			imageCropDragHandleBR.style.top = newY + "px";
+			imageCrop.style.width = PuzzlyCreator.imageCropDragHandle.imageCropWidth + (PuzzlyCreator.imageCropDragHandle.imageCropOffsetLeft - handleBoundingBox.right) + "px";
+			imageCrop.style.height = PuzzlyCreator.imageCropDragHandle.imageCropHeight + (newY - PuzzlyCreator.imageCropDragHandle.imageCropBoundingBox.bottom) + "px";
+		}
 
 		if(PuzzlyCreator.selectedShape === "Square"){
 		} else {

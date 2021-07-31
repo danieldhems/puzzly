@@ -73,6 +73,7 @@ label {
 
 #image-crop {
     position: absolute;
+    display: none;
     top: 0;
     left: 0;
     width: 100px;
@@ -128,6 +129,6 @@ label {
     display: none;
 }
 
-#puzzle-crop-ctrl {
+#puzzle-crop-ctrl { 
     display: flex;
 }
