@@ -338,8 +338,9 @@ class Puzzly {
 					path: './bg-wood.jpg'
 				}
 			],
-			jigsawSpriteConnectorSize: 41,
-			jigsawSpriteConnectorDistanceFromCorner: 40,
+			// jigsawSpriteConnectorSize: 41, // True size in sprite
+			jigsawSpriteConnectorSize: 43,
+			jigsawSpriteConnectorDistanceFromCorner: 37,
 			selectedPuzzleSize: puzzleSize,
 			collisionTolerance: 10,
 		};
@@ -475,13 +476,19 @@ class Puzzly {
 		canvasEl.setAttribute('data-piece-id', piece.id)
 		canvasEl.setAttribute('data-imgX', piece.imgX)
 		canvasEl.setAttribute('data-imgy', piece.imgY)
+		canvasEl.style.zIndex = 10;
 		canvasEl.width = piece.imgW;
 		canvasEl.height = piece.imgH;
 		canvasEl.style.position = "absolute";
-		canvasEl.style.zIndex = 100;
 
 		canvasEl.style.left = piece.pageX + "px";
 		canvasEl.style.top = piece.pageY + "px";
+
+		canvasEl.addEventListener('mouseenter', e => {
+			const allPieces = document.querySelectorAll('.puzzle-piece');
+			allPieces.forEach(p => p.style.zIndex = 10);
+			e.target.style.zIndex = 100;
+		})
 
 		const cvctx = canvasEl.getContext("2d");
 
@@ -499,6 +506,30 @@ class Puzzly {
 			piece.imgH,
 		);
 		cvctx.globalCompositeOperation = 'destination-atop';
+
+		/**
+		 * Borrowed from: https://stackoverflow.com/questions/37115530/how-do-i-create-a-puzzle-piece-with-bevel-effect-in-edged-in-canvas-html5
+		 */
+
+		cvctx.fill();
+
+		// 4) Add rect to make stencil
+		cvctx.rect(0, 0, piece.imgW, piece.imgH);
+
+		// 5) Build dark shadow
+		cvctx.shadowBlur = 4;
+		cvctx.shadowOffsetX = -1;
+		cvctx.shadowOffsetY = -1;
+		cvctx.shadowColor = "rgba(0,0,0,0.8)";
+
+		// 6) Draw stencil with shadow but only on non-transparent pixels
+		cvctx.globalCompositeOperation = "destination-atop";
+		cvctx.fill();
+
+		/**
+		 * End borrowed code
+		*/
+
 		cvctx.drawImage(
 			this.JigsawSprite,
 			sprite.x,
