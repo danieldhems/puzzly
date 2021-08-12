@@ -3,6 +3,24 @@ import Utils from "./utils.js";
 
 const uploadDir = './uploads/';
 
+
+function drawBackground(){
+	const path = './bg-wood.jpg';
+	const BgImage = new Image();
+	const BackgroundCanvas = document.getElementById('canvas');
+	BackgroundCanvas.style.position = "absolute";
+	BackgroundCanvas.style.top = 0;
+	BackgroundCanvas.style.left = 0;
+	BackgroundCanvas.style.width = "100%";
+	BackgroundCanvas.style.height = "100%";
+	BgImage.addEventListener('load', () => {
+		BackgroundCanvas.style.backgroundImage = `url(${path})`;
+	})
+	BgImage.src = path;
+}
+
+drawBackground();
+
 const puzzleSizes = {
 	small: {
 		piecesPerSideHorizontal: 10,
@@ -26,10 +44,8 @@ window.PuzzlyCreator = {};
 const imageUploadCtrlEl = document.querySelector('#image-upload-ctrl');
 const puzzleShapeCtrlEl = document.querySelector('#puzzle-shape-ctrl');
 const puzzleSizeCtrlEl = document.querySelector('#puzzle-size-ctrl');
-const puzzleCropCtrlEl = document.querySelector('#puzzle-crop-ctrl');
+const puzzleSetupCtrlEl = document.querySelector('#puzzle-setup-ctrl');
 const imagePreviewEl = document.querySelector('#image-preview');
-
-puzzleCropCtrlEl.style.display = 'none';
 
 var imageUpload = document.querySelector('#upload');
 var newPuzzleForm = document.querySelector('#form-container');
@@ -37,6 +53,7 @@ var imageCrop = document.querySelector('#image-crop');
 var submit = document.querySelector('[type=submit]');
 
 let imagePath;
+let imageDimensions;
 
 const prevButton = document.querySelectorAll(".previous");
 const nextButton = document.querySelectorAll(".next");
@@ -84,7 +101,11 @@ const imageCropDragHandleTR = document.querySelector('#image-crop-drag-handle-tr
 const imageCropDragHandleBR = document.querySelector('#image-crop-drag-handle-br');
 const imageCropDragHandleBL = document.querySelector('#image-crop-drag-handle-bl');
 
+const ImageCropDragHandlesInUse = false;
+
 function setImageCropDragHandles(){
+	imageCropDragHandles.forEach(el => el.style.display = "block")
+
 	const imageCropBoundingBox = imageCrop.getBoundingClientRect();
 	imageCropDragHandleTL.style.top = imageCropBoundingBox.top - imageCropDragHandleTL.clientHeight + "px";
 	imageCropDragHandleTL.style.left = imageCropBoundingBox.left - imageCropDragHandleTL.clientWidth + "px";
@@ -97,6 +118,8 @@ function setImageCropDragHandles(){
 
 	imageCropDragHandleBL.style.top = imageCropBoundingBox.top + imageCropBoundingBox.height + "px";
 	imageCropDragHandleBL.style.left = imageCropBoundingBox.left - imageCropDragHandleBL.clientWidth + "px";
+
+	ImageCropDragHandlesInUse = true;
 }
 
 imageCrop && imageCrop.addEventListener('mousedown', function(e){
@@ -118,9 +141,7 @@ imageCrop && imageCrop.addEventListener('mousedown', function(e){
 	})
 })
 
-function onImageCropMove(e){
-	const newX = e.clientX - PuzzlyCreator.imageCrop.diffX;
-	const newY = e.clientY - PuzzlyCreator.imageCrop.diffY;
+function imageCropWithinBounds(newX, newY){
 	const elBoundingBox = {
 		top: newY,
 		right: newX + imageCrop.clientWidth,
@@ -128,14 +149,22 @@ function onImageCropMove(e){
 		left: newX
 	};
 	const containerBoundingBox = imagePreviewEl.getBoundingClientRect();
-	if(elBoundingBox.left >= 0 && elBoundingBox.right <= containerBoundingBox.width && elBoundingBox.top >= 0 && elBoundingBox.bottom <= containerBoundingBox.height){
-		imageCrop.style.top = newY + "px";
-		imageCrop.style.left = newX + "px";
-		setImageCropDragHandles()
-	}
+	
+	return elBoundingBox.left >= Math.floor(containerBoundingBox.left) && elBoundingBox.right <= Math.floor(containerBoundingBox.right) && elBoundingBox.top >= Math.floor(containerBoundingBox.top) && elBoundingBox.bottom <= Math.floor(containerBoundingBox.bottom);
 }
 
+function onImageCropMove(e){
+	const newX = e.clientX - PuzzlyCreator.imageCrop.diffX;
+	const newY = e.clientY - PuzzlyCreator.imageCrop.diffY;
 
+	if(imageCropWithinBounds(newX, newY)){
+		imageCrop.style.top = newY + "px";
+		imageCrop.style.left = newX + "px";
+		if(ImageCropDragHandlesInUse){
+			setImageCropDragHandles()
+		}
+	}
+}
 
 const onImageCropDragHandleMouseDown = e => {
 	const el = e.target;
@@ -225,7 +254,12 @@ imageCropDragHandles.forEach(el => {
 
 imageUpload.addEventListener('change', function(e){
 	e.preventDefault();
-	upload();
+	upload()
+		.then( function(d){
+			onUploadSuccess(d);
+		}).catch( function(err){
+			onUploadFailure(err);
+		});
 });
 
 submit.addEventListener('click', function(e){
@@ -236,16 +270,24 @@ submit.addEventListener('click', function(e){
 function onUploadSuccess(response){
 	imageUploadCtrlEl.style.display = "none";
 
-	puzzleCropCtrlEl.style.display = "flex";
+	puzzleSetupCtrlEl.style.display = "flex";
 	imageCrop.style.display = "block";
-	imageCropDragHandles.forEach(el => el.style.display = "block")
-
-	setImageCropDragHandles();
-
+	
 	const imageEl = document.createElement('img');
+	imageEl.addEventListener('load', () => {
+		const containerPos = imagePreviewEl.getBoundingClientRect();
+		imageCrop.style.top = containerPos.top + "px";
+		imageCrop.style.left = containerPos.left + "px";
+		imageCrop.style.width = containerPos.height + "px";
+		imageCrop.style.height = containerPos.height + "px";
+		// setImageCropDragHandles();
+	});
+
 	imageEl.src = uploadDir + response.data.path;
 	imagePreviewEl.appendChild(imageEl);
 	imagePath = response.data.path;
+	imageDimensions = response.data.dimensions;
+	console.log(imageDimensions)
 }
 
 function onUploadFailure(response){
@@ -258,16 +300,11 @@ function upload(){
 	const fd = new FormData();
 	fd.append('files[]', image[0])
 
-	fetch('/api/upload', {
+	return fetch('/api/upload', {
 		body: fd,
 		method: 'POST',
 	})
 	.then( response => response.json() )
-	.then( function(d){
-		onUploadSuccess(d);
-	}).catch( function(err){
-		onUploadFailure(err);
-	});
 }
 
 function createPuzzle(){
@@ -288,7 +325,7 @@ function createPuzzle(){
 	.then( response => response.json() )
 	.then( function(response){
 		const puzzleId = response._id;
-		insertUrlParam('puzzleId', puzzleId)
+		insertUrlParam('puzzleId', puzzleId);
 		newPuzzleForm.style.display = 'none';
 		new Puzzly('canvas', puzzleId, imagePath, response.puzzleSize)
 	}).catch( function(err){
@@ -348,18 +385,14 @@ class Puzzly {
 		this.pieces = [];
 		this.puzzleId = puzzleId;
 		this.progress = progress;
-		this.canvas = document.getElementById(canvasId);
-		this.canvas.style.position = "absolute";
-		this.canvas.style.top = 0;
-		this.canvas.style.left = 0;
+		
 		this.groupCounter = groupCounter;
 		this.movingPieces = [];
 		this.loadedImages = [];
 		this.SourceImage = new Image();
 		this.SourceImage.src = uploadDir + imagePath;
 
-		this.BgImage = new Image();
-		this.BgImage.src = this.config.backgroundImages[0].path;
+		
 
 		this.JigsawSprite = new Image();
 		this.JigsawSprite.src = './jigsaw-sprite.png';
@@ -426,10 +459,6 @@ class Puzzly {
 			});
 		}
 
-	}
-
-	drawBackground(){
-		this.canvas.style.backgroundImage = `url(${this.BgImage.src})`;
 	}
 
 	getPieceWidthAndHeightWithConnectors(piece){

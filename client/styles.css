@@ -1,6 +1,5 @@
 body {
     margin: 0;
-    background-color: #000;
     color: #fff;
     height: 100%;
 }
@@ -13,6 +12,18 @@ body {
     width: 50%;
 }
 
+.centered-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    width: 50%;
+}
+
+.full-width {
+    width: 100%;
+}
+
 .centered > div {
     display: flex;
     flex-direction: column;
@@ -21,10 +32,23 @@ body {
 
 #form-container {
     display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
     flex-direction: column;
     align-items: center;
     width: 100%;
     height: 100%;
+}
+
+.form-page {
+    display: none;
+}
+
+.form-control {
+    background: transparent;
+    border: none;
 }
 
 #form-container form {
@@ -35,13 +59,16 @@ body {
     align-items: center;
 }
 
+#image-upload-ctrl {
+    display: flex;
+}
 #image-upload-ctrl input {
     display: block;
     width: 100%;
 }
 
 label {
-    font-size: 48px;
+    font-size: 20px;
     width: 100%;
     margin-bottom: 15px;
 }
@@ -131,4 +158,8 @@ label {
 
 #puzzle-crop-ctrl { 
     display: flex;
+}
+
+#puzzle-setup-ctrl {
+    flex-direction: column;
 }
