@@ -41,11 +41,17 @@
           <div class="centered full-width">
             <div id="image-preview"></div>
           </div>
-          <div id="puzzle-num-pieces-ctrl" class="centered full-width">
-            <label for="customRange3" class="form-label">How many pieces?</label>
+          <div id="puzzle-size-container">
+            <div id="puzzle-num-pieces-ctrl">
+              <label for="customRange3" class="form-label">How many pieces?</label>
+            </div>
+            <div>
+              <label for="puzzle-size-input-field" id="puzzle-size-input-label"></label>
+              <input type="range" class="form-range" min="0" max="18" id="puzzle-size-input-field">
+            </div>
           </div>
-          <div class="centered full-width">
-            <input type="range" class="form-range" min="0" max="5" step="0.5" id="customRange3">
+          <div class="form-ctrl">
+            <input type="submit" id="start-btn" value="Start">
           </div>
           <div class="form-navigation centered full-width">
             <a href="#" class="previous">Go back</a>
