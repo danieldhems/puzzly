@@ -1,6 +1,22 @@
 import { SpriteMap, JigsawShapeSpans } from "./jigsaw.js";
 import Utils from "./utils.js";
 
+window.PuzzlyCreator = {
+	puzzleSetup: {
+		sourceImage: {
+			path: null,
+			dimensions: null,
+		},
+		selectedShape: "Square",
+		selectedOffsetX: 0,
+		selectedOffsetY: 0,
+		selectedWidth: null,
+		selectedNumPieces: null,
+	},
+	imageCrop: {},
+	imageCropDragHandle: {},
+};
+
 const uploadDir = './uploads/';
 
 const PuzzleSizes = [
@@ -23,16 +39,22 @@ const PuzzleSizes = [
 	{numPieces: 676, piecesPerSide: 26},
 	{numPieces: 1024, piecesPerSide: 32},
 	{numPieces: 1600, piecesPerSide: 40},
+	{numPieces: 2025, piecesPerSide: 45},
 ]
 
-let SelectedPuzzleSize;
+function setDefaultNumPieces(){
+	puzzleSizeInputLabel.textContent = PuzzlyCreator.puzzleSetup.selectedNumPieces = PuzzleSizes[10].numPieces;
+}
 
 const puzzleSizeInputField = document.querySelector('#puzzle-size-input-field');
 const puzzleSizeInputLabel = document.querySelector('#puzzle-size-input-label');
+const ControlsElPreviewButton = document.getElementById('preview');
 
 puzzleSizeInputField.addEventListener('input', e => {
-	puzzleSizeInputLabel.textContent = PuzzlyCreator.selectedNumPieces = PuzzleSizes[e.target.value].numPieces;
+	puzzleSizeInputLabel.textContent = PuzzlyCreator.puzzleSetup.selectedNumPieces = PuzzleSizes[e.target.value].numPieces;
 })
+
+setDefaultNumPieces();
 
 function drawBackground(){
 	const path = './bg-wood.jpg';
@@ -51,25 +73,7 @@ function drawBackground(){
 
 drawBackground();
 
-window.PuzzlyCreator = {
-	puzzleSetup: {
-		sourceImage: {
-			path: null,
-			dimensions: null,
-		},
-		selectedShape: "Square",
-		selectedOffsetX: 0,
-		selectedOffsetY: 0,
-		selectedWidth: null,
-		selectedNumPieces: null,
-	},
-	imageCrop: {},
-	imageCropDragHandle: {},
-};
-
 const imageUploadCtrlEl = document.querySelector('#image-upload-ctrl');
-const puzzleShapeCtrlEl = document.querySelector('#puzzle-shape-ctrl');
-const puzzleSizeCtrlEl = document.querySelector('#puzzle-size-ctrl');
 const puzzleSetupCtrlEl = document.querySelector('#puzzle-setup-ctrl');
 const imagePreviewEl = document.querySelector('#image-preview');
 
@@ -78,8 +82,6 @@ var newPuzzleForm = document.querySelector('#form-container');
 var imageCrop = document.querySelector('#image-crop');
 var submit = document.querySelector('[type=submit]');
 
-let imagePath;
-let imageDimensions;
 
 const prevButton = document.querySelectorAll(".previous");
 const nextButton = document.querySelectorAll(".next");
@@ -167,17 +169,20 @@ imageCrop && imageCrop.addEventListener('mousedown', function(e){
 	})
 });
 
-let PuzzleImageOffset;
-let PuzzleImageWidth;
-
-imageCrop && imageCrop.addEventListener('mouseup', function(e){
+function setPuzzleImageOffsetAndWidth(cropElement){
 	const imageRect = imagePreviewEl.getBoundingClientRect();
-	const leftPos = imageCrop.offsetLeft - imageRect.left;
+
+	const leftPos = cropElement.offsetLeft - imageRect.left;
+	const width = cropElement.clientWidth;
 	const cropLeftOffsetPercentage = leftPos / imageRect.width * 100;
-	const cropWidthPercentage = e.target.clientWidth / imageRect.width * 100;
-	console.log(PuzzlyCreator.puzzleSetup.sourceImage)
+	const cropWidthPercentage = width / imageRect.width * 100;
+
 	PuzzlyCreator.puzzleSetup.selectedOffsetX = PuzzlyCreator.puzzleSetup.sourceImage.dimensions.width / 100 * cropLeftOffsetPercentage;
 	PuzzlyCreator.puzzleSetup.selectedWidth = PuzzlyCreator.puzzleSetup.sourceImage.dimensions.width / 100 * cropWidthPercentage;
+}
+
+imageCrop && imageCrop.addEventListener('mouseup', function(e){
+	setPuzzleImageOffsetAndWidth(e.target);
 })
 
 function imageCropWithinBounds(newX, newY){
@@ -319,12 +324,14 @@ function onUploadSuccess(response){
 		imageCrop.style.left = containerPos.left + "px";
 		imageCrop.style.width = containerPos.height + "px";
 		imageCrop.style.height = containerPos.height + "px";
+		setPuzzleImageOffsetAndWidth(imageCrop);
 		// setImageCropDragHandles();
 	});
 
-	imageEl.src = uploadDir + response.data.path;
+	const uploadPath = uploadDir + response.data.path
+	imageEl.src = uploadPath;
 	imagePreviewEl.appendChild(imageEl);
-	PuzzlyCreator.puzzleSetup.sourceImage.path = response.data.path;
+	PuzzlyCreator.puzzleSetup.sourceImage.path = uploadPath;
 	PuzzlyCreator.puzzleSetup.sourceImage.dimensions = response.data.dimensions;
 }
 
@@ -346,12 +353,12 @@ function upload(){
 }
 
 function createPuzzle(){
-	console.log(PuzzlyCreator.puzzleSetup.selectedWidth, PuzzlyCreator.puzzleSetup)
 	const puzzleConfig = {
 		...PuzzlyCreator.puzzleSetup,
 		groupCounter: 0,
-		pieceSize: PuzzlyCreator.puzzleSetup.selectedWidth / Math.sqrt(PuzzlyCreator.puzzleSetup.selectedNumPieces),
+		pieceSize: Math.round(PuzzlyCreator.puzzleSetup.selectedWidth / Math.sqrt(PuzzlyCreator.puzzleSetup.selectedNumPieces)),
 	}
+	console.log(JSON.stringify(puzzleConfig))
 	
 	fetch('/api/puzzle', {
 		body: JSON.stringify(puzzleConfig),
@@ -365,8 +372,6 @@ function createPuzzle(){
 		const puzzleId = response._id;
 		insertUrlParam('puzzleId', puzzleId);
 		newPuzzleForm.style.display = 'none';
-		console.log("initiating puzzle with settings")
-		console.log(puzzleConfig)
 		new Puzzly('canvas', puzzleId, puzzleConfig)
 	}).catch( function(err){
 		console.log(err);
@@ -393,8 +398,10 @@ document.body.onload = function(){
 		fetch(`/api/puzzle/${puzzleId}`)
 		.then( response => response.json() )
 		.then( response => {
-			new Puzzly('canvas', puzzleId, response.sourceImage.imagePath, response.puzzleSize, response.groupCounter, response.pieces)
+			new Puzzly('canvas', puzzleId, response, response.pieces)
 		})
+	} else {
+		newPuzzleForm.style.display = 'flex';
 	}
 }
 
@@ -439,6 +446,25 @@ class Puzzly {
 		this.JigsawSprite = new Image();
 		this.JigsawSprite.src = './jigsaw-sprite.png';
 
+		this.ControlsEl = document.getElementById('controls');
+		this.ControlsEl.style.display = 'block';
+
+		this.fullImageViewerEl = document.getElementById('full-image-viewer');
+		this.previewBtn = document.getElementById('preview');
+		this.previewBtnShowLabel = document.getElementById('preview-show');
+		this.previewBtnHideLabel = document.getElementById('preview-hide');
+
+		this.filterBtn = document.getElementById('filter-pieces');
+		this.filterBtnOffLabel = document.getElementById('inner-pieces-on');
+		this.filterBtnOnLabel = document.getElementById('inner-pieces-off');
+
+		this.isPreviewActive = false;
+
+		this.previewBtn.addEventListener('click', this.togglePreviewer.bind(this))
+		this.filterBtn.addEventListener('click', this.toggleInnerPieces.bind(this))
+
+		this.innerPiecesVisible = true;
+
 		const imgs = [
 			this.SourceImage,
 			this.JigsawSprite,
@@ -447,6 +473,34 @@ class Puzzly {
 		this.preloadImages(imgs).then( () => {
 			this.init()
 		})
+	}
+
+	togglePreviewer(){
+		if(this.isPreviewActive){
+			this.fullImageViewerEl.style.display = 'none';
+			this.previewBtnShowLabel.style.display = 'block';
+			this.previewBtnHideLabel.style.display = 'none';
+			this.isPreviewActive = false;
+		} else {
+			this.fullImageViewerEl.style.display = 'block';
+			this.previewBtnShowLabel.style.display = 'none';
+			this.previewBtnHideLabel.style.display = 'block';
+			this.isPreviewActive = true;
+		}
+	}
+
+	toggleInnerPieces(){
+		if(this.innerPiecesVisible){
+			this.innerPieces.forEach(p => p.style.display = 'none');
+			this.innerPiecesVisible = false;
+			this.filterBtnOffLabel.style.display = 'block';
+			this.filterBtnOnLabel.style.display = 'none';
+		} else {
+			this.innerPieces.forEach(p => p.style.display = 'block')
+			this.innerPiecesVisible = true;
+			this.filterBtnOffLabel.style.display = 'none';
+			this.filterBtnOnLabel.style.display = 'block';
+		}
 	}
 	
 	init(){
@@ -462,6 +516,8 @@ class Puzzly {
 			right: this.config.boardBoundary + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
 			left: this.config.boardBoundary,
 			bottom: this.config.boardBoundary + (this.config.piecesPerSideVertical * this.config.pieceSize),
+			width: this.config.boardBoundary + this.config.boardBoundary + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
+			height: this.config.boardBoundary + this.config.boardBoundary + (this.config.piecesPerSideVertical * this.config.pieceSize),
 		};
 
 		this.boardSize = {
@@ -477,12 +533,16 @@ class Puzzly {
 
 		// this.drawBackground();
 		this.drawBoardArea();
+		this.initiFullImagePreviewer();
+
+		this.isFullImageViewerActive = false;
 		
 		if(this.progress.length > 0){
 			this.pieces = this.progress;
 			this.pieces.map(p => this.drawPiece(p))
 		} else {
 			this.makePieces();
+			this.innerPieces = document.querySelectorAll('.inner-piece');
 			this.save(this.pieces)
 		}
 
@@ -537,13 +597,16 @@ class Puzzly {
 
 		canvasEl.id = "canvas-" + piece.shapeId;
 		canvasEl.className = "puzzle-piece";
+		if(piece.isInnerPiece){
+			canvasEl.className += " inner-piece";
+		}
 		canvasEl.setAttribute('data-jigsaw-type', piece.type.join(","))
 		canvasEl.setAttribute('data-piece-id', piece.id)
 		canvasEl.setAttribute('data-imgX', piece.imgX)
 		canvasEl.setAttribute('data-imgy', piece.imgY)
 		canvasEl.style.zIndex = 10;
-		canvasEl.width = piece.imgW;
-		canvasEl.height = piece.imgH;
+		canvasEl.setAttribute('width', piece.imgW);
+		canvasEl.setAttribute('height', piece.imgH);
 		canvasEl.style.position = "absolute";
 
 		canvasEl.style.left = piece.pageX + "px";
@@ -582,7 +645,7 @@ class Puzzly {
 		cvctx.rect(0, 0, piece.imgW, piece.imgH);
 
 		// 5) Build dark shadow
-		cvctx.shadowBlur = 4;
+		cvctx.shadowBlur = 1;
 		cvctx.shadowOffsetX = -1;
 		cvctx.shadowOffsetY = -1;
 		cvctx.shadowColor = "rgba(0,0,0,0.8)";
@@ -922,7 +985,6 @@ class Puzzly {
 	}
 
 	makePieces(){
-		debugger;
 		var boardLeft = this.canvas.offsetLeft + this.config.boardBoundary;
 		var boardTop = this.canvas.offsetTop + this.config.boardBoundary;
 
@@ -1217,10 +1279,11 @@ class Puzzly {
 			id: i,
 			imgX: imgX,
 			imgY: imgY,
-			imgW: pieceDimensions.width,
-			imgH: pieceDimensions.height,
+			imgW: Math.round(pieceDimensions.width),
+			imgH: Math.round(pieceDimensions.height),
 			pageX: this.config.debug ? canvX : randPos.left,
 			pageY: this.config.debug ? canvY : randPos.top,
+			isInnerPiece: Utils.isInnerPiece(piece),
 		}, piece);
 	}
 
@@ -1681,6 +1744,25 @@ class Puzzly {
 			}
 			return p;
 		})
+	}
+
+	initiFullImagePreviewer(){
+		this.fullImageViewerEl.style.left = this.boardBoundingBox.left + "px";
+		this.fullImageViewerEl.style.top = this.boardBoundingBox.top + "px";
+		this.fullImageViewerEl.setAttribute('width', this.config.selectedWidth);
+		this.fullImageViewerEl.setAttribute('height', this.config.selectedWidth);
+		const previewctx = this.fullImageViewerEl.getContext('2d');
+		previewctx.drawImage(
+			this.SourceImage, 
+			this.config.selectedOffsetX,
+			this.config.selectedOffsetY,
+			Math.round(this.config.selectedWidth),
+			Math.round(this.config.selectedWidth),
+			0,
+			0, 
+			Math.round(this.config.selectedWidth), 
+			Math.round(this.config.selectedWidth)
+		)
 	}
 
 	checkCompletion(){

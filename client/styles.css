@@ -29,7 +29,7 @@ body {
 }
 
 #form-container {
-    display: flex;
+    display: none;
     position: absolute;
     top: 0;
     left: 0;
@@ -169,4 +169,25 @@ label {
 
 #puzzle-size-input-field {
     width: 100%;
+}
+
+#full-image-viewer {
+    position: absolute;
+    display: none;
+    z-index: 100;
+}
+
+#controls {
+    position: absolute;
+    top: 600px;
+    left: 600px;
+    display: none;
+}
+
+#preview-hide {
+    display: none;
+}
+
+#inner-pieces-on {
+    display: none;
 }

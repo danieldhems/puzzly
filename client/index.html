@@ -47,7 +47,7 @@
             </div>
             <div>
               <label for="puzzle-size-input-field" id="puzzle-size-input-label"></label>
-              <input type="range" class="form-range" min="0" max="18" id="puzzle-size-input-field">
+              <input type="range" class="form-range" min="0" max="19" id="puzzle-size-input-field">
             </div>
           </div>
           <div class="form-ctrl">
@@ -71,6 +71,17 @@
       </form>
     </div>
     <div id="canvas"></div>
+    <canvas id="full-image-viewer"></canvas>
+    <div id="controls">
+      <div id="preview">
+        <span id='preview-show'>Show image</span>
+        <span id='preview-hide'>Hide image</span>
+      </div>
+      <div id="filter-pieces">
+        <span id='inner-pieces-off'>Edges only</span>
+        <span id='inner-pieces-on'>All pieces</span>
+      </div>
+    </div>
     <script type="module" src="./puzzly.js"></script>
   </body>
 </html>
