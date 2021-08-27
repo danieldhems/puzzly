@@ -436,6 +436,7 @@ class Puzzly {
 		this.progress = progress;
 		
 		this.groupCounter = config.groupCounter;
+		this.innerPiecesVisible = config.innerPiecesVisible !== undefined ? config.innerPiecesVisible : true;
 		this.movingPieces = [];
 		this.loadedImages = [];
 		this.SourceImage = new Image();
@@ -458,12 +459,18 @@ class Puzzly {
 		this.filterBtnOffLabel = document.getElementById('inner-pieces-on');
 		this.filterBtnOnLabel = document.getElementById('inner-pieces-off');
 
+		if(this.innerPiecesVisible){
+			this.filterBtnOnLabel.style.display = 'block';
+			this.filterBtnOffLabel.style.display = 'none';
+		} else {
+			this.filterBtnOffLabel.style.display = 'block';
+			this.filterBtnOnLabel.style.display = 'none';
+		}
+
 		this.isPreviewActive = false;
 
 		this.previewBtn.addEventListener('click', this.togglePreviewer.bind(this))
 		this.filterBtn.addEventListener('click', this.toggleInnerPieces.bind(this))
-
-		this.innerPiecesVisible = true;
 
 		const imgs = [
 			this.SourceImage,
@@ -489,18 +496,46 @@ class Puzzly {
 		}
 	}
 
+	showPiece(piece){
+		const el = this.getElementByPieceId(piece.id)
+		el.style.display = 'block';
+		el.style.zIndex = '100';
+		piece.isVisible = true;
+		return piece;
+	}
+	
+	hidePiece(piece){
+		const el = this.getElementByPieceId(piece.id)
+		el.style.display = 'none';
+		el.style.zIndex = '-1';
+		piece.isVisible = false;
+		return piece;
+	}
+
 	toggleInnerPieces(){
 		if(this.innerPiecesVisible){
-			this.innerPieces.forEach(p => p.style.display = 'none');
+			this.pieces = this.pieces.map(p => {
+				if(Utils.isInnerPiece(p)){
+					return this.hidePiece(p);
+				}
+				return p;
+			})
 			this.innerPiecesVisible = false;
 			this.filterBtnOffLabel.style.display = 'block';
 			this.filterBtnOnLabel.style.display = 'none';
 		} else {
-			this.innerPieces.forEach(p => p.style.display = 'block')
+			this.pieces = this.pieces.map(p => {
+				if(Utils.isInnerPiece(p)){
+					return this.showPiece(p);
+				}
+				return p;
+			})
 			this.innerPiecesVisible = true;
 			this.filterBtnOffLabel.style.display = 'none';
 			this.filterBtnOnLabel.style.display = 'block';
 		}
+
+		this.saveInnerPieceVisibility(this.innerPiecesVisible);
 	}
 	
 	init(){
@@ -542,9 +577,10 @@ class Puzzly {
 			this.pieces.map(p => this.drawPiece(p))
 		} else {
 			this.makePieces();
-			this.innerPieces = document.querySelectorAll('.inner-piece');
 			this.save(this.pieces)
 		}
+		
+		this.innerPieces = document.querySelectorAll('.inner-piece');
 
 		if(isMobile()){
 			window.addEventListener('touchstart', (e) => {
@@ -597,8 +633,12 @@ class Puzzly {
 
 		canvasEl.id = "canvas-" + piece.shapeId;
 		canvasEl.className = "puzzle-piece";
+
 		if(piece.isInnerPiece){
 			canvasEl.className += " inner-piece";
+			if(!this.innerPiecesVisible){
+				canvasEl.style.display = 'none';
+			}
 		}
 		canvasEl.setAttribute('data-jigsaw-type', piece.type.join(","))
 		canvasEl.setAttribute('data-piece-id', piece.id)
@@ -1284,6 +1324,7 @@ class Puzzly {
 			pageX: this.config.debug ? canvX : randPos.left,
 			pageY: this.config.debug ? canvY : randPos.top,
 			isInnerPiece: Utils.isInnerPiece(piece),
+			isVisible: true,
 		}, piece);
 	}
 
@@ -1785,6 +1826,7 @@ class Puzzly {
 			group: piece.group,
 			connectsTo: piece.connectsTo,
 			isSolved: piece.isSolved,
+			isInnerPiece: piece.isInnerPiece,
 		}
 	}
 
@@ -1796,6 +1838,16 @@ class Puzzly {
 				'Content-Type': 'Application/json'
 			},
 			body: JSON.stringify(payload)
+		})
+	}
+
+	async saveInnerPieceVisibility(visible){
+		fetch(`/api/toggleVisibility/${this.puzzleId}`, {
+			method: 'put',
+			headers: {
+				'Content-Type': 'Application/json'
+			},
+			body: JSON.stringify({piecesVisible: visible})
 		})
 	}
 }

@@ -19,6 +19,7 @@ app.use(bodyParser.json());
 // Configure API endpoints
 app.use('/api/puzzle', puzzleApi.router);
 app.use('/api/upload', require('./api/upload.js'));
+app.use('/api/toggleVisibility', require('./api/pieceFiltering.js'));
 
 // Configure base URL for home page
 app.get('/', function(req, res){
