@@ -411,11 +411,17 @@ const isMobile = function() {
 	return check;
   };
 
+const JigsawSprintConnectorSize = {
+	actual: 41,
+	9: '+4',
+};
+
 class Puzzly {
 	constructor(canvasId, puzzleId, config, progress = []){
 		this.config = {
 			debug: true,
 			boardBoundary: 800,
+			drawBoundingBox: false,
 			backgroundImages: [
 				{
 					name: 'wood',
@@ -423,12 +429,13 @@ class Puzzly {
 				}
 			],
 			// jigsawSpriteConnectorSize: 41, // True size in sprite
-			jigsawSpriteConnectorSize: 43,
+			jigsawSpriteConnectorSize: 42,
 			jigsawSpriteConnectorDistanceFromCorner: 37,
-			collisionTolerance: 10,
 			...config,
 			piecesPerSideHorizontal: config.selectedShape === 'Rectangle' ? config.piecesPerSideHorizontal : Math.sqrt(config.selectedNumPieces),
 			piecesPerSideVertical: config.selectedShape === 'Rectangle' ? config.piecesPerSideVertical : Math.sqrt(config.selectedNumPieces),
+			drawOutlines: config.drawOutlines || false,
+			drawSquares: false
 		};
 
 		this.pieces = [];
@@ -438,7 +445,7 @@ class Puzzly {
 		this.groupCounter = config.groupCounter;
 		this.innerPiecesVisible = config.innerPiecesVisible !== undefined ? config.innerPiecesVisible : true;
 		this.movingPieces = [];
-		this.loadedImages = [];
+		this.loadedAssets = [];
 		this.SourceImage = new Image();
 		this.SourceImage.src = config.sourceImage.path;
 
@@ -446,6 +453,8 @@ class Puzzly {
 
 		this.JigsawSprite = new Image();
 		this.JigsawSprite.src = './jigsaw-sprite.png';
+
+		this.clickSound = new Audio('./mixkit-plastic-bubble-click-1124.wav');
 
 		this.ControlsEl = document.getElementById('controls');
 		this.ControlsEl.style.display = 'block';
@@ -472,12 +481,12 @@ class Puzzly {
 		this.previewBtn.addEventListener('click', this.togglePreviewer.bind(this))
 		this.filterBtn.addEventListener('click', this.toggleInnerPieces.bind(this))
 
-		const imgs = [
+		const assets = [
 			this.SourceImage,
 			this.JigsawSprite,
 		];
 
-		this.preloadImages(imgs).then( () => {
+		this.loadAssets(assets).then( () => {
 			this.init()
 		})
 	}
@@ -537,10 +546,26 @@ class Puzzly {
 
 		this.saveInnerPieceVisibility(this.innerPiecesVisible);
 	}
+
+	getConnectorSnapAdjustment(distance){
+		if(distance.charAt(0) === '+'){
+			return this.config.connectorSize + parseInt(distance.substr(1));
+		} else {
+			return this.config.connectorSize - parseInt(distance.substr(1));
+		}
+	}
 	
 	init(){
+		console.log(this.config)
+
 		this.config.connectorRatio = this.config.jigsawSpriteConnectorSize / JigsawShapeSpans.small * 100;
 		this.config.connectorSize = this.config.pieceSize / 100 * this.config.connectorRatio;
+
+		// this.snapDistance = this.getConnectorSnapAdjustment(JigsawSprintConnectorSize[this.config.selectedNumPieces]);
+		this.snapDistance = this.config.connectorSize;
+
+		console.log(this.config.connectorSize, this.snapDistance);
+
 		this.config.connectorDistanceFromCornerRatio = this.config.jigsawSpriteConnectorDistanceFromCorner / JigsawShapeSpans.small * 100;
 
 		this.config.connectorDistanceFromCorner = this.config.pieceSize / 100 * this.config.connectorDistanceFromCornerRatio;
@@ -660,61 +685,100 @@ class Puzzly {
 
 		const cvctx = canvasEl.getContext("2d");
 
+		cvctx.translate(0.5, 0.5);
 		const sprite = SpriteMap.find(s => s._shape_id === piece.shapeId);
 
-		cvctx.drawImage(
-			this.SourceImage,
-			piece.imgX,
-			piece.imgY,
-			piece.imgW,
-			piece.imgH,
-			0,
-			0,
-			piece.imgW,
-			piece.imgH,
-		);
-		cvctx.globalCompositeOperation = 'destination-atop';
+		if(this.config.drawSquares){
+			const blip = document.createElement('div');
+			blip.style.position = 'absolute';
+			blip.style.top = piece.pageY + 'px';
+			blip.style.left = piece.pageX + 'px';
+			blip.style.width = this.config.pieceSize + 'px';
+			blip.style.height = this.config.pieceSize + 'px';
 
-		/**
-		 * Borrowed from: https://stackoverflow.com/questions/37115530/how-do-i-create-a-puzzle-piece-with-bevel-effect-in-edged-in-canvas-html5
-		 */
+			if(Utils.has(piece, 'plug', 'top')){
+				blip.style.top = parseInt(blip.style.top) + this.config.connectorSize + 'px';
+			}
+			if(Utils.has(piece, 'plug', 'left')){
+				blip.style.left = parseInt(blip.style.left) + this.config.connectorSize + 'px';
+			}
+			blip.style.backgroundColor = '#ccc';
+			document.body.appendChild(blip)
+		} else {
 
-		cvctx.fill();
+			/*
+			cvctx.drawImage(
+				this.SourceImage,
+				piece.imgX,
+				piece.imgY,
+				piece.imgW,
+				piece.imgH,
+				0,
+				0,
+				piece.imgW,
+				piece.imgH,
+			);
+			*/
 
-		// 4) Add rect to make stencil
-		cvctx.rect(0, 0, piece.imgW, piece.imgH);
+			cvctx.globalCompositeOperation = 'destination-atop';
+	
+			if(this.config.drawOutlines){
+				/**
+				 * Borrowed from: https://stackoverflow.com/questions/37115530/how-do-i-create-a-puzzle-piece-with-bevel-effect-in-edged-in-canvas-html5
+				 */
+		
+				cvctx.fill();
+		
+				// 4) Add rect to make stencil
+				cvctx.rect(0, 0, piece.imgW, piece.imgH);
+		
+				// 5) Build dark shadow
+				cvctx.shadowBlur = 1;
+				cvctx.shadowOffsetX = -1;
+				cvctx.shadowOffsetY = -1;
+				cvctx.shadowColor = "rgba(0,0,0,0.8)";
+		
+				// 6) Draw stencil with shadow but only on non-transparent pixels
+				cvctx.globalCompositeOperation = "destination-atop";
+				cvctx.fill();
+		
+				/**
+				 * End borrowed code
+				*/
+			}
+	/*
+			cvctx.drawImage(
+				this.JigsawSprite,
+				sprite.x,
+				sprite.y,
+				sprite._w,
+				sprite._h,
+				0, 
+				0, 
+				piece.imgW,
+				piece.imgH,
+			);
+*/
+			cvctx.strokeStyle = '#fff';
+			cvctx.beginPath();
+			cvctx.moveTo(100, 100);
+			cvctx.lineTo(130, 100);
 
-		// 5) Build dark shadow
-		cvctx.shadowBlur = 1;
-		cvctx.shadowOffsetX = -1;
-		cvctx.shadowOffsetY = -1;
-		cvctx.shadowColor = "rgba(0,0,0,0.8)";
+			cvctx.quadraticCurveTo(140, 100, 145, 95);
+			cvctx.bezierCurveTo(150, 90, 110, 80, 140, 60);
+			cvctx.quadraticCurveTo(155, 55, 165, 60);
+			cvctx.bezierCurveTo(190, 90, 160, 90, 160, 95);
+			cvctx.quadraticCurveTo(165, 100, 175, 100);
+			// cvctx.closePath()
+			cvctx.stroke()
+		}
 
-		// 6) Draw stencil with shadow but only on non-transparent pixels
-		cvctx.globalCompositeOperation = "destination-atop";
-		cvctx.fill();
-
-		/**
-		 * End borrowed code
-		*/
-
-		cvctx.drawImage(
-			this.JigsawSprite,
-			sprite.x,
-			sprite.y,
-			sprite._w,
-			sprite._h,
-			0, 
-			0, 
-			piece.imgW,
-			piece.imgH,
-		);
 	}
 
 	onMouseDown(e){
 		let element, diffX, diffY;
 		if(e.which === 1){
-			if(e.target.className === "puzzle-piece"){
+			if(e.target.classList.contains("puzzle-piece")){
 				const thisPiece = this.pieces.find(p => p.id === parseInt(e.target.getAttribute("data-piece-id")));
 				if(thisPiece.isSolved){
 					return;
@@ -834,6 +898,7 @@ class Puzzly {
 					connection = this.checkConnections(element);
 
 					if(connection){
+						this.clickSound.play();
 						const diff = this.snapPiece(element, connection);
 						const trailingPieces = this.movingPieces.filter( p => p.id !== piece.id);
 						this.updatePiecePositionsByDiff(diff, trailingPieces);
@@ -858,6 +923,7 @@ class Puzzly {
 				const element = this.getElementByPieceId(this.movingPieces[0].id);
 				connection = this.checkConnections(element);
 				if(connection){
+					this.clickSound.play();
 					this.snapPiece(element, connection);
 					const updatedPiece = this.getPieceByElement(element);
 					if(this.isCornerConnection(connection) && this.shouldMarkAsSolved([updatedPiece])){
@@ -938,21 +1004,21 @@ class Puzzly {
 		}.bind(this)
 	}
 
-	preloadImages(imgs, cb){
+	loadAssets(assets){
 		let promises = [];
-		for(let i=0,l=imgs.length;i<l;i++){
-			promises.push(this.loadImage(imgs[i]).then(imgData => this.loadedImages.push(imgData)));
+		for(let i=0,l=assets.length;i<l;i++){
+			promises.push(this.loadAsset(assets[i]).then(assetData => this.loadedAssets.push(assetData)));
 		}
 		
 		return Promise.all(promises)
 	}
 
-	loadImage(img){
+	loadAsset(asset){
 		return new Promise( (resolve, reject) => {
-			img.onload = img => {
-				resolve(img);
+			asset.onload = asset => {
+				resolve(asset);
 			};
-			img.onerror = err => {
+			asset.onerror = err => {
 				reject(err);
 			};
 		})
@@ -1537,12 +1603,14 @@ class Puzzly {
 		oldPos.top = thisPiece.pageY;
 		oldPos.left = thisPiece.pageX;
 
+		console.log(this.config)
+
 		switch(connection){
 			case "right":
 				connectingPiece = this.getPieceById(thisPiece.id + 1);
 
-				newPos.left = connectingPiece.pageX - thisPiece.imgW + this.config.connectorSize,
-				el.style.left = newPos.left + "px";
+				newPos.left = connectingPiece.pageX - thisPiece.imgW + this.snapDistance;
+				el.style.left = Math.floor(newPos.left) + "px";
 
 				if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
 					newPos.top = connectingPiece.pageY;
@@ -1556,6 +1624,7 @@ class Puzzly {
 					newPos.top = connectingPiece.pageY;
 				}
 
+				console.log('newPos', newPos)
 				el.style.top = newPos.top + "px";
 
 				break;
@@ -1563,8 +1632,8 @@ class Puzzly {
 			case "left":
 				connectingPiece = this.getPieceById(thisPiece.id - 1);
 
-				newPos.left = connectingPiece.pageX + connectingPiece.imgW - this.config.connectorSize,
-				el.style.left = newPos.left + "px";
+				newPos.left = connectingPiece.pageX + connectingPiece.imgW - this.snapDistance;
+				el.style.left = Math.floor(newPos.left) + "px";
 
 				if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
 					newPos.top = connectingPiece.pageY;
@@ -1578,6 +1647,7 @@ class Puzzly {
 					newPos.top = connectingPiece.pageY;
 				}
 
+				console.log('newPos', newPos)
 				el.style.top = newPos.top + "px";
 
 				break;
@@ -1585,8 +1655,8 @@ class Puzzly {
 			case "bottom":
 				connectingPiece = this.getPieceById(thisPiece.id + this.config.piecesPerSideHorizontal);
 
-				newPos.top = connectingPiece.pageY - thisPiece.imgH + this.config.connectorSize;
-				el.style.top = newPos.top + "px";
+				newPos.top = connectingPiece.pageY - thisPiece.imgH + this.snapDistance;
+				el.style.top = Math.floor(newPos.top) + "px";
 
 				if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
 					newPos.left = connectingPiece.pageX;
@@ -1600,6 +1670,7 @@ class Puzzly {
 					newPos.left = connectingPiece.pageX;
 				}
 
+				console.log('newPos', newPos)
 				el.style.left = newPos.left + "px";
 
 				break;
@@ -1608,8 +1679,8 @@ class Puzzly {
 				connectingPiece = this.getPieceById(thisPiece.id - this.config.piecesPerSideHorizontal);
 				const connectingEl = this.getElementByPieceId(connectingPiece.id);
 
-				newPos.top = connectingEl.offsetTop + connectingEl.height - this.config.connectorSize
-				el.style.top = newPos.top + "px";
+				newPos.top = connectingEl.offsetTop + connectingEl.height - this.snapDistance;
+				el.style.top = Math.floor(newPos.top) + "px";
 
 				if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
 					newPos.left = connectingPiece.pageX;
@@ -1623,6 +1694,7 @@ class Puzzly {
 					newPos.left = connectingPiece.pageX;
 				}
 
+				console.log('newPos', newPos)
 				el.style.left = newPos.left + "px";
 				
 				break;

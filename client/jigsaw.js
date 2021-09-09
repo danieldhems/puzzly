@@ -1,6 +1,6 @@
 
 export const JigsawShapeSpans = {
-    small: 122,
+    small: 123,
     medium: 163,
     large: 204
 };
@@ -16,7 +16,7 @@ export const SpriteMap = [
 	{x: 1758, y: 0, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.small, type: [-1, 1, 0, 0], _shape_id: 8},
 	
 	{x: 40, y: 245, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.small, type: [-1,  1, -1, 0], _shape_id: 9},
-	{x: 286, y: 245, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [-1, 1, 1, 0], _shape_id: 10},
+	{x: 286, y: 247, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [-1, 1, 1, 0], _shape_id: 10},
 	{x: 531, y: 204, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.medium, type: [1, -1, 0, 0], _shape_id: 11},
 	{x: 776, y: 204, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.medium, type: [1, -1, -1, 0], _shape_id: 12},
 	{x: 1022, y: 204, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.large, type: [1, -1, 1, 0], _shape_id: 13},
@@ -29,7 +29,7 @@ export const SpriteMap = [
 	{x: 531, y: 490, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.small, type: [0,  -1, -1, -1], _shape_id: 19},
 	{x: 776, y: 490, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.medium, type: [0,  -1, 1, -1], _shape_id: 20},
 	{x: 1022, y: 490, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.small, type: [0,  1, -1, -1], _shape_id: 21},
-	{x: 1267, y: 489, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [0,  1, 1, -1], _shape_id: 22},
+	{x: 1267, y: 490, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [0,  1, 1, -1], _shape_id: 22},
 	{x: 1512, y: 490, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.small, type: [-1,  0, 0, -1], _shape_id: 23},
 	{x: 1758, y: 490, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.small, type: [-1,  0, -1, -1], _shape_id: 24},
 
@@ -39,7 +39,7 @@ export const SpriteMap = [
 	{x: 776, y: 737, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.medium, type: [-1,  -1, 1, -1], _shape_id: 28},
 	{x: 1022, y: 737, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [-1,  1, 0, -1], _shape_id: 29},
 	{x: 1267, y: 737, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.small, type: [-1,  1, -1, -1], _shape_id: 30},
-	{x: 1512, y: 737, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [-1,  1, 1, -1], _shape_id: 31},
+	{x: 1512, y: 736, _w: JigsawShapeSpans.medium, _h: JigsawShapeSpans.medium, type: [-1,  1, 1, -1], _shape_id: 31},
 	{x: 1758, y: 695, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.medium, type: [1,  0, 0, -1], _shape_id: 32},
 	// Fifth row actual x value = 976
 	{x: 40, y: 940, _w: JigsawShapeSpans.small, _h: JigsawShapeSpans.medium, type: [1,  0, -1, -1], _shape_id: 33},
