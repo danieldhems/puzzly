@@ -430,7 +430,7 @@ class Puzzly {
 			],
 			// jigsawSpriteConnectorSize: 41, // True size in sprite
 			jigsawSpriteConnectorSize: 42,
-			jigsawSpriteConnectorDistanceFromCorner: 37,
+			jigsawSpriteConnectorDistanceFromCorner: 43,
 			...config,
 			piecesPerSideHorizontal: config.selectedShape === 'Rectangle' ? config.piecesPerSideHorizontal : Math.sqrt(config.selectedNumPieces),
 			piecesPerSideVertical: config.selectedShape === 'Rectangle' ? config.piecesPerSideVertical : Math.sqrt(config.selectedNumPieces),
@@ -653,48 +653,123 @@ class Puzzly {
 		}
 	}
 
+	getTopPlug(){
+		return {
+			firstCurve: {
+				destX: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/6,
+				destY: this.config.connectorSize - this.config.connectorSize/5,
+				cpX: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/5,
+				cpY: this.config.connectorSize - this.config.connectorSize/10,
+			},
+			secondCurve: {
+				cp1: {
+					x: this.config.connectorSize + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/4,
+					y: this.config.connectorSize - this.config.connectorSize/3,
+				},
+				cp2: {
+					x: this.config.connectorSize + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/4,
+					y: 0,
+				},
+				destX: this.largestPieceSpan / 2,
+				destY: 0,
+			},
+			thirdCurve: {
+				cp1: {
+					x: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4,
+					y: 0,
+				},
+				cp2: {
+					x: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4,
+					y: this.config.connectorSize - this.config.connectorSize/3,
+				},
+				destX: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner - this.config.connectorSize/6,
+				destY: this.config.connectorSize - this.config.connectorSize/5,
+			},
+			fourthCurve: {
+				cpX: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner - this.config.connectorSize/5,
+				cpY: this.config.connectorSize - this.config.connectorSize/10,
+				destX: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner,
+				destY: this.config.connectorSize,
+			}
+		}
+	}
+
+	getRightPlug(){
+		return {
+			firstCurve: {
+				destX: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/5,
+				destY: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/6,
+				// destX: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/6,
+				// destY: this.config.connectorSize - this.config.connectorSize/5,
+				cpX: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/10,
+				cpY: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/5,
+				// cpX: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/5,
+				// cpY: this.config.connectorSize - this.config.connectorSize/10,
+			},
+			secondCurve: {
+				cp1: {
+					y: this.config.connectorSize + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/4,
+					x: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/3,
+				},
+				cp2: {
+					y: this.config.connectorSize + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/4,
+					x: this.largestPieceSpan,
+				},
+				destX: this.largestPieceSpan,
+				destY: this.largestPieceSpan / 2,
+			},
+			thirdCurve: {
+				cp1: {
+					y: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4,
+					x: this.largestPieceSpan,
+				},
+				cp2: {
+					y: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4,
+					x: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/3,
+				},
+				destY: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner - this.config.connectorSize/6,
+				destX: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/5,
+			},
+			fourthCurve: {
+				cpY: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner - this.config.connectorSize/5,
+				cpX: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/10,
+				destY: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner,
+				destX: this.largestPieceSpan - this.config.connectorSize,
+			}
+		}
+	}
+
+	drawPlugGuides(ctx, plug){
+		ctx.fillStyle = 'blue';
+		ctx.beginPath();
+		ctx.arc(plug.firstCurve.cpX, plug.firstCurve.cpY, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+		
+		ctx.fillStyle = 'brown';
+		ctx.beginPath();
+		ctx.arc(plug.secondCurve.cp1.x, plug.secondCurve.cp1.y, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+
+		ctx.beginPath();
+		ctx.arc(plug.secondCurve.cp2.x, plug.secondCurve.cp2.y, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+		
+		ctx.fillStyle = 'green';
+		ctx.beginPath();
+		ctx.arc(plug.thirdCurve.cp1.x, plug.thirdCurve.cp1.y, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+
+		ctx.beginPath();
+		ctx.arc(plug.thirdCurve.cp2.x, plug.thirdCurve.cp2.y, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+
+		ctx.fillStyle = 'purple';
+		ctx.beginPath();
+		ctx.arc(plug.fourthCurve.cpX, plug.fourthCurve.cpY, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+	}
+
 	drawPieceManually(){
-
-		const firstCurve = {
-			destX: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/5,
-			destY: this.config.connectorSize - this.config.connectorSize/4,
-			cpX: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/4,
-			cpY: this.config.connectorSize - this.config.connectorSize/10,
-		}
-
-		const secondCurve = {
-			cp1: {
-				x: this.config.connectorSize + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/3,
-				y: this.config.connectorSize - this.config.connectorSize/3,
-			},
-			cp2: {
-				x: this.config.connectorSize + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/3,
-				y: 0,
-			},
-			destX: this.largestPieceSpan / 2,
-			destY: 0,
-		}
-
-		const thirdCurve = {
-			cp1: {
-				x: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/3,
-				y: 0,
-			},
-			cp2: {
-				x: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/3,
-				y: this.config.connectorSize - this.config.connectorSize/3,
-			},
-			destX: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner - this.config.connectorSize/5,
-			destY: firstCurve.destY,
-		}
-
-		const fourthCurve = {
-			cpX: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner - this.config.connectorSize/4,
-			cpY: this.config.connectorSize - this.config.connectorSize/10,
-			destX: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner,
-			destY: this.config.connectorSize,
-		}
-
 		const el = document.createElement("canvas");
 		const ctx = el.getContext("2d");
 		el.style.position = "absolute";
@@ -709,50 +784,26 @@ class Puzzly {
 		ctx.beginPath();
 		ctx.moveTo(this.config.connectorSize, this.config.connectorSize);
 		ctx.lineTo(this.config.connectorSize + this.config.connectorDistanceFromCorner, this.config.connectorSize);
-		ctx.quadraticCurveTo(firstCurve.cpX, firstCurve.cpY, firstCurve.destX, firstCurve.destY);
-		ctx.bezierCurveTo(secondCurve.cp1.x, secondCurve.cp1.y, secondCurve.cp2.x, secondCurve.cp2.y, secondCurve.destX, secondCurve.destY)
-		ctx.bezierCurveTo(thirdCurve.cp1.x, thirdCurve.cp1.y, thirdCurve.cp2.x, thirdCurve.cp2.y, thirdCurve.destX, thirdCurve.destY)
-		ctx.quadraticCurveTo(fourthCurve.cpX, fourthCurve.cpY, fourthCurve.destX, fourthCurve.destY);
+		
+		// Draw top plug
+		const topPlug = this.getTopPlug();
+		ctx.quadraticCurveTo(topPlug.firstCurve.cpX, topPlug.firstCurve.cpY, topPlug.firstCurve.destX, topPlug.firstCurve.destY);
+		ctx.bezierCurveTo(topPlug.secondCurve.cp1.x, topPlug.secondCurve.cp1.y, topPlug.secondCurve.cp2.x, topPlug.secondCurve.cp2.y, topPlug.secondCurve.destX, topPlug.secondCurve.destY)
+		ctx.bezierCurveTo(topPlug.thirdCurve.cp1.x, topPlug.thirdCurve.cp1.y, topPlug.thirdCurve.cp2.x, topPlug.thirdCurve.cp2.y, topPlug.thirdCurve.destX, topPlug.thirdCurve.destY)
+		ctx.quadraticCurveTo(topPlug.fourthCurve.cpX, topPlug.fourthCurve.cpY, topPlug.fourthCurve.destX, topPlug.fourthCurve.destY);
+
 		ctx.lineTo(this.largestPieceSpan - this.config.connectorSize, this.config.connectorSize)
+		ctx.lineTo(this.largestPieceSpan - this.config.connectorSize, this.config.connectorSize + this.config.connectorDistanceFromCorner);
+
+		const rightPlug = this.getRightPlug();
+		ctx.quadraticCurveTo(rightPlug.firstCurve.cpX, rightPlug.firstCurve.cpY, rightPlug.firstCurve.destX, rightPlug.firstCurve.destY);
+		ctx.bezierCurveTo(rightPlug.secondCurve.cp1.x, rightPlug.secondCurve.cp1.y, rightPlug.secondCurve.cp2.x, rightPlug.secondCurve.cp2.y, rightPlug.secondCurve.destX, rightPlug.secondCurve.destY)
+		ctx.bezierCurveTo(rightPlug.thirdCurve.cp1.x, rightPlug.thirdCurve.cp1.y, rightPlug.thirdCurve.cp2.x, rightPlug.thirdCurve.cp2.y, rightPlug.thirdCurve.destX, rightPlug.thirdCurve.destY);
+		ctx.quadraticCurveTo(rightPlug.fourthCurve.cpX, rightPlug.fourthCurve.cpY, rightPlug.fourthCurve.destX, rightPlug.fourthCurve.destY);
+		
 		ctx.stroke()
-
-		ctx.fillStyle = 'blue';
-		ctx.beginPath();
-		ctx.arc(firstCurve.cpX, firstCurve.cpY, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-		
-		ctx.fillStyle = 'brown';
-		ctx.beginPath();
-		ctx.arc(secondCurve.cp1.x, secondCurve.cp1.y, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-
-		ctx.beginPath();
-		ctx.arc(secondCurve.cp2.x, secondCurve.cp2.y, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-		
-		ctx.fillStyle = 'green';
-		ctx.beginPath();
-		ctx.arc(thirdCurve.cp1.x, thirdCurve.cp1.y, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-
-		ctx.beginPath();
-		ctx.arc(thirdCurve.cp2.x, thirdCurve.cp2.y, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-
-		ctx.fillStyle = 'purple';
-		ctx.beginPath();
-		ctx.arc(fourthCurve.cpX, fourthCurve.cpY, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-
-		ctx.fillStyle = 'cyan';
-		ctx.beginPath();
-		ctx.arc(this.largestPieceSpan - this.config.connectorSize, this.config.connectorSize, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-
-		// ctx.bezierCurveTo(150, 90, 110, 80, 140, 60);
-		// ctx.quadraticCurveTo(155, 55, 165, 60);
-		// ctx.bezierCurveTo(190, 90, 160, 90, 160, 95);
-		// ctx.quadraticCurveTo(165, 100, 175, 100);
+		this.drawPlugGuides(ctx, topPlug)
+		this.drawPlugGuides(ctx, rightPlug)
 	}
 	
 	drawPiece(piece) {
