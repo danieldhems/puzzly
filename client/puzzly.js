@@ -699,12 +699,8 @@ class Puzzly {
 			firstCurve: {
 				destX: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/5,
 				destY: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/6,
-				// destX: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/6,
-				// destY: this.config.connectorSize - this.config.connectorSize/5,
 				cpX: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/10,
 				cpY: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/5,
-				// cpX: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/5,
-				// cpY: this.config.connectorSize - this.config.connectorSize/10,
 			},
 			secondCurve: {
 				cp1: {
@@ -735,6 +731,47 @@ class Puzzly {
 				cpX: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/10,
 				destY: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner,
 				destX: this.largestPieceSpan - this.config.connectorSize,
+			}
+		}
+	}
+
+	getBottomPlug(){
+		return {
+			firstCurve: {
+				destX: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner - this.config.connectorSize/6,
+				destY: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/5,
+				cpX: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner - this.config.connectorSize/5,
+				cpY: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/10,
+			},
+			secondCurve: {
+				cp1: {
+					x: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4,
+					y: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/3,
+				},
+				cp2: {
+					x: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4,
+					y: this.largestPieceSpan,
+				},
+				destX: this.largestPieceSpan / 2,
+				destY: this.largestPieceSpan,
+			},
+			thirdCurve: {
+				cp1: {
+					x: this.config.connectorSize + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/4,
+					y: this.largestPieceSpan,
+				},
+				cp2: {
+					x: this.config.connectorSize + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/4,
+					y: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/3,
+				},
+				destX: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/6,
+				destY: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/5,
+			},
+			fourthCurve: {
+				cpX: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/5,
+				cpY: this.largestPieceSpan - this.config.connectorSize + this.config.connectorSize/10,
+				destX: this.config.connectorSize + this.config.connectorDistanceFromCorner,
+				destY: this.largestPieceSpan - this.config.connectorSize,
 			}
 		}
 	}
@@ -800,10 +837,20 @@ class Puzzly {
 		ctx.bezierCurveTo(rightPlug.secondCurve.cp1.x, rightPlug.secondCurve.cp1.y, rightPlug.secondCurve.cp2.x, rightPlug.secondCurve.cp2.y, rightPlug.secondCurve.destX, rightPlug.secondCurve.destY)
 		ctx.bezierCurveTo(rightPlug.thirdCurve.cp1.x, rightPlug.thirdCurve.cp1.y, rightPlug.thirdCurve.cp2.x, rightPlug.thirdCurve.cp2.y, rightPlug.thirdCurve.destX, rightPlug.thirdCurve.destY);
 		ctx.quadraticCurveTo(rightPlug.fourthCurve.cpX, rightPlug.fourthCurve.cpY, rightPlug.fourthCurve.destX, rightPlug.fourthCurve.destY);
+
+		ctx.lineTo(this.largestPieceSpan - this.config.connectorSize, this.largestPieceSpan - this.config.connectorSize)
+		ctx.lineTo(this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner, this.largestPieceSpan - this.config.connectorSize);
+
+		const bottomPlug = this.getBottomPlug();
+		ctx.quadraticCurveTo(bottomPlug.firstCurve.cpX, bottomPlug.firstCurve.cpY, bottomPlug.firstCurve.destX, bottomPlug.firstCurve.destY);
+		ctx.bezierCurveTo(bottomPlug.secondCurve.cp1.x, bottomPlug.secondCurve.cp1.y, bottomPlug.secondCurve.cp2.x, bottomPlug.secondCurve.cp2.y, bottomPlug.secondCurve.destX, bottomPlug.secondCurve.destY)
+		ctx.bezierCurveTo(bottomPlug.thirdCurve.cp1.x, bottomPlug.thirdCurve.cp1.y, bottomPlug.thirdCurve.cp2.x, bottomPlug.thirdCurve.cp2.y, bottomPlug.thirdCurve.destX, bottomPlug.thirdCurve.destY);
+		ctx.quadraticCurveTo(bottomPlug.fourthCurve.cpX, bottomPlug.fourthCurve.cpY, bottomPlug.fourthCurve.destX, bottomPlug.fourthCurve.destY);
 		
 		ctx.stroke()
 		this.drawPlugGuides(ctx, topPlug)
 		this.drawPlugGuides(ctx, rightPlug)
+		this.drawPlugGuides(ctx, bottomPlug)
 	}
 	
 	drawPiece(piece) {
