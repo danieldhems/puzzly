@@ -606,6 +606,7 @@ class Puzzly {
 		}
 		
 		this.innerPieces = document.querySelectorAll('.inner-piece');
+		this.drawPieceManually()
 
 		if(isMobile()){
 			window.addEventListener('touchstart', (e) => {
@@ -651,6 +652,108 @@ class Puzzly {
 			height: actualHeight,
 		}
 	}
+
+	drawPieceManually(){
+
+		const firstCurve = {
+			destX: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/5,
+			destY: this.config.connectorSize - this.config.connectorSize/4,
+			cpX: this.config.connectorSize + this.config.connectorDistanceFromCorner + this.config.connectorSize/4,
+			cpY: this.config.connectorSize - this.config.connectorSize/10,
+		}
+
+		const secondCurve = {
+			cp1: {
+				x: this.config.connectorSize + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/3,
+				y: this.config.connectorSize - this.config.connectorSize/3,
+			},
+			cp2: {
+				x: this.config.connectorSize + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/3,
+				y: 0,
+			},
+			destX: this.largestPieceSpan / 2,
+			destY: 0,
+		}
+
+		const thirdCurve = {
+			cp1: {
+				x: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/3,
+				y: 0,
+			},
+			cp2: {
+				x: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/3,
+				y: this.config.connectorSize - this.config.connectorSize/3,
+			},
+			destX: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner - this.config.connectorSize/5,
+			destY: firstCurve.destY,
+		}
+
+		const fourthCurve = {
+			cpX: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner - this.config.connectorSize/4,
+			cpY: this.config.connectorSize - this.config.connectorSize/10,
+			destX: this.largestPieceSpan - this.config.connectorSize - this.config.connectorDistanceFromCorner,
+			destY: this.config.connectorSize,
+		}
+
+		const el = document.createElement("canvas");
+		const ctx = el.getContext("2d");
+		el.style.position = "absolute";
+		el.style.left = 100 + "px";
+		el.style.top = 100 + "px";
+		el.style.backgroundColor = '#ccc';
+		el.setAttribute('width', this.largestPieceSpan);
+		el.setAttribute('height', this.largestPieceSpan);
+		this.canvas.appendChild(el);
+		
+		ctx.strokeStyle = '#000';
+		ctx.beginPath();
+		ctx.moveTo(this.config.connectorSize, this.config.connectorSize);
+		ctx.lineTo(this.config.connectorSize + this.config.connectorDistanceFromCorner, this.config.connectorSize);
+		ctx.quadraticCurveTo(firstCurve.cpX, firstCurve.cpY, firstCurve.destX, firstCurve.destY);
+		ctx.bezierCurveTo(secondCurve.cp1.x, secondCurve.cp1.y, secondCurve.cp2.x, secondCurve.cp2.y, secondCurve.destX, secondCurve.destY)
+		ctx.bezierCurveTo(thirdCurve.cp1.x, thirdCurve.cp1.y, thirdCurve.cp2.x, thirdCurve.cp2.y, thirdCurve.destX, thirdCurve.destY)
+		ctx.quadraticCurveTo(fourthCurve.cpX, fourthCurve.cpY, fourthCurve.destX, fourthCurve.destY);
+		ctx.lineTo(this.largestPieceSpan - this.config.connectorSize, this.config.connectorSize)
+		ctx.stroke()
+
+		ctx.fillStyle = 'blue';
+		ctx.beginPath();
+		ctx.arc(firstCurve.cpX, firstCurve.cpY, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+		
+		ctx.fillStyle = 'brown';
+		ctx.beginPath();
+		ctx.arc(secondCurve.cp1.x, secondCurve.cp1.y, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+
+		ctx.beginPath();
+		ctx.arc(secondCurve.cp2.x, secondCurve.cp2.y, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+		
+		ctx.fillStyle = 'green';
+		ctx.beginPath();
+		ctx.arc(thirdCurve.cp1.x, thirdCurve.cp1.y, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+
+		ctx.beginPath();
+		ctx.arc(thirdCurve.cp2.x, thirdCurve.cp2.y, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+
+		ctx.fillStyle = 'purple';
+		ctx.beginPath();
+		ctx.arc(fourthCurve.cpX, fourthCurve.cpY, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+
+		ctx.fillStyle = 'cyan';
+		ctx.beginPath();
+		ctx.arc(this.largestPieceSpan - this.config.connectorSize, this.config.connectorSize, 5, 0, 2 * Math.PI);  // Control point one
+		ctx.fill()
+
+		// ctx.bezierCurveTo(150, 90, 110, 80, 140, 60);
+		// ctx.quadraticCurveTo(155, 55, 165, 60);
+		// ctx.bezierCurveTo(190, 90, 160, 90, 160, 95);
+		// ctx.quadraticCurveTo(165, 100, 175, 100);
+	}
 	
 	drawPiece(piece) {
 		const canvasEl = document.createElement("canvas");
@@ -685,92 +788,59 @@ class Puzzly {
 
 		const cvctx = canvasEl.getContext("2d");
 
-		cvctx.translate(0.5, 0.5);
 		const sprite = SpriteMap.find(s => s._shape_id === piece.shapeId);
 
-		if(this.config.drawSquares){
-			const blip = document.createElement('div');
-			blip.style.position = 'absolute';
-			blip.style.top = piece.pageY + 'px';
-			blip.style.left = piece.pageX + 'px';
-			blip.style.width = this.config.pieceSize + 'px';
-			blip.style.height = this.config.pieceSize + 'px';
+		cvctx.drawImage(
+			this.SourceImage,
+			piece.imgX,
+			piece.imgY,
+			piece.imgW,
+			piece.imgH,
+			0,
+			0,
+			piece.imgW,
+			piece.imgH,
+		);
 
-			if(Utils.has(piece, 'plug', 'top')){
-				blip.style.top = parseInt(blip.style.top) + this.config.connectorSize + 'px';
-			}
-			if(Utils.has(piece, 'plug', 'left')){
-				blip.style.left = parseInt(blip.style.left) + this.config.connectorSize + 'px';
-			}
-			blip.style.backgroundColor = '#ccc';
-			document.body.appendChild(blip)
-		} else {
+		cvctx.globalCompositeOperation = 'destination-atop';
 
-			/*
-			cvctx.drawImage(
-				this.SourceImage,
-				piece.imgX,
-				piece.imgY,
-				piece.imgW,
-				piece.imgH,
-				0,
-				0,
-				piece.imgW,
-				piece.imgH,
-			);
-			*/
+		cvctx.drawImage(
+			this.JigsawSprite,
+			sprite.x,
+			sprite.y,
+			sprite._w,
+			sprite._h,
+			0, 
+			0, 
+			piece.imgW,
+			piece.imgH,
+		);
 
-			cvctx.globalCompositeOperation = 'destination-atop';
+		
+
+		if(this.config.drawOutlines){
+			/**
+			 * Borrowed from: https://stackoverflow.com/questions/37115530/how-do-i-create-a-puzzle-piece-with-bevel-effect-in-edged-in-canvas-html5
+			 */
 	
-			if(this.config.drawOutlines){
-				/**
-				 * Borrowed from: https://stackoverflow.com/questions/37115530/how-do-i-create-a-puzzle-piece-with-bevel-effect-in-edged-in-canvas-html5
-				 */
-		
-				cvctx.fill();
-		
-				// 4) Add rect to make stencil
-				cvctx.rect(0, 0, piece.imgW, piece.imgH);
-		
-				// 5) Build dark shadow
-				cvctx.shadowBlur = 1;
-				cvctx.shadowOffsetX = -1;
-				cvctx.shadowOffsetY = -1;
-				cvctx.shadowColor = "rgba(0,0,0,0.8)";
-		
-				// 6) Draw stencil with shadow but only on non-transparent pixels
-				cvctx.globalCompositeOperation = "destination-atop";
-				cvctx.fill();
-		
-				/**
-				 * End borrowed code
-				*/
-			}
-	/*
-			cvctx.drawImage(
-				this.JigsawSprite,
-				sprite.x,
-				sprite.y,
-				sprite._w,
-				sprite._h,
-				0, 
-				0, 
-				piece.imgW,
-				piece.imgH,
-			);
-*/
-			cvctx.strokeStyle = '#fff';
-			cvctx.beginPath();
-			cvctx.moveTo(100, 100);
-			cvctx.lineTo(130, 100);
-
-			cvctx.quadraticCurveTo(140, 100, 145, 95);
-			cvctx.bezierCurveTo(150, 90, 110, 80, 140, 60);
-			cvctx.quadraticCurveTo(155, 55, 165, 60);
-			cvctx.bezierCurveTo(190, 90, 160, 90, 160, 95);
-			cvctx.quadraticCurveTo(165, 100, 175, 100);
-			// cvctx.closePath()
-			cvctx.stroke()
+			cvctx.fill();
+	
+			// 4) Add rect to make stencil
+			cvctx.rect(0, 0, piece.imgW, piece.imgH);
+	
+			// 5) Build dark shadow
+			cvctx.shadowBlur = 1;
+			cvctx.shadowOffsetX = -1;
+			cvctx.shadowOffsetY = -1;
+			cvctx.shadowColor = "rgba(0,0,0,0.8)";
+	
+			// 6) Draw stencil with shadow but only on non-transparent pixels
+			cvctx.globalCompositeOperation = "destination-atop";
+			cvctx.fill();
+	
+			/**
+			 * End borrowed code
+			*/
 		}
 
 	}
