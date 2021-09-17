@@ -194,7 +194,7 @@ function imageCropWithinBounds(newX, newY){
 	};
 	const containerBoundingBox = imagePreviewEl.getBoundingClientRect();
 	
-	return elBoundingBox.left >= Math.floor(containerBoundingBox.left) && elBoundingBox.right <= Math.floor(containerBoundingBox.right) && elBoundingBox.top >= Math.floor(containerBoundingBox.top) && elBoundingBox.bottom <= Math.floor(containerBoundingBox.bottom);
+	return elBoundingBox.left >= Math.ceil(containerBoundingBox.left) && elBoundingBox.right <= Math.ceil(containerBoundingBox.right) && elBoundingBox.top >= Math.ceil(containerBoundingBox.top) && elBoundingBox.bottom <= Math.ceil(containerBoundingBox.bottom);
 }
 
 function onImageCropMove(e){
@@ -557,11 +557,11 @@ class Puzzly {
 	init(){
 		console.log(this.config)
 
+		this.config.pieceSize = Math.ceil(this.config.pieceSize)
 		this.config.connectorDistanceFromCornerRatio = this.config.connectorRatio = 33;
-		this.config.connectorSize = this.config.pieceSize / 100 * this.config.connectorRatio;
-		console.log(this.config.pieceSize, this.config.connectorRatio, this.config.connectorSize)
+		this.config.connectorSize = Math.ceil(this.config.pieceSize / 100 * this.config.connectorRatio);
 
-		this.config.connectorDistanceFromCorner = this.config.pieceSize / 100 * this.config.connectorDistanceFromCornerRatio;
+		this.config.connectorDistanceFromCorner = Math.ceil(this.config.pieceSize / 100 * this.config.connectorDistanceFromCornerRatio);
 
 		this.largestPieceSpan = this.config.pieceSize + (this.config.connectorSize * 2);
 		this.boardBoundingBox = {
@@ -592,7 +592,7 @@ class Puzzly {
 		
 		if(this.progress.length > 0){
 			this.pieces = this.progress;
-			this.pieces.map(p => this.drawPiece(p))
+			this.pieces.map(p => this.drawPieceManually(p))
 		} else {
 			this.makePieces();
 			this.save(this.pieces)
@@ -616,38 +616,38 @@ class Puzzly {
 	getTopPlug(leftBoundary, topBoundary, rightBoundary){
 		return {
 			firstCurve: {
-				destX: leftBoundary + this.config.connectorDistanceFromCorner + this.config.connectorSize/6,
-				destY: topBoundary - this.config.connectorSize/5,
-				cpX: leftBoundary + this.config.connectorDistanceFromCorner + this.config.connectorSize/5,
-				cpY: topBoundary - this.config.connectorSize/10,
+				destX: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner + this.config.connectorSize/6),
+				destY: Math.ceil(topBoundary - this.config.connectorSize/5),
+				cpX: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner + this.config.connectorSize/5),
+				cpY: Math.ceil(topBoundary - this.config.connectorSize/10),
 			},
 			secondCurve: {
 				cp1: {
-					x: leftBoundary + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/4,
-					y: topBoundary - this.config.connectorSize/3,
+					x: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/4),
+					y: Math.ceil(topBoundary - this.config.connectorSize/3),
 				},
 				cp2: {
-					x: leftBoundary + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/4,
-					y: 0,
+					x: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/4),
+					y: 1,
 				},
-				destX: leftBoundary + this.config.pieceSize / 2,
-				destY: 0,
+				destX: Math.ceil(leftBoundary + this.config.pieceSize / 2),
+				destY: 1,
 			},
 			thirdCurve: {
 				cp1: {
-					x: rightBoundary - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4,
-					y: 0,
+					x: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4),
+					y: 1,
 				},
 				cp2: {
-					x: rightBoundary - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4,
-					y: topBoundary - this.config.connectorSize/3,
+					x: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4),
+					y: Math.ceil(topBoundary - this.config.connectorSize/3),
 				},
-				destX: rightBoundary - this.config.connectorDistanceFromCorner - this.config.connectorSize/6,
-				destY: topBoundary - this.config.connectorSize/5,
+				destX: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner - this.config.connectorSize/6),
+				destY: Math.ceil(topBoundary - this.config.connectorSize/5),
 			},
 			fourthCurve: {
-				cpX: rightBoundary - this.config.connectorDistanceFromCorner - this.config.connectorSize/5,
-				cpY: topBoundary - this.config.connectorSize/10,
+				cpX: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner - this.config.connectorSize/5),
+				cpY: Math.ceil(topBoundary - this.config.connectorSize/10),
 				destX: rightBoundary - this.config.connectorDistanceFromCorner,
 				destY: topBoundary,
 			}
@@ -655,41 +655,40 @@ class Puzzly {
 	}
 
 	getTopSocket(leftBoundary, topBoundary, rightBoundary, totalWidth){
-		console.log('top socket boundaries', leftBoundary, topBoundary, rightBoundary, this.config.connectorSize)
 		return {
 			firstCurve: {
-				destX: leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6),
-				destY: topBoundary + (this.config.connectorSize/5),
-				cpX: leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5),
-				cpY: topBoundary + (this.config.connectorSize/10),
+				destX: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6)),
+				destY: Math.ceil(topBoundary + (this.config.connectorSize/5)),
+				cpX: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5)),
+				cpY: Math.ceil(topBoundary + (this.config.connectorSize/10)),
 			},
 			secondCurve: {
 				cp1: {
-					x: leftBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
-					y: topBoundary + (this.config.connectorSize/3),
+					x: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
+					y: Math.ceil(topBoundary + (this.config.connectorSize/3)),
 				},
 				cp2: {
-					x: leftBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
-					y: topBoundary + this.config.connectorSize,
+					x: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
+					y: topBoundary + this.config.connectorSize -1,
 				},
-				destX: leftBoundary + (this.config.pieceSize/2),
-				destY: topBoundary + this.config.connectorSize,
+				destX: Math.ceil(leftBoundary + (this.config.pieceSize/2)),
+				destY: topBoundary + this.config.connectorSize -1,
 			},
 			thirdCurve: {
 				cp1: {
-					x: rightBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4),
-					y: topBoundary + this.config.connectorSize,
+					x: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
+					y: topBoundary + this.config.connectorSize -1,
 				},
 				cp2: {
-					x: rightBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4),
-					y: topBoundary + (this.config.connectorSize/3),
+					x: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
+					y: Math.ceil(topBoundary + (this.config.connectorSize/3)),
 				},
-				destX: rightBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6),
-				destY: topBoundary + (this.config.connectorSize/5),
+				destX: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6)),
+				destY: Math.ceil(topBoundary + (this.config.connectorSize/5)),
 			},
 			fourthCurve: {
-				cpX: rightBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/5),
-				cpY: topBoundary + (this.config.connectorSize/10),
+				cpX: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/5)),
+				cpY: Math.ceil(topBoundary + (this.config.connectorSize/10)),
 				destX: rightBoundary - this.config.connectorDistanceFromCorner,
 				destY: topBoundary,
 			}
@@ -699,38 +698,38 @@ class Puzzly {
 	getRightPlug(topBoundary, rightBoundary, leftBoundary){
 		return {
 			firstCurve: {
-				destX: rightBoundary + (this.config.connectorSize/5),
-				destY: topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6),
-				cpX: rightBoundary + (this.config.connectorSize/10),
-				cpY: topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5),
+				destX: Math.ceil(rightBoundary + (this.config.connectorSize/5)),
+				destY: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6)),
+				cpX: Math.ceil(rightBoundary + (this.config.connectorSize/10)),
+				cpY: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5)),
 			},
 			secondCurve: {
 				cp1: {
-					y: topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
-					x: leftBoundary + this.config.pieceSize + (this.config.connectorSize/3),
+					y: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
+					x: Math.ceil(leftBoundary + this.config.pieceSize + (this.config.connectorSize/3)),
 				},
 				cp2: {
-					y: topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
-					x: leftBoundary + this.config.pieceSize + this.config.connectorSize,
+					y: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
+					x: leftBoundary + this.config.pieceSize + this.config.connectorSize -1,
 				},
-				destX: leftBoundary + this.config.pieceSize + this.config.connectorSize,
-				destY: topBoundary + this.config.pieceSize - (this.config.pieceSize/2),
+				destX: leftBoundary + this.config.pieceSize + this.config.connectorSize -1,
+				destY: Math.ceil(topBoundary + this.config.pieceSize - (this.config.pieceSize/2)),
 			},
 			thirdCurve: {
 				cp1: {
-					y: topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4,
-					x: leftBoundary + this.config.pieceSize + this.config.connectorSize,
+					y: Math.ceil(topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4),
+					x: leftBoundary + this.config.pieceSize + this.config.connectorSize -1,
 				},
 				cp2: {
-					y: topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4,
-					x: leftBoundary + this.config.pieceSize + (this.config.connectorSize/3),
+					y: Math.ceil(topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4),
+					x: Math.ceil(leftBoundary + this.config.pieceSize + (this.config.connectorSize/3)),
 				},
-				destY: topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6),
-				destX: leftBoundary + this.config.pieceSize + (this.config.connectorSize/5),
+				destY: Math.ceil(topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6)),
+				destX: Math.ceil(leftBoundary + this.config.pieceSize + (this.config.connectorSize/5)),
 			},
 			fourthCurve: {
-				cpY: topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner - (this.config.connectorSize/5),
-				cpX: leftBoundary + this.config.pieceSize + (this.config.connectorSize/10),
+				cpY: Math.ceil(topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner - (this.config.connectorSize/5)),
+				cpX: Math.ceil(leftBoundary + this.config.pieceSize + (this.config.connectorSize/10)),
 				destY: topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner,
 				destX: leftBoundary + this.config.pieceSize,
 			}
@@ -740,38 +739,38 @@ class Puzzly {
 	getRightSocket(topBoundary, rightBoundary, bottomBoundary){
 		return {
 			firstCurve: {
-				destX: rightBoundary - (this.config.connectorSize/5),
-				destY: topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6),
-				cpX: rightBoundary - (this.config.connectorSize/10),
-				cpY: topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5),
+				destX: Math.ceil(rightBoundary - (this.config.connectorSize/5)),
+				destY: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6)),
+				cpX: Math.ceil(rightBoundary - (this.config.connectorSize/10)),
+				cpY: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5)),
 			},
 			secondCurve: {
 				cp1: {
-					y: topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
-					x: rightBoundary - (this.config.connectorSize/3),
+					y: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
+					x: Math.ceil(rightBoundary - (this.config.connectorSize/3)),
 				},
 				cp2: {
-					y: topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
+					y: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
 					x: rightBoundary - this.config.connectorSize,
 				},
 				destX: rightBoundary - this.config.connectorSize,
-				destY: topBoundary + (this.config.pieceSize/2),
+				destY: Math.ceil(topBoundary + (this.config.pieceSize/2)),
 			},
 			thirdCurve: {
 				cp1: {
-					y: topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4),
+					y: Math.ceil(topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
 					x: rightBoundary - this.config.connectorSize,
 				},
 				cp2: {
-					y: topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4),
-					x: rightBoundary - (this.config.connectorSize/3),
+					y: Math.ceil(topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
+					x: Math.ceil(rightBoundary - (this.config.connectorSize/3)),
 				},
-				destY: topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6),
-				destX: rightBoundary - (this.config.connectorSize/5),
+				destY: Math.ceil(topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6)),
+				destX: Math.ceil(rightBoundary - (this.config.connectorSize/5)),
 			},
 			fourthCurve: {
-				cpY: topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner - (this.config.connectorSize/5),
-				cpX: rightBoundary - (this.config.connectorSize/10),
+				cpY: Math.ceil(topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner - (this.config.connectorSize/5)),
+				cpX: Math.ceil(rightBoundary - (this.config.connectorSize/10)),
 				destY: topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner,
 				destX: rightBoundary,
 			}
@@ -781,38 +780,38 @@ class Puzzly {
 	getBottomPlug(rightBoundary, bottomBoundary, leftBoundary){
 		return {
 			firstCurve: {
-				destX: rightBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6),
+				destX: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6)),
 				destY: bottomBoundary + (this.config.connectorSize/5),
-				cpX: rightBoundary - this.config.connectorDistanceFromCorner - this.config.connectorSize/5,
-				cpY: bottomBoundary + (this.config.connectorSize/10),
+				cpX: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner - this.config.connectorSize/5),
+				cpY: Math.ceil(bottomBoundary + (this.config.connectorSize/10)),
 			},
 			secondCurve: {
 				cp1: {
-					x: rightBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4),
-					y: bottomBoundary + (this.config.connectorSize/3),
+					x: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
+					y: Math.ceil(bottomBoundary + (this.config.connectorSize/3)),
 				},
 				cp2: {
-					x: rightBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4),
-					y: bottomBoundary + this.config.connectorSize,
+					x: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
+					y: bottomBoundary + this.config.connectorSize -1,
 				},
-				destX: leftBoundary + this.config.pieceSize - (this.config.pieceSize/2),
-				destY: bottomBoundary + this.config.connectorSize,
+				destX: Math.ceil(leftBoundary + this.config.pieceSize - (this.config.pieceSize/2)),
+				destY: bottomBoundary + this.config.connectorSize -1,
 			},
 			thirdCurve: {
 				cp1: {
-					x: leftBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
-					y: bottomBoundary + this.config.connectorSize,
+					x: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
+					y: bottomBoundary + this.config.connectorSize-1,
 				},
 				cp2: {
-					x: leftBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
-					y: bottomBoundary + (this.config.connectorSize/3),
+					x: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
+					y: Math.ceil(bottomBoundary + (this.config.connectorSize/3)),
 				},
-				destX: leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6),
-				destY: bottomBoundary + (this.config.connectorSize/5),
+				destX: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6)),
+				destY: Math.ceil(bottomBoundary + (this.config.connectorSize/5)),
 			},
 			fourthCurve: {
-				cpX: leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5),
-				cpY: bottomBoundary + (this.config.connectorSize/10),
+				cpX: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5)),
+				cpY: Math.ceil(bottomBoundary + (this.config.connectorSize/10)),
 				destX: leftBoundary + this.config.connectorDistanceFromCorner,
 				destY: bottomBoundary,
 			}
@@ -822,38 +821,38 @@ class Puzzly {
 	getBottomSocket(rightBoundary, bottomBoundary, leftBoundary){
 		return {
 			firstCurve: {
-				destX: rightBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6),
-				destY: bottomBoundary - (this.config.connectorSize/5),
-				cpX: rightBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/5),
-				cpY: bottomBoundary - (this.config.connectorSize/10),
+				destX: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6)),
+				destY: Math.ceil(bottomBoundary - (this.config.connectorSize/5)),
+				cpX: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/5)),
+				cpY: Math.ceil(bottomBoundary - (this.config.connectorSize/10)),
 			},
 			secondCurve: {
 				cp1: {
-					x: rightBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4),
-					y: bottomBoundary - (this.config.connectorSize/3),
+					x: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
+					y: Math.ceil(bottomBoundary - (this.config.connectorSize/3)),
 				},
 				cp2: {
-					x: rightBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4),
-					y: bottomBoundary - this.config.connectorSize,
+					x: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
+					y: bottomBoundary - this.config.connectorSize +1,
 				},
-				destX: rightBoundary - (this.config.pieceSize/2),
-				destY: bottomBoundary - this.config.connectorSize,
+				destX: Math.ceil(rightBoundary - (this.config.pieceSize/2)),
+				destY: bottomBoundary - this.config.connectorSize +1,
 			},
 			thirdCurve: {
 				cp1: {
-					x: leftBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
-					y: bottomBoundary - this.config.connectorSize,
+					x: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
+					y: bottomBoundary - this.config.connectorSize +1,
 				},
 				cp2: {
-					x: leftBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
-					y: bottomBoundary - (this.config.connectorSize/3),
+					x: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
+					y: Math.ceil(bottomBoundary - (this.config.connectorSize/3)),
 				},
-				destX: leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6),
+				destX: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6)),
 				destY: bottomBoundary - (this.config.connectorSize/5),
 			},
 			fourthCurve: {
-				cpX: leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5),
-				cpY: bottomBoundary - (this.config.connectorSize/10),
+				cpX: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5)),
+				cpY: Math.ceil(bottomBoundary - (this.config.connectorSize/10)),
 				destX: leftBoundary + this.config.connectorDistanceFromCorner,
 				destY: bottomBoundary,
 			}
@@ -863,79 +862,79 @@ class Puzzly {
 	getLeftPlug(bottomBoundary, leftBoundary, topBoundary){
 		return {
 			firstCurve: {
-				destX: leftBoundary - (this.config.connectorSize/5),
-				destY: bottomBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6),
-				cpX: leftBoundary - (this.config.connectorSize/10),
-				cpY: bottomBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/5),
+				destX: Math.ceil(leftBoundary - (this.config.connectorSize/5)),
+				destY: Math.ceil(bottomBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6)),
+				cpX: Math.ceil(leftBoundary - (this.config.connectorSize/10)),
+				cpY: Math.ceil(bottomBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/5)),
 			},
 			secondCurve: {
 				cp1: {
-					y: bottomBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4),
-					x: leftBoundary - (this.config.connectorSize/3),
+					y: Math.ceil(bottomBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
+					x: Math.ceil(leftBoundary - (this.config.connectorSize/3)),
 				},
 				cp2: {
-					y: bottomBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4),
+					y: Math.ceil(bottomBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
 					x: 0,
 				},
-				destX: leftBoundary - this.config.connectorSize,
-				destY: bottomBoundary - (this.config.pieceSize/2),
+				destX: 0,
+				destY: Math.ceil(bottomBoundary - (this.config.pieceSize/2)),
 			},
 			thirdCurve: {
 				cp1: {
-					y: topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
+					y: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
 					x: 0,
 				},
 				cp2: {
-					y: topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
-					x: leftBoundary - (this.config.connectorSize/3),
+					y: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
+					x: Math.ceil(leftBoundary - (this.config.connectorSize/3)),
 				},
-				destY: topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6),
-				destX: leftBoundary - (this.config.connectorSize/5),
+				destY: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6)),
+				destX: Math.ceil(leftBoundary - (this.config.connectorSize/5)),
 			},
 			fourthCurve: {
-				cpY: topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5),
-				cpX: leftBoundary - (this.config.connectorSize/10),
-				destY: topBoundary + this.config.connectorDistanceFromCorner,
+				cpY: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5)),
+				cpX: Math.ceil(leftBoundary - (this.config.connectorSize/10)),
+				destY: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner),
 				destX: leftBoundary,
 			}
 		}
 	}
 
-	getLeftSocket(bottomBoundary, leftBoundary, topBoundary, hasBottomConnector, hasTopConnector){
+	getLeftSocket(bottomBoundary, leftBoundary, topBoundary){
 		return {
 			firstCurve: {
-				destX: leftBoundary + (this.config.connectorSize/5),
-				destY: bottomBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6),
-				cpX: leftBoundary + (this.config.connectorSize/10),
-				cpY: bottomBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/5),
+				destX: Math.ceil(leftBoundary + (this.config.connectorSize/5)),
+				destY: Math.ceil(bottomBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/6)),
+				cpX: Math.ceil(leftBoundary + (this.config.connectorSize/10)),
+				cpY: Math.ceil(bottomBoundary - this.config.connectorDistanceFromCorner - (this.config.connectorSize/5)),
 			},
 			secondCurve: {
 				cp1: {
-					y: bottomBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4),
-					x: leftBoundary + (this.config.connectorSize/3),
+					y: Math.ceil(bottomBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
+					x: Math.ceil(leftBoundary + (this.config.connectorSize/3)),
 				},
 				cp2: {
-					y: bottomBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4),
-					x: this.config.connectorSize,
+					y: Math.ceil(bottomBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
+					x: this.config.connectorSize -1,
 				},
-				destX: this.config.connectorSize,
-				destY: bottomBoundary - (this.config.pieceSize/2)
+				destX: this.config.connectorSize -1,
+				destY: Math.ceil(bottomBoundary - (this.config.pieceSize/2))
 			},
 			thirdCurve: {
 				cp1: {
-					y: topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
-					x: this.config.connectorSize,
+					y: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
+					x: this.config.connectorSize -1,
 				},
 				cp2: {
-					y: topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4),
-					x: leftBoundary + (this.config.connectorSize/3),
+					y: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
+					x: Math.ceil(leftBoundary + (this.config.connectorSize/3)),
 				},
-				destY: topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6),
-				destX: leftBoundary + (this.config.connectorSize/5),
+				destY: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6)),
+				destX: Math.ceil(leftBoundary + (this.config.connectorSize/5)),
 			},
 			fourthCurve: {
-				cpY: topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5),
-				cpX: leftBoundary + (this.config.connectorSize/10),
+				cpY: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/5)),
+				cpX: Math.ceil(leftBoundary + (this.config.connectorSize/10)),
 				destY: topBoundary + this.config.connectorDistanceFromCorner,
 				destX: leftBoundary,
 			}
@@ -970,6 +969,12 @@ class Puzzly {
 		ctx.beginPath();
 		ctx.arc(plug.fourthCurve.cpX, plug.fourthCurve.cpY, 5, 0, 2 * Math.PI);  // Control point one
 		ctx.fill()
+	}
+
+	repaintPiece(piece){
+		const el = this.getElementByPieceId(piece.id);
+		const ctx = el.getContext('2d');
+		ctx.drawImage(this.SourceImage, piece.imgX, piece.imgY, piece.imgW, piece.imgH, 0, 0, piece.imgW, piece.imgH);
 	}
 
 	drawPieceManually(piece){
@@ -1258,17 +1263,18 @@ class Puzzly {
 		this.pieces = this.pieces.map(p => {
 			if(pieceIDs.includes(p.id)){
 				const diffTopOperand = diff.top.charAt(0);
-				const diffTopValue = diff.top.substr(1);
+				const diffTopValue = diffTopOperand === "+" ? Math.ceil(parseFloat(diff.top.substr(1))) : Math.floor(parseFloat(diff.top.substr(1)));
 				const diffLeftOperand = diff.left.charAt(0);
-				const diffLeftValue = diff.left.substr(1);
-	
+				const diffLeftValue = diffLeftOperand === "+" ? Math.ceil(parseFloat(diff.left.substr(1))) : Math.ceil(parseFloat(diff.left.substr(1)));
+				
 				const element = this.getElementByPieceId(p.id);
 	
-				const newPosTop = diffTopOperand === "+" ? element.offsetTop + parseInt(diffTopValue) : element.offsetTop - parseInt(diffTopValue);
-				const newPosLeft = diffLeftOperand === "+" ? element.offsetLeft + parseInt(diffLeftValue) : element.offsetLeft - parseInt(diffLeftValue);
+				const newPosTop = diffTopOperand === "+" ? element.offsetTop + diffTopValue : element.offsetTop - diffTopValue;
+				const newPosLeft = diffLeftOperand === "+" ? element.offsetLeft + diffLeftValue : element.offsetLeft - diffLeftValue;
 				
 				element.style.top = newPosTop + "px";
 				element.style.left = newPosLeft + "px";
+				element.style.zIndex = 10;
 				
 				return {
 					...p,
@@ -1296,6 +1302,7 @@ class Puzzly {
 				while(!hasConnection && !noneFound){
 					const piece = this.movingPieces[i];
 					const element = this.getElementByPieceId(piece.id);
+					this.updatePiecePosition(element);
 					connection = this.checkConnections(element);
 
 					if(connection){
@@ -1322,6 +1329,7 @@ class Puzzly {
 				pieces = this.pieces.filter(p => pieceIds.includes(p._id));
 			} else {
 				const element = this.getElementByPieceId(this.movingPieces[0].id);
+				element.style.zIndex = 3;
 				connection = this.checkConnections(element);
 				if(connection){
 					this.clickSound.play();
@@ -1540,9 +1548,6 @@ class Puzzly {
 				adjacentPieceBehind = null;
 			}
 
-			// let candidatePieces = this.getCandidatePieces(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
-			// let currentPiece = candidatePieces[ Math.floor(Math.random() * candidatePieces.length) ];
-			
 			currentPiece.type = this.getConnectors(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, currentPiece, i);
 
@@ -1983,6 +1988,7 @@ class Puzzly {
 	}
 
 	updatePiecePosition(el){
+		el.style.zIndex = 2;
 		const pid = parseInt(el.getAttribute('data-piece-id'));
 		const piece = this.pieces.find(p => p.id === pid);
 		this.pieces = this.pieces.map(p => {
@@ -2105,14 +2111,12 @@ class Puzzly {
 		oldPos.top = thisPiece.pageY;
 		oldPos.left = thisPiece.pageX;
 
-		console.log(this.config)
-
 		switch(connection){
 			case "right":
 				connectingPiece = this.getPieceById(thisPiece.id + 1);
 
-				newPos.left = connectingPiece.pageX - thisPiece.imgW + this.snapDistance;
-				el.style.left = Math.floor(newPos.left) + "px";
+				newPos.left = connectingPiece.pageX - thisPiece.imgW + this.config.connectorSize;
+				el.style.left = Math.ceil(newPos.left) + "px";
 
 				if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
 					newPos.top = connectingPiece.pageY;
@@ -2133,8 +2137,8 @@ class Puzzly {
 			case "left":
 				connectingPiece = this.getPieceById(thisPiece.id - 1);
 
-				newPos.left = connectingPiece.pageX + connectingPiece.imgW - this.snapDistance;
-				el.style.left = Math.floor(newPos.left) + "px";
+				newPos.left = connectingPiece.pageX + connectingPiece.imgW - this.config.connectorSize;
+				el.style.left = Math.ceil(newPos.left) + "px";
 
 				if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
 					newPos.top = connectingPiece.pageY;
@@ -2155,8 +2159,8 @@ class Puzzly {
 			case "bottom":
 				connectingPiece = this.getPieceById(thisPiece.id + this.config.piecesPerSideHorizontal);
 
-				newPos.top = connectingPiece.pageY - thisPiece.imgH + this.snapDistance;
-				el.style.top = Math.floor(newPos.top) + "px";
+				newPos.top = connectingPiece.pageY - thisPiece.imgH + this.config.connectorSize;
+				el.style.top = Math.ceil(newPos.top) + "px";
 
 				if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
 					newPos.left = connectingPiece.pageX;
@@ -2178,8 +2182,8 @@ class Puzzly {
 				connectingPiece = this.getPieceById(thisPiece.id - this.config.piecesPerSideHorizontal);
 				const connectingEl = this.getElementByPieceId(connectingPiece.id);
 
-				newPos.top = connectingEl.offsetTop + connectingEl.height - this.snapDistance;
-				el.style.top = Math.floor(newPos.top) + "px";
+				newPos.top = connectingEl.offsetTop + connectingEl.height - this.config.connectorSize;
+				el.style.top = Math.ceil(newPos.top) + "px";
 
 				if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
 					newPos.left = connectingPiece.pageX;
@@ -2282,6 +2286,11 @@ class Puzzly {
 			}
 			return p;
 		})
+
+		const elA = this.getElementByPieceId(pieceA.id);
+		elA.style.zIndex = 10;
+		const elB = this.getElementByPieceId(pieceB.id);
+		elB.style.zIndex = 10;
 
 		this.setElementAttribute(this.getElementByPieceId(pieceA.id), "data-group", groupId)
 		this.setElementAttribute(this.getElementByPieceId(pieceB.id), "data-group", groupId)
