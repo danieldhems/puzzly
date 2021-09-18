@@ -1265,7 +1265,7 @@ class Puzzly {
 				const diffTopOperand = diff.top.charAt(0);
 				const diffTopValue = diffTopOperand === "+" ? Math.ceil(parseFloat(diff.top.substr(1))) : Math.floor(parseFloat(diff.top.substr(1)));
 				const diffLeftOperand = diff.left.charAt(0);
-				const diffLeftValue = diffLeftOperand === "+" ? Math.ceil(parseFloat(diff.left.substr(1))) : Math.ceil(parseFloat(diff.left.substr(1)));
+				const diffLeftValue = diffLeftOperand === "+" ? Math.ceil(parseFloat(diff.left.substr(1))) : Math.floor(parseFloat(diff.left.substr(1)));
 				
 				const element = this.getElementByPieceId(p.id);
 	
