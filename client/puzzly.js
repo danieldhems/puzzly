@@ -599,8 +599,6 @@ class Puzzly {
 		}
 		
 		this.innerPieces = document.querySelectorAll('.inner-piece');
-		// this.drawPieceManually({type: [0,1,-1,0], pageX: 100, pageY: 100, isSolved: false})
-		// this.drawPieceManually({type: [0,1,-1,-1], pageX: 316, pageY: 100, isSolved: false})
 
 		if(isMobile()){
 			window.addEventListener('touchstart', (e) => {
@@ -1119,7 +1117,6 @@ class Puzzly {
 		canvasEl.addEventListener('mouseenter', e => {
 			const allPieces = document.querySelectorAll('.puzzle-piece');
 			allPieces.forEach(p => p.style.zIndex = 10);
-			e.target.style.zIndex = 100;
 		})
 
 		const cvctx = canvasEl.getContext("2d");
@@ -1194,7 +1191,7 @@ class Puzzly {
 
 						if(p.group === thisPiece.group){
 							element = this.getElementByPieceId(p.id);
-							element.style.zIndex = 100;
+							element.style.zIndex = 10;
 							diffX = e.clientX - element.offsetLeft;
 							diffY = e.clientY - element.offsetTop;
 							
@@ -1207,7 +1204,9 @@ class Puzzly {
 					});
 				} else {
 					element = this.getElementByPieceId(thisPiece.id);
-					element.style.zIndex = 100;
+					element.style.zIndex = 10;
+
+					// A single piece that is not in a group has been selected so set movingPieces array to only contian this piece (keeping movingPieces interface consistent for single and multiple pieces)
 					this.movingPieces = [{
 						...thisPiece,
 						diffX: e.clientX - e.target.offsetLeft,
@@ -1329,7 +1328,6 @@ class Puzzly {
 				pieces = this.pieces.filter(p => pieceIds.includes(p._id));
 			} else {
 				const element = this.getElementByPieceId(this.movingPieces[0].id);
-				element.style.zIndex = 3;
 				connection = this.checkConnections(element);
 				if(connection){
 					this.clickSound.play();
@@ -1391,6 +1389,7 @@ class Puzzly {
 			if(hasGroup && p.group === group || p.id === pieces[0].id){
 				const el = this.getElementByPieceId(p.id);
 				el.setAttribute("data-is-solved", true);
+				el.style.zIndex = 2;
 				return {
 					...p,
 					isSolved: true
@@ -1988,7 +1987,6 @@ class Puzzly {
 	}
 
 	updatePiecePosition(el){
-		el.style.zIndex = 2;
 		const pid = parseInt(el.getAttribute('data-piece-id'));
 		const piece = this.pieces.find(p => p.id === pid);
 		this.pieces = this.pieces.map(p => {

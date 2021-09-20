@@ -34,6 +34,7 @@ module.exports.clean = function(){
 
 var api = {
 	create: function(req, res){
+		console.log(req)
 		client.connect().then((client, err) => {
 			assert.strictEqual(err, undefined);
 			db = client.db(dbName);
