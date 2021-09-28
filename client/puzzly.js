@@ -410,11 +410,6 @@ const isMobile = function() {
 	return check;
   };
 
-const JigsawSprintConnectorSize = {
-	actual: 41,
-	9: '+4',
-};
-
 class Puzzly {
 	constructor(canvasId, puzzleId, config, progress = []){
 		this.config = {
@@ -467,6 +462,10 @@ class Puzzly {
 		this.filterBtnOffLabel = document.getElementById('inner-pieces-on');
 		this.filterBtnOnLabel = document.getElementById('inner-pieces-off');
 
+		this.soundsBtn = document.getElementById('sound-toggle');
+		this.soundsBtnOnLabel = document.getElementById('sounds-on');
+		this.soundsBtnOffLabel = document.getElementById('sounds-off');
+
 		if(this.innerPiecesVisible){
 			this.filterBtnOnLabel.style.display = 'block';
 			this.filterBtnOffLabel.style.display = 'none';
@@ -475,10 +474,13 @@ class Puzzly {
 			this.filterBtnOnLabel.style.display = 'none';
 		}
 
+		this.soundsEnabled = true;
+		this.soundsBtnOnLabel.style.display = 'none';
 		this.isPreviewActive = false;
 
 		this.previewBtn.addEventListener('click', this.togglePreviewer.bind(this))
 		this.filterBtn.addEventListener('click', this.toggleInnerPieces.bind(this))
+		this.soundsBtn.addEventListener('click', this.toggleSounds.bind(this))
 
 		const assets = [
 			this.SourceImage,
@@ -488,6 +490,12 @@ class Puzzly {
 		this.loadAssets(assets).then( () => {
 			this.init()
 		})
+	}
+
+	toggleSounds(){
+		this.soundsEnabled = this.soundsEnabled ? false : true;
+		this.soundsBtnOffLabel.style.display = this.soundsEnabled ? 'block' : 'none';
+		this.soundsBtnOnLabel.style.display = this.soundsEnabled ? 'none' : 'block';
 	}
 
 	togglePreviewer(){
@@ -523,7 +531,7 @@ class Puzzly {
 	toggleInnerPieces(){
 		if(this.innerPiecesVisible){
 			this.pieces = this.pieces.map(p => {
-				if(Utils.isInnerPiece(p)){
+				if(Utils.isInnerPiece(p) && !p.isSolved){
 					return this.hidePiece(p);
 				}
 				return p;
@@ -609,6 +617,31 @@ class Puzzly {
 				this.onMouseDown(e);
 			});
 		}
+
+		this.zoomLevel = 1;
+
+		window.addEventListener('keydown', event => {
+			// 107 Num Key  +
+			// 109 Num Key  -
+			// 173 Min Key  hyphen/underscore key
+			// 61 Plus key  +/= key
+			if ((event.ctrlKey || event.metaKey) && (event.which === 61 || event.which === 107 || event.which === 173 || event.which === 109  || event.which === 187  || event.which === 189 || event.which === 48) ) {
+				event.preventDefault();
+				if(event.which === 187){
+					this.zoomLevel += .1;
+				}
+				
+				if(event.which === 189){
+					this.zoomLevel -= .1;
+				}
+
+				if(event.which === 48){
+					this.zoomLevel = 1;
+				}
+
+				this.canvas.style.transform = `scale(${this.zoomLevel})`;
+			}
+		})
 	}
 
 	getTopPlug(leftBoundary, topBoundary, rightBoundary){
@@ -1194,7 +1227,7 @@ class Puzzly {
 							element.style.zIndex = 10;
 							diffX = e.clientX - element.offsetLeft;
 							diffY = e.clientY - element.offsetTop;
-							
+
 							this.movingPieces.push({
 								...p,
 								diffX,
@@ -1268,9 +1301,9 @@ class Puzzly {
 				
 				const element = this.getElementByPieceId(p.id);
 	
-				const newPosTop = diffTopOperand === "+" ? element.offsetTop + diffTopValue : element.offsetTop - diffTopValue;
-				const newPosLeft = diffLeftOperand === "+" ? element.offsetLeft + diffLeftValue : element.offsetLeft - diffLeftValue;
-				
+				const newPosTop = diffTopOperand === "+" ? parseInt(element.style.top) + diffTopValue : parseInt(element.style.top) - diffTopValue;
+				const newPosLeft = diffLeftOperand === "+" ? parseInt(element.style.left) + diffLeftValue : parseInt(element.style.left) - diffLeftValue;
+
 				element.style.top = newPosTop + "px";
 				element.style.left = newPosLeft + "px";
 				element.style.zIndex = 10;
@@ -1305,7 +1338,9 @@ class Puzzly {
 					connection = this.checkConnections(element);
 
 					if(connection){
-						this.clickSound.play();
+						if(this.soundsEnabled){
+							this.clickSound.play();
+						}
 						const diff = this.snapPiece(element, connection);
 						const trailingPieces = this.movingPieces.filter( p => p.id !== piece.id);
 						this.updatePiecePositionsByDiff(diff, trailingPieces);
@@ -1330,7 +1365,9 @@ class Puzzly {
 				const element = this.getElementByPieceId(this.movingPieces[0].id);
 				connection = this.checkConnections(element);
 				if(connection){
-					this.clickSound.play();
+					if(this.soundsEnabled){
+						this.clickSound.play();
+					}
 					this.snapPiece(element, connection);
 					const updatedPiece = this.getPieceByElement(element);
 					if(this.isCornerConnection(connection) && this.shouldMarkAsSolved([updatedPiece])){
@@ -1818,11 +1855,11 @@ class Puzzly {
 					top: 0,
 					right: this.canvasWidth,
 					bottom: this.canvasHeight,
-					left: this.config.boardBoundary + this.boardBoundingBox.right,
+					left: this.boardBoundingBox.right,
 				}
 			case "bottom":
 				return {
-					top: this.config.boardBoundary + this.boardBoundingBox.bottom,
+					top: this.boardBoundingBox.bottom,
 					right: this.boardBoundingBox.right,
 					bottom: this.canvasHeight,
 					left: this.boardBoundingBox.left,
@@ -1852,6 +1889,7 @@ class Puzzly {
 
 	getRandomPositionOutsideBoardArea(piece, sector){
 		const randSectorBoundingBox = this.getSectorBoundingBox(sector);
+		
 		return {
 			left: this.getRandomInt(randSectorBoundingBox.left, randSectorBoundingBox.right - this.largestPieceSpan),
 			top: this.getRandomInt(randSectorBoundingBox.top, randSectorBoundingBox.bottom - this.largestPieceSpan),
