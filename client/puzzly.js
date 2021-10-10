@@ -586,8 +586,8 @@ class Puzzly {
 			height: this.config.piecesPerSideVertical * this.config.pieceSize,
 		}
 	
-		this.canvas.style.width = this.boardSize.width + this.config.boardBoundary * 2 + "px";
-		this.canvas.style.height = this.boardSize.height + this.config.boardBoundary * 2 + "px";
+		this.canvas.style.width = this.boardSize.width + (this.config.boardBoundary * 2) + "px";
+		this.canvas.style.height = this.boardSize.height + (this.config.boardBoundary * 2) + "px";
 
 		this.canvasWidth = parseInt(this.canvas.style.width);
 		this.canvasHeight = parseInt(this.canvas.style.height);
@@ -630,15 +630,15 @@ class Puzzly {
 				if(event.which === 187){
 					this.zoomLevel += .1;
 				}
-				
 				if(event.which === 189){
 					this.zoomLevel -= .1;
 				}
-
+				
 				if(event.which === 48){
 					this.zoomLevel = 1;
 				}
-
+				
+				console.log(this.zoomLevel)
 				this.canvas.style.transform = `scale(${this.zoomLevel})`;
 			}
 		})
@@ -1208,7 +1208,6 @@ class Puzzly {
 			 * End borrowed code
 			*/
 		}
-
 	}
 
 	onMouseDown(e){
@@ -1225,8 +1224,8 @@ class Puzzly {
 						if(p.group === thisPiece.group){
 							element = this.getElementByPieceId(p.id);
 							element.style.zIndex = 10;
-							diffX = e.clientX - element.offsetLeft;
-							diffY = e.clientY - element.offsetTop;
+							diffX = e.clientX - (element.offsetLeft * this.zoomLevel);
+							diffY = e.clientY - (element.offsetTop * this.zoomLevel);
 
 							this.movingPieces.push({
 								...p,
@@ -1242,8 +1241,8 @@ class Puzzly {
 					// A single piece that is not in a group has been selected so set movingPieces array to only contian this piece (keeping movingPieces interface consistent for single and multiple pieces)
 					this.movingPieces = [{
 						...thisPiece,
-						diffX: e.clientX - e.target.offsetLeft,
-						diffY: e.clientY - e.target.offsetTop,
+						diffX: e.clientX - (element.offsetLeft * this.zoomLevel),
+						diffY: e.clientY - (element.offsetTop * this.zoomLevel),
 					}]
 				}
 			}
@@ -1251,8 +1250,8 @@ class Puzzly {
 			if(e.target.id === "canvas" || e.target.id === "board-area"){
 				this.isCanvasMoving = true;
 				element = this.canvas;
-				this.canvasDiffX = e.clientX - element.offsetLeft;
-				this.canvasDiffY = e.clientY - element.offsetTop;
+				this.canvasDiffX = (e.clientX * this.zoomLevel) - (element.offsetLeft * this.zoomLevel);
+				this.canvasDiffY = (e.clientY * this.zoomLevel) - (element.offsetTop * this.zoomLevel);
 			}
 			
 			this.mouseMoveFunc = this.onMouseMove(this.movingPieces)
@@ -1268,54 +1267,19 @@ class Puzzly {
 		}
 	}
 
-	moveCanvas(e){
-		const element = this.canvas;
-		if(this.isMouseDown && this.isCanvasMoving){
-			const newPosTop = e.clientY - this.canvasDiffY;
-			const newPosLeft = e.clientX - this.canvasDiffX;
-
-			const topLimit = 0;
-			const leftLimit = 0;
-			const rightLimit = window.innerWidth - this.canvasWidth;
-			const bottomLimit = window.innerHeight - this.canvasHeight;
-			
-			if(newPosTop <= topLimit && newPosLeft <= leftLimit && newPosTop >= bottomLimit && newPosLeft >= rightLimit){
-				element.style.top = newPosTop + "px";
-				element.style.left = newPosLeft + "px";
-			}
-		}
-	}
-
-	setElementAttribute(el, attr, value){
-		el.setAttribute(attr, value);
-	}
-
-	updatePiecePositionsByDiff(diff, pieces){
-		const pieceIDs = pieces.map(p => p.id);
-		this.pieces = this.pieces.map(p => {
-			if(pieceIDs.includes(p.id)){
-				const diffTopOperand = diff.top.charAt(0);
-				const diffTopValue = diffTopOperand === "+" ? Math.ceil(parseFloat(diff.top.substr(1))) : Math.floor(parseFloat(diff.top.substr(1)));
-				const diffLeftOperand = diff.left.charAt(0);
-				const diffLeftValue = diffLeftOperand === "+" ? Math.ceil(parseFloat(diff.left.substr(1))) : Math.floor(parseFloat(diff.left.substr(1)));
-				
+	onMouseMove(piecesToMove){
+		const canvasBB = this.canvas.getBoundingClientRect();
+		const zoomLevelNormalised = this.zoomLevel - 1;
+		return function(e){
+			piecesToMove.forEach( p => {
 				const element = this.getElementByPieceId(p.id);
-	
-				const newPosTop = diffTopOperand === "+" ? parseInt(element.style.top) + diffTopValue : parseInt(element.style.top) - diffTopValue;
-				const newPosLeft = diffLeftOperand === "+" ? parseInt(element.style.left) + diffLeftValue : parseInt(element.style.left) - diffLeftValue;
-
+				const newPosTop = (e.clientY / this.zoomLevel) - (p.diffY / this.zoomLevel);
+				const newPosLeft = (e.clientX / this.zoomLevel) - (p.diffX / this.zoomLevel);
 				element.style.top = newPosTop + "px";
 				element.style.left = newPosLeft + "px";
-				element.style.zIndex = 10;
-				
-				return {
-					...p,
-					pageY: newPosTop,
-					pageX: newPosLeft,
-				}
-			}
-			return p;
-		})
+				this.updatePiecePosition(element);
+			})
+		}.bind(this)
 	}
 
 	onMouseUp(e){
@@ -1398,6 +1362,58 @@ class Puzzly {
 		window.removeEventListener('mouseup', this.onMouseUp);
 	}
 
+	moveCanvas(e){
+		const element = this.canvas;
+		if(this.isMouseDown && this.isCanvasMoving){
+			const newPosTop = e.clientY - this.canvasDiffY;
+			const newPosLeft = e.clientX - this.canvasDiffX;
+
+			const topLimit = 0;
+			const leftLimit = 0;
+			const rightLimit = window.innerWidth - this.canvasWidth;
+			const bottomLimit = window.innerHeight - this.canvasHeight;
+			
+			if(newPosTop <= topLimit && newPosLeft <= leftLimit && newPosTop >= bottomLimit && newPosLeft >= rightLimit){
+				element.style.top = newPosTop + "px";
+				element.style.left = newPosLeft + "px";
+			}
+		}
+	}
+
+	setElementAttribute(el, attr, value){
+		el.setAttribute(attr, value);
+	}
+
+	updatePiecePositionsByDiff(diff, pieces){
+		const pieceIDs = pieces.map(p => p.id);
+		this.pieces = this.pieces.map(p => {
+			if(pieceIDs.includes(p.id)){
+				const diffTopOperand = diff.top.charAt(0);
+				const diffTopValue = diffTopOperand === "+" ? Math.ceil(parseFloat(diff.top.substr(1))) : Math.floor(parseFloat(diff.top.substr(1)));
+				const diffLeftOperand = diff.left.charAt(0);
+				const diffLeftValue = diffLeftOperand === "+" ? Math.ceil(parseFloat(diff.left.substr(1))) : Math.floor(parseFloat(diff.left.substr(1)));
+				
+				const element = this.getElementByPieceId(p.id);
+	
+				const newPosTop = diffTopOperand === "+" ? parseInt(element.style.top) + diffTopValue : parseInt(element.style.top) - diffTopValue;
+				const newPosLeft = diffLeftOperand === "+" ? parseInt(element.style.left) + diffLeftValue : parseInt(element.style.left) - diffLeftValue;
+
+				element.style.top = newPosTop + "px";
+				element.style.left = newPosLeft + "px";
+				element.style.zIndex = 10;
+				
+				return {
+					...p,
+					pageY: newPosTop,
+					pageX: newPosLeft,
+				}
+			}
+			return p;
+		})
+	}
+
+	
+
 	isCornerConnection(str){
 		return str === "top-left" || str === "top-right" || str === "bottom-right" || str === "bottom-left";
 	}
@@ -1436,18 +1452,7 @@ class Puzzly {
 		})
 	}
 
-	onMouseMove(piecesToMove){
-		return function(e){
-			piecesToMove.forEach( p => {
-				const element = this.getElementByPieceId(p.id);
-				const newPosTop = e.clientY - p.diffY;
-				const newPosLeft = e.clientX - p.diffX;
-				element.style.top = newPosTop + "px";
-				element.style.left = newPosLeft + "px";
-				this.updatePiecePosition(element);
-			})
-		}.bind(this)
-	}
+	
 
 	loadAssets(assets){
 		let promises = [];

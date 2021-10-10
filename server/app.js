@@ -13,8 +13,8 @@ app.use(fileUpload({
 	createParentPath: true,
 	debug: true
 }));
-app.use(bodyParser.urlencoded({ uploadDir: path.join(__dirname, 'uploads'), keepExtensions: true, extended: true }));
-app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ uploadDir: path.join(__dirname, 'uploads'), keepExtensions: true, extended: true, limit: '50mb' }));
+app.use(bodyParser.json({limit: '50mb'}));
 
 // Configure API endpoints
 app.use('/api/puzzle', puzzleApi.router);
