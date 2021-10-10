@@ -1282,13 +1282,11 @@ class Puzzly {
 	}
 
 	onMouseMove(piecesToMove){
-		const canvasBB = this.canvas.getBoundingClientRect();
-		const zoomLevelNormalised = this.zoomLevel - 1;
 		return function(e){
 			piecesToMove.forEach( p => {
 				const element = this.getElementByPieceId(p.id);
-				const newPosTop = (e.clientY / this.zoomLevel) - (p.diffY / this.zoomLevel);
-				const newPosLeft = (e.clientX / this.zoomLevel) - (p.diffX / this.zoomLevel);
+				const newPosTop = Math.round(e.clientY / this.zoomLevel) - Math.round(p.diffY / this.zoomLevel);
+				const newPosLeft = Math.round(e.clientX / this.zoomLevel) - Math.round(p.diffX / this.zoomLevel);
 				element.style.top = newPosTop + "px";
 				element.style.left = newPosLeft + "px";
 				this.updatePiecePosition(element);
