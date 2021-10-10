@@ -498,6 +498,13 @@ class Puzzly {
 		this.soundsBtnOnLabel.style.display = this.soundsEnabled ? 'none' : 'block';
 	}
 
+	updatePreviewerSizeAndPosition(){
+		this.fullImageViewerEl.style.left = this.config.boardBoundary * this.zoomLevel + 'px';
+		this.fullImageViewerEl.style.top = this.config.boardBoundary * this.zoomLevel + 'px';
+		this.fullImageViewerEl.style.width = this.config.selectedWidth * this.zoomLevel + 'px';
+		this.fullImageViewerEl.style.height = this.config.selectedWidth * this.zoomLevel + 'px';
+	}
+
 	togglePreviewer(){
 		if(this.isPreviewActive){
 			this.fullImageViewerEl.style.display = 'none';
@@ -505,6 +512,7 @@ class Puzzly {
 			this.previewBtnHideLabel.style.display = 'none';
 			this.isPreviewActive = false;
 		} else {
+			this.updatePreviewerSizeAndPosition();
 			this.fullImageViewerEl.style.display = 'block';
 			this.previewBtnShowLabel.style.display = 'none';
 			this.previewBtnHideLabel.style.display = 'block';
@@ -565,6 +573,8 @@ class Puzzly {
 	init(){
 		console.log(this.config)
 
+		this.zoomLevel = 1;
+
 		this.config.pieceSize = Math.ceil(this.config.pieceSize)
 		this.config.connectorDistanceFromCornerRatio = this.config.connectorRatio = 33;
 		this.config.connectorSize = Math.ceil(this.config.pieceSize / 100 * this.config.connectorRatio);
@@ -573,12 +583,12 @@ class Puzzly {
 
 		this.largestPieceSpan = this.config.pieceSize + (this.config.connectorSize * 2);
 		this.boardBoundingBox = {
-			top: this.config.boardBoundary,
+			top: this.config.boardBoundary * this.zoomLevel,
 			right: this.config.boardBoundary + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
-			left: this.config.boardBoundary,
+			left: this.config.boardBoundary * this.zoomLevel,
 			bottom: this.config.boardBoundary + (this.config.piecesPerSideVertical * this.config.pieceSize),
-			width: this.config.boardBoundary + this.config.boardBoundary + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
-			height: this.config.boardBoundary + this.config.boardBoundary + (this.config.piecesPerSideVertical * this.config.pieceSize),
+			width: this.config.boardBoundary * this.zoomLevel + this.config.boardBoundary + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
+			height: this.config.boardBoundary * this.zoomLevel + this.config.boardBoundary + (this.config.piecesPerSideVertical * this.config.pieceSize),
 		};
 
 		this.boardSize = {
@@ -594,6 +604,9 @@ class Puzzly {
 
 		// this.drawBackground();
 		this.drawBoardArea();
+
+		this.boardAreaEl = document.getElementById('board-area');
+
 		this.initiFullImagePreviewer();
 
 		this.isFullImageViewerActive = false;
@@ -618,8 +631,6 @@ class Puzzly {
 			});
 		}
 
-		this.zoomLevel = 1;
-
 		window.addEventListener('keydown', event => {
 			// 107 Num Key  +
 			// 109 Num Key  -
@@ -638,7 +649,10 @@ class Puzzly {
 					this.zoomLevel = 1;
 				}
 				
-				console.log(this.zoomLevel)
+				if(this.isPreviewActive){
+					this.updatePreviewerSizeAndPosition();
+				}
+
 				this.canvas.style.transform = `scale(${this.zoomLevel})`;
 			}
 		})
@@ -2408,21 +2422,22 @@ class Puzzly {
 	}
 
 	initiFullImagePreviewer(){
-		this.fullImageViewerEl.style.left = this.boardBoundingBox.left + "px";
-		this.fullImageViewerEl.style.top = this.boardBoundingBox.top + "px";
-		this.fullImageViewerEl.setAttribute('width', this.config.selectedWidth);
-		this.fullImageViewerEl.setAttribute('height', this.config.selectedWidth);
+		const boardAreaElRect = this.boardAreaEl.getBoundingClientRect();
+		this.fullImageViewerEl.style.left = boardAreaElRect.left + "px";
+		this.fullImageViewerEl.style.top = boardAreaElRect.top + "px";
+		this.fullImageViewerEl.setAttribute('width', boardAreaElRect.width);
+		this.fullImageViewerEl.setAttribute('height', boardAreaElRect.height);
 		const previewctx = this.fullImageViewerEl.getContext('2d');
 		previewctx.drawImage(
 			this.SourceImage, 
 			this.config.selectedOffsetX,
 			this.config.selectedOffsetY,
-			Math.round(this.config.selectedWidth),
-			Math.round(this.config.selectedWidth),
+			Math.round(boardAreaElRect.width),
+			Math.round(boardAreaElRect.height),
 			0,
 			0, 
-			Math.round(this.config.selectedWidth), 
-			Math.round(this.config.selectedWidth)
+			Math.round(boardAreaElRect.width), 
+			Math.round(boardAreaElRect.height)
 		)
 	}
 
