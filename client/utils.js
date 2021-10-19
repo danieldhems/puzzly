@@ -44,5 +44,17 @@ export default {
 		const c = connector === "plug" ? 1 : connector === "socket" ? -1 : null;
 		const s = side === "top" ? 0 : side === "right" ? 1 : side === "bottom" ? 2 : side === "left" ? 3 : null;
 		return piece.type[s] === c;
+	},
+
+	isAdjacent(pieceAId, pieceBId, numPiecesHorizontal){
+		const pieceToRightId = pieceAId + 1;
+		const pieceToBottomRightId = pieceAId + numPiecesHorizontal + 1;
+		const pieceToBottomLefttId = pieceAId + numPiecesHorizontal - 1;
+		const pieceToLeftId = pieceAId - 1;
+		const pieceToTopId = pieceAId - numPiecesHorizontal;
+		const pieceToTopRightId = pieceAId - numPiecesHorizontal + 1;
+		const pieceToTopLeftId = pieceAId - numPiecesHorizontal - 1;
+		const pieceToBottomId = pieceAId + numPiecesHorizontal;
+		return pieceToRightId === pieceBId || pieceToLeftId === pieceBId || pieceToTopId === pieceBId || pieceToBottomId === pieceBId || pieceToBottomLefttId === pieceBId || pieceToBottomRightId === pieceBId || pieceToTopLeftId === pieceBId || pieceToTopRightId === pieceBId;
 	}
 }
