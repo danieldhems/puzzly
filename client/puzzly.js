@@ -2269,6 +2269,7 @@ console.log('comparing connectors', thisPieceConnectorBoundingBox, targetPieceCo
 					newPos.left = connectingPiece.pageX - thisPiece.imgW + this.config.connectorSize;
 					el.style.left = Math.ceil(newPos.left) + "px";
 				} else {
+					console.log('snapping container')
 					newPos.left = connectingPiece.pageX - container.offsetWidth + this.config.connectorSize;
 					container = Math.ceil(newPos.left) + "px";
 					container.style.width = container.offsetWidth + connectingPiece.imgW;
