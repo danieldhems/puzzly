@@ -416,6 +416,7 @@ class Puzzly {
 			debug: true,
 			boardBoundary: 800,
 			drawBoundingBox: false,
+			showDebugInfo: true,
 			backgroundImages: [
 				{
 					name: 'wood',
@@ -467,6 +468,7 @@ class Puzzly {
 		this.soundsBtn = document.getElementById('sound-toggle');
 		this.soundsBtnOnLabel = document.getElementById('sounds-on');
 		this.soundsBtnOffLabel = document.getElementById('sounds-off');
+		this.debugInfoWindow = document.getElementById('debug-info');
 
 		if(this.innerPiecesVisible){
 			this.filterBtnOnLabel.style.display = 'block';
@@ -484,6 +486,10 @@ class Puzzly {
 		this.filterBtn.addEventListener('click', this.toggleInnerPieces.bind(this))
 		this.soundsBtn.addEventListener('click', this.toggleSounds.bind(this))
 
+		if(this.config.showDebugInfo){
+			this.displayElement(this.debugInfoWindow)
+		}
+
 		const assets = [
 			this.SourceImage,
 			this.JigsawSprite,
@@ -492,6 +498,48 @@ class Puzzly {
 		this.loadAssets(assets).then( () => {
 			this.init()
 		})
+	}
+
+	debugWindowAddRow(label, readoutElementId){
+		const row = document.createElement('div');
+		row.classList.add('debug-info-row');
+		row.classList.add('group');
+		const rowLabelEl = document.createElement('div');
+		rowLabelEl.classList.add('label');
+		const rowLabelText = label + ':';
+		rowLabelEl.innerText = rowLabelText;
+		const rowReadoutEl = document.createElement('div');
+		rowReadoutEl.classList.add('readout');
+		const readoutId = `debug-readout--${readoutElementId}`;
+		rowReadoutEl.setAttribute('id', readoutId);
+		row.appendChild(rowLabelEl)
+		row.appendChild(rowReadoutEl)
+		this.debugInfoRows[readoutElementId] = rowReadoutEl;
+		this.debugInfoWindow.appendChild(row)
+	}
+
+	debugInfoSetReadout(el, content){
+		el.innerHTML = content;
+	}
+
+	debugInfoClearReadout(id){
+		this.debugInfoRows[id].innerHTML = '';
+	}
+	
+	debugWindowInitialise(){
+		this.debugInfoRows = [];
+		this.debugWindowAddRow('Dragged element', 'draggedEl');
+		this.debugWindowAddRow('Dragged element container', 'draggedElContainer');
+		this.debugWindowAddRow('Dragged element top container', 'draggedElTopContainer');
+		this.debugWindowAddRow('Target element', 'targetEl');
+		this.debugWindowAddRow('Target element container', 'targetElContainer');
+		this.debugWindowAddRow('Target element top container', 'targetElTopContainer');
+		this.debugWindowAddRow('Last connection', 'lastConnection');
+		this.config.debugInfoRows = this.debugInfoRows;
+	}
+
+	displayElement(el, cssDisplayType = 'block'){
+		el.style.display = cssDisplayType;
 	}
 
 	toggleSounds(){
@@ -632,6 +680,8 @@ class Puzzly {
 				this.onMouseDown(e);
 			});
 		}
+
+		this.debugWindowInitialise();
 
 		window.addEventListener('keydown', event => {
 			// https://stackoverflow.com/questions/995914/catch-browsers-zoom-event-in-javascript
@@ -1228,22 +1278,15 @@ class Puzzly {
 		}
 	}
 
-	getTopContainer(el){
-		const thisEl = el.parentNode;
-		if(thisEl.id.indexOf('group-') > -1 && !thisEl.classList.contains('subgroup')){
-			return thisEl;
-		} else if(thisEl.getAttribute('id') === 'canvas'){
-			return null;
-		} else {
-			return this.getTopContainer(thisEl)
-		}
-	}
+	
 
 	onMouseDown(e){
 		let element, diffX, diffY, thisPiece;
 		if(e.which === 1){
 			if(e.target.classList.contains("puzzle-piece")){
 				this.movingElement = e.target;
+				this.debugInfoSetReadout(this.debugInfoRows.draggedEl, `Piece ID: ${this.movingElement.getAttribute('data-piece-id')}<br/>Piece type: ${this.movingElement.getAttribute('data-jigsaw-type')}`)
+
 				thisPiece = this.pieces.find(p => p.id === parseInt(e.target.getAttribute("data-piece-id")));
 				if(thisPiece.isSolved){
 					return;
@@ -1251,11 +1294,17 @@ class Puzzly {
 				if(thisPiece.group !== undefined && thisPiece.group !== null && thisPiece.group > -1){
 					this.isMovingSinglePiece = false;
 
-					this.movingElement = this.getTopContainer(e.target);
+					this.movingElement = this.getGroupTopContainer(e.target);
 					if(this.movingElement){
 						diffX = e.clientX - Math.floor(this.movingElement.offsetLeft * this.zoomLevel);
 						diffY = e.clientY - Math.floor(this.movingElement.offsetTop * this.zoomLevel);
-	
+
+						const container = this.getGroupContainer(e.target);
+						this.debugInfoSetReadout(this.debugInfoRows['draggedElContainer'], `ID: ${container.getAttribute('id')}`)
+						if(container.classList.contains('subgroup')){
+							this.debugInfoSetReadout(this.debugInfoRows['draggedElTopContainer'], `ID: ${this.movingElement.getAttribute('id')}`)
+						}
+						
 						// To move all pieces in group
 						this.pieces.forEach(p => {
 							if(p.group === thisPiece.group){
@@ -1339,13 +1388,14 @@ class Puzzly {
 				let thisPiece, group;
 				thisPiece = this.getPieceByElement(el);
 				group = thisPiece.group;
-				const container = this.getGroupContainerElement(el);
+				const container = this.getGroupContainer(el);
 				const piecesToCheck = this.getCollisionCandidatesInGroup(group);
 				while(!hasConnection && !noneFound){
 					let p = piecesToCheck[i];
 					connection = this.checkConnections(p, container);
-					console.log(connection)
 					if(connection){
+						console.log(connection)
+						this.debugInfoSetReadout(this.debugInfoRows.lastConnection, connection);
 						if(this.soundsEnabled){
 							this.clickSound.play();
 						}
@@ -1355,6 +1405,8 @@ class Puzzly {
 						}
 
 						hasConnection = true;
+					} else {
+						this.debugInfoSetReadout(this.debugInfoRows.lastConnection, 'None');
 					}
 	
 					if(i === piecesToCheck.length - 1 && !hasConnection){
@@ -1369,8 +1421,9 @@ class Puzzly {
 			} else {
 				let thisPiece = this.getPieceByElement(this.movingElement);
 				connection = this.checkConnections(thisPiece);
-				console.log(connection)
+				this.debugInfoSetReadout(this.debugInfoRows.lastConnection, connection);
 				if(connection){
+					console.log(connection)
 					if(this.soundsEnabled){
 						this.clickSound.play();
 					}
@@ -1386,6 +1439,8 @@ class Puzzly {
 					} else {
 						pieces = [updatedPiece]
 					}
+				} else {
+					this.debugInfoSetReadout(this.debugInfoRows.lastConnection, 'None');
 				}
 
 				if(!pieces){
@@ -2004,31 +2059,31 @@ class Puzzly {
 		switch(side){
 			case "left":
 				return {
-					top: parseInt(element.style.top) + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					right: parseInt(element.style.left) + this.config.connectorSize,
-					bottom: parseInt(element.style.top) + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					left: parseInt(element.style.left),
+					top: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					right: element.offsetLeft + this.config.connectorSize,
+					bottom: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
+					left: element.offsetLeft,
 				}
 			case "right":
 				return {
-					top: parseInt(element.style.top) + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					top: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
 					right: element.offsetLeft + element.offsetWidth,
-					bottom: parseInt(element.style.top) + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
+					bottom: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
 					left: element.offsetLeft + element.offsetWidth - this.config.connectorSize,
 				}
 			case "bottom":
 				return {
-					top: parseInt(element.style.top) + element.offsetHeight - this.config.connectorSize,
-					right: parseInt(element.style.left) + element.offsetWidth - (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					bottom: parseInt(element.style.top) + element.offsetHeight,
-					left: parseInt(element.style.left) + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					top: element.offsetTop + element.offsetHeight - this.config.connectorSize,
+					right: element.offsetLeft + element.offsetWidth - (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					bottom: element.offsetTop + element.offsetHeight,
+					left: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
 				}
 			case "top":
 				return {
-					top: parseInt(element.style.top),
-					right: parseInt(element.style.left) + element.offsetWidth - (hasRightPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					bottom: parseInt(element.style.top) + this.config.connectorSize,
-					left: parseInt(element.style.left) + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					top: element.offsetTop,
+					right: element.offsetLeft + element.offsetWidth - (hasRightPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					bottom: element.offsetTop + this.config.connectorSize,
+					left: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
 				}
 		}
 	}
@@ -2078,7 +2133,7 @@ class Puzzly {
 		}
 	}
 
-	getGroupContainerElement(arg){
+	getGroupContainer(arg){
 		if(arg instanceof HTMLCanvasElement){
 			return arg.parentNode;
 		}
@@ -2087,8 +2142,19 @@ class Puzzly {
 		}
 	}
 
+	getGroupTopContainer(el){
+		const thisEl = el.parentNode;
+		if(thisEl.id.indexOf('group-') > -1 && !thisEl.classList.contains('subgroup')){
+			return thisEl;
+		} else if(thisEl.getAttribute('id') === 'canvas'){
+			return null;
+		} else {
+			return this.getGroupTopContainer(thisEl)
+		}
+	}
+
 	getCollisionCandidatesInGroup(group){
-		const container = this.getGroupContainerElement(group);
+		const container = this.getGroupContainer(group);
 		const containerBoundingBox = container.getBoundingClientRect();
 		const hasInnerPieces = containerBoundingBox.width >= this.pieceSize * 3 && containerBoundingBox.height >= this.pieceSize * 3;
 
@@ -2154,26 +2220,6 @@ class Puzzly {
 		}
 	}
 
-	getContainerOffsetWithinNestedGroup(element){
-		let left = 0, top = 0;
-
-		function addOffsets(element){
-			left += element.offsetLeft;
-			top += element.offsetTop;
-			
-			if(element.parentNode.classList.contains('subgroup')){
-				return addOffsets(element.parentNode)
-			} else {
-				return {
-					top: top,
-					left: left
-				}
-			}
-		}
-
-		return addOffsets(element);
-	}
-
 	getTrueBoundingBox(el){
 		const bodyRect = document.body.getBoundingClientRect();
 		const elRect = el.getBoundingClientRect();
@@ -2197,10 +2243,13 @@ class Puzzly {
 	}
 
 	checkConnections(piece, container){
-		let containerBoundingBox, thisElement, targetElement, thisPieceConnectorBoundingBox, targetContainer;
+		let containerBoundingBox, thisElement, targetElement, thisPieceConnectorBoundingBox, thisTopContainerBoundingBox, targetContainerBoundingBox;
+
 		if(container){
 			containerBoundingBox = this.getTrueBoundingBox(container);
+			this.debugInfoSetReadout(this.debugInfoRows.draggedElContainer, `ID: ${container.getAttribute('id')}`)
 		}
+	
 		const hasRightConnector = Utils.has(piece, "plug", "right") || Utils.has(piece, "socket", "right");
 		const hasBottomConnector = Utils.has(piece, "plug", "bottom") || Utils.has(piece, "socket", "bottom");
 		const hasLeftConnector = Utils.has(piece, "plug", "left") || Utils.has(piece, "socket", "left");
@@ -2217,17 +2266,16 @@ class Puzzly {
 				if(container){
 					containerBoundingBox = this.getTrueBoundingBox(container);
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(thisElement, 'right', containerBoundingBox);
+					thisTopContainerBoundingBox = this.getTrueBoundingBox(this.getGroupTopContainer(thisElement));
 				} else {
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(thisElement, "right");
 				}
 
 				let targetContainer, targetPieceConnectorBoundingBox, targetContainerBoundingBox;
 				if(targetPiece.group !== undefined && !Number.isNaN(targetPiece)){
-					targetContainer = this.getGroupContainerElement(targetElement);
-					console.log('target container', targetContainer)
+					targetContainer = this.getGroupContainer(targetElement);
 					targetContainerBoundingBox = this.getTrueBoundingBox(targetContainer);
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(targetElement, "left", targetContainerBoundingBox)
-					console.log('target piece connector bounding box', targetPieceConnectorBoundingBox)
 				} else {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "left");
 				}
@@ -2247,13 +2295,14 @@ class Puzzly {
 				if(container){
 					containerBoundingBox = this.getTrueBoundingBox(container);
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(thisElement, 'bottom', containerBoundingBox);
+					thisTopContainerBoundingBox = this.getTrueBoundingBox(this.getGroupTopContainer(thisElement));
 				} else {
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(thisElement, "bottom");
 				}
 
 				let targetContainer, targetPieceConnectorBoundingBox, targetContainerBoundingBox;
 				if(targetPiece.group !== undefined && !Number.isNaN(targetPiece)){
-					targetContainer = this.getGroupContainerElement(targetElement);
+					targetContainer = this.getGroupContainer(targetElement);
 					targetContainerBoundingBox = this.getTrueBoundingBox(targetContainer);
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(targetElement, "top", targetContainerBoundingBox)
 				} else {
@@ -2276,17 +2325,16 @@ class Puzzly {
 				if(container){
 					containerBoundingBox = this.getTrueBoundingBox(container);
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(thisElement, 'left', containerBoundingBox);
+					thisTopContainerBoundingBox = this.getTrueBoundingBox(this.getGroupTopContainer(thisElement));
 				} else {
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(thisElement, "left");
 				}
 
 				let targetContainer, targetPieceConnectorBoundingBox, targetContainerBoundingBox;
 				if(targetPiece.group !== undefined && !Number.isNaN(targetPiece)){
-					targetContainer = this.getGroupContainerElement(targetElement);
-					console.log('target container', targetContainer)
+					targetContainer = this.getGroupContainer(targetElement);
 					targetContainerBoundingBox = this.getTrueBoundingBox(targetContainer);
-					targetPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(targetElement, "right", targetContainerBoundingBox)
-					console.log('target piece bounding box', targetPieceConnectorBoundingBox)
+					targetPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(targetElement, "right", targetContainerBoundingBox);
 				} else {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "right");
 				}
@@ -2306,16 +2354,21 @@ class Puzzly {
 			if(shouldCompare(targetPiece)){ 
 				if(container){
 					containerBoundingBox = this.getTrueBoundingBox(container);
-					thisPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(thisElement, 'top', containerBoundingBox)
+					thisPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(thisElement, 'top', containerBoundingBox);
+					if(container.classList.contains('subgroup')){
+						thisTopContainerBoundingBox = this.getTrueBoundingBox(this.getGroupTopContainer(thisElement));
+					} else {
+						thisTopContainerBoundingBox = this.getTrueBoundingBox(this.getGroupContainer(thisElement));
+					}
 				} else {
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(thisElement, "top");
 				}
 
 				let targetPieceConnectorBoundingBox;
 				if(targetPiece.group !== undefined && !Number.isNaN(targetPiece)){
-					let targetContainer = this.getGroupContainerElement(targetElement);
-					let targetContainerBoundingBox = this.getTrueBoundingBox(targetContainer);
-					targetPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(targetElement, "bottom", targetContainerBoundingBox)
+					let targetContainer = this.getGroupContainer(targetElement);
+					targetContainerBoundingBox = this.getTrueBoundingBox(targetContainer);
+					targetPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(targetElement, "bottom", targetContainerBoundingBox);
 				} else {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "bottom");
 				}
@@ -2379,21 +2432,23 @@ class Puzzly {
 	}
 
 	snapPiece(el, connection){
-		let thisPiece, connectingPiece, connectingPieceEl, thisContainer, targetContainer, newPos = {}, oldPos = {}, connectingPieceNewTopPos, connectingPieceNewLeftPos;
+		let thisPiece, connectingPiece, connectingPieceEl, thisContainer, targetContainer, targetTopContainer, newPos = {}, oldPos = {}, connectingPieceNewTopPos, connectingPieceNewLeftPos;
 
 		thisPiece = this.getPieceByElement(el);
 		oldPos.top = thisPiece.pageY;
 		oldPos.left = thisPiece.pageX;
-		const container = this.getTopContainer(el);
+		const container = this.getGroupTopContainer(el);
 
 		switch(connection){
 			case "right":
 				connectingPiece = this.getPieceById(thisPiece.id + 1);
 				connectingPieceEl = this.getElementByPieceId(connectingPiece.id)
-
+				this.debugInfoSetReadout(this.debugInfoRows.targetEl, `ID: ${connectingPieceEl.getAttribute('data-piece-id')}`);
+				
 				if(this.isMovingSinglePiece){
 					if(connectingPiece.group !== undefined && !Number.isNaN(connectingPiece)){
-						targetContainer = this.getGroupContainerElement(connectingPiece.group);
+						targetContainer = this.getGroupContainer(connectingPiece.group);
+						this.debugInfoSetReadout(this.debugInfoRows.targetElContainer, `ID: ${targetContainer.getAttribute('id')}`)
 						newPos.left = connectingPieceEl.offsetLeft - el.offsetWidth + this.config.connectorSize;
 						targetContainer.appendChild(el);
 						el.style.left = this.getPxString(newPos.left);
@@ -2412,7 +2467,7 @@ class Puzzly {
 	
 						el.style.top = newPos.top + "px";
 					} else {
-						newPos.left = connectingPiece.pageX - thisPiece.imgW + this.config.connectorSize;
+						newPos.left = connectingPieceEl.offsetLeft - el.offsetWidth + this.config.connectorSize;
 						el.style.left = newPos.left + "px";
 						
 						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
@@ -2432,30 +2487,39 @@ class Puzzly {
 				} else {
 					if(connectingPiece.group !== undefined && !Number.isNaN(connectingPiece)){
 						// Snapping two groups together	
-						targetContainer = this.getGroupContainerElement(connectingPieceEl);
-						thisContainer = this.getTopContainer(el);
+						targetContainer = this.getGroupContainer(connectingPieceEl);
+						targetTopContainer = this.getGroupTopContainer(connectingPieceEl);
+						let thisContainer = this.getGroupTopContainer(el);
+
+						this.debugInfoSetReadout(this.debugInfoRows.targetEl, `ID: ${connectingPieceEl.getAttribute('id')}`)
+						this.debugInfoSetReadout(this.debugInfoRows.targetElContainer, `ID: ${targetContainer.getAttribute('id')}`)
+						this.debugInfoSetReadout(this.debugInfoRows.targetElTopContainer, `ID: ${targetTopContainer.getAttribute('id')}`)
 						
 						targetContainer.appendChild(thisContainer);
-						newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft - el.offsetWidth + this.config.connectorSize;
+
+						const thisElOffsetWithinTopContainerLeft = this.getTrueBoundingBox(el).left - this.getTrueBoundingBox(thisContainer).left;
+						const thisElOffsetWithinTopContainerTop = this.getTrueBoundingBox(el).top - this.getTrueBoundingBox(thisContainer).top;
+
+						newPos.left = connectingPieceEl.offsetLeft - el.offsetWidth - thisElOffsetWithinTopContainerLeft + this.config.connectorSize;
 
 						thisContainer.style.left = this.getPxString(newPos.left);
 	
 						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
-							newPos.top = connectingPieceEl.offsetTop - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop;
 						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
-							newPos.top = (connectingPieceEl.offsetTop - this.config.connectorSize) - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
-							newPos.top = (connectingPieceEl.offsetTop + this.config.connectorSize) - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop + this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
-							newPos.top = connectingPieceEl.offsetTop - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop;
 						} else {
-							newPos.top = connectingPieceEl.offsetTop - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop;
 						}
 	
 						thisContainer.style.top = newPos.top + "px";
 						thisContainer.classList.add('subgroup');
 					} else {
-						newPos.left = connectingPiece.pageX - container.offsetWidth + this.config.connectorSize;
+						newPos.left = connectingPieceEl.offsetLeft - el.offsetWidth + this.config.connectorSize - el.offsetLeft;
 
 						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
 							newPos.top = connectingPiece.pageY - el.offsetTop;
@@ -2474,10 +2538,10 @@ class Puzzly {
 							connectingPieceNewTopPos = el.offsetTop;
 						}
 
+						container.appendChild(connectingPieceEl)
 						container.style.top = this.getPxString(newPos.top);
 						container.style.left = this.getPxString(newPos.left);
 						
-						container.appendChild(connectingPieceEl)
 						connectingPieceEl.style.left = this.getPxString(el.offsetLeft + el.offsetWidth - this.config.connectorSize);
 						connectingPieceEl.style.top = this.getPxString(connectingPieceNewTopPos);
 						
@@ -2491,11 +2555,12 @@ class Puzzly {
 
 			case "left":
 				connectingPiece = this.getPieceById(thisPiece.id - 1);
-				connectingPieceEl = this.getElementByPieceId(connectingPiece.id)
+				connectingPieceEl = this.getElementByPieceId(connectingPiece.id);
+				this.debugInfoSetReadout(this.debugInfoRows.targetEl, `ID: ${connectingPiece.id}`);
 
 				if(this.isMovingSinglePiece){
 					if(connectingPiece.group !== undefined && !Number.isNaN(connectingPiece)){
-						targetContainer = this.getGroupContainerElement(connectingPiece.group);
+						targetContainer = this.getGroupContainer(connectingPiece.group);
 						newPos.left = connectingPieceEl.offsetLeft + connectingPieceEl.offsetWidth - this.config.connectorSize;
 						targetContainer.appendChild(el);
 						el.style.left = this.getPxString(newPos.left);
@@ -2534,24 +2599,34 @@ class Puzzly {
 				} else {
 					if(connectingPiece.group !== undefined && !Number.isNaN(connectingPiece)){
 						// Snapping two groups together
-						targetContainer = this.getGroupContainerElement(connectingPieceEl);
-						thisContainer = this.getTopContainer(el);
-						
+
+						let thisSubContainer = this.getGroupContainer(el);
+						let thisContainer = this.getGroupTopContainer(el);
+						targetContainer = this.getGroupContainer(connectingPieceEl);
+
 						targetContainer.appendChild(thisContainer);
-						newPos.left = connectingPieceEl.offsetLeft + connectingPieceEl.offsetWidth - this.config.connectorSize - el.offsetLeft;
+
+						this.debugInfoSetReadout(this.debugInfoRows.targetEl, `ID: ${connectingPieceEl.getAttribute('id')}`)
+						this.debugInfoSetReadout(this.debugInfoRows.targetElContainer, `ID: ${thisSubContainer.getAttribute('id')}`)
+						this.debugInfoSetReadout(this.debugInfoRows.targetElTopContainer, `ID: ${thisContainer.getAttribute('id')}`)
+
+						const thisElOffsetWithinTopContainerLeft = this.getTrueBoundingBox(el).left - this.getTrueBoundingBox(thisContainer).left;
+						const thisElOffsetWithinTopContainerTop = this.getTrueBoundingBox(el).top - this.getTrueBoundingBox(thisContainer).top;
+
+						newPos.left = connectingPieceEl.offsetLeft + connectingPieceEl.offsetWidth - thisElOffsetWithinTopContainerLeft - this.config.connectorSize;
 
 						thisContainer.style.left = this.getPxString(newPos.left);
 	
 						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
-							newPos.top = connectingPieceEl.offsetTop - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop;
 						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
-							newPos.top = (connectingPieceEl.offsetTop - this.config.connectorSize) - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
-							newPos.top = (connectingPieceEl.offsetTop + this.config.connectorSize) - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop + this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
-							newPos.top = connectingPieceEl.offsetTop - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop;
 						} else {
-							newPos.top = connectingPieceEl.offsetTop - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop;
 						}
 	
 						thisContainer.style.top = newPos.top + "px";
@@ -2593,11 +2668,12 @@ class Puzzly {
 			
 			case "bottom":
 				connectingPiece = this.getPieceById(thisPiece.id + this.config.piecesPerSideHorizontal);
-				connectingPieceEl = this.getElementByPieceId(thisPiece.id + this.config.piecesPerSideHorizontal)
+				connectingPieceEl = this.getElementByPieceId(thisPiece.id + this.config.piecesPerSideHorizontal);
+				this.debugInfoSetReadout(this.debugInfoRows.targetEl, `ID: ${connectingPiece.id}`);
 
 				if(this.isMovingSinglePiece){
 					if(connectingPiece.group){
-						targetContainer = this.getGroupContainerElement(connectingPiece.group);
+						targetContainer = this.getGroupContainer(connectingPiece.group);
 						newPos.top = connectingPieceEl.offsetTop - el.offsetHeight + this.config.connectorSize;
 						el.style.top = this.getPxString(newPos.top);
 	
@@ -2641,25 +2717,34 @@ class Puzzly {
 				} else {
 					if(connectingPiece.group !== undefined && !Number.isNaN(connectingPiece)){
 						// Snapping two groups together
-						targetContainer = this.getGroupContainerElement(connectingPieceEl);
-						thisContainer = this.getTopContainer(el);
+						targetContainer = this.getGroupContainer(connectingPieceEl);
+						thisContainer = this.getGroupTopContainer(el);
 						
 						targetContainer.appendChild(thisContainer);
 
-						newPos.top = connectingPieceEl.offsetTop + this.config.connectorSize - el.offsetHeight - el.offsetTop;
+						let thisSubContainer = this.getGroupContainer(el);
+
+						this.debugInfoSetReadout(this.debugInfoRows.targetEl, `ID: ${connectingPieceEl.getAttribute('id')}`)
+						this.debugInfoSetReadout(this.debugInfoRows.targetElContainer, `ID: ${thisSubContainer.getAttribute('id')}`)
+						this.debugInfoSetReadout(this.debugInfoRows.targetElTopContainer, `ID: ${thisContainer.getAttribute('id')}`)
+
+						const thisElOffsetWithinTopContainerTop = this.getTrueBoundingBox(el).top - this.getTrueBoundingBox(thisContainer).top;
+						const thisElOffsetWithinTopContainerLeft = this.getTrueBoundingBox(el).left - this.getTrueBoundingBox(thisContainer).left;
+
+						newPos.top = connectingPieceEl.offsetTop + this.config.connectorSize - el.offsetHeight - thisElOffsetWithinTopContainerTop;
 
 						thisContainer.style.top = this.getPxString(newPos.top);
 	
 						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainerLeft;
 						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = (connectingPieceEl.offsetLeft - this.config.connectorSize) - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainerLeft - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
-							newPos.left = (connectingPieceEl.offsetLeft + this.config.connectorSize) - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft + thisElOffsetWithinTopContainerLeft - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainerLeft;
 						} else {
-							newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainerLeft;
 						}
 	
 						thisContainer.style.left = newPos.left + "px";
@@ -2698,10 +2783,11 @@ class Puzzly {
 			case "top":
 				connectingPiece = this.getPieceById(thisPiece.id - this.config.piecesPerSideHorizontal);
 				connectingPieceEl = this.getElementByPieceId(connectingPiece.id);
+				this.debugInfoSetReadout(this.debugInfoRows.targetEl, `ID: ${connectingPiece.id}`);
 
 				if(this.isMovingSinglePiece){
 					if(connectingPiece.group !== undefined && !Number.isNaN(connectingPiece)){
-						targetContainer = this.getGroupContainerElement(connectingPiece.group);
+						targetContainer = this.getGroupContainer(connectingPiece.group);
 						newPos.top = connectingPieceEl.offsetTop + connectingPieceEl.offsetHeight - this.config.connectorSize;
 						targetContainer.appendChild(el);
 						el.style.top = this.getPxString(newPos.top);
@@ -2740,24 +2826,35 @@ class Puzzly {
 				} else {
 					if(connectingPiece.group !== undefined && !Number.isNaN(connectingPiece)){
 						// Snapping two groups together
-						targetContainer = this.getGroupContainerElement(connectingPieceEl);
-						thisContainer = this.getTopContainer(el);
+						targetContainer = this.getGroupContainer(connectingPieceEl);
+						thisContainer = this.getGroupTopContainer(el);
 						
 						targetContainer.appendChild(thisContainer);
-						newPos.top = connectingPieceEl.offsetTop + connectingPieceEl.offsetHeight - this.config.connectorSize - el.offsetTop;
+
+						let thisSubContainer = this.getGroupContainer(el);
+						let thisTopContainer = this.getGroupTopContainer(el);
+
+						this.debugInfoSetReadout(this.debugInfoRows.targetEl, `ID: ${connectingPiece.id}`)
+						this.debugInfoSetReadout(this.debugInfoRows.targetElContainer, `ID: ${thisSubContainer.getAttribute('id')}`)
+						this.debugInfoSetReadout(this.debugInfoRows.targetElTopContainer, `ID: ${thisTopContainer.getAttribute('id')}`)
+
+						const thisElOffsetWithinTopContainerTop = this.getTrueBoundingBox(el).top - this.getTrueBoundingBox(thisContainer).top;
+						const thisElOffsetWithinTopContainerLeft = this.getTrueBoundingBox(el).left - this.getTrueBoundingBox(thisContainer).left;
+
+						newPos.top = connectingPieceEl.offsetTop + connectingPieceEl.offsetHeight - this.config.connectorSize - thisElOffsetWithinTopContainerTop;
 
 						thisContainer.style.top = this.getPxString(newPos.top);
 	
 						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainerLeft;
 						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = (connectingPieceEl.offsetLeft - this.config.connectorSize) - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainerLeft - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
-							newPos.left = (connectingPieceEl.offsetLeft + this.config.connectorSize) - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft + thisElOffsetWithinTopContainerLeft - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainerLeft;
 						} else {
-							newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainerLeft;
 						}
 	
 						thisContainer.style.left = newPos.left + "px";
@@ -2871,6 +2968,81 @@ class Puzzly {
 		return value + 'px';
 	}
 
+	createGroupContainer(pieceAEl, pieceBEl, groupId){
+		const leftPos =  Math.min(pieceAEl.offsetLeft, pieceBEl.offsetLeft);
+		const topPos =  Math.min(pieceAEl.offsetTop, pieceBEl.offsetTop);
+		const container = document.createElement('div');
+		container.setAttribute('id', `group-${groupId}`);
+		container.style.top = this.getPxString(topPos);
+		container.style.left = this.getPxString(leftPos);
+		container.style.width = this.getPxString(this.config.pieceSize);
+		container.style.height = this.getPxString(this.config.pieceSize);
+
+		container.appendChild(pieceAEl);
+		container.appendChild(pieceBEl);
+		container.style.position = 'absolute';
+		this.canvas.appendChild(container);
+
+		const pieceA = this.getPieceByElement(pieceAEl);
+		const pieceB = this.getPieceByElement(pieceBEl);
+
+		if(pieceA.id === pieceB.id - 1 || pieceA.id === pieceB.id + 1){
+			// piece A has horizontal connection with piece B
+			if(pieceA.id === pieceB.id - 1){
+				pieceAEl.style.left = this.getPxString(0);
+				pieceBEl.style.left = this.getPxString(pieceAEl.offsetWidth - this.config.connectorSize);
+			} else {
+				pieceBEl.style.left = this.getPxString(0);
+				pieceAEl.style.left = this.getPxString(pieceBEl.offsetWidth - this.config.connectorSize);
+			}
+
+			if(Utils.has(pieceA, "plug", "top") && Utils.has(pieceB, "plug", "top")){
+				pieceAEl.style.top = this.getPxString(0);
+				pieceBEl.style.top = this.getPxString(0);
+			} else if(Utils.has(pieceA, "plug", "top") && Utils.has(pieceB, "socket", "top")){
+				pieceAEl.style.top = this.getPxString(0);
+				pieceBEl.style.top = this.getPxString(this.config.connectorSize);
+			} else if(Utils.has(pieceA, "socket", "top") && Utils.has(pieceB, "plug", "top")){
+				pieceAEl.style.top = this.getPxString(this.config.connectorSize);
+				pieceBEl.style.top = this.getPxString(0);
+			} else if(Utils.has(pieceA, "socket", "top") && Utils.has(pieceB, "socket", "top")){
+				pieceAEl.style.top = this.getPxString(0);
+				pieceBEl.style.top = this.getPxString(0);
+			} else {
+				pieceAEl.style.top = this.getPxString(0);
+				pieceBEl.style.top = this.getPxString(0);
+			}
+		} else if(pieceA.id < pieceB.id - 1 || pieceA.id > pieceB.id + 1){
+			// piece A has vertical connection with piece B
+			if(pieceA.id < pieceB.id - 1){
+				pieceAEl.style.top = this.getPxString(0);
+				pieceBEl.style.top = this.getPxString(pieceAEl.offsetHeight - this.config.connectorSize);
+			} else {
+				pieceBEl.style.top = this.getPxString(0);
+				pieceAEl.style.top = this.getPxString(pieceBEl.offsetHeight - this.config.connectorSize);
+			}
+
+			if(Utils.has(pieceA, "plug", "left") && Utils.has(pieceB, "plug", "left")){
+				pieceAEl.style.left = this.getPxString(0);
+				pieceBEl.style.left = this.getPxString(0);
+			} else if(Utils.has(pieceA, "plug", "left") && Utils.has(pieceB, "socket", "left")){
+				pieceAEl.style.left = this.getPxString(0);
+				pieceBEl.style.left = this.getPxString(this.config.connectorSize);
+			} else if(Utils.has(pieceA, "socket", "left") && Utils.has(pieceB, "plug", "left")){
+				pieceAEl.style.left = this.getPxString(this.config.connectorSize);
+				pieceBEl.style.left = this.getPxString(0);
+			} else if(Utils.has(pieceA, "socket", "left") && Utils.has(pieceB, "socket", "left")){
+				pieceAEl.style.left = this.getPxString(0);
+				pieceBEl.style.left = this.getPxString(0);
+			} else {
+				pieceAEl.style.left = this.getPxString(0);
+				pieceBEl.style.left = this.getPxString(0);
+			}
+		}
+		const topDiff = parseInt()
+	}
+
+	// Deprecated
 	createWrapperForGroup(groupId){
 		let xPos = this.canvasWidth, yPos = this.canvasHeight;
 		let maxX = 0, maxY = 0;
@@ -2927,7 +3099,8 @@ class Puzzly {
 		const elB = this.getElementByPieceId(pieceB.id);
 		elB.style.zIndex = 10;
 
-		this.createWrapperForGroup(groupId)
+		// this.createWrapperForGroup(groupId);
+		this.createGroupContainer(elA, elB, groupId)
 
 		this.setElementAttribute(this.getElementByPieceId(pieceA.id), "data-group", groupId)
 		this.setElementAttribute(this.getElementByPieceId(pieceB.id), "data-group", groupId)

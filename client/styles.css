@@ -183,6 +183,7 @@ label {
 
 #controls {
     position: fixed;
+    z-index: 100;
     color: #000;
     top: 100px;
     left: 100px;
@@ -198,4 +199,35 @@ label {
 
 #inner-pieces-on {
     display: none;
+}
+
+#debug-info {
+    position: fixed;
+    z-index: 100;
+    top: 20px;
+    right: 20px;
+    padding: 20px;
+    background-color: #000;
+    color: #fff;
+    width: 400px;
+    display: none;
+    font-size: 12px;
+}
+
+.debug-info-row {
+    margin-bottom: 10px;
+}
+
+.debug-info-row .label {
+    float: left;
+}
+
+.debug-info-row .readout {
+    float: right;
+}
+
+.group:after {
+    content: "";
+    display: table;
+    clear: both;
 }
