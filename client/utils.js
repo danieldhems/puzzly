@@ -23,12 +23,32 @@ export default {
 		return piece && piece.type[0] !== 0 && piece.type[1] === 0 && piece.type[2] !== 0;
 	},
 
+	isTopEdgePiece(piece) {
+		return piece && piece.type[0] === 0;
+	},
+
+	isRightEdgePiece(piece) {
+		return piece && piece.type[1] === 0;
+	},
+
+	isBottomEdgePiece(piece) {
+		return piece && piece.type[2] === 0;
+	},
+
+	isLeftEdgePiece(piece) {
+		return piece && piece.type[3] === 0;
+	},
+
 	isBottomLeftCorner(piece) {
 		return piece && piece.type[2] === 0 && piece.type[3] === 0;
 	},
 
 	isBottomSide(piece) {
 		return piece && piece.type[1] !== 0 && piece.type[2] === 0 && piece.type[3] !== 0;
+	},
+
+	isSidePiece(piece) {
+		return piece && piece.type.filter(t => t === 0).length === 1;
 	},
 
 	isBottomRightCorner(piece) {
