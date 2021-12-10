@@ -2544,23 +2544,22 @@ console.log('checking right connection', thisElement, thisPieceConnectorBounding
 						this.debugInfoSetReadout(this.debugInfoRows.targetElTopContainer, `ID: ${targetTopContainer.getAttribute('id')}`)
 						
 
-						const thisElOffsetWithinTopContainerLeft = this.getTrueBoundingBox(el).left - this.getTrueBoundingBox(thisContainer).left;
-						const thisElOffsetWithinTopContainerTop = this.getTrueBoundingBox(el).top - this.getTrueBoundingBox(thisContainer).top;
+						const thisElOffsetWithinTopContainer = this.getElementBoundingBoxRelativeToTopContainer(el)
 
-						newPos.left = connectingPieceEl.offsetLeft - el.offsetWidth - thisElOffsetWithinTopContainerLeft + this.config.connectorSize;
+						newPos.left = connectingPieceEl.offsetLeft - el.offsetWidth - thisElOffsetWithinTopContainer.left + this.config.connectorSize;
 
 						thisContainer.style.left = this.getPxString(newPos.left);
 	
 						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
-							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top;
 						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
-							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop - this.config.connectorSize;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
-							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop + this.config.connectorSize;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top + this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
-							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top;
 						} else {
-							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top;
 						}
 	
 						thisContainer.style.top = newPos.top + "px";
@@ -2573,19 +2572,19 @@ console.log('checking right connection', thisElement, thisPieceConnectorBounding
 						newPos.left = connectingPieceEl.offsetLeft + this.config.connectorSize - el.offsetWidth - elBB.left;
 
 						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
-							newPos.top = connectingPiece.pageY - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop;
 						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
-							newPos.top = (connectingPiece.pageY - this.config.connectorSize) - el.offsetTop;
+							newPos.top = (connectingPieceEl.offsetTop - this.config.connectorSize) - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop + this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
-							newPos.top = (connectingPiece.pageY + this.config.connectorSize) - el.offsetTop;
+							newPos.top = (connectingPieceEl.offsetTop + this.config.connectorSize) - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
-							newPos.top = connectingPiece.pageY - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop;
 						} else {
-							newPos.top = connectingPiece.pageY - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop;
 						}
 
@@ -2657,23 +2656,22 @@ console.log('checking right connection', thisElement, thisPieceConnectorBounding
 						this.debugInfoSetReadout(this.debugInfoRows.targetElContainer, `ID: ${thisSubContainer.getAttribute('id')}`)
 						this.debugInfoSetReadout(this.debugInfoRows.targetElTopContainer, `ID: ${thisContainer.getAttribute('id')}`)
 
-						const thisElOffsetWithinTopContainerLeft = this.getTrueBoundingBox(el).left - this.getTrueBoundingBox(thisContainer).left;
-						const thisElOffsetWithinTopContainerTop = this.getTrueBoundingBox(el).top - this.getTrueBoundingBox(thisContainer).top;
+						const thisElOffsetWithinTopContainer = this.getElementBoundingBoxRelativeToTopContainer(el)
 
-						newPos.left = connectingPieceEl.offsetLeft + connectingPieceEl.offsetWidth - thisElOffsetWithinTopContainerLeft - this.config.connectorSize;
+						newPos.left = connectingPieceEl.offsetLeft + connectingPieceEl.offsetWidth - thisElOffsetWithinTopContainer.left - this.config.connectorSize;
 
 						thisContainer.style.left = this.getPxString(newPos.left);
 	
 						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
-							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top;
 						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
-							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop - this.config.connectorSize;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
-							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop + this.config.connectorSize;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top + this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
-							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top;
 						} else {
-							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainerTop;
+							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top;
 						}
 	
 						thisContainer.style.top = newPos.top + "px";
@@ -2686,19 +2684,19 @@ console.log('checking right connection', thisElement, thisPieceConnectorBounding
 						newPos.left = connectingPieceEl.offsetLeft - this.config.connectorSize + connectingPieceEl.offsetWidth - elBB.left;
 
 						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
-							newPos.top = connectingPieceEl.offsetTop - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop;
 						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
-							newPos.top = (connectingPieceEl.offsetTop - this.config.connectorSize) - el.offsetTop;
+							newPos.top = (connectingPieceEl.offsetTop - this.config.connectorSize) - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop + this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
-							newPos.top = (connectingPieceEl.offsetTop + this.config.connectorSize) - el.offsetTop;
+							newPos.top = (connectingPieceEl.offsetTop + this.config.connectorSize) - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
-							newPos.top = connectingPieceEl.offsetTop - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop;
 						} else {
-							newPos.top = connectingPieceEl.offsetTop - el.offsetTop;
+							newPos.top = connectingPieceEl.offsetTop - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop;
 						}
 
@@ -2768,23 +2766,22 @@ console.log('checking right connection', thisElement, thisPieceConnectorBounding
 						this.debugInfoSetReadout(this.debugInfoRows.targetElContainer, `ID: ${container.getAttribute('id')}`)
 						this.debugInfoSetReadout(this.debugInfoRows.targetElTopContainer, `ID: ${thisContainer.getAttribute('id')}`)
 
-						const thisElOffsetWithinTopContainerTop = this.getTrueBoundingBox(el).top - this.getTrueBoundingBox(thisContainer).top;
-						const thisElOffsetWithinTopContainerLeft = this.getTrueBoundingBox(el).left - this.getTrueBoundingBox(thisContainer).left;
+						const thisElOffsetWithinTopContainer = this.getElementBoundingBoxRelativeToTopContainer(el)
 
-						newPos.top = connectingPieceEl.offsetTop + this.config.connectorSize - el.offsetHeight - thisElOffsetWithinTopContainerTop;
+						newPos.top = connectingPieceEl.offsetTop + this.config.connectorSize - el.offsetHeight - thisElOffsetWithinTopContainer.top;
 
 						thisContainer.style.top = this.getPxString(newPos.top);
 	
 						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - Math.abs(thisElOffsetWithinTopContainerLeft);
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left;
 						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - Math.abs(thisElOffsetWithinTopContainerLeft) - this.config.connectorSize;
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
-							newPos.left = connectingPieceEl.offsetLeft + Math.abs(thisElOffsetWithinTopContainerLeft) + this.config.connectorSize;
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left + this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - Math.abs(thisElOffsetWithinTopContainerLeft);
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left;
 						} else {
-							newPos.left = connectingPieceEl.offsetLeft - Math.abs(thisElOffsetWithinTopContainerLeft);
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left;
 						}
 	
 						thisContainer.style.left = newPos.left + "px";
@@ -2797,19 +2794,19 @@ console.log('checking right connection', thisElement, thisPieceConnectorBounding
 						newPos.top = connectingPieceEl.offsetTop - el.offsetHeight + this.config.connectorSize - elBB.top;
 
 						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft;
 						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = (connectingPieceEl.offsetLeft - this.config.connectorSize) - el.offsetLeft;
+							newPos.left = (connectingPieceEl.offsetLeft - this.config.connectorSize) - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft + this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
-							newPos.left = (connectingPieceEl.offsetLeft + this.config.connectorSize) - el.offsetLeft;
+							newPos.left = (connectingPieceEl.offsetLeft + this.config.connectorSize) - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft;
 						} else {
-							newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft;
 						}
 
@@ -2878,47 +2875,46 @@ console.log('checking right connection', thisElement, thisPieceConnectorBounding
 						this.debugInfoSetReadout(this.debugInfoRows.targetElContainer, `ID: ${container.getAttribute('id')}`)
 						this.debugInfoSetReadout(this.debugInfoRows.targetElTopContainer, `ID: ${thisContainer.getAttribute('id')}`)
 
-						const thisElOffsetWithinTopContainerTop = this.getTrueBoundingBox(el).top - this.getTrueBoundingBox(thisContainer).top;
-						const thisElOffsetWithinTopContainerLeft = this.getTrueBoundingBox(el).left - this.getTrueBoundingBox(thisContainer).left;
+						const thisElOffsetWithinTopContainer = this.getElementBoundingBoxRelativeToTopContainer(el)
 
-						newPos.top = connectingPieceEl.offsetTop + connectingPieceEl.offsetHeight - this.config.connectorSize - thisElOffsetWithinTopContainerTop;
+						newPos.top = connectingPieceEl.offsetTop + connectingPieceEl.offsetHeight - this.config.connectorSize - thisElOffsetWithinTopContainer.top;
 
 						thisContainer.style.top = this.getPxString(newPos.top);
 	
 						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - Math.abs(thisElOffsetWithinTopContainerLeft);
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left;
 						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - Math.abs(thisElOffsetWithinTopContainerLeft) - this.config.connectorSize;
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - Math.abs(thisElOffsetWithinTopContainerLeft) + this.config.connectorSize;
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left + this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - Math.abs(thisElOffsetWithinTopContainerLeft);
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left;
 						} else {
-							newPos.left = connectingPieceEl.offsetLeft - Math.abs(thisElOffsetWithinTopContainerLeft);
+							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left;
 						}
 	
 						thisContainer.style.left = newPos.left + "px";
 						thisContainer.classList.add('subgroup');
 						targetContainer.appendChild(thisContainer);
 					} else {
-						const elBB = this.getTrueBoundingBox(el);
+						const elBB = this.getElementBoundingBoxRelativeToTopContainer(el);
 
 						newPos.top = connectingPieceEl.offsetTop + connectingPieceEl.offsetHeight - this.config.connectorSize - elBB.top;
 
 						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft;
 						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = (connectingPieceEl.offsetLeft - this.config.connectorSize) - el.offsetLeft;
+							newPos.left = (connectingPieceEl.offsetLeft - this.config.connectorSize) - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft + this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
-							newPos.left = (connectingPieceEl.offsetLeft + this.config.connectorSize) - el.offsetLeft;
+							newPos.left = (connectingPieceEl.offsetLeft + this.config.connectorSize) - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft - this.config.connectorSize;
 						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft;
 						} else {
-							newPos.left = connectingPieceEl.offsetLeft - el.offsetLeft;
+							newPos.left = connectingPieceEl.offsetLeft - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft;
 						}
 
@@ -2936,7 +2932,8 @@ console.log('checking right connection', thisElement, thisPieceConnectorBounding
 
 			case "top-left":
 				if(!this.isMovingSinglePiece){
-					newPos.left = this.config.boardBoundary - el.offsetLeft;
+					let elBB = this.getElementBoundingBoxRelativeToTopContainer(el);
+					newPos.left = this.config.boardBoundary - elBB.left;
 					let topContainer = this.getGroupTopContainer(el);
 					let containerBoundingBox = topContainer.getBoundingClientRect();
 					let elBoundingBox = el.getBoundingClientRect();
