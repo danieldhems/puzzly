@@ -2284,7 +2284,7 @@ class Puzzly {
 
 		const hasLeftPlug = Utils.has(piece, "plug", "left");
 		const hasTopPlug = Utils.has(piece, "plug", "top");
-		const tolerance = this.config.collisionTolerance;
+		const tolerance = this.config.connectorTolerance;
 
 		switch(connector){
 			case 'right':
@@ -2390,7 +2390,6 @@ class Puzzly {
 				if(container){
 					containerBoundingBox = this.getTrueBoundingBox(container);
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(piece, thisElement, 'right', containerBoundingBox);
-					console.log(thisPieceConnectorBoundingBox)
 				} else {
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(thisElement, "right");
 				}
@@ -2424,7 +2423,6 @@ class Puzzly {
 				if(container){
 					containerBoundingBox = this.getTrueBoundingBox(container);
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(piece, thisElement, 'bottom', containerBoundingBox);
-					console.log(thisPieceConnectorBoundingBox)
 				} else {
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(thisElement, "bottom");
 				}
@@ -2458,7 +2456,6 @@ class Puzzly {
 				if(container){
 					containerBoundingBox = this.getTrueBoundingBox(container);
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(piece, thisElement, 'left', containerBoundingBox);
-					console.log(thisPieceConnectorBoundingBox)
 				} else {
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(thisElement, "left");
 				}
@@ -2492,7 +2489,6 @@ class Puzzly {
 				if(container){
 					containerBoundingBox = this.getTrueBoundingBox(container);
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBoxInGroup(piece, thisElement, 'top', containerBoundingBox);
-					console.log(thisPieceConnectorBoundingBox)
 				} else {
 					thisPieceConnectorBoundingBox = this.getConnectorBoundingBox(thisElement, "top");
 				}
@@ -2530,7 +2526,6 @@ class Puzzly {
 			}
 		}
 		if(Utils.isBottomRightCorner(piece)){
-			console.log(elBoundingBox)
 			if(this.hasCollision(elBoundingBox, this.getBottomRightCornerBoundingBox())){
 				return "bottom-right";
 			}
