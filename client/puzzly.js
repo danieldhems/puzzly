@@ -433,6 +433,8 @@ class Puzzly {
 			drawSquares: false
 		};
 
+		this.collisionTolerance = 30;
+
 		this.isMovingSinglePiece = false;
 		this.movingElement = null;
 		this.pieces = [];
@@ -628,6 +630,7 @@ class Puzzly {
 		this.config.pieceSize = Math.ceil(this.config.pieceSize)
 		this.config.connectorDistanceFromCornerRatio = this.config.connectorRatio = 33;
 		this.config.connectorSize = Math.ceil(this.config.pieceSize / 100 * this.config.connectorRatio);
+		this.config.connectorTolerance = this.config.connectorSize / 100 * (50 - this.collisionTolerance / 2);
 
 		this.config.connectorDistanceFromCorner = Math.ceil(this.config.pieceSize / 100 * this.config.connectorDistanceFromCornerRatio);
 
@@ -2089,37 +2092,37 @@ class Puzzly {
 
 	getConnectorBoundingBox(element, side){
 		const piece = this.getPieceByElement(element);
-		const hasRightPlug = Utils.has(piece, "plug", "right");
 		const hasLeftPlug = Utils.has(piece, "plug", "left");
 		const hasTopPlug = Utils.has(piece, "plug", "top");
+		const tolerance = this.config.connectorTolerance;
 		switch(side){
 			case "left":
 				return {
-					top: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					right: element.offsetLeft + this.config.connectorSize,
-					bottom: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					left: element.offsetLeft,
+					top: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
+					right: element.offsetLeft + this.config.connectorSize - tolerance,
+					bottom: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
+					left: element.offsetLeft + tolerance,
 				}
 			case "right":
 				return {
-					top: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					right: element.offsetLeft + element.offsetWidth,
-					bottom: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					left: element.offsetLeft + element.offsetWidth - this.config.connectorSize,
+					top: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
+					right: element.offsetLeft + element.offsetWidth - tolerance,
+					bottom: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
+					left: element.offsetLeft + element.offsetWidth - this.config.connectorSize + tolerance,
 				}
 			case "bottom":
 				return {
-					top: element.offsetTop + element.offsetHeight - this.config.connectorSize,
-					right: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					bottom: element.offsetTop + element.offsetHeight,
-					left: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					top: element.offsetTop + element.offsetHeight - this.config.connectorSize + tolerance,
+					right: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
+					bottom: element.offsetTop + element.offsetHeight - tolerance,
+					left: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
 				}
 			case "top":
 				return {
-					top: element.offsetTop,
-					right: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					bottom: element.offsetTop + this.config.connectorSize,
-					left: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					top: element.offsetTop + tolerance,
+					right: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
+					bottom: element.offsetTop + this.config.connectorSize - tolerance,
+					left: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
 				}
 		}
 	}
@@ -2128,34 +2131,35 @@ class Puzzly {
 		const solvedBB = this.getPieceSolvedBoundingBox(piece)
 		const hasLeftPlug = Utils.has(piece, "plug", "left");
 		const hasTopPlug = Utils.has(piece, "plug", "top");
+		const tolerance = this.config.connectorTolerance;
 		switch(side){
 			case "left":
 				return {
-					top: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					right: solvedBB.left + this.config.connectorSize,
-					bottom: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					left: solvedBB.left,
+					top: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
+					right: solvedBB.left + this.config.connectorSize - tolerance,
+					bottom: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
+					left: solvedBB.left + tolerance,
 				}
 			case "right":
 				return {
-					top: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					right: solvedBB.right,
-					bottom: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					left: solvedBB.right - this.config.connectorSize,
+					top: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
+					right: solvedBB.right - tolerance,
+					bottom: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
+					left: solvedBB.right - this.config.connectorSize + tolerance,
 				}
 			case "bottom":
 				return {
-					top: solvedBB.bottom - this.config.connectorSize,
-					right: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					bottom: solvedBB.bottom,
-					left: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					top: solvedBB.bottom - this.config.connectorSize + tolerance,
+					right: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
+					bottom: solvedBB.bottom - tolerance,
+					left: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
 				}
 			case "top":
 				return {
-					top: solvedBB.top,
-					right: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					bottom: solvedBB.top + this.config.connectorSize,
-					left: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					top: solvedBB.top + tolerance,
+					right: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
+					bottom: solvedBB.top + this.config.connectorSize - tolerance,
+					left: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
 				}
 		}
 	}
@@ -2280,41 +2284,39 @@ class Puzzly {
 
 		const hasLeftPlug = Utils.has(piece, "plug", "left");
 		const hasTopPlug = Utils.has(piece, "plug", "top");
+		const tolerance = this.config.collisionTolerance;
 
 		switch(connector){
 			case 'right':
 				return {
-					top: containerBoundingBox.top + elPositionWithinContainer.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					
-					right: containerBoundingBox.left + elPositionWithinContainer.left + element.offsetWidth,
-					
-					bottom: containerBoundingBox.top + elPositionWithinContainer.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					
-					left: containerBoundingBox.left + elPositionWithinContainer.left + element.offsetWidth - this.config.connectorSize
+					top: containerBoundingBox.top + elPositionWithinContainer.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
+					right: containerBoundingBox.left + elPositionWithinContainer.left + element.offsetWidth - tolerance,
+					bottom: containerBoundingBox.top + elPositionWithinContainer.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
+					left: containerBoundingBox.left + elPositionWithinContainer.left + element.offsetWidth - this.config.connectorSize + tolerance
 				}
 	
 			case 'bottom':
 				return {
-					top: containerBoundingBox.top + elPositionWithinContainer.top + element.offsetHeight - this.config.connectorSize,
-					right: containerBoundingBox.left + elPositionWithinContainer.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					bottom: containerBoundingBox.top + elPositionWithinContainer.top + element.offsetHeight,
-					left: containerBoundingBox.left + elPositionWithinContainer.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
+					top: containerBoundingBox.top + elPositionWithinContainer.top + element.offsetHeight - this.config.connectorSize + tolerance,
+					right: containerBoundingBox.left + elPositionWithinContainer.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
+					bottom: containerBoundingBox.top + elPositionWithinContainer.top + element.offsetHeight - tolerance,
+					left: containerBoundingBox.left + elPositionWithinContainer.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
 				}
 	
 			case 'left':
 				return {
-					top: containerBoundingBox.top + elPositionWithinContainer.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner),
-					right: containerBoundingBox.left + elPositionWithinContainer.left + this.config.connectorSize,
-					bottom: containerBoundingBox.top + elPositionWithinContainer.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					left: containerBoundingBox.left + elPositionWithinContainer.left 
+					top: containerBoundingBox.top + elPositionWithinContainer.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
+					right: containerBoundingBox.left + elPositionWithinContainer.left + this.config.connectorSize - tolerance,
+					bottom: containerBoundingBox.top + elPositionWithinContainer.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
+					left: containerBoundingBox.left + elPositionWithinContainer.left + tolerance
 				}
 	
 			case 'top':
 				return {
-					top: containerBoundingBox.top + elPositionWithinContainer.top,
-					right: containerBoundingBox.left + elPositionWithinContainer.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize,
-					bottom: containerBoundingBox.top + elPositionWithinContainer.top + this.config.connectorSize,
-					left: containerBoundingBox.left + elPositionWithinContainer.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner)
+					top: containerBoundingBox.top + elPositionWithinContainer.top + tolerance,
+					right: containerBoundingBox.left + elPositionWithinContainer.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
+					bottom: containerBoundingBox.top + elPositionWithinContainer.top + this.config.connectorSize - tolerance,
+					left: containerBoundingBox.left + elPositionWithinContainer.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance
 				}
 		}
 	}
