@@ -226,6 +226,10 @@ label {
     float: right;
 }
 
+.group-container {
+    position: absolute;
+}
+
 .group:after {
     content: "";
     display: table;

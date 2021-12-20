@@ -76,5 +76,9 @@ export default {
 		const pieceToTopLeftId = pieceAId - numPiecesHorizontal - 1;
 		const pieceToBottomId = pieceAId + numPiecesHorizontal;
 		return pieceToRightId === pieceBId || pieceToLeftId === pieceBId || pieceToTopId === pieceBId || pieceToBottomId === pieceBId || pieceToBottomLefttId === pieceBId || pieceToBottomRightId === pieceBId || pieceToTopLeftId === pieceBId || pieceToTopRightId === pieceBId;
+	},
+
+	hasGroup(piece){
+		return piece.group !== undefined && piece.group !== null && !Number.isNaN(piece);
 	}
 }

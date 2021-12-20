@@ -89,16 +89,16 @@ var api = {
 				if(data.length === 1){
 					query = { _id: new ObjectID(data[0]._id) }
 	
-					let { id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, isSolved, group, type, connectsTo, isVisible, isInnerPiece } = data[0];
-					update = { "$set": {id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, group, type, connectsTo, isSolved, isVisible, isInnerPiece} };
+					let { id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, isSolved, group, type, connectsTo, connections, isVisible, isInnerPiece } = data[0];
+					update = { "$set": {id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, group, type, connectsTo, connections, isSolved, isVisible, isInnerPiece} };
 					pieces.updateOne(query, update, function(err, result){
 						if(err) throw new Error(err);
 					});
 				} else {
 					data.forEach(d => {
 						query = { puzzleId: d.puzzleId, id: d.id }
-						let { id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, isSolved, group, type, connectsTo, isVisible, isInnerPiece } = d;
-						update = { "$set": {id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, group, type, connectsTo, isSolved, isVisible, isInnerPiece} };
+						let { id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, containerX, containerY, isSolved, group, type, connectsTo, connections, isVisible, isInnerPiece } = d;
+						update = { "$set": {id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, containerX, containerY, group, type, connectsTo, connections, isSolved, isVisible, isInnerPiece} };
 						pieces.updateOne(query, update, {upsert: true}, function(err, result){
 							if(err) throw new Error(err);
 						});
