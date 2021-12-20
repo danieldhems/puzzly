@@ -1497,7 +1497,7 @@ class Puzzly {
 					}
 
 					// If we've created a new group, update both pieces in persistence
-					if(updatedPiece.group > -1){
+					if(Utils.hasGroup(updatedPiece)){
 						pieces = this.pieces.filter(p => p.group > -1 && p.group === updatedPiece.group);
 					} else {
 						pieces = [updatedPiece]
@@ -2439,6 +2439,7 @@ class Puzzly {
 
 				// We aren't targeting an adjacent piece for a floating connection
 				solvedPieceConnectorBoundingBox = this.getSolvedConnectorBoundingBox(piece, "right");
+				console.log(solvedPieceConnectorBoundingBox)
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
 					return "right";
@@ -3480,6 +3481,8 @@ class Puzzly {
 			connections: piece.connections,
 			isSolved: piece.isSolved,
 			isInnerPiece: piece.isInnerPiece,
+			numPiecesFromTopEdge: piece.numPiecesFromTopEdge,
+			numPiecesFromLeftEdge: piece.numPiecesFromLeftEdge,
 		}
 
 		if(container){
