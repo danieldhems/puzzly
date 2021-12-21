@@ -41,6 +41,7 @@ var api = {
 			collection = db.collection(puzzlesCollection);
 
 			const data = req.body;
+			data.numberOfSolvedPieces = 0;
 
 		  collection.insertOne(data, function(err, result){
 			  if(err) throw new Error(err);
@@ -86,34 +87,43 @@ var api = {
 			let query, update;
 			
 			if(Array.isArray(data)){
-				if(data.length === 1){
-					query = { _id: new ObjectID(data[0]._id) }
-	
-					let { id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, isSolved, group, type, connectsTo, connections, isVisible, isInnerPiece, numPiecesFromTopEdge, numPiecesFromLeftEdge } = data[0];
-					update = { "$set": {id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, group, type, connectsTo, connections, isSolved, isVisible, isInnerPiece, numPiecesFromTopEdge, numPiecesFromLeftEdge } };
-					pieces.updateOne(query, update, function(err, result){
+				data.forEach(d => {
+					query = { puzzleId: d.puzzleId, id: d.id }
+					let { pageX, pageY, containerX, containerY, isSolved, group, connections, isVisible } = d;
+
+					update = { "$set": {
+						pageX, 
+						pageY, 
+						containerX, 
+						containerY, 
+						isSolved, 
+						group, 
+						connections, 
+						isVisible
+					} };
+
+					pieces.updateOne(query, update, {upsert: true}, function(err, result){
 						if(err) throw new Error(err);
 					});
-				} else {
-					data.forEach(d => {
-						query = { puzzleId: d.puzzleId, id: d.id }
-						let { id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, containerX, containerY, isSolved, group, type, connectsTo, connections, isVisible, isInnerPiece, numPiecesFromTopEdge, numPiecesFromLeftEdge } = d;
-						update = { "$set": {id, shapeId, imgX, imgY, imgH, imgW, pageX, pageY, containerX, containerY, group, type, connectsTo, connections, isSolved, isVisible, isInnerPiece, numPiecesFromTopEdge, numPiecesFromLeftEdge } };
-						pieces.updateOne(query, update, {upsert: true}, function(err, result){
-							if(err) throw new Error(err);
-						});
-					});
-				}
+				});
+			}
+
+			const hasSolvedPieces = data.some(p => p.isSolved);
+			const puzzleId = data[0].puzzleId;
+
+			if(hasSolvedPieces){
+				puzzles.findOneAndUpdate({_id: new ObjectID(puzzleId)}, {"$inc": { numberOfSolvedPieces: data.length }}, function(err, result){
+					if(err) throw new Error(err);
+				})
 			}
 			
 			if(data.groupCounter !== undefined && data.groupCounter !== null){
 				puzzles.findOneAndUpdate({_id: new ObjectID(id)}, {$inc: { groupCounter: 1 }}, function(err, result) {
 					if(err) throw new Error(err);
-					console.log(result)
 				})
 			}
 
-			res.send(200)
+			res.sendStatus(200)
 		});
 
 	},
@@ -126,9 +136,36 @@ var api = {
 	}
 };
 
+api.fetchAll = function(req, res) {
+	client.connect().then(async (client, err) => {
+		assert.strictEqual(err, undefined);
+		db = client.db(dbName);
+		
+		let puzzles = db.collection(puzzlesCollection);
+		puzzles.find().toArray( function(err, result){
+			console.log(err, result)
+			res.status(200).send(result)
+		})
+	})
+}
+
+api.removeAll = function(req, res) {
+	client.connect().then(async (client, err) => {
+		assert.strictEqual(err, undefined);
+		db = client.db(dbName);
+		
+		let puzzles = db.collection(puzzlesCollection);
+		puzzles.deleteMany( function(err, result){
+			console.log(err, result)
+			res.status(200).send("ok")
+		})
+	})
+}
 
 // Set API CRUD endpoints
 router.get('/', api.read);
+router.get('/fetchAll', api.fetchAll);
+router.get('/removeAll', api.removeAll);
 router.get('/:id', api.read);
 router.post('/', api.create);
 router.put('/:id', api.update);

@@ -26,6 +26,14 @@ app.get('/', function(req, res){
 	res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
+app.get('/gallery', function(req, res){
+	res.sendFile(path.join(__dirname, '../client/puzzleGallery.html'));
+});
+
+app.get('/removeAll', function(req, res){
+	res.sendFile(path.join(__dirname, '../client/removeAll.html'));
+});
+
 // puzzleApi.clean();
 
 module.exports = app;

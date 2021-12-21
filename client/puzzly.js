@@ -80,7 +80,8 @@ const imagePreviewEl = document.querySelector('#image-preview');
 var imageUpload = document.querySelector('#upload');
 var newPuzzleForm = document.querySelector('#form-container');
 var imageCrop = document.querySelector('#image-crop');
-var submit = document.querySelector('[type=submit]');
+var startBtn = document.querySelector('#start-btn');
+var startDebugBtn = document.querySelector('#start-debug-btn');
 
 
 const prevButton = document.querySelectorAll(".previous");
@@ -306,9 +307,14 @@ imageUpload.addEventListener('change', function(e){
 		});
 });
 
-submit.addEventListener('click', function(e){
+startBtn.addEventListener('click', function(e){
 	e.preventDefault();
 	createPuzzle();
+});
+
+startDebugBtn.addEventListener('click', function(e){
+	e.preventDefault();
+	createPuzzle({isDebug: true});
 });
 
 function onUploadSuccess(response){
@@ -352,9 +358,10 @@ function upload(){
 	.then( response => response.json() )
 }
 
-function createPuzzle(){
+function createPuzzle(opts = {}){
 	const puzzleConfig = {
 		...PuzzlyCreator.puzzleSetup,
+		debug: opts.isDebug || false,
 		groupCounter: 0,
 		pieceSize: Math.round(PuzzlyCreator.puzzleSetup.selectedWidth / Math.sqrt(PuzzlyCreator.puzzleSetup.selectedNumPieces)),
 	}
@@ -675,10 +682,10 @@ class Puzzly {
 			this.save(this.pieces)
 		}
 
-		this.canvas.addEventListener('doubleclick', e => {
+		this.canvas.addEventListener('mouseover', e => {
 			let el = e.target;
 			let piece = this.getPieceByElement(el);
-			console.log(piece)
+			// console.log(piece)
 		})
 		
 		this.innerPieces = document.querySelectorAll('.inner-piece');

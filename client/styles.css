@@ -230,6 +230,32 @@ label {
     position: absolute;
 }
 
+#gallery {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 auto;
+    width: 80%;
+}
+
+.puzzle-list-item {
+    width: 46%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+.puzzle-list-item:nth-child(odd) {
+    margin-right: 4%;
+}
+
+.puzzle-list-item__image {
+    width: 100%;
+}
+
+.puzzle-list-item p {
+    margin: 1em 0;
+}
+
 .group:after {
     content: "";
     display: table;
