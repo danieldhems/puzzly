@@ -21,14 +21,16 @@ function Gallery (){
     }
 
     function makePuzzleItem(puzzle){
-        const percentSolved = Math.round(puzzle.numberOfSolvedPieces / puzzle.selectedNumPieces * 100)
+        const percentSolved = Math.round(puzzle.numberOfSolvedPieces / puzzle.selectedNumPieces * 100);
+        const time = puzzle.elapsedTime;
+
+        console.log(new Date(time).toISOString().substr(8))
         const tpl = `
             <div data-puzzle-id="${puzzle._id}" class="puzzle-list-item">
                 <a href="/?puzzleId=${puzzle._id}" title="">
                     <img src="${puzzle.sourceImage.path}" class="puzzle-list-item__image" />
                 </a>
                 <p>${percentSolved}% solved</p>
-                <button onClick="${goToPuzzle}">Resume</button>
             </div>
         `;
         container.insertAdjacentHTML("beforeend", tpl);
@@ -37,13 +39,6 @@ function Gallery (){
     function makeGallery(puzzles){
         console.log(puzzles)
         puzzles.forEach(makePuzzleItem)
-    }
-
-    function goToPuzzle(e){
-        e.preventDefault();
-        const id = parseInt(e.target.parentNode.getAttribute('data-puzzle-id'));
-        console.log(id)
-        window.location.href = "/" + id;
     }
 }
 

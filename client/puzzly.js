@@ -419,6 +419,7 @@ const isMobile = function() {
 
 class Puzzly {
 	constructor(canvasId, puzzleId, config, progress = []){
+		console.log(progress)
 		this.config = {
 			debug: true,
 			boardBoundary: 800,
@@ -682,6 +683,11 @@ class Puzzly {
 			this.save(this.pieces)
 		}
 
+		this.timeStarted = new Date().getTime();
+		addEventListener("beforeunload", function(e) {
+			this.updateElapsedTime();
+		}.bind(this))
+
 		this.canvas.addEventListener('mouseover', e => {
 			let el = e.target;
 			let piece = this.getPieceByElement(el);
@@ -728,6 +734,21 @@ class Puzzly {
 
 				this.canvas.style.transform = `scale(${this.zoomLevel})`;
 			}
+		})
+	}
+
+	updateElapsedTime(){
+		const now = new Date().getTime();
+		const elapsedTime = now - this.timeStarted;
+
+		return fetch(`/api/puzzle/updateTime/${this.puzzleId}`, {
+			method: 'put',
+			headers: {
+				'Content-Type': 'Application/json'
+			},
+			body: JSON.stringify({
+				time: elapsedTime
+			})
 		})
 	}
 
@@ -1458,7 +1479,6 @@ class Puzzly {
 					let p = piecesToCheck[i];
 					connection = this.checkConnections(p, this.getGroupTopContainer(this.getElementByPieceId(p.id)));
 					if(connection){
-						console.log(connection)
 						this.debugInfoSetReadout(this.debugInfoRows.lastConnection, connection);
 						if(this.soundsEnabled){
 							this.clickSound.play();
@@ -1485,17 +1505,16 @@ class Puzzly {
 				pieces = this.pieces.filter(p => p.group === thisPiece.group);
 			} else {
 				let thisPiece = this.getPieceByElement(this.movingElement);
+				let updatedPiece;
 				connection = this.checkConnections(thisPiece);
 				this.debugInfoSetReadout(this.debugInfoRows.lastConnection, connection);
 				if(connection){
-					console.log(connection)
-
 					if(this.soundsEnabled){
 						this.clickSound.play();
 					}
 
 					this.snapPiece(this.movingElement, connection);
-					const updatedPiece = this.getPieceByElement(this.movingElement);
+					updatedPiece = this.getPieceByElement(this.movingElement);
 					this.updatePiece(thisPiece.id)
 					this.updateConnections(updatedPiece.group);
 
@@ -1503,23 +1522,23 @@ class Puzzly {
 						this.markAsSolved([updatedPiece]);
 					}
 
-					// If we've created a new group, update both pieces in persistence
-					if(Utils.hasGroup(updatedPiece)){
-						pieces = this.pieces.filter(p => p.group > -1 && p.group === updatedPiece.group);
-					} else {
-						pieces = [updatedPiece]
-					}
+					
 				} else {
 					this.debugInfoSetReadout(this.debugInfoRows.lastConnection, 'None');
 				}
 
-				if(!pieces){
-					pieces = [thisPiece];
+				pieces = [thisPiece];
+
+				if(updatedPiece){
+					pieces.push(updatedPiece)
 				}
 			}
 
+			this.save(pieces);
+
 			this.movingElement = null;
-			this.save(pieces)
+			this.movingPieces = [];
+			pieces = [];
 		}
 
 		window.removeEventListener('mousemove', this.moveCanvas);
@@ -2446,7 +2465,6 @@ class Puzzly {
 
 				// We aren't targeting an adjacent piece for a floating connection
 				solvedPieceConnectorBoundingBox = this.getSolvedConnectorBoundingBox(piece, "right");
-				console.log(solvedPieceConnectorBoundingBox)
 
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
 					return "right";
@@ -3505,6 +3523,7 @@ class Puzzly {
 	}
 
 	async save(pieces){
+		console.log(this.movingPieces)
 		const payload = pieces.map( p => this.getPieceDataForPersistence(p))
 		console.log('saving', payload)
 		fetch(`/api/puzzle/${this.puzzleId}`, {

@@ -1,6 +1,7 @@
 body {
     margin: 0;
     background-color: #000;
+    background: url('./bg-wood.jpg');
     height: 100%;
 }
 

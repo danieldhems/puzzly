@@ -42,6 +42,8 @@ var api = {
 
 			const data = req.body;
 			data.numberOfSolvedPieces = 0;
+			data.dateCreated = new Date();
+			data.elapsedTime = 0;
 
 		  collection.insertOne(data, function(err, result){
 			  if(err) throw new Error(err);
@@ -89,18 +91,9 @@ var api = {
 			if(Array.isArray(data)){
 				data.forEach(d => {
 					query = { puzzleId: d.puzzleId, id: d.id }
-					let { pageX, pageY, containerX, containerY, isSolved, group, connections, isVisible } = d;
-
-					update = { "$set": {
-						pageX, 
-						pageY, 
-						containerX, 
-						containerY, 
-						isSolved, 
-						group, 
-						connections, 
-						isVisible
-					} };
+					delete d._id;
+					update = { "$set": {...d}};
+					console.log(update)
 
 					pieces.updateOne(query, update, {upsert: true}, function(err, result){
 						if(err) throw new Error(err);
@@ -143,7 +136,7 @@ api.fetchAll = function(req, res) {
 		
 		let puzzles = db.collection(puzzlesCollection);
 		puzzles.find().toArray( function(err, result){
-			console.log(err, result)
+			if(err) throw new Error(err);
 			res.status(200).send(result)
 		})
 	})
@@ -156,7 +149,25 @@ api.removeAll = function(req, res) {
 		
 		let puzzles = db.collection(puzzlesCollection);
 		puzzles.deleteMany( function(err, result){
-			console.log(err, result)
+			if(err) throw new Error(err);
+			res.status(200).send("ok")
+		})
+	})
+}
+
+api.updateTime = function(req, res) {
+	client.connect().then(async (client, err) => {
+		assert.strictEqual(err, undefined);
+		db = client.db(dbName);
+		let puzzles = db.collection(puzzlesCollection);
+
+		const query = { _id: new ObjectID(req.params.id) };
+		console.log('query', query)
+		const update = { "$inc": { elapsedTime: req.body.time } };
+		console.log('update'), update
+
+		puzzles.updateOne(query, update, function(err, result){
+			if(err) throw new Error(err);
 			res.status(200).send("ok")
 		})
 	})
@@ -166,6 +177,7 @@ api.removeAll = function(req, res) {
 router.get('/', api.read);
 router.get('/fetchAll', api.fetchAll);
 router.get('/removeAll', api.removeAll);
+router.put('/updateTime/:id', api.updateTime);
 router.get('/:id', api.read);
 router.post('/', api.create);
 router.put('/:id', api.update);
