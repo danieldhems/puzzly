@@ -101,21 +101,6 @@ var api = {
 				});
 			}
 
-			const hasSolvedPieces = data.some(p => p.isSolved);
-			const puzzleId = data[0].puzzleId;
-
-			if(hasSolvedPieces){
-				puzzles.findOneAndUpdate({_id: new ObjectID(puzzleId)}, {"$inc": { numberOfSolvedPieces: data.length }}, function(err, result){
-					if(err) throw new Error(err);
-				})
-			}
-			
-			if(data.groupCounter !== undefined && data.groupCounter !== null){
-				puzzles.findOneAndUpdate({_id: new ObjectID(id)}, {$inc: { groupCounter: 1 }}, function(err, result) {
-					if(err) throw new Error(err);
-				})
-			}
-
 			res.sendStatus(200)
 		});
 
@@ -130,15 +115,26 @@ var api = {
 };
 
 api.fetchAll = function(req, res) {
-	client.connect().then(async (client, err) => {
+	client.connect().then( async (client, err) => {
 		assert.strictEqual(err, undefined);
 		db = client.db(dbName);
 		
 		let puzzles = db.collection(puzzlesCollection);
-		puzzles.find().toArray( function(err, result){
-			if(err) throw new Error(err);
-			res.status(200).send(result)
-		})
+		let piecesDB = db.collection(piecesCollection);
+
+		const pieces = await piecesDB.find().toArray();
+
+		const d = await puzzles.find().map(p => {
+			return {
+				...p,
+				percentSolved: pieces.filter(piece => piece.puzzleId === p._id.toString() && piece.isSolved).length / p.selectedNumPieces * 100
+			}
+		}).toArray();
+
+		res.send(d)
+
+	}).catch(err => {
+		throw new Error(err)
 	})
 }
 
@@ -162,9 +158,13 @@ api.updateTime = function(req, res) {
 		let puzzles = db.collection(puzzlesCollection);
 
 		const query = { _id: new ObjectID(req.params.id) };
-		console.log('query', query)
-		const update = { "$inc": { elapsedTime: req.body.time } };
-		console.log('update'), update
+
+		const { time, isComplete } = req.body;
+		
+		const update = { "$inc": { elapsedTime: time } };
+		if(isComplete){
+			update["$set"] =  { isComplete };
+		}
 
 		puzzles.updateOne(query, update, function(err, result){
 			if(err) throw new Error(err);

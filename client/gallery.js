@@ -21,16 +21,21 @@ function Gallery (){
     }
 
     function makePuzzleItem(puzzle){
-        const percentSolved = Math.round(puzzle.numberOfSolvedPieces / puzzle.selectedNumPieces * 100);
-        const time = puzzle.elapsedTime;
+        const time = new Date(puzzle.elapsedTime).toISOString().substr(8);
+        const hms = time.split('T')[1].split(':');
+        const hourStr = hms[0] !== '00' ? hms[0].substring(1, 2) + 'hours,' : '';
+        const minuteStr = (hms[1].charAt(0) === '0' ? hms[1].charAt(1) : hms[1]) + ' minutes';
+        const secondsStr = (hms[2].charAt(0) === '0' ? hms[2].substring(1, 2) : hms[2].substring(0, 2)) + ', seconds';
 
-        console.log(new Date(time).toISOString().substr(8))
         const tpl = `
             <div data-puzzle-id="${puzzle._id}" class="puzzle-list-item">
                 <a href="/?puzzleId=${puzzle._id}" title="">
                     <img src="${puzzle.sourceImage.path}" class="puzzle-list-item__image" />
                 </a>
-                <p>${percentSolved}% solved</p>
+                <p>
+                ${Math.round(puzzle.percentSolved)}% solved.<br />
+                Time spent: ${hourStr} ${minuteStr}.
+                </p>
             </div>
         `;
         container.insertAdjacentHTML("beforeend", tpl);

@@ -362,7 +362,6 @@ function createPuzzle(opts = {}){
 	const puzzleConfig = {
 		...PuzzlyCreator.puzzleSetup,
 		debug: opts.isDebug || false,
-		groupCounter: 0,
 		pieceSize: Math.round(PuzzlyCreator.puzzleSetup.selectedWidth / Math.sqrt(PuzzlyCreator.puzzleSetup.selectedNumPieces)),
 	}
 	
@@ -449,7 +448,6 @@ class Puzzly {
 		this.puzzleId = puzzleId;
 		this.progress = progress;
 		
-		this.groupCounter = config.groupCounter;
 		this.innerPiecesVisible = config.innerPiecesVisible !== undefined ? config.innerPiecesVisible : true;
 		this.movingPieces = [];
 		this.loadedAssets = [];
@@ -737,7 +735,7 @@ class Puzzly {
 		})
 	}
 
-	updateElapsedTime(){
+	updateElapsedTime(isComplete = false){
 		const now = new Date().getTime();
 		const elapsedTime = now - this.timeStarted;
 
@@ -747,7 +745,8 @@ class Puzzly {
 				'Content-Type': 'Application/json'
 			},
 			body: JSON.stringify({
-				time: elapsedTime
+				time: elapsedTime,
+				isComplete
 			})
 		})
 	}
@@ -1488,6 +1487,9 @@ class Puzzly {
 						this.updateConnections(updatedPiece.group);
 						if(this.isCornerConnection(connection) || this.shouldMarkAsSolved(piecesToCheck)){
 							this.markAsSolved(piecesToCheck);
+							if(this.checkCompletion()){
+								this.updateElapsedTime(true)
+							}
 						}
 
 						hasConnection = true;
@@ -1508,6 +1510,7 @@ class Puzzly {
 				let updatedPiece;
 				connection = this.checkConnections(thisPiece);
 				this.debugInfoSetReadout(this.debugInfoRows.lastConnection, connection);
+
 				if(connection){
 					if(this.soundsEnabled){
 						this.clickSound.play();
@@ -1520,20 +1523,22 @@ class Puzzly {
 
 					if(this.isCornerConnection(connection) && this.shouldMarkAsSolved([updatedPiece])){
 						this.markAsSolved([updatedPiece]);
+						if(this.checkCompletion()){
+							this.updateElapsedTime(true)
+						}
 					}
 
-					
+					// prepare pieces for persistence
+					// start with the piece that just found a connection,
+					// then get the one or more pieces that piece is now connected to.
+					pieces = [updatedPiece];
+					pieces = pieces.concat(this.pieces.filter(p => Utils.hasGroup(p) && p.id !== thisPiece.id && p.group === updatedPiece.group));
 				} else {
-					this.debugInfoSetReadout(this.debugInfoRows.lastConnection, 'None');
-				}
-
-				pieces = [thisPiece];
-
-				if(updatedPiece){
-					pieces.push(updatedPiece)
+					pieces = [thisPiece];
 				}
 			}
 
+			console.log(pieces)
 			this.save(pieces);
 
 			this.movingElement = null;
@@ -3224,27 +3229,16 @@ class Puzzly {
 		}
 	}
 
-	incrementGroupCounter(){
-		return fetch(`/api/puzzle/${this.puzzleId}`, {
-			method: 'put',
-			headers: {
-				'Content-Type': 'Application/json'
-			},
-			body: JSON.stringify({
-				groupCounter: this.groupCounter
-			})
-		})
-	}
-
 	getPxString(value){
 		return value + 'px';
 	}
 
-	createGroupContainer(pieceAEl, pieceBEl, groupId){
+	createGroupContainer(pieceAEl, pieceBEl){
 		const leftPos =  Math.min(pieceAEl.offsetLeft, pieceBEl.offsetLeft);
 		const topPos =  Math.min(pieceAEl.offsetTop, pieceBEl.offsetTop);
 		const container = document.createElement('div');
-		container.setAttribute('id', `group-${groupId}`);
+		const id = new Date().getTime();
+		container.setAttribute('id', `group-${id}`);
 		container.classList.add('group-container');
 		container.style.top = this.getPxString(topPos);
 		container.style.left = this.getPxString(leftPos);
@@ -3352,7 +3346,7 @@ class Puzzly {
 	}
 
 	createGroup(pieceA, pieceB){
-		const groupId = this.groupCounter++;
+		const groupId = new Date().getTime();
 		this.pieces = this.pieces.map(p => {
 			if(p.id === pieceA.id || p.id === pieceB.id){
 				const update = {
@@ -3382,8 +3376,6 @@ class Puzzly {
 			this.setElementAttribute(this.getElementByPieceId(pieceA.id), "data-is-solved", true)
 			this.setElementAttribute(this.getElementByPieceId(pieceB.id), "data-is-solved", true)
 		}
-
-		this.incrementGroupCounter()
 	}
 
 	addToGroup(piece, group){
@@ -3523,9 +3515,7 @@ class Puzzly {
 	}
 
 	async save(pieces){
-		console.log(this.movingPieces)
 		const payload = pieces.map( p => this.getPieceDataForPersistence(p))
-		console.log('saving', payload)
 		fetch(`/api/puzzle/${this.puzzleId}`, {
 			method: 'put',
 			headers: {
