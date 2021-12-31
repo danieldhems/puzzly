@@ -440,6 +440,10 @@ class Puzzly {
 			drawSquares: false
 		};
 
+		this.pieceSectors = {};
+		this.usedPieceSectors = [];
+		this.sectors = {};
+
 		this.collisionTolerance = 30;
 
 		this.isMovingSinglePiece = false;
@@ -671,6 +675,8 @@ class Puzzly {
 		this.initiFullImagePreviewer();
 
 		this.isFullImageViewerActive = false;
+
+		// this.generatePieceSectorMap();
 		
 		if(this.progress.length > 0){
 			this.pieces = this.progress;
@@ -680,6 +686,8 @@ class Puzzly {
 			this.makePieces();
 			this.save(this.pieces)
 		}
+
+		this.wrapPiecesAroundBoard();
 
 		this.timeStarted = new Date().getTime();
 		addEventListener("beforeunload", function(e) {
@@ -2051,38 +2059,194 @@ class Puzzly {
 	}
 
 	getSectorBoundingBox(sector){
-		const chosen = sector === 1 ? "top" : sector === 2 ? "right" : sector === 3 ? "bottom" : sector === 4 ? "left" : "";
+		const sectors = [
+			"top-first-half",
+			"top-second-half",
+			"top-right",
+			"right-first-half",
+			"right-second-half",
+			"bottom-right",
+			"bottom-first-half",
+			"bottom-second-half",
+			"bottom-left",
+			"left-first-half",
+			"left-second-half",
+			"top-left"
+		];
+		const chosen = sectors[sector];
 		switch(chosen){
-			case "top":
+			case "top-first-half":
+				return {
+					top: 0,
+					right: this.boardBoundingBox.width / 2,
+					bottom: this.config.boardBoundary,
+					left: this.config.boardBoundary,
+				}
+			case "top-second-half":
 				return {
 					top: 0,
 					right: this.boardBoundingBox.right,
 					bottom: this.config.boardBoundary,
-					left: this.config.boardBoundary,
+					left: this.config.boardBoundary + this.boardBoundingBox.width / 2,
 				}
-			case "right":
+			case "top-left":
+				return {
+					top: 0,
+					right: this.config.boardBoundary,
+					bottom: this.config.boardBoundary,
+					left: 0,
+				}
+			case "right-first-half":
+				return {
+					top: this.config.boardBoundary,
+					right: this.canvasWidth,
+					bottom: this.config.boardBoundary + this.boardBoundingBox.height / 2,
+					left: this.boardBoundingBox.right,
+				}
+			case "right-second-half":
+				return {
+					top: this.config.boardBoundary + this.boardBoundingBox.height / 2,
+					right: this.canvasWidth,
+					bottom: this.boardBoundingBox.bottom,
+					left: this.boardBoundingBox.right,
+				}
+			case "top-right":
 				return {
 					top: 0,
 					right: this.canvasWidth,
-					bottom: this.canvasHeight,
+					bottom: this.config.boardBoundary,
 					left: this.boardBoundingBox.right,
 				}
-			case "bottom":
+			case "bottom-first-half":
 				return {
 					top: this.boardBoundingBox.bottom,
 					right: this.boardBoundingBox.right,
 					bottom: this.canvasHeight,
+					left: this.boardBoundingBox.left + this.boardBoundingBox.width / 2,
+				}
+			case "bottom-second-half":
+				return {
+					top: this.boardBoundingBox.bottom,
+					right: this.boardBoundingBox.left + this.boardBoundingBox.width / 2,
+					bottom: this.canvasHeight,
 					left: this.boardBoundingBox.left,
 				}
-			case "left":
+			case "bottom-right":
 				return {
-					top: 0,
+					top: this.boardBoundingBox.bottom,
+					right: this.canvasWidth,
+					bottom: this.canvasHeight,
+					left: this.boardBoundingBox.right,
+				}
+			case "left-first-half":
+				return {
+					top: this.config.boardBoundary + this.boardBoundingBox.height / 2,
+					right: this.boardBoundingBox.left,
+					bottom: this.boardBoundingBox.bottom,
+					left: 0,
+				}
+			case "left-second-half":
+				return {
+					top: this.config.boardBoundary,
+					right: this.boardBoundingBox.left,
+					bottom: this.boardBoundingBox.top + this.boardBoundingBox.height / 2,
+					left: 0,
+				}
+			case "bottom-left":
+				return {
+					top: this.boardBoundingBox.bottom,
 					right: this.boardBoundingBox.left,
 					bottom: this.canvasHeight,
 					left: 0,
 				}
 		}
 	}
+	
+	// Not sure if I need this
+	generatePieceSectorMap(){
+		// Generate bounding boxes for area outside puzzle board, evenly sized based on total number of pieces the puzzle was created with.
+		const totalArea = (this.canvasWidth * this.canvasHeight - this.boardSize.width * this.boardSize.height) / this.largestPieceSpan;
+		const pieceSectorSize = this.largestPieceSpan;
+		const wh = {w: pieceSectorSize, h: pieceSectorSize};
+
+		let xPos = 0, yPos = 0;
+
+		for(let i=0, n=this.config.selectedNumPieces; i<n; i++){
+			this.pieceSectors[i] = {
+				id: i,
+				x: xPos,
+				y: yPos,
+				...wh,
+			}
+
+			if(xPos < this.boardBoundingBox.left && xPos + pieceSectorSize >= this.boardBoundingBox.left && xPos + pieceSectorSize < this.canvasWidth && (yPos >= this.boardBoundingBox.top && yPos <= this.boardBoundingBox.bottom - pieceSectorSize)){
+				xPos = this.boardBoundingBox.right;
+			} else if(xPos + pieceSectorSize >= this.canvasWidth){
+				xPos = 0;
+			} else {
+				xPos += pieceSectorSize;
+			}
+
+			if(yPos + pieceSectorSize >= this.canvasHeight){
+				yPos = 0;
+			} else if(xPos === 0) {
+				yPos += pieceSectorSize;
+			}
+		}
+
+		this.pieceSectors = this.shuffleArray(this.pieceSectors);
+		console.log(this.pieceSectors)
+	}
+
+	wrapPiecesAroundBoard(){
+		let currentLineEnd = this.config.piecesPerSideHorizontal;
+		let currentX = this.config.boardBoundary, currentY = this.config.boardBoundary - this.largestPieceSpan;
+		
+		const directions = ["right", "down", "left", "up"];
+		let direction = directions[0];
+		let layerCounter = 1;
+
+		this.pieces.forEach((p, i) => {
+			const el = this.getElementByPieceId(p.id);
+			const nextPiece = this.getPieceById(p.id+1);
+			const w = el.offsetWidth;
+			const h = el.offsetHeight;
+
+			el.style.left = this.getPxString(currentX);
+			el.style.top = this.getPxString(currentY);
+			
+			currentX = direction === "right" ? currentX + w : direction === "left" ? currentX - nextPiece.imgW : currentX;
+			currentY = direction === "down" ? currentY + h : direction === "up" ? currentY - nextPiece.imgH : currentY;
+			
+			if(
+				// finished going right, go down
+				(currentY <= this.boardBoundingBox.top - h && currentX >= this.boardBoundingBox.right + layerCounter*this.config.pieceSize)
+				// finished going down, go left
+				|| (currentX >= this.boardBoundingBox.right && currentY >= this.boardBoundingBox.bottom + layerCounter*this.config.pieceSize)
+				// finished going left, go up
+				|| (currentY >= this.boardBoundingBox.bottom && currentX - layerCounter*w <= this.boardBoundingBox.left - layerCounter*this.config.pieceSize)
+				// finished going up, go right
+				|| (currentX <= this.boardBoundingBox.left && currentY - layerCounter*h <= this.boardBoundingBox.top - layerCounter*this.config.pieceSize)
+			){
+				let nextDirectionIndex = directions.indexOf(direction) === directions.length ? 0 : directions.indexOf(direction) + 1;
+				direction = directions[nextDirectionIndex];
+				
+				if(directions.indexOf(direction) === directions.length){
+					layerCounter++;
+				}
+			}
+		})
+	}
+
+	shuffleArray(array) {
+		for (let i = array.length - 1; i > 0; i--) {
+		  const j = Math.floor(Math.random() * (i + 1));
+		  const temp = array[i];
+		  array[i] = array[j];
+		  array[j] = temp;
+		}
+		return array;
+	  }
 
 	drawBoardArea(){
 		const element = document.createElement('div');
@@ -2097,7 +2261,7 @@ class Puzzly {
 		this.canvas.appendChild(element);
 	}
 
-	getRandomPositionOutsideBoardArea(piece, sector){
+	getRandomPositionOutsideBoardArea(sector){
 		const randSectorBoundingBox = this.getSectorBoundingBox(sector);
 		
 		return {
@@ -2132,7 +2296,16 @@ class Puzzly {
 
 	assignInitialPieceData(imgX, imgY, canvX, canvY, piece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i){
 		const pieceDimensions = this.getPieceWidthAndHeightWithConnectors(piece);
-		const randPos = this.getRandomPositionOutsideBoardArea(piece, this.getRandomInt(1,4));
+		const sectorID = this.getRandomInt(0,11);
+
+		if(!this.sectors[sectorID]){
+			this.sectors[sectorID] = 1;
+		} else {
+			this.sectors[sectorID]++;
+		}
+
+		const randPos = this.getRandomPositionOutsideBoardArea(sectorID);
+		// const randSector = this.pieceSectors[i];
 		return Object.assign({
 			puzzleId: this.puzzleId,
 			shapeId: piece._shape_id,

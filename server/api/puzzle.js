@@ -122,16 +122,27 @@ api.fetchAll = function(req, res) {
 		let puzzles = db.collection(puzzlesCollection);
 		let piecesDB = db.collection(piecesCollection);
 
-		const pieces = await piecesDB.find().toArray();
+		let puzzleList = await puzzles.find().toArray();
+		let puzzleIds = puzzleList.map(p => p._id);
 
-		const d = await puzzles.find().map(p => {
+		let pieces = await puzzleIds.map(id => {
+			return piecesDB.find({puzzleId: id.toString()}, (err, d) => d)
+		});
+
+		let result = puzzleList.map(p => ({
+			...p,
+			percentSolved: pieces.filter(piece => piece.isSolved).length / p.selectedNumPieces * 100
+		}))
+
+		const d = await puzzles.find().map(async p => {
+			const pieces = await piecesDB.find({puzzleId: p._id.toString()}).toArray();
 			return {
 				...p,
-				percentSolved: pieces.filter(piece => piece.puzzleId === p._id.toString() && piece.isSolved).length / p.selectedNumPieces * 100
+				percentSolved: pieces.filter(piece => piece.isSolved).length / p.selectedNumPieces * 100
 			}
-		}).toArray();
-
-		res.send(d)
+		})
+		
+		res.send(result)
 
 	}).catch(err => {
 		throw new Error(err)
