@@ -2200,11 +2200,14 @@ class Puzzly {
 
 	wrapPiecesAroundBoard(){
 		let currentLineEnd = this.config.piecesPerSideHorizontal;
-		let currentX = this.config.boardBoundary, currentY = this.config.boardBoundary - this.largestPieceSpan;
+		let currentX = this.config.boardBoundary;
+		let currentY = this.config.boardBoundary - this.config.pieceSize - this.config.connectorSize;
 		
 		const directions = ["right", "down", "left", "up"];
 		let direction = directions[0];
-		let layerCounter = 1;
+		let layerCounter = 0;
+		const tipOverPieces = [];
+
 
 		this.pieces.forEach((p, i) => {
 			const el = this.getElementByPieceId(p.id);
@@ -2214,21 +2217,28 @@ class Puzzly {
 
 			el.style.left = this.getPxString(currentX);
 			el.style.top = this.getPxString(currentY);
+
+			console.log(direction)
 			
-			currentX = direction === "right" ? currentX + w : direction === "left" ? currentX - nextPiece.imgW : currentX;
-			currentY = direction === "down" ? currentY + h : direction === "up" ? currentY - nextPiece.imgH : currentY;
-			
+			let box = tipOverPieces[direction] ? tipOverPieces[direction].getBoundingClientRect() : {right: this.boardBoundingBox.right, bottom: this.boardBoundingBox.bottom, left: this.config.boardBoundary - w, top: this.config.boardBoundary};
+
+			currentX = direction === "right" ? currentX + w : direction === "left" ? currentX - nextPiece.imgW : direction === "down" ? box.right + this.config.connectorSize : direction === "up" ? box.left : 0;
+
+			currentY = direction === "down" ? currentY + h : direction === "up" ? currentY - h : direction === "right" ? box.top - this.largestPieceSpan : direction === "left" ? box.bottom + this.config.connectorSize : 0;
+
 			if(
 				// finished going right, go down
-				(currentY <= this.boardBoundingBox.top - h && currentX >= this.boardBoundingBox.right + layerCounter*this.config.pieceSize)
+				(direction === "right" && currentX > box.right)
 				// finished going down, go left
-				|| (currentX >= this.boardBoundingBox.right && currentY >= this.boardBoundingBox.bottom + layerCounter*this.config.pieceSize)
+				|| (direction === "down" && currentY > box.bottom)
 				// finished going left, go up
-				|| (currentY >= this.boardBoundingBox.bottom && currentX - layerCounter*w <= this.boardBoundingBox.left - layerCounter*this.config.pieceSize)
+				|| (direction === "left" && currentX + w <= box.left)
 				// finished going up, go right
-				|| (currentX <= this.boardBoundingBox.left && currentY - layerCounter*h <= this.boardBoundingBox.top - layerCounter*this.config.pieceSize)
+				|| (direction === "up" && currentY + h <= box.top)
 			){
-				let nextDirectionIndex = directions.indexOf(direction) === directions.length ? 0 : directions.indexOf(direction) + 1;
+				tipOverPieces[direction] = el;
+
+				let nextDirectionIndex = directions.indexOf(direction) === directions.length - 1 ? 0 : directions.indexOf(direction) + 1;
 				direction = directions[nextDirectionIndex];
 				
 				if(directions.indexOf(direction) === directions.length){
