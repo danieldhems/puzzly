@@ -687,7 +687,8 @@ class Puzzly {
 			this.save(this.pieces)
 		}
 
-		this.wrapPiecesAroundBoard();
+		// this.wrapPiecesAroundBoard();
+		this.arrangePieces()
 
 		this.timeStarted = new Date().getTime();
 		addEventListener("beforeunload", function(e) {
@@ -2198,54 +2199,109 @@ class Puzzly {
 		console.log(this.pieceSectors)
 	}
 
-	wrapPiecesAroundBoard(){
-		let currentLineEnd = this.config.piecesPerSideHorizontal;
-		let currentX = this.config.boardBoundary;
-		let currentY = this.config.boardBoundary - this.config.pieceSize - this.config.connectorSize;
+	arrangePieces(){
+		const pieces = this.shuffleArray(this.pieces);
+		let depth = 0;
+		let totalRendered = 0;
+		let currentIndex = 0;
+
+		const sides = ["top", "right", "bottom", "left"];
 		
-		const directions = ["right", "down", "left", "up"];
-		let direction = directions[0];
-		let layerCounter = 0;
-		const tipOverPieces = [];
-
-
-		this.pieces.forEach((p, i) => {
-			const el = this.getElementByPieceId(p.id);
-			const nextPiece = this.getPieceById(p.id+1);
-			const w = el.offsetWidth;
-			const h = el.offsetHeight;
-
-			el.style.left = this.getPxString(currentX);
-			el.style.top = this.getPxString(currentY);
-
-			console.log(direction)
-			
-			let box = tipOverPieces[direction] ? tipOverPieces[direction].getBoundingClientRect() : {right: this.boardBoundingBox.right, bottom: this.boardBoundingBox.bottom, left: this.config.boardBoundary - w, top: this.config.boardBoundary};
-
-			currentX = direction === "right" ? currentX + w : direction === "left" ? currentX - nextPiece.imgW : direction === "down" ? box.right + this.config.connectorSize : direction === "up" ? box.left : 0;
-
-			currentY = direction === "down" ? currentY + h : direction === "up" ? currentY - h : direction === "right" ? box.top - this.largestPieceSpan : direction === "left" ? box.bottom + this.config.connectorSize : 0;
-
-			if(
-				// finished going right, go down
-				(direction === "right" && currentX > box.right)
-				// finished going down, go left
-				|| (direction === "down" && currentY > box.bottom)
-				// finished going left, go up
-				|| (direction === "left" && currentX + w <= box.left)
-				// finished going up, go right
-				|| (direction === "up" && currentY + h <= box.top)
-			){
-				tipOverPieces[direction] = el;
-
-				let nextDirectionIndex = directions.indexOf(direction) === directions.length - 1 ? 0 : directions.indexOf(direction) + 1;
-				direction = directions[nextDirectionIndex];
-				
-				if(directions.indexOf(direction) === directions.length){
-					layerCounter++;
-				}
+		while(totalRendered < pieces.length - 1){
+			totalRendered += this.renderPiecesAlongEdge(sides[currentIndex], pieces.slice(totalRendered), depth);
+			if(currentIndex < sides.length - 1){
+				currentIndex++;
+			} else {
+				currentIndex = 0;
+				depth++;
 			}
-		})
+		}
+	}
+
+	renderPiecesAlongEdge(side, pieces, depth){
+		let currentX, currentY, el, numPiecesRendered = 0, edge;
+
+		const step = this.largestPieceSpan;
+
+		switch(side){
+			case "top":
+				currentX = this.boardBoundingBox.left;
+				currentY = this.boardBoundingBox.top - (depth*this.largestPieceSpan);
+				break;
+			case "right":
+				currentX = this.boardBoundingBox.right + (depth*this.largestPieceSpan);
+				currentY = this.boardBoundingBox.top;
+				break;
+			case "bottom":
+				currentX = this.boardBoundingBox.right;
+				currentY = this.boardBoundingBox.bottom + (depth*this.largestPieceSpan);
+				break;
+			case "left":
+				currentX = this.boardBoundingBox.left - (depth*this.largestPieceSpan);
+				currentY = this.boardBoundingBox.bottom;
+				break;
+			default:;
+		}
+
+		for(let p of pieces){
+			el = this.getElementByPieceId(p.id);
+			
+			switch(side){
+				case "top":
+					el.style.top = this.getPxString(currentY - p.imgH);
+					el.style.left = this.getPxString(currentX);
+					
+					edge = el.offsetLeft + el.offsetWidth;
+
+					if(edge >= this.boardBoundingBox.right){
+						return numPiecesRendered;
+					} else {
+						currentX += step;
+						numPiecesRendered++;
+					}
+					break;
+				case "right":
+					el.style.top = this.getPxString(currentY);
+					el.style.left = this.getPxString(currentX);
+
+					edge = el.offsetTop + el.offsetHeight;
+
+					if(edge > this.boardBoundingBox.bottom){
+						return numPiecesRendered;
+					} else {
+						currentY += step;
+						numPiecesRendered++;
+					}
+					break;
+				case "bottom":
+					el.style.top = this.getPxString(currentY);
+					el.style.left = this.getPxString(currentX - p.imgW);
+
+					edge = el.offsetLeft;
+
+					if(edge < this.boardBoundingBox.left - el.offsetWidth){
+						return numPiecesRendered;
+					} else {
+						currentX -= step;
+						numPiecesRendered++;
+					}
+					break;
+				case "left":
+					el.style.top = this.getPxString(currentY - p.imgH);
+					el.style.left = this.getPxString(currentX - p.imgW);
+
+					edge = el.offsetTop;
+
+					if(edge < this.boardBoundingBox.top){
+						return numPiecesRendered;
+					} else {
+						currentY -= step;
+						numPiecesRendered++;
+					}
+					break;
+				default:;
+			}
+		};
 	}
 
 	shuffleArray(array) {
