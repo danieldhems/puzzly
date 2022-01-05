@@ -669,14 +669,12 @@ class Puzzly {
 
 		// this.drawBackground();
 		this.drawBoardArea();
-
 		this.boardAreaEl = document.getElementById('board-area');
 
 		this.initiFullImagePreviewer();
-
 		this.isFullImageViewerActive = false;
 
-		// this.generatePieceSectorMap();
+		this.generatePieceSectorMap();
 		
 		if(this.progress.length > 0){
 			this.pieces = this.progress;
@@ -684,13 +682,19 @@ class Puzzly {
 			this.initGroupContainerPositions()
 		} else {
 			this.makePieces();
-			this.save(this.pieces)
+			this.pieces = this.shuffleArray(this.pieces);
+			if(!this.debug){
+				this.randomisePiecePositions();
+			}
 		}
 
 		// this.wrapPiecesAroundBoard();
-		this.arrangePieces()
+		// this.arrangePieces()
+
+		this.save(this.pieces)
 
 		this.timeStarted = new Date().getTime();
+
 		addEventListener("beforeunload", function(e) {
 			this.updateElapsedTime();
 		}.bind(this))
@@ -741,6 +745,17 @@ class Puzzly {
 
 				this.canvas.style.transform = `scale(${this.zoomLevel})`;
 			}
+		})
+	}
+
+	randomisePiecePositions(){
+		this.pieces.forEach((p, i) => {
+			let sector = this.pieceSectors[i];
+			let el = this.getElementByPieceId(p.id);
+			let randX = this.getRandomInt(sector.x, sector.x + sector.w - p.imgW);
+			let randY = this.getRandomInt(sector.y, sector.y + sector.h - p.imgH);
+			el.style.top = this.getPxString(randX);
+			el.style.left = this.getPxString(randY);
 		})
 	}
 
@@ -2163,44 +2178,56 @@ class Puzzly {
 		}
 	}
 	
-	// Not sure if I need this
+	// Generate map of sectors that can be used for even dispersal of pieces around outside of puzzle board
 	generatePieceSectorMap(){
-		// Generate bounding boxes for area outside puzzle board, evenly sized based on total number of pieces the puzzle was created with.
-		const totalArea = (this.canvasWidth * this.canvasHeight - this.boardSize.width * this.boardSize.height) / this.largestPieceSpan;
-		const pieceSectorSize = this.largestPieceSpan;
-		const wh = {w: pieceSectorSize, h: pieceSectorSize};
+		const totalArea = ((this.canvasWidth * this.canvasHeight) - (this.boardSize.width * this.boardSize.height));
+		const pieceSectorSize = totalArea / this.config.selectedNumPieces;
 
-		let xPos = 0, yPos = 0;
+		const sqr = Math.abs(Math.sqrt(pieceSectorSize));
+		const area = {w: sqr, h: sqr};
 
+		const quadrants = [
+			{x:0,y:0,w:this.canvasWidth,h:this.config.boardBoundary},
+			{x:0,y:this.config.boardBoundary,w:this.config.boardBoundary,h:this.boardSize.height},
+			{x:this.config.boardBoundary + this.boardSize.width,y:this.config.boardBoundary,w:this.config.boardBoundary,h:this.boardSize.height},
+			{x:0,y:this.config.boardBoundary + this.boardSize.height,w:this.canvasWidth,h:this.config.boardBoundary},
+		];
+
+		let quad = 0;
+		let currentQuadrant = quadrants[quad];
+		let xPos = currentQuadrant.x, yPos = currentQuadrant.y;
+		let thisSector;
+		
 		for(let i=0, n=this.config.selectedNumPieces; i<n; i++){
-			this.pieceSectors[i] = {
+			thisSector = this.pieceSectors[i] = {
 				id: i,
 				x: xPos,
 				y: yPos,
-				...wh,
+				...area,
 			}
 
-			if(xPos < this.boardBoundingBox.left && xPos + pieceSectorSize >= this.boardBoundingBox.left && xPos + pieceSectorSize < this.canvasWidth && (yPos >= this.boardBoundingBox.top && yPos <= this.boardBoundingBox.bottom - pieceSectorSize)){
-				xPos = this.boardBoundingBox.right;
-			} else if(xPos + pieceSectorSize >= this.canvasWidth){
-				xPos = 0;
+			if(thisSector.x + (thisSector.w*2) < currentQuadrant.x + currentQuadrant.w){
+				xPos += sqr;
 			} else {
-				xPos += pieceSectorSize;
-			}
-
-			if(yPos + pieceSectorSize >= this.canvasHeight){
-				yPos = 0;
-			} else if(xPos === 0) {
-				yPos += pieceSectorSize;
+				if(yPos + (sqr*2) > currentQuadrant.y + currentQuadrant.h){
+					// Finished last quadrant, now pick another at random to continue
+					if(quad === quadrants.length - 1){
+						currentQuadrant = quadrants[this.getRandomInt(0, 3)];
+					} else {
+						quad++;
+						currentQuadrant = quadrants[quad];
+					}
+					xPos = currentQuadrant.x;
+					yPos = currentQuadrant.y;
+				} else {
+					xPos = currentQuadrant.x;
+					yPos += sqr;
+				}
 			}
 		}
-
-		this.pieceSectors = this.shuffleArray(this.pieceSectors);
-		console.log(this.pieceSectors)
 	}
 
 	arrangePieces(){
-		const pieces = this.shuffleArray(this.pieces);
 		let depth = 0;
 		let totalRendered = 0;
 		let currentIndex = 0;
@@ -2362,26 +2389,16 @@ class Puzzly {
 
 	assignInitialPieceData(imgX, imgY, canvX, canvY, piece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i){
 		const pieceDimensions = this.getPieceWidthAndHeightWithConnectors(piece);
-		const sectorID = this.getRandomInt(0,11);
 
-		if(!this.sectors[sectorID]){
-			this.sectors[sectorID] = 1;
-		} else {
-			this.sectors[sectorID]++;
-		}
-
-		const randPos = this.getRandomPositionOutsideBoardArea(sectorID);
-		// const randSector = this.pieceSectors[i];
 		return Object.assign({
 			puzzleId: this.puzzleId,
-			shapeId: piece._shape_id,
 			id: i,
 			imgX: imgX,
 			imgY: imgY,
 			imgW: pieceDimensions.width,
 			imgH: pieceDimensions.height,
-			pageX: this.config.debug ? canvX : randPos.left,
-			pageY: this.config.debug ? canvY : randPos.top,
+			pageX: this.config.debug ? canvX : 0,
+			pageY: this.config.debug ? canvY : 0,
 			isInnerPiece: Utils.isInnerPiece(piece),
 			isVisible: true,
 			connections: [],
