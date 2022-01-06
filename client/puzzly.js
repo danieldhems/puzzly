@@ -683,7 +683,7 @@ class Puzzly {
 		} else {
 			this.makePieces();
 			this.pieces = this.shuffleArray(this.pieces);
-			if(!this.debug){
+			if(!this.config.debug){
 				this.randomisePiecePositions();
 			}
 		}
@@ -2488,8 +2488,8 @@ class Puzzly {
 	getTopLeftCornerBoundingBox(){
 		return {
 			top: this.config.boardBoundary,
-			right: this.config.boardBoundary + this.largestPieceSpan,
-			bottom: this.config.boardBoundary + this.largestPieceSpan,
+			right: this.config.boardBoundary + this.config.connectorTolerance,
+			bottom: this.config.boardBoundary + this.config.connectorTolerance,
 			left: this.config.boardBoundary,
 		}
 	}
@@ -2498,24 +2498,24 @@ class Puzzly {
 		return {
 			top: this.config.boardBoundary,
 			right: this.canvasWidth - this.config.boardBoundary,
-			bottom: this.config.boardBoundary + this.largestPieceSpan,
-			left: this.canvasWidth - this.config.boardBoundary - this.largestPieceSpan,
+			bottom: this.config.boardBoundary + this.config.connectorTolerance,
+			left: this.canvasWidth - this.config.boardBoundary - this.config.connectorTolerance,
 		}
 	}
 
 	getBottomRightCornerBoundingBox(){
 		return {
-			top: this.canvasHeight - this.config.boardBoundary - this.largestPieceSpan,
+			top: this.canvasHeight - this.config.boardBoundary - this.config.connectorTolerance,
 			right: this.canvasWidth - this.config.boardBoundary,
 			bottom: this.canvasHeight - this.config.boardBoundary,
-			left: this.canvasWidth - this.config.boardBoundary - this.largestPieceSpan,
+			left: this.canvasWidth - this.config.boardBoundary - this.config.connectorTolerance,
 		}
 	}
 
 	getBottomLeftCornerBoundingBox(){
 		return {
-			top: this.canvasHeight - this.config.boardBoundary - this.largestPieceSpan,
-			right: this.config.boardBoundary + this.largestPieceSpan,
+			top: this.canvasHeight - this.config.boardBoundary - this.config.connectorTolerance,
+			right: this.config.boardBoundary + this.config.connectorTolerance,
 			bottom: this.canvasHeight - this.config.boardBoundary,
 			left: this.config.boardBoundary,
 		}
@@ -2836,24 +2836,38 @@ class Puzzly {
 		}
 
 		
-		let el = this.getElementByPieceId(piece.id)
+		let el = this.getElementByPieceId(piece.id);
 		let elBoundingBox = this.getTrueBoundingBox(el);
+		let elBBWithinTolerance = {};
+
 		if(Utils.isTopLeftCorner(piece)){
-			if(this.hasCollision(elBoundingBox, this.getTopLeftCornerBoundingBox())){
+			elBBWithinTolerance = elBoundingBox;
+			elBBWithinTolerance.right = elBoundingBox.left + this.config.connectorTolerance;
+			elBBWithinTolerance.bottom = elBoundingBox.top + this.config.connectorTolerance;
+			if(this.hasCollision(elBBWithinTolerance, this.getTopLeftCornerBoundingBox())){
 				return "top-left";
 			}
 		}
 		if(Utils.isTopRightCorner(piece)){
+			elBBWithinTolerance = elBoundingBox;
+			elBBWithinTolerance.left = elBoundingBox.right - this.config.connectorTolerance;
+			elBBWithinTolerance.bottom = elBoundingBox.top + this.config.connectorTolerance;
 			if(this.hasCollision(elBoundingBox, this.getTopRightCornerBoundingBox())){
 				return "top-right";
 			}
 		}
 		if(Utils.isBottomRightCorner(piece)){
+			elBBWithinTolerance = elBoundingBox;
+			elBBWithinTolerance.left = elBoundingBox.right - this.config.connectorTolerance;
+			elBBWithinTolerance.top = elBoundingBox.bottom - this.config.connectorTolerance;
 			if(this.hasCollision(elBoundingBox, this.getBottomRightCornerBoundingBox())){
 				return "bottom-right";
 			}
 		}
 		if(Utils.isBottomLeftCorner(piece)){
+			elBBWithinTolerance = elBoundingBox;
+			elBBWithinTolerance.right = elBoundingBox.left + this.config.connectorTolerance;
+			elBBWithinTolerance.top = elBoundingBox.bottom - this.config.connectorTolerance;
 			if(this.hasCollision(elBoundingBox, this.getBottomLeftCornerBoundingBox())){
 				return "bottom-left";
 			}
