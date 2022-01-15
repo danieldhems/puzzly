@@ -73,9 +73,9 @@ function drawBackground(){
 
 drawBackground();
 
-const imageUploadCtrlEl = document.querySelector('#image-upload-ctrl');
+const imageUploadCtrlEl = document.querySelector('#puzzle-setup--image_input');
 const puzzleSetupCtrlEl = document.querySelector('#puzzle-setup-ctrl');
-const imagePreviewEl = document.querySelector('#image-preview');
+const imagePreviewEl = document.querySelector('#puzzle-setup--image_preview');
 
 var imageUpload = document.querySelector('#upload');
 var newPuzzleForm = document.querySelector('#form-container');
@@ -320,8 +320,9 @@ startDebugBtn.addEventListener('click', function(e){
 function onUploadSuccess(response){
 	imageUploadCtrlEl.style.display = "none";
 
-	puzzleSetupCtrlEl.style.display = "flex";
 	imageCrop.style.display = "block";
+
+	imagePreviewEl.style.display = "flex";
 	
 	const imageEl = document.createElement('img');
 	imageEl.addEventListener('load', () => {
@@ -337,6 +338,7 @@ function onUploadSuccess(response){
 	const uploadPath = uploadDir + response.data.path
 	imageEl.src = uploadPath;
 	imagePreviewEl.appendChild(imageEl);
+	imagePreviewEl.style.display = 'flex';
 	PuzzlyCreator.puzzleSetup.sourceImage.path = uploadPath;
 	PuzzlyCreator.puzzleSetup.sourceImage.dimensions = response.data.dimensions;
 }
@@ -476,11 +478,24 @@ class Puzzly {
 		this.filterBtn = document.getElementById('filter-pieces');
 		this.filterBtnOffLabel = document.getElementById('inner-pieces-on');
 		this.filterBtnOnLabel = document.getElementById('inner-pieces-off');
-
+		
 		this.soundsBtn = document.getElementById('sound-toggle');
 		this.soundsBtnOnLabel = document.getElementById('sounds-on');
 		this.soundsBtnOffLabel = document.getElementById('sounds-off');
 		this.debugInfoWindow = document.getElementById('debug-info');
+
+		this.sendToEdgeShuffleBtn = document.getElementById('shuffle-pieces');
+		this.sendToEdgeNeatenBtn = document.getElementById('neaten-pieces');
+
+		this.sendToEdgeShuffleBtn.addEventListener('click', e => {
+			let pieces = this.shuffleArray(this.pieces.filter(p => !p.isSolved && !Utils.hasGroup(p)));
+			this.randomisePiecePositions(pieces);
+		})
+
+		this.sendToEdgeNeatenBtn.addEventListener('click', e => {
+			let pieces = this.shuffleArray(this.pieces.filter(p => !p.isSolved && !Utils.hasGroup(p)));
+			this.arrangePieces(pieces);
+		})
 
 		if(this.innerPiecesVisible){
 			this.filterBtnOnLabel.style.display = 'block';
@@ -587,7 +602,7 @@ class Puzzly {
 	showPiece(piece){
 		const el = this.getElementByPieceId(piece.id)
 		el.style.display = 'block';
-		el.style.zIndex = '100';
+		// el.style.zIndex = '100';
 		piece.isVisible = true;
 		return piece;
 	}
@@ -595,7 +610,7 @@ class Puzzly {
 	hidePiece(piece){
 		const el = this.getElementByPieceId(piece.id)
 		el.style.display = 'none';
-		el.style.zIndex = '-1';
+		// el.style.zIndex = '-1';
 		piece.isVisible = false;
 		return piece;
 	}
@@ -684,7 +699,7 @@ class Puzzly {
 			this.makePieces();
 			this.pieces = this.shuffleArray(this.pieces);
 			if(!this.config.debug){
-				this.randomisePiecePositions();
+				this.randomisePiecePositions(this.pieces);
 			}
 		}
 
@@ -698,12 +713,6 @@ class Puzzly {
 		addEventListener("beforeunload", function(e) {
 			this.updateElapsedTime();
 		}.bind(this))
-
-		this.canvas.addEventListener('mouseover', e => {
-			let el = e.target;
-			let piece = this.getPieceByElement(el);
-			// console.log(piece)
-		})
 		
 		this.innerPieces = document.querySelectorAll('.inner-piece');
 
@@ -748,15 +757,34 @@ class Puzzly {
 		})
 	}
 
-	randomisePiecePositions(){
-		this.pieces.forEach((p, i) => {
+	randomisePiecePositions(pieces){
+		pieces.forEach((p, i) => {
 			let sector = this.pieceSectors[i];
 			let el = this.getElementByPieceId(p.id);
 			let randX = this.getRandomInt(sector.x, sector.x + sector.w - p.imgW);
 			let randY = this.getRandomInt(sector.y, sector.y + sector.h - p.imgH);
-			el.style.top = this.getPxString(randX);
-			el.style.left = this.getPxString(randY);
+
+			this.animatePiece(el, randX, randY);
 		})
+	}
+
+	animatePiece(el, x, y){
+		el.keyframes = {
+			top: this.getPxString(y),
+			left: this.getPxString(x),
+		};
+
+		el.animProps = {
+			duration: 300,
+			easing: "ease-out",
+			iterations: 1
+		  }
+		 
+		var animationPlayer = el.animate(el.keyframes, el.animProps);
+		animationPlayer.onfinish = () => {
+			el.style.top = this.getPxString(y);
+			el.style.left = this.getPxString(x);
+		}
 	}
 
 	updateElapsedTime(isComplete = false){
@@ -1140,23 +1168,34 @@ class Puzzly {
 	}
 
 	drawPieceManually(piece){
+		const pieceContainer = document.createElement('div');
+		pieceContainer.classList.add('puzzle-piece')
+		pieceContainer.style.left = piece.pageX + "px";
+		pieceContainer.style.top = piece.pageY + "px";
+		pieceContainer.style.position = "absolute";
+		pieceContainer.style.zIndex = 3;
+
+		pieceContainer.style.width = piece.imgW + "px";
+		pieceContainer.style.height = piece.imgH + 'px';
+		pieceContainer.width = piece.imgW;
+		pieceContainer.height = piece.imgH;
+
+		pieceContainer.setAttribute('data-jigsaw-type', piece.type.join(","))
+		pieceContainer.setAttribute('data-piece-id', piece.id)
+		pieceContainer.setAttribute('data-imgX', piece.imgX)
+		pieceContainer.setAttribute('data-imgy', piece.imgY)
+
 		const el = document.createElement("canvas");
 		const ctx = el.getContext("2d");
 		el.style.position = "absolute";
-		el.style.left = piece.pageX + "px";
-		el.style.top = piece.pageY + "px";
-		el.className = "puzzle-piece";
-		el.style.zIndex = 10;
-
-		el.setAttribute('data-jigsaw-type', piece.type.join(","))
-		el.setAttribute('data-piece-id', piece.id)
-		el.setAttribute('data-imgX', piece.imgX)
-		el.setAttribute('data-imgy', piece.imgY)
+		el.style.top = 0;
+		el.style.left = 0;
+		el.className = "puzzle-piece-canvas";
 
 		if(piece.isInnerPiece){
-			el.className += " inner-piece";
+			pieceContainer.className += " inner-piece";
 			if(!this.innerPiecesVisible){
-				el.style.display = 'none';
+				pieceContainer.style.display = 'none';
 			}
 		}
 
@@ -1164,6 +1203,8 @@ class Puzzly {
 		el.style.height = piece.imgH + 'px';
 		el.width = piece.imgW;
 		el.height = piece.imgH;
+
+		pieceContainer.appendChild(el);
 
 		if(piece.group !== undefined && piece.group !== null && !Number.isNaN(piece.group)){
 			let groupContainer = document.querySelector(`#group-${piece.group}`);
@@ -1174,12 +1215,12 @@ class Puzzly {
 				groupContainer.style.width = this.getPxString(piece.imgW);
 				groupContainer.style.height = this.getPxString(piece.imgH);
 			}
-			el.style.top = this.getPxString(piece.pageY);
-			el.style.left = this.getPxString(piece.pageX);
-			groupContainer.append(el);
+			pieceContainer.style.top = this.getPxString(piece.pageY);
+			pieceContainer.style.left = this.getPxString(piece.pageX);
+			groupContainer.append(pieceContainer);
 			this.canvas.appendChild(groupContainer);
 		} else {
-			this.canvas.appendChild(el);
+			this.canvas.appendChild(pieceContainer);
 		}
 
 		ctx.strokeStyle = '#000';
@@ -1267,6 +1308,15 @@ class Puzzly {
 		// if(leftConnector) this.drawPlugGuides(ctx, leftConnector)
 		ctx.clip(path)
 		ctx.drawImage(this.SourceImage, piece.imgX, piece.imgY, piece.imgW, piece.imgH, 0, 0, piece.imgW, piece.imgH);
+
+		const coverEl = document.createElement('div');
+		coverEl.classList.add('puzzle-piece-cover');
+		coverEl.style.position = 'absolute';
+		coverEl.style.left = '0';
+		coverEl.style.top = '0';
+		coverEl.style.width = this.getPxString(piece.imgW);
+		coverEl.style.height = this.getPxString(piece.imgH);
+		pieceContainer.appendChild(coverEl);
 	}
 
 	initGroupContainerPositions(){
@@ -1298,7 +1348,7 @@ class Puzzly {
 		canvasEl.setAttribute('data-piece-id', piece.id)
 		canvasEl.setAttribute('data-imgX', piece.imgX)
 		canvasEl.setAttribute('data-imgy', piece.imgY)
-		canvasEl.style.zIndex = 10;
+		canvasEl.style.zIndex = 3;
 		canvasEl.setAttribute('width', piece.imgW);
 		canvasEl.setAttribute('height', piece.imgH);
 		canvasEl.style.position = "absolute";
@@ -1308,7 +1358,7 @@ class Puzzly {
 
 		canvasEl.addEventListener('mouseenter', e => {
 			const allPieces = document.querySelectorAll('.puzzle-piece');
-			allPieces.forEach(p => p.style.zIndex = 10);
+			// allPieces.forEach(p => p.style.zIndex = 10);
 		})
 
 		const cvctx = canvasEl.getContext("2d");
@@ -1373,29 +1423,31 @@ class Puzzly {
 
 	onMouseDown(e){
 		let element, diffX, diffY, thisPiece;
-		if(e.target.getAttribute('data-is-solved')){
-			return;
-		}
 		if(e.which === 1){
-			if(e.target.classList.contains("puzzle-piece")){
-				this.movingElement = e.target;
+			if(e.target.classList.contains("puzzle-piece-cover")){
+				this.movingElement = e.target.parentNode;
+
+				if(this.movingElement.getAttribute('data-is-solved')){
+					return;
+				}
+
 				this.debugInfoSetReadout(this.debugInfoRows.draggedEl, `Piece ID: ${this.movingElement.getAttribute('data-piece-id')}<br/>Piece type: ${this.movingElement.getAttribute('data-jigsaw-type')}`)
 
-				thisPiece = this.pieces.find(p => p.id === parseInt(e.target.getAttribute("data-piece-id")));
+				thisPiece = this.pieces.find(p => p.id === parseInt(this.movingElement.getAttribute("data-piece-id")));
 				if(thisPiece.isSolved){
 					return;
 				}
 				if(Utils.hasGroup(thisPiece)){
 					this.isMovingSinglePiece = false;
 
-					this.movingElement = this.getGroupTopContainer(e.target);
+					this.movingElement = this.getGroupTopContainer(this.movingElement);
 					this.movingPieces = this.pieces.filter(p => p.group === thisPiece.group);
 
 					if(this.movingElement){
 						diffX = e.clientX - Math.floor(this.movingElement.offsetLeft * this.zoomLevel);
 						diffY = e.clientY - Math.floor(this.movingElement.offsetTop * this.zoomLevel);
 
-						const container = this.getGroupContainer(e.target);
+						const container = this.getGroupContainer(this.movingElement);
 						this.debugInfoSetReadout(this.debugInfoRows['draggedElContainer'], `ID: ${container.getAttribute('id')}`)
 						if(container.classList.contains('subgroup')){
 							this.debugInfoSetReadout(this.debugInfoRows['draggedElTopContainer'], `ID: ${this.movingElement.getAttribute('id')}`)
@@ -1415,11 +1467,12 @@ class Puzzly {
 					this.isMovingSinglePiece = true;
 
 					this.movingElement = this.getElementByPieceId(thisPiece.id);
-					this.movingElement.style.zIndex = 10;
 					diffX = e.clientX - this.movingElement.offsetLeft * this.zoomLevel;
 					diffY = e.clientY - this.movingElement.offsetTop * this.zoomLevel;
 				}
 			}
+
+			this.movingElement.style.zIndex = 10;
 
 			if(e.target.id === "canvas" || e.target.id === "board-area"){
 				this.isCanvasMoving = true;
@@ -1482,7 +1535,8 @@ class Puzzly {
 	}
 
 	onMouseUp(e){
-		const el = e.target;
+		const el = e.target.parentNode;
+		console.log(el)
 		this.isMouseDown = false;
 		let pieces, element;
 
@@ -1564,6 +1618,8 @@ class Puzzly {
 
 			console.log(pieces)
 			this.save(pieces);
+
+			this.movingElement.style.zIndex = 3;
 
 			this.movingElement = null;
 			this.movingPieces = [];
@@ -1660,8 +1716,9 @@ class Puzzly {
 		this.pieces = this.pieces.map(p => {
 			if(hasGroup && p.group === group || p.id === pieces[0].id){
 				const el = this.getElementByPieceId(p.id);
+				console.log(el)
 				el.setAttribute("data-is-solved", true);
-				el.style.zIndex = 2;
+				el.style.zIndex = 3;
 				return {
 					...p,
 					isSolved: true
@@ -2227,15 +2284,20 @@ class Puzzly {
 		}
 	}
 
-	arrangePieces(){
+	arrangePieces(pieces){
+		this.arrangedPieces = [];
 		let depth = 0;
+		let start = 0;
 		let totalRendered = 0;
 		let currentIndex = 0;
+		let currentSet;
 
 		const sides = ["top", "right", "bottom", "left"];
 		
 		while(totalRendered < pieces.length - 1){
-			totalRendered += this.renderPiecesAlongEdge(sides[currentIndex], pieces.slice(totalRendered), depth);
+			totalRendered += this.renderPiecesAlongEdge(sides[currentIndex], pieces.slice(-totalRendered), depth);
+
+			start += totalRendered;
 			if(currentIndex < sides.length - 1){
 				currentIndex++;
 			} else {
@@ -2243,9 +2305,20 @@ class Puzzly {
 				depth++;
 			}
 		}
+		/*
+		console.log(this.arrangedPieces)
+		this.arrangedPieces.forEach(p => {
+			let el = this.getElementByPieceId(p.id);
+			el.style.top = this.getPxString(p.y);
+			el.style.left = this.getPxString(p.x);
+			this.animatePiece(el, p.x, p.y)
+		})
+		*/
 	}
 
 	renderPiecesAlongEdge(side, pieces, depth){
+		// console.log('renderPiecesAlongEdge', side, pieces, depth)
+		console.log('renderPiecesAlongEdge', pieces)
 		let currentX, currentY, el, numPiecesRendered = 0, edge;
 
 		const step = this.largestPieceSpan;
@@ -2269,18 +2342,23 @@ class Puzzly {
 				break;
 			default:;
 		}
-
+		
+		let i = 0;
 		for(let p of pieces){
+			if(i === pieces.length - 1) return pieces.length;
+
 			el = this.getElementByPieceId(p.id);
 			
 			switch(side){
 				case "top":
+					// this.arrangedPieces.push({id: p.id, x: currentX, y: currentY - p.imgH});
 					el.style.top = this.getPxString(currentY - p.imgH);
 					el.style.left = this.getPxString(currentX);
+					this.animatePiece(el, currentX, currentY - p.imgH)
 					
 					edge = el.offsetLeft + el.offsetWidth;
 
-					if(edge >= this.boardBoundingBox.right){
+					if(edge >= this.config.boardBoundary + this.boardSize.width){
 						return numPiecesRendered;
 					} else {
 						currentX += step;
@@ -2288,12 +2366,14 @@ class Puzzly {
 					}
 					break;
 				case "right":
+					// this.arrangedPieces.push({id: p.id, x: currentX, y: currentY})
 					el.style.top = this.getPxString(currentY);
 					el.style.left = this.getPxString(currentX);
+					this.animatePiece(el, currentX, currentY)
 
 					edge = el.offsetTop + el.offsetHeight;
 
-					if(edge > this.boardBoundingBox.bottom){
+					if(edge > this.config.boardBoundary + this.boardSize.height){
 						return numPiecesRendered;
 					} else {
 						currentY += step;
@@ -2301,12 +2381,14 @@ class Puzzly {
 					}
 					break;
 				case "bottom":
+					// this.arrangedPieces.push({id: p.id, x: currentX - p.imgW, y: currentY})
 					el.style.top = this.getPxString(currentY);
 					el.style.left = this.getPxString(currentX - p.imgW);
+					this.animatePiece(el, currentX - p.imgW, currentY)
 
 					edge = el.offsetLeft;
 
-					if(edge < this.boardBoundingBox.left - el.offsetWidth){
+					if(edge < this.config.boardBoundary - el.offsetWidth){
 						return numPiecesRendered;
 					} else {
 						currentX -= step;
@@ -2314,8 +2396,10 @@ class Puzzly {
 					}
 					break;
 				case "left":
+					// this.arrangedPieces.push({id: p.id, x: currentX - p.imgW, y: currentY - p.imgH})
 					el.style.top = this.getPxString(currentY - p.imgH);
 					el.style.left = this.getPxString(currentX - p.imgW);
+					this.animatePiece(el, currentX - p.imgW, currentY - p.imgH)
 
 					edge = el.offsetTop;
 
@@ -2328,6 +2412,8 @@ class Puzzly {
 					break;
 				default:;
 			}
+
+			i++;
 		};
 	}
 
@@ -2531,7 +2617,7 @@ class Puzzly {
 	}
 
 	getGroupContainer(arg){
-		if(arg instanceof HTMLCanvasElement){
+		if(arg instanceof HTMLDivElement){
 			return arg.parentNode;
 		}
 		if(typeof arg === 'number'){
@@ -3632,9 +3718,9 @@ class Puzzly {
 		})
 
 		const elA = this.getElementByPieceId(pieceA.id);
-		elA.style.zIndex = 10;
 		const elB = this.getElementByPieceId(pieceB.id);
-		elB.style.zIndex = 10;
+		// elA.style.zIndex = 10;
+		// elB.style.zIndex = 10;
 
 		// this.createWrapperForGroup(groupId);
 		this.createGroupContainer(elA, elB, groupId)

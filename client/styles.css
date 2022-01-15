@@ -29,6 +29,10 @@ body {
     align-items: center;
 }
 
+.flex {
+    display: flex;
+}
+
 #canvas {
     transform-origin: 0 0;
 }
@@ -43,10 +47,6 @@ body {
     align-items: center;
     width: 100%;
     height: 100%;
-}
-
-.form-page {
-    display: none;
 }
 
 .form-control {
@@ -162,18 +162,30 @@ label {
     display: flex;
 }
 
-#puzzle-setup-ctrl {
-    flex-direction: column;
+#puzzle-setup {
+    flex-direction: row;
+    width: 100%;
 }
 
-#puzzle-size-container {
+#puzzle-setup--image {
+    width: 40%;
     display: flex;
-    flex-direction: column;
+}
+
+#puzzle-setup--image_input {
+
+}
+
+#puzzle-setup--image_preview {
+    display: none;
+}
+#puzzle-setup--image_preview img {
     width: 100%;
 }
 
-#puzzle-size-input-field {
-    width: 100%;
+#puzzle-setup--options {
+    width: 60%;
+    display: flex;
 }
 
 #full-image-viewer {

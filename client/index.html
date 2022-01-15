@@ -14,40 +14,43 @@
   <body style="margin: 0;">
     <div id="form-container">
       <form enctype="multipart/form-data">
-        <div id="image-upload-ctrl" class="form-control form-page centered" data-page-num="0">
-          <div>
-            <label id="image-upload-label" for="upload">Choose your image</label>
-            <input name="image" id="upload" type="file" value="No file chosen" />
-          </div>
-        </div>
-        <div id="puzzle-shape-ctrl" class="form-control form-page centered" data-page-num="1">
-          <div>
-            <p>Choose puzzle shape</p>
-            <select name="puzzle-shape">
-              <option value="">Select</option>
-              <option value="square">Square</option>
-              <option value="rectangle">Rectangle</option>
-            </select>
-            <div class="form-navigation">
-              <a href="#" class="previous">Go back</a>
-              <a href="#" class="next">Next</a>
-            </div>
-          </div>
-        </div>
-        <div id="puzzle-setup-ctrl" class="form-control form-page centered-wrapper" data-page-num="3">
-          <div class="centered full-width">
-            <p>Drag the white square to select the part of the image you'd like to make your puzzle from<br/><small>(The parts of the image outside the white box will be cropped)</small></p>
-          </div>
-          <div class="centered full-width">
-            <div id="image-preview"></div>
-          </div>
-          <div id="puzzle-size-container">
-            <div id="puzzle-num-pieces-ctrl">
-              <label for="customRange3" class="form-label">How many pieces?</label>
-            </div>
+        <!--
+          <div id="image-upload-ctrl" class="form-control form-page centered form-page"></div>
+          <div id="puzzle-shape-ctrl" class="form-control form-page centered form-page">
             <div>
-              <label for="puzzle-size-input-field" id="puzzle-size-input-label"></label>
-              <input type="range" class="form-range" min="0" max="19" id="puzzle-size-input-field">
+              <p>Choose puzzle shape</p>
+              <select name="puzzle-shape">
+                <option value="">Select</option>
+                <option value="square">Square</option>
+                <option value="rectangle">Rectangle</option>
+              </select>
+              <div class="form-navigation">
+                <a href="#" class="previous">Go back</a>
+                <a href="#" class="next">Next</a>
+              </div>
+            </div>
+          </div>
+        -->
+        <div id="puzzle-setup" class="form-page">
+          <!--
+            <div>
+              <p>Drag the white square to select the part of the image you'd like to make your puzzle from<br/><small>(The parts of the image outside the white box will be cropped)</small></p>
+            </div>
+          -->
+          <div class="flex">
+            <div id="puzzle-setup--image">
+              <div id="puzzle-setup--image_input">
+                <label id="image-upload-label" for="upload">Choose your image</label>
+                <input name="image" id="upload" type="file" value="No file chosen" />
+              </div>
+              <div id="puzzle-setup--image_preview"></div>
+            </div>
+            <div id="puzzle-setup--options">
+              <p>How many pieces?</p>
+              <div>
+                <label for="puzzle-size-input-field" id="puzzle-size-input-label"></label>
+                <input type="range" class="form-range" min="0" max="19" id="puzzle-size-input-field">
+              </div>
             </div>
           </div>
           <div class="form-ctrl">
@@ -82,6 +85,12 @@
       <div id="sound-toggle">
         <span id='sounds-off'>Turn sound off</span>
         <span id='sounds-on'>Turn sound on</span>
+      </div>
+      <div id="shuffle-pieces">
+        <span id=''>Send pieces to edge: Shuffle</span>
+      </div>
+      <div id="neaten-pieces">
+        <span id=''>Send pieces to edge: Neaten</span>
       </div>
       <a href="/gallery" title="All puzzles">Go back</a>
     </div>
