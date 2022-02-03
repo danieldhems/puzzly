@@ -28,6 +28,9 @@ async function upload(req, res){
                         dimensions: result.pages[0]
                     }
                 });
+            })
+            .catch(e => {
+                res.send(new Error(e))
             });
         }
     } catch (err) {

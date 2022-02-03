@@ -184,11 +184,35 @@ api.updateTime = function(req, res) {
 	})
 }
 
+api.unsolvePiece = function(req, res) {
+	client.connect().then(async (client, err) => {
+		assert.strictEqual(err, undefined);
+		db = client.db(dbName);
+		const id = req.params.id;
+		
+		let pieces = db.collection(piecesCollection);
+		console.log('attempt unsolve piece', id)
+
+		pieces.findOne({_id: new ObjectID(id)}, function(err, result, a){
+			if(err) throw new Error(err);
+			console.log('found piece', err, result)
+			res.status(200).send("ok")
+		})
+
+		// pieces.updateOne({_id: id}, {"$set": {isSolved: false}}, function(err, result){
+		// 	if(err) throw new Error(err);
+		// 	console.log('Unsolved piece', result)
+		// 	res.status(200).send("ok")
+		// })
+	})
+}
+
 // Set API CRUD endpoints
 router.get('/', api.read);
 router.get('/fetchAll', api.fetchAll);
 router.get('/removeAll', api.removeAll);
 router.put('/updateTime/:id', api.updateTime);
+router.put('/unsolvePiece/:id', api.unsolvePiece);
 router.get('/:id', api.read);
 router.post('/', api.create);
 router.put('/:id', api.update);

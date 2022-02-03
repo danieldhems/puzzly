@@ -34,6 +34,10 @@ app.get('/removeAll', function(req, res){
 	res.sendFile(path.join(__dirname, '../client/removeAll.html'));
 });
 
+app.get('/unsolvePiece', function(req, res){
+	res.sendFile(path.join(__dirname, '../client/unsolvePiece.html'));
+});
+
 // puzzleApi.clean();
 
 module.exports = app;

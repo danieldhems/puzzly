@@ -79,6 +79,6 @@ export default {
 	},
 
 	hasGroup(piece){
-		return piece.group !== undefined && piece.group !== null && !Number.isNaN(piece);
+		return piece.group !== undefined && piece.group !== null && !Number.isNaN(piece.group);
 	}
 }
