@@ -3,6 +3,7 @@ var	express = require('express');
 var	bodyParser = require('body-parser');
 var fileUpload = require('express-fileupload');
 var puzzleApi = require('./api/puzzle.js');
+var piecesApi = require('./api/pieces.js');
 
 var app = express();
 
@@ -18,6 +19,7 @@ app.use(bodyParser.json({limit: '50mb'}));
 
 // Configure API endpoints
 app.use('/api/puzzle', puzzleApi.router);
+app.use('/api/pieces', piecesApi.router);
 app.use('/api/upload', require('./api/upload.js'));
 app.use('/api/toggleVisibility', require('./api/pieceFiltering.js'));
 

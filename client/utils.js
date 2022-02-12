@@ -80,5 +80,11 @@ export default {
 
 	hasGroup(piece){
 		return piece.group !== undefined && piece.group !== null && !Number.isNaN(piece.group);
+	},
+
+	querySelectorFrom(selector, elements) {
+		return [].filter.call(elements, function(element) {
+			return element.matches(selector);
+		});
 	}
 }

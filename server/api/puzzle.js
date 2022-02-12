@@ -34,7 +34,6 @@ module.exports.clean = function(){
 
 var api = {
 	create: function(req, res){
-		console.log(req)
 		client.connect().then((client, err) => {
 			assert.strictEqual(err, undefined);
 			db = client.db(dbName);
@@ -63,10 +62,12 @@ var api = {
 			const pieces = db.collection(piecesCollection);
 
 			const puzzleQuery = { _id: new ObjectID(puzzleId) }
-			const piecesQuery = { puzzleId: puzzleId }
+			const piecesQuery = { puzzleId: new ObjectID(puzzleId) }
 
 		  const puzzle = await puzzles.findOne(puzzleQuery);
-		  const piecesResult = await pieces.find(piecesQuery).toArray();
+		  const piecesResult = await pieces.find().toArray();
+		  console.log('pieces found for puzzle', puzzleId)
+		  console.log(piecesResult)
 
 		  const result = {
 			  ...puzzle,
@@ -77,32 +78,6 @@ var api = {
 		});
 	},
 	update: function(req, res){
-		var data = req.body;
-		var id = req.params.id;
-
-		client.connect().then(async (client, err) => {
-			assert.strictEqual(err, undefined);
-			db = client.db(dbName);
-			
-			let puzzles = db.collection(puzzlesCollection);
-			let pieces = db.collection(piecesCollection);
-			let query, update;
-			
-			if(Array.isArray(data)){
-				data.forEach(d => {
-					query = { puzzleId: d.puzzleId, id: d.id }
-					delete d._id;
-					update = { "$set": {...d}};
-					console.log(update)
-
-					pieces.updateOne(query, update, {upsert: true}, function(err, result){
-						if(err) throw new Error(err);
-					});
-				});
-			}
-
-			res.sendStatus(200)
-		});
 
 	},
 	destroy: function(req, res){
@@ -153,10 +128,17 @@ api.removeAll = function(req, res) {
 	client.connect().then(async (client, err) => {
 		assert.strictEqual(err, undefined);
 		db = client.db(dbName);
-		
-		let puzzles = db.collection(puzzlesCollection);
-		puzzles.deleteMany( function(err, result){
+		let coll;
+		if(req.params.coll === 'puzzles'){
+			coll = db.collection(puzzlesCollection);
+		} else if(req.params.coll === 'pieces'){
+			coll = db.collection(piecesCollection);
+		}
+
+		console.info('Deleting all from collection', coll)
+		coll.deleteMany({}, function(err, result){
 			if(err) throw new Error(err);
+			console.log(result)
 			res.status(200).send("ok")
 		})
 	})
@@ -210,7 +192,7 @@ api.unsolvePiece = function(req, res) {
 // Set API CRUD endpoints
 router.get('/', api.read);
 router.get('/fetchAll', api.fetchAll);
-router.get('/removeAll', api.removeAll);
+router.delete('/removeAll/:coll', api.removeAll);
 router.put('/updateTime/:id', api.updateTime);
 router.put('/unsolvePiece/:id', api.unsolvePiece);
 router.get('/:id', api.read);

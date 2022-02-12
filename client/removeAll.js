@@ -3,8 +3,8 @@ class RemoveAll {
         this.load()
     }
     load(){
-        fetch('/api/puzzle/removeAll', {
-            method: 'GET',
+        fetch('/api/puzzle/removeAll/pieces', {
+            method: 'delete',
             headers: {
                 'content-type': 'application/json'
             }
