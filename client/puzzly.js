@@ -1459,6 +1459,11 @@ class Puzzly {
 		return attrValue ? attrValue.indexOf(',') > -1 ? attrValue.split(',') : [attrValue] : [];
 	}
 
+	getIsSolved(el){
+		const attrValue = this.getDataAttributeValue(el, 'is-solved');
+		return attrValue !== undefined && attrValue !== null && attrValue !== "" ? attrValue === "true" : false;
+	}
+
 	onMouseDown(e){
 		let element, diffX, diffY, thisPiece;
 
@@ -1467,11 +1472,9 @@ class Puzzly {
 
 			if(e.target.classList.contains("puzzle-piece-cover")){
 				element = e.target.parentNode;
-				thisPiece = {
-					id: parseInt(this.getDataAttributeValue(element, 'piece-id')),
-					group: this.getGroup(element),
-					isSolved: this.getDataAttributeValue(element, 'is-solved')
-				}
+				thisPiece = this.getPieceFromElement(element, ['piece-id', 'is-solved', 'group']);
+
+				console.log(thisPiece)
 
 				if(thisPiece.isSolved){
 					return;
@@ -1612,7 +1615,6 @@ class Puzzly {
 			let hasConnection = false, noneFound = false, connection, i = 0;
 
 			if(!this.isMovingSinglePiece){
-				let thisPiece;
 				let group = this.getGroup(el);
 				const piecesToCheck = this.getCollisionCandidatesInGroup(group);
 				console.log(piecesToCheck)
@@ -1630,7 +1632,7 @@ class Puzzly {
 
 						this.snapPiece(p, connection);
 						this.updateConnections(this.getGroup(p));
-						if(this.isCornerConnection(connection) || this.shouldMarkAsSolved(piecesToCheck)){
+						if(this.isCornerConnection(connection) || this.shouldMarkAsSolved(p)){
 							this.markAsSolved(piecesToCheck);
 							if(this.checkCompletion()){
 								this.updateElapsedTime(true)
@@ -1649,7 +1651,14 @@ class Puzzly {
 					i++;
 				}
 
-				this.save(this.getPiecesInGroup(group));
+				const piecesInCurrentGroup = this.getPiecesInGroup(group);
+				const piecesInNewGroup = this.getPiecesInGroup(this.getGroup(el));
+
+				if(hasConnection){
+					this.save(piecesInNewGroup);
+				} else {
+					this.save(piecesInCurrentGroup);
+				}
 			} else {
 				connection = this.checkConnections(el);
 				console.log(connection)
@@ -1662,19 +1671,18 @@ class Puzzly {
 					this.snapPiece(el, connection);
 					this.updateConnections(el);
 
-					let piece = {
-						type: this.getType(el),
-					}
-
-					if(this.isCornerConnection(connection) && this.shouldMarkAsSolved([piece])){
+					if(this.isCornerConnection(connection) && this.shouldMarkAsSolved([el])){
 						this.markAsSolved([el]);
 						if(this.checkCompletion()){
 							this.updateElapsedTime(true)
 						}
 					}
+
+					this.save(this.getPiecesInGroup(this.getGroup(el)))
+				} else {
+					this.save([el])
 				}
 
-				this.save([el])
 			}
 
 			if(this.movingElement){
@@ -1759,7 +1767,7 @@ class Puzzly {
 			let piece = this.getPieceFromElement(pieces[0], ['jigsaw-type', 'is-solved', 'group']);
 			return Utils.isCornerPiece(piece) || this.pieces.filter(p => p.group === pieces[0].group).some(p => Utils.isCornerPiece(p) && p.isSolved)
 		} else {
-			pieces.some(p => {
+			Array.from(pieces).some(p => {
 				let piece = this.getPieceFromElement(p, ['jigsaw-type', 'is-solved']);
 				return Utils.isCornerPiece(piece) && piece.isSolved;
 			})
@@ -2844,7 +2852,8 @@ class Puzzly {
 			type: this.getType(element),
 			connections,
 		}
-
+		
+		console.log(element)
 		console.log(piece)
 
 		const hasRightConnector = Utils.has(piece, "plug", "right") || Utils.has(piece, "socket", "right");
@@ -3810,8 +3819,32 @@ class Puzzly {
 		return document.querySelectorAll(`[data-group='${group}']`)
 	}
 
+	addPiecesToGroup(pieces, group){
+		console.log('addPiecesToGroup', pieces, group)
+		
+		const isTargetGroupSolved = this.isGroupSolved(group);
+		const container = this.getGroupContainer(group);
+
+		pieces.forEach(p => {
+			let posInGroup = this.getElementBoundingBoxRelativeToTopContainer(p, container);
+			this.setElementAttribute(p, "data-connections", this.getConnectionsForPiece(p).join(', '))
+			this.setElementAttribute(p, "data-group", group)
+			this.setElementAttribute(p, "data-position-within-container-top", posInGroup.top)
+			this.setElementAttribute(p, "data-position-within-container-left", posInGroup.left)
+
+			if(isTargetGroupSolved){
+				console.log('target group is solved')
+				this.setElementAttribute(p, "data-is-solved", true)
+			}	
+		});
+
+		const piecesInTargetGroup = this.getPiecesInGroup(group);
+		piecesInTargetGroup.forEach(p =>{
+			this.setElementAttribute(p, "data-connections", this.getConnectionsForPiece(p).join(', '))
+		})
+	}
+
 	addToGroup(piece, group){
-		console.log('addToGroup', piece, group)
 		const formerGroup = this.getGroup(piece);
 		const otherPiecesInFormerGroup = this.getPiecesInGroup(formerGroup);
 
@@ -3829,16 +3862,18 @@ class Puzzly {
 			this.setElementAttribute(piece, "data-is-solved", true)
 		}
 
-		if(this.getDataAttributeValue(piece, 'is-solved')){
-			const piecesInNewGroup = this.getPiecesInGroup(group)
-			piecesInNewGroup.map(el => this.setElementAttribute(el, 'is-solved', true))
+		const pieceIsSolved = this.getPieceFromElement(piece, ['is-solved']).isSolved;
+		const piecesInNewGroup = this.getPiecesInGroup(group);
+
+		if(pieceIsSolved){
+			piecesInNewGroup.forEach(el => this.setElementAttribute(el, 'data-is-solved', true))
 		}
 	}
 	
 	mergeGroups(pieceA, pieceB){
 		console.log('mergeGroup', pieceA, pieceB)
-		const pieceAGroup = this.getPieceFromElement(pieceA, ['group']);
-		const pieceBGroup = this.getPieceFromElement(pieceB, ['group']);
+		const pieceAGroup = this.getGroup(pieceA);
+		const pieceBGroup = this.getGroup(pieceB);
 		const piecesInGroupA = this.getPiecesInGroup(pieceAGroup);
 		const piecesInGroupB = this.getPiecesInGroup(pieceBGroup);
 		if(piecesInGroupA.length > piecesInGroupB.length){
@@ -3849,33 +3884,7 @@ class Puzzly {
 	}
 
 	isGroupSolved(group){
-		return this.pieces.some(p => p.group === group && p.isSolved);
-	}
-
-	addPiecesToGroup(pieces, group){
-		console.log('addPiecesToGroup', pieces, group)
-		
-		const isTargetGroupSolved = this.isGroupSolved(group);
-		const container = this.getGroupContainer(group);
-
-		pieces.forEach(p => {
-			let posInGroup = this.getElementBoundingBoxRelativeToTopContainer(p, container);
-			this.setElementAttribute(p, "data-connections", this.getConnectionsForPiece(p).join(', '))
-			this.setElementAttribute(p, "data-group", group)
-			this.setElementAttribute(p, "data-position-within-container-top", posInGroup.top)
-			this.setElementAttribute(p, "data-position-within-container-left", posInGroup.left)
-
-			if(isTargetGroupSolved){
-				this.setElementAttribute(this.getElementByPieceId(p.id), "data-is-solved", true)
-			}	
-		});
-
-		const piecesInTargetGroup = this.getPiecesInGroup(group);
-		piecesInTargetGroup.forEach(p =>{
-			this.setElementAttribute(p, "data-connections", this.getConnectionsForPiece(p).join(', '))
-		})
-		
-		this.save([...pieces, ...piecesInTargetGroup])
+		return Array.from(this.getPiecesInGroup(group)).some(p => this.getIsSolved(p));
 	}
 
 	initiFullImagePreviewer(){
@@ -3947,7 +3956,7 @@ class Puzzly {
 				data.isInnerPiece = isInnerPiece == "true" ? true : false;
 			}
 			if(k == 'is-solved'){
-				data.isSolved = !!this.getDataAttributeValue(el, 'is-solved') || false;
+				data.isSolved = this.getIsSolved(el);
 			}
 			if(k == 'group'){
 				data.group = this.getGroup(el);
