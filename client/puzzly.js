@@ -1474,7 +1474,7 @@ class Puzzly {
 				element = e.target.parentNode;
 				thisPiece = this.getPieceFromElement(element, ['piece-id', 'is-solved', 'group']);
 
-				console.log(thisPiece)
+				// console.log(thisPiece)
 
 				if(thisPiece.isSolved){
 					return;
@@ -2853,8 +2853,8 @@ class Puzzly {
 			connections,
 		}
 		
-		console.log(element)
-		console.log(piece)
+		// console.log(element)
+		// console.log(piece)
 
 		const hasRightConnector = Utils.has(piece, "plug", "right") || Utils.has(piece, "socket", "right");
 		const hasBottomConnector = Utils.has(piece, "plug", "bottom") || Utils.has(piece, "socket", "bottom");
@@ -3135,7 +3135,8 @@ class Puzzly {
 					}
 				} else {
 					if(Utils.hasGroup(connectingPiece)){
-						// Snapping two groups together	
+						// Snapping two groups together
+						// mark	
 						targetContainer = this.getGroupContainer(connectingPieceEl);
 						let thisContainer = this.getGroupTopContainer(el);
 
@@ -3753,48 +3754,13 @@ class Puzzly {
 
 	setPiecePositionsWithinContainer(el){
 		const pos = this.getElementBoundingBoxRelativeToTopContainer(el);
-		this.setElementAttribute(el, 'data-position-within-container-top', pos.top)
-		this.setElementAttribute(el, 'data-position-within-container-left', pos.left)
-	}
-
-	// Deprecated
-	createWrapperForGroup(groupId){
-		let xPos = this.canvasWidth, yPos = this.canvasHeight;
-		let maxX = 0, maxY = 0;
-		const els = [];
-
-		const pieces = this.pieces.filter(p => p.group === groupId);
-		pieces.map(p => {
-			let el = this.getElementByPieceId(p.id);
-			let elXPos = parseInt(el.style.left);
-			let elYPos = parseInt(el.style.top);
-			xPos = elXPos < xPos ? elXPos : xPos;
-			maxX = elXPos + el.clientWidth > maxX ? elXPos + el.clientWidth : maxX;
-			yPos = elYPos < yPos ? elYPos : yPos;
-			maxY = elYPos + el.clientHeight > maxY ? elYPos + el.clientHeight: maxY;
-			els.push(el);
-		});
-		const width = maxX - xPos;
-		const height = maxY - yPos;
-
-		const wrapperEl = document.createElement('div');
-		this.canvas.appendChild(wrapperEl);
-		wrapperEl.setAttribute('id', `group-${groupId}`)
-		wrapperEl.style.position = 'absolute';
-		wrapperEl.style.top = this.getPxString(yPos);
-		wrapperEl.style.left = this.getPxString(xPos);
-		wrapperEl.style.width = this.getPxString(width);
-		wrapperEl.style.height = this.getPxString(height);
-
-		els.map(el => {
-			wrapperEl.appendChild(el);
-			el.style.top = this.getPxString(parseInt(el.style.top) - yPos);
-			el.style.left = this.getPxString(parseInt(el.style.left) - xPos);
-		});
+		// console.log('updating piece position', el, pos)
+		this.setElementAttribute(el, 'data-position-within-container-top', pos.top);
+		this.setElementAttribute(el, 'data-position-within-container-left', pos.left);
 	}
 
 	createGroup(elementA, elementB){
-		console.log('createGroup', elementA, elementB)
+		// console.log('createGroup', elementA, elementB)
 		const groupId = new Date().getTime();
 
 		this.createGroupContainer(elementA, elementB, groupId)
@@ -3823,17 +3789,12 @@ class Puzzly {
 		console.log('addPiecesToGroup', pieces, group)
 		
 		const isTargetGroupSolved = this.isGroupSolved(group);
-		const container = this.getGroupContainer(group);
 
 		pieces.forEach(p => {
-			let posInGroup = this.getElementBoundingBoxRelativeToTopContainer(p, container);
 			this.setElementAttribute(p, "data-connections", this.getConnectionsForPiece(p).join(', '))
 			this.setElementAttribute(p, "data-group", group)
-			this.setElementAttribute(p, "data-position-within-container-top", posInGroup.top)
-			this.setElementAttribute(p, "data-position-within-container-left", posInGroup.left)
 
 			if(isTargetGroupSolved){
-				console.log('target group is solved')
 				this.setElementAttribute(p, "data-is-solved", true)
 			}	
 		});
@@ -3842,6 +3803,9 @@ class Puzzly {
 		piecesInTargetGroup.forEach(p =>{
 			this.setElementAttribute(p, "data-connections", this.getConnectionsForPiece(p).join(', '))
 		})
+
+		const allPieces = this.getPiecesInGroup(group);
+		allPieces.forEach(p => this.setPiecePositionsWithinContainer(p));
 	}
 
 	addToGroup(piece, group){
@@ -3853,10 +3817,6 @@ class Puzzly {
 		}
 
 		this.setElementAttribute(piece, "data-group", group)
-		
-		const posInContainer = this.getElementBoundingBoxRelativeToTopContainer(piece);
-		this.setElementAttribute(piece, "data-position-within-container-top", posInContainer.top)
-		this.setElementAttribute(piece, "data-position-within-container-left", posInContainer.left)
 
 		if(this.isGroupSolved(group)){
 			this.setElementAttribute(piece, "data-is-solved", true)
@@ -3868,6 +3828,9 @@ class Puzzly {
 		if(pieceIsSolved){
 			piecesInNewGroup.forEach(el => this.setElementAttribute(el, 'data-is-solved', true))
 		}
+
+		const allPieces = this.getPiecesInGroup(group);
+		allPieces.forEach(p => this.setPiecePositionsWithinContainer(p));
 	}
 	
 	mergeGroups(pieceA, pieceB){

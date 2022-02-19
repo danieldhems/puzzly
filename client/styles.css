@@ -274,3 +274,8 @@ label {
     display: table;
     clear: both;
 }
+
+.group-container:focus:not(.subgroup){
+    border: 2px solid;
+    z-index: 99;
+}
