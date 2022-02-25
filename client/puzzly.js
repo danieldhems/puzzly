@@ -724,35 +724,39 @@ class Puzzly {
 
 		this.debugWindowInitialise();
 
+
+
 		window.addEventListener('mouseup', this.onMouseUp.bind(this));
 
-		window.addEventListener('keydown', event => {
-			// https://stackoverflow.com/questions/995914/catch-browsers-zoom-event-in-javascript
-
-			// 107 Num Key  +
-			// 109 Num Key  -
-			// 173 Min Key  hyphen/underscore key
-			// 61 Plus key  +/= key
-			if ((event.ctrlKey || event.metaKey) && (event.which === 61 || event.which === 107 || event.which === 173 || event.which === 109  || event.which === 187  || event.which === 189 || event.which === 48) ) {
-				event.preventDefault();
-				if(event.which === 187){
-					this.zoomLevel += .1;
-				}
-				if(event.which === 189){
-					this.zoomLevel -= .1;
-				}
-				
-				if(event.which === 48){
-					this.zoomLevel = 1;
-				}
-				
-				if(this.isPreviewActive){
-					this.updatePreviewerSizeAndPosition();
-				}
-
-				this.canvas.style.transform = `scale(${this.zoomLevel})`;
+		// window.addEventListener('keydown', this.onKeyDown.bind(this))
+	}
+	
+	onKeyDown(event){
+		// https://stackoverflow.com/questions/995914/catch-browsers-zoom-event-in-javascript
+	
+		// 107 Num Key  +
+		// 109 Num Key  -
+		// 173 Min Key  hyphen/underscore key
+		// 61 Plus key  +/= key
+		if ((event.ctrlKey || event.metaKey) && (event.which === 61 || event.which === 107 || event.which === 173 || event.which === 109  || event.which === 187  || event.which === 189 || event.which === 48) ) {
+			event.preventDefault();
+			if(event.which === 187){
+				this.zoomLevel += .1;
 			}
-		})
+			if(event.which === 189){
+				this.zoomLevel -= .1;
+			}
+			
+			if(event.which === 48){
+				this.zoomLevel = 1;
+			}
+			
+			if(this.isPreviewActive){
+				this.updatePreviewerSizeAndPosition();
+			}
+	
+			this.canvas.style.transform = `scale(${this.zoomLevel})`;
+		}
 	}
 
 	getRandomCoordsFromSectorMap(){
@@ -1242,6 +1246,10 @@ class Puzzly {
 			groupContainer.append(pieceContainer);
 			this.setPiecePositionsWithinContainer(pieceContainer);
 
+			if(piece.isSolved && !this.getDataAttributeValue(groupContainer, 'data-is-solved')){
+				this.setElementAttribute(groupContainer, 'data-is-solved', true);
+			}
+
 			this.canvas.appendChild(groupContainer);
 		} else {
 			this.canvas.appendChild(pieceContainer);
@@ -1449,6 +1457,10 @@ class Puzzly {
 		return attrValue ? parseInt(attrValue) : undefined;
 	}
 
+	getGroupFromContainer(el){
+		return parseInt(el.id.split('-')[1]);
+	}
+
 	getType (el){
 		const attrValue = this.getDataAttributeValue(el, 'jigsaw-type');
 		return attrValue.split(',').map(n => parseInt(n));
@@ -1473,16 +1485,20 @@ class Puzzly {
 			if(e.target.classList.contains("puzzle-piece-cover")){
 				element = e.target.parentNode;
 				thisPiece = this.getPieceFromElement(element, ['piece-id', 'is-solved', 'group']);
-
-				// console.log(thisPiece)
+				console.log(thisPiece)
 
 				if(thisPiece.isSolved){
 					return;
 				}
 
-				// thisPiece = this.pieces.find(p => p.id === parseInt(this.movingElement.getAttribute("data-piece-id")));
-
 				if(Utils.hasGroup(thisPiece)){
+					const container = this.getGroupTopContainer(element);
+					const isGroupSolved = this.getDataAttributeValue(container, 'is-solved');
+
+					if(isGroupSolved){
+						return;
+					}
+
 					this.isMovingSinglePiece = false;
 					this.movingElement = this.getGroupTopContainer(element);
 
@@ -1617,7 +1633,6 @@ class Puzzly {
 			if(!this.isMovingSinglePiece){
 				let group = this.getGroup(el);
 				const piecesToCheck = this.getCollisionCandidatesInGroup(group);
-				console.log(piecesToCheck)
 
 				while(!hasConnection && !noneFound){
 					let p = piecesToCheck[i];
@@ -1631,9 +1646,13 @@ class Puzzly {
 						}
 
 						this.snapPiece(p, connection);
-						this.updateConnections(this.getGroup(p));
+
+						const updatedGroup = this.getGroup(p);
+						this.updateConnections(updatedGroup);
+
 						if(this.isCornerConnection(connection) || this.shouldMarkAsSolved(p)){
-							this.markAsSolved(piecesToCheck);
+							const piecesInGroup = this.getPiecesInGroup(updatedGroup)
+							this.markAsSolved(piecesInGroup);
 							if(this.checkCompletion()){
 								this.updateElapsedTime(true)
 							}
@@ -1678,7 +1697,11 @@ class Puzzly {
 						}
 					}
 
-					this.save(this.getPiecesInGroup(this.getGroup(el)))
+					if(this.getGroup(el)){
+						this.save(this.getPiecesInGroup(this.getGroup(el)))
+					} else {
+						this.save([el])
+					}
 				} else {
 					this.save([el])
 				}
@@ -1774,15 +1797,17 @@ class Puzzly {
 		}
 	}
 
-	// Deprecated
-	markAsSolved(pieces){
-		pieces.map(el => {
-			this.setElementAttribute(el, "data-is-solved", true);
-			el.style.zIndex = 1;
+	markAsSolved(els){
+		let container;
+		if(Utils.hasGroup(els[0])){
+			container = this.getGroupTopContainer(els[0]);
+			this.setElementAttribute(container, 'data-is-solved', true);
+		}
+		els.forEach( piece => {
+			this.setElementAttribute(piece, "data-is-solved", true);
+			piece.style.zIndex = 1;
 		})
 	}
-
-	
 
 	loadAssets(assets){
 		let promises = [];
@@ -2727,7 +2752,6 @@ class Puzzly {
 
 	getElementBoundingBoxRelativeToTopContainer(el){
 		let top = 0, left = 0;
-
 		const recurse = (el) => {
 			// console.log('recurse', el)
 			if(el.classList.contains('subgroup') || el.classList.contains('puzzle-piece')){
@@ -3252,7 +3276,6 @@ class Puzzly {
 						let thisContainer = this.getGroupTopContainer(el);
 						targetContainer = this.getGroupContainer(connectingPieceEl);
 
-
 						this.debugInfoSetReadout(this.debugInfoRows.targetEl, `ID: ${connectingPieceEl.getAttribute('id')}`)
 						this.debugInfoSetReadout(this.debugInfoRows.targetElContainer, `ID: ${thisSubContainer.getAttribute('id')}`)
 						this.debugInfoSetReadout(this.debugInfoRows.targetElTopContainer, `ID: ${thisContainer.getAttribute('id')}`)
@@ -3359,10 +3382,10 @@ class Puzzly {
 				} else {
 					if(Utils.hasGroup(connectingPiece)){
 						// Snapping two groups together
+						console.log('snap problem', el, connectingPieceEl)
 						targetContainer = this.getGroupContainer(connectingPieceEl);
 						thisContainer = this.getGroupTopContainer(el);
 						
-
 						this.debugInfoSetReadout(this.debugInfoRows.targetEl, `ID: ${connectingPieceEl.getAttribute('id')}`)
 						this.debugInfoSetReadout(this.debugInfoRows.targetElContainer, `ID: ${container.getAttribute('id')}`)
 						this.debugInfoSetReadout(this.debugInfoRows.targetElTopContainer, `ID: ${thisContainer.getAttribute('id')}`)
@@ -3752,11 +3775,17 @@ class Puzzly {
 		this.setPiecePositionsWithinContainer(pieceBEl);
 	}
 
-	setPiecePositionsWithinContainer(el){
-		const pos = this.getElementBoundingBoxRelativeToTopContainer(el);
-		// console.log('updating piece position', el, pos)
-		this.setElementAttribute(el, 'data-position-within-container-top', pos.top);
-		this.setElementAttribute(el, 'data-position-within-container-left', pos.left);
+	setPiecePositionsWithinContainer(arg){
+		const updateFn = el => {
+			const pos = this.getElementBoundingBoxRelativeToTopContainer(el);
+			this.setElementAttribute(el, 'data-position-within-container-top', pos.top);
+			this.setElementAttribute(el, 'data-position-within-container-left', pos.left);
+		};
+		if(arg instanceof Array){
+			arg.forEach( updateFn )
+		} else {
+			updateFn(arg);
+		}
 	}
 
 	createGroup(elementA, elementB){
@@ -3773,6 +3802,8 @@ class Puzzly {
 		this.setElementAttribute(elementB, "data-position-within-container-left", pieceBPosWithinContainer.left)
 		this.setElementAttribute(elementB, "data-position-within-container-top", pieceBPosWithinContainer.top)
 
+
+		// flip
 		if(this.isGroupSolved(groupId)){
 			this.setElementAttribute(elementA, "data-is-solved", true)
 			this.setElementAttribute(elementB, "data-is-solved", true)
@@ -3783,6 +3814,12 @@ class Puzzly {
 
 	getPiecesInGroup(group){
 		return document.querySelectorAll(`[data-group='${group}']`)
+	}
+
+	assignPiecesToTopGroup(pieces){
+		const container = this.getGroupTopContainer(pieces[0]);
+		const group = this.getGroupFromContainer(container);
+		pieces.forEach(p => this.setElementAttribute(p, 'data-group', group));
 	}
 
 	addPiecesToGroup(pieces, group){
@@ -3803,9 +3840,6 @@ class Puzzly {
 		piecesInTargetGroup.forEach(p =>{
 			this.setElementAttribute(p, "data-connections", this.getConnectionsForPiece(p).join(', '))
 		})
-
-		const allPieces = this.getPiecesInGroup(group);
-		allPieces.forEach(p => this.setPiecePositionsWithinContainer(p));
 	}
 
 	addToGroup(piece, group){
@@ -3822,28 +3856,38 @@ class Puzzly {
 			this.setElementAttribute(piece, "data-is-solved", true)
 		}
 
+		const posInGroup = this.getElementBoundingBoxRelativeToTopContainer(piece);
+		this.setElementAttribute(piece, 'data-position-within-container-top', posInGroup.top);
+		this.setElementAttribute(piece, 'data-position-within-container-left', posInGroup.left);
+
 		const pieceIsSolved = this.getPieceFromElement(piece, ['is-solved']).isSolved;
 		const piecesInNewGroup = this.getPiecesInGroup(group);
 
 		if(pieceIsSolved){
 			piecesInNewGroup.forEach(el => this.setElementAttribute(el, 'data-is-solved', true))
 		}
-
-		const allPieces = this.getPiecesInGroup(group);
-		allPieces.forEach(p => this.setPiecePositionsWithinContainer(p));
 	}
 	
 	mergeGroups(pieceA, pieceB){
-		console.log('mergeGroup', pieceA, pieceB)
 		const pieceAGroup = this.getGroup(pieceA);
 		const pieceBGroup = this.getGroup(pieceB);
 		const piecesInGroupA = this.getPiecesInGroup(pieceAGroup);
 		const piecesInGroupB = this.getPiecesInGroup(pieceBGroup);
+
+		let pieces, targetGroup;
+
 		if(piecesInGroupA.length > piecesInGroupB.length){
-			this.addPiecesToGroup(piecesInGroupB, pieceAGroup);
+			pieces = piecesInGroupB;
+			targetGroup = pieceAGroup;
 		} else {
-			this.addPiecesToGroup(piecesInGroupA, pieceBGroup);
+			pieces = piecesInGroupA;
+			targetGroup = pieceBGroup;
 		}
+
+		this.addPiecesToGroup(pieces, targetGroup);
+		// const allPieces = this.getPiecesInGroup(targetGroup)
+		// this.assignPiecesToTopGroup(allPieces);
+		this.setPiecePositionsWithinContainer([...piecesInGroupA, ...piecesInGroupB]);
 	}
 
 	isGroupSolved(group){
@@ -3919,7 +3963,14 @@ class Puzzly {
 				data.isInnerPiece = isInnerPiece == "true" ? true : false;
 			}
 			if(k == 'is-solved'){
-				data.isSolved = this.getIsSolved(el);
+				let groupIsSolved;
+				if(this.getGroup(el)){
+					const container = this.getGroupTopContainer(el);
+					if(this.getDataAttributeValue(container, 'is-solved')){
+						groupIsSolved = true;
+					}
+				}
+				data.isSolved = this.getIsSolved(el) || groupIsSolved;
 			}
 			if(k == 'group'){
 				data.group = this.getGroup(el);
@@ -3986,7 +4037,6 @@ class Puzzly {
 	}
 
 	async save(pieces){
-		// console.log('save piece', pieces)
 		const payload = [];
 		const allKeys = [
 			'piece-id', 'piece-id-in-persistence', 'puzzle-id', 'imgx', 'imgy', 'imgw', 'imgh', 'num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type', 'connections', 'connects-to', 'is-inner-piece', 'is-solved', 'group',
