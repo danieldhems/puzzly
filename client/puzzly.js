@@ -1485,7 +1485,6 @@ class Puzzly {
 			if(e.target.classList.contains("puzzle-piece-cover")){
 				element = e.target.parentNode;
 				thisPiece = this.getPieceFromElement(element, ['piece-id', 'is-solved', 'group']);
-				console.log(thisPiece)
 
 				if(thisPiece.isSolved){
 					return;
@@ -3598,8 +3597,8 @@ class Puzzly {
 					topContainer.style.top = this.getPxString(newPos.top);
 					topContainer.style.left = this.getPxString(newPos.left);
 				} else {
-					newPos.top = this.canvasHeight - this.config.boardBoundary - thisPiece.imgH;
-					newPos.left = this.canvasWidth - this.config.boardBoundary - thisPiece.imgW;
+					newPos.top = this.canvasHeight - this.config.boardBoundary - el.offsetHeight;
+					newPos.left = this.canvasWidth - this.config.boardBoundary - el.offsetWidth;
 					el.style.top = newPos.top + "px";
 					el.style.left = newPos.left + "px";
 				}
@@ -3616,7 +3615,7 @@ class Puzzly {
 					topContainer.style.top = this.getPxString(newPos.top);
 					topContainer.style.left = this.getPxString(newPos.left);
 				} else {
-					newPos.top = this.canvasHeight - this.config.boardBoundary - thisPiece.imgH;
+					newPos.top = this.canvasHeight - this.config.boardBoundary - el.offsetHeight;
 					newPos.left = this.config.boardBoundary;
 					el.style.top = newPos.top + "px";
 					el.style.left = newPos.left + "px";
@@ -3802,8 +3801,8 @@ class Puzzly {
 		this.setElementAttribute(elementB, "data-position-within-container-left", pieceBPosWithinContainer.left)
 		this.setElementAttribute(elementB, "data-position-within-container-top", pieceBPosWithinContainer.top)
 
+		this.updateConnections(groupId);
 
-		// flip
 		if(this.isGroupSolved(groupId)){
 			this.setElementAttribute(elementA, "data-is-solved", true)
 			this.setElementAttribute(elementB, "data-is-solved", true)
@@ -3823,8 +3822,6 @@ class Puzzly {
 	}
 
 	addPiecesToGroup(pieces, group){
-		console.log('addPiecesToGroup', pieces, group)
-		
 		const isTargetGroupSolved = this.isGroupSolved(group);
 
 		pieces.forEach(p => {
@@ -3862,6 +3859,8 @@ class Puzzly {
 
 		const pieceIsSolved = this.getPieceFromElement(piece, ['is-solved']).isSolved;
 		const piecesInNewGroup = this.getPiecesInGroup(group);
+
+		this.updateConnections(group);
 
 		if(pieceIsSolved){
 			piecesInNewGroup.forEach(el => this.setElementAttribute(el, 'data-is-solved', true))
