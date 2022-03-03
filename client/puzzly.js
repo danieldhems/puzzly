@@ -1255,6 +1255,8 @@ class Puzzly {
 			this.canvas.appendChild(pieceContainer);
 		}
 
+		this.setPiecePositionsWithinContainer(pieceContainer);
+
 		ctx.strokeStyle = '#000';
 		
 		const hasTopPlug = Utils.has(piece, 'plug', 'top')
@@ -1476,6 +1478,20 @@ class Puzzly {
 		return attrValue !== undefined && attrValue !== null && attrValue !== "" ? attrValue === "true" : false;
 	}
 
+	applyHighlightToConnectingPieces(connections){
+		for(let id in connections){
+			let el = this.getElementByPieceId(connections[id]);
+			el.style.border = '4px solid red';
+		}
+	}
+
+	removeHighlightFromConnectingPieces(connections){
+		for(let id in connections){
+			let el = this.getElementByPieceId(connections[id]);
+			el.style.border = 'none';
+		}
+	}
+
 	onMouseDown(e){
 		let element, diffX, diffY, thisPiece;
 
@@ -1484,7 +1500,9 @@ class Puzzly {
 
 			if(e.target.classList.contains("puzzle-piece-cover")){
 				element = e.target.parentNode;
-				thisPiece = this.getPieceFromElement(element, ['piece-id', 'is-solved', 'group']);
+				thisPiece = this.getPieceFromElement(element, ['piece-id', 'is-solved', 'group', 'connects-to']);
+
+				this.applyHighlightToConnectingPieces(JSON.parse(thisPiece.connectsTo));
 
 				if(thisPiece.isSolved){
 					return;
@@ -1611,7 +1629,7 @@ class Puzzly {
 	}
 
 	onMouseUp(e){
-		let el;
+		let el, pieces;
 	
 		if(e.target.classList.contains('puzzle-piece-canvas') || e.target.classList.contains('puzzle-piece-cover')){
 			el = e.target.parentNode;
@@ -1619,8 +1637,10 @@ class Puzzly {
 			el = e.target;
 		}
 
+		const thisPiece = this.getPieceFromElement(el, ['connects-to']);
+		this.removeHighlightFromConnectingPieces(JSON.parse(thisPiece.connectsTo));
+
 		this.isMouseDown = false;
-		let pieces;
 
 		if(this.isCanvasMoving){
 			this.isCanvasMoving = false;
@@ -2956,7 +2976,7 @@ class Puzzly {
 
 		if(hasBottomConnector && !piece.connections.includes('bottom')){
 			targetElement = this.getElementByPieceId(piece.id + this.config.piecesPerSideHorizontal)
-			targetPiece = this.getPieceFromElement(targetElement, ['group', 'jigsaw-type', 'is-solved']);
+			targetPiece = this.getPieceFromElement(targetElement, ['piece-id', 'group', 'jigsaw-type', 'is-solved']);
 
 			if(shouldCompare(targetPiece)){
 				// flip
@@ -2978,7 +2998,8 @@ class Puzzly {
 				}
 
 				solvedPieceConnectorBoundingBox = this.getSolvedConnectorBoundingBox(piece, "bottom");
-				// console.log('checking bottom collision for piece', piece, element)
+				console.log('checking bottom collision for piece', piece, element)
+				console.log(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
 					return "bottom";
 				} else if(this.hasCollision(thisPieceConnectorBoundingBox, solvedPieceConnectorBoundingBox)){
@@ -3024,7 +3045,7 @@ class Puzzly {
 
 		if(hasTopConnector && !piece.connections.includes('top')){
 			targetElement = this.getElementByPieceId(piece.id - this.config.piecesPerSideHorizontal)
-			targetPiece = this.getPieceFromElement(targetElement, ['group', 'jigsaw-type', 'is-solved']);
+			targetPiece = this.getPieceFromElement(targetElement, ['piece-id', 'group', 'jigsaw-type', 'is-solved']);
 
 			if(shouldCompare(targetPiece)){ 
 				if(Utils.hasGroup(piece)){
