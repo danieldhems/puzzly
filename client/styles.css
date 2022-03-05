@@ -279,3 +279,13 @@ label {
     border: 2px solid;
     z-index: 99;
 }
+
+.puzzle-piece {
+    /* opacity: 1; */
+    background-color: transparent;
+}
+
+.js-highlight {
+    /* opacity: .5; */
+    background-color: red;
+}
