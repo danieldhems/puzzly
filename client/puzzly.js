@@ -496,7 +496,6 @@ class Puzzly {
 		this.sendToEdgeShuffleBtn.addEventListener('click', e => {
 			this.shuffleArray(Array.from(this.pieces).filter(p => !this.getIsSolved(p) && !Utils.hasGroup(p)));
 			this.randomisePiecePositions(pieces);
-			console.log(this.pieces)
 			this.save(this.pieces);
 		})
 
@@ -1485,7 +1484,6 @@ class Puzzly {
 	removeHighlightFromConnectingPieces(connections){
 		for(let id in connections){
 			let el = this.getElementByPieceId(connections[id]);
-			console.log('removing class from', el)
 			el.classList.remove('js-highlight');
 		}
 	}
@@ -1627,7 +1625,7 @@ class Puzzly {
 		} else if(e.target.classList.contains('puzzle-piece')){
 			el = e.target;
 		}
-console.log(el)
+
 		if(el){
 			console.log|('remove hili')
 			const thisPiece = this.getPieceFromElement(el, ['connects-to']);
@@ -3579,8 +3577,9 @@ console.log(el)
 				if(!this.isMovingSinglePiece){
 					let topContainer = this.getGroupTopContainer(el);
 					let containerBoundingBox = topContainer.getBoundingClientRect();
-					let elBoundingBox = el.getBoundingClientRect();
+					let elBoundingBox = this.getElementBoundingBoxRelativeToTopContainer(el);
 					newPos.top = this.config.boardBoundary + (containerBoundingBox.top - elBoundingBox.top);
+					// TODO: wrong position calc
 					newPos.left = this.canvasWidth - this.config.boardBoundary - el.offsetWidth - (elBoundingBox.left - containerBoundingBox.left);
 
 					topContainer.style.top = this.getPxString(newPos.top);
@@ -3596,7 +3595,7 @@ console.log(el)
 				if(!this.isMovingSinglePiece){
 					let topContainer = this.getGroupTopContainer(el);
 					let containerBoundingBox = topContainer.getBoundingClientRect();
-					let elBoundingBox = el.getBoundingClientRect();
+					let elBoundingBox = this.getElementBoundingBoxRelativeToTopContainer(el);
 
 					newPos.top = this.canvasHeight - this.config.boardBoundary - (elBoundingBox.top - containerBoundingBox.top) - el.offsetHeight;
 					newPos.left = this.canvasWidth - this.config.boardBoundary - (elBoundingBox.left - containerBoundingBox.left) - el.offsetWidth;
@@ -3612,13 +3611,12 @@ console.log(el)
 				break;
 			case "bottom-left":
 				if(!this.isMovingSinglePiece){
+					let elBB = this.getElementBoundingBoxRelativeToTopContainer(el);
 					let topContainer = this.getGroupTopContainer(el);
 					let containerBoundingBox = topContainer.getBoundingClientRect();
 					let elBoundingBox = el.getBoundingClientRect();
-
-					newPos.top = this.canvasHeight - this.config.boardBoundary - (elBoundingBox.top - containerBoundingBox.top) - el.offsetHeight;
-					newPos.left = this.config.boardBoundary + (elBoundingBox.left - containerBoundingBox.left);
-
+					newPos.left = this.config.boardBoundary - elBB.left;
+					newPos.top = this.canvasHeight - this.config.boardBoundary + (containerBoundingBox.top - elBoundingBox.top) - el.offsetHeight;
 					topContainer.style.top = this.getPxString(newPos.top);
 					topContainer.style.left = this.getPxString(newPos.left);
 				} else {
@@ -3630,7 +3628,7 @@ console.log(el)
 				break;
 		}
 		
-		this.group(el, connectingPieceEl);
+		this.group(el, connectingPieceEl, connection);
 
 		const diff = {
 			top: oldPos.top < newPos.top
@@ -3779,6 +3777,8 @@ console.log(el)
 
 		this.setPiecePositionsWithinContainer(pieceAEl);
 		this.setPiecePositionsWithinContainer(pieceBEl);
+
+		return container;
 	}
 
 	setPiecePositionsWithinContainer(arg){
@@ -3795,10 +3795,9 @@ console.log(el)
 	}
 
 	createGroup(elementA, elementB){
-		// console.log('createGroup', elementA, elementB)
 		const groupId = new Date().getTime();
 
-		this.createGroupContainer(elementA, elementB, groupId)
+		const container = this.createGroupContainer(elementA, elementB, groupId)
 		const pieceAPosWithinContainer = this.getElementBoundingBoxRelativeToTopContainer(elementA);
 		const pieceBPosWithinContainer = this.getElementBoundingBoxRelativeToTopContainer(elementB);
 		this.setElementAttribute(elementA, "data-group", groupId)
@@ -3810,9 +3809,15 @@ console.log(el)
 
 		this.updateConnections(groupId);
 
-		if(this.isGroupSolved(groupId)){
+		// TODO: Refactor Util methods to expect type array only, not piece object containing it.
+		// Not sure if this logic is entirely applicable...
+		const elementAIsSolved = this.getIsSolved(elementA);
+		const elementBIsSolved = this.getIsSolved(elementB);
+
+		if(elementAIsSolved || elementBIsSolved){
 			this.setElementAttribute(elementA, "data-is-solved", true)
 			this.setElementAttribute(elementB, "data-is-solved", true)
+			this.setElementAttribute(container, "data-is-solved", true)
 		}
 
 		this.save([elementA, elementB])

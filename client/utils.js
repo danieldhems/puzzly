@@ -59,6 +59,10 @@ export default {
 		return this.isTopLeftCorner(piece) || this.isTopRightCorner(piece) || this.isBottomRightCorner(piece) || this.isBottomLeftCorner(piece);
 	},
 
+	isCornerConnection(str){
+		return str === 'top-left' || str === 'top-right' || str === 'bottom-right' || str === 'bottom-left';
+	},
+
 	has(piece, connector, side){
 		if(!connector || !side) return false;
 		const c = connector === "plug" ? 1 : connector === "socket" ? -1 : null;
