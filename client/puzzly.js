@@ -3576,11 +3576,9 @@ class Puzzly {
 			case "top-right":
 				if(!this.isMovingSinglePiece){
 					let topContainer = this.getGroupTopContainer(el);
-					let containerBoundingBox = topContainer.getBoundingClientRect();
 					let elBoundingBox = this.getElementBoundingBoxRelativeToTopContainer(el);
-					newPos.top = this.config.boardBoundary + (containerBoundingBox.top - elBoundingBox.top);
-					// TODO: wrong position calc
-					newPos.left = this.canvasWidth - this.config.boardBoundary - el.offsetWidth - (elBoundingBox.left - containerBoundingBox.left);
+					newPos.top = this.config.boardBoundary - elBoundingBox.top - el.offsetTop;
+					newPos.left = this.canvasWidth - this.config.boardBoundary - elBoundingBox.left - el.offsetWidth;
 
 					topContainer.style.top = this.getPxString(newPos.top);
 					topContainer.style.left = this.getPxString(newPos.left);
@@ -3594,11 +3592,10 @@ class Puzzly {
 			case "bottom-right":
 				if(!this.isMovingSinglePiece){
 					let topContainer = this.getGroupTopContainer(el);
-					let containerBoundingBox = topContainer.getBoundingClientRect();
 					let elBoundingBox = this.getElementBoundingBoxRelativeToTopContainer(el);
 
-					newPos.top = this.canvasHeight - this.config.boardBoundary - (elBoundingBox.top - containerBoundingBox.top) - el.offsetHeight;
-					newPos.left = this.canvasWidth - this.config.boardBoundary - (elBoundingBox.left - containerBoundingBox.left) - el.offsetWidth;
+					newPos.top = this.canvasHeight - this.config.boardBoundary - elBoundingBox.top - el.offsetHeight;
+					newPos.left = this.canvasWidth - this.config.boardBoundary - elBoundingBox.left - el.offsetWidth;
 
 					topContainer.style.top = this.getPxString(newPos.top);
 					topContainer.style.left = this.getPxString(newPos.left);
