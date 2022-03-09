@@ -1800,7 +1800,7 @@ class Puzzly {
 
 	markAsSolved(els){
 		let container;
-		if(Utils.hasGroup(els[0])){
+		if(this.getGroup(els[0])){
 			container = this.getGroupTopContainer(els[0]);
 			this.setElementAttribute(container, 'data-is-solved', true);
 		}
