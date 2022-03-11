@@ -446,6 +446,8 @@ class Puzzly {
 			drawSquares: false
 		};
 
+		this.currentZIndex = 3;
+
 		this.isMobile = isMobile();
 
 		this.pieceSectors = [];
@@ -1496,8 +1498,8 @@ class Puzzly {
 
 			if(e.target.classList.contains("puzzle-piece-cover")){
 				element = e.target.parentNode;
-				thisPiece = this.getPieceFromElement(element, ['piece-id', 'is-solved', 'group', 'connects-to']);
 
+				thisPiece = this.getPieceFromElement(element, ['piece-id', 'is-solved', 'group', 'connects-to']);
 				this.applyHighlightToConnectingPieces(JSON.parse(thisPiece.connectsTo));
 
 				if(thisPiece.isSolved){
@@ -1514,6 +1516,7 @@ class Puzzly {
 
 					this.isMovingSinglePiece = false;
 					this.movingElement = this.getGroupTopContainer(element);
+					this.movingPieces = this.movingElement.querySelectorAll('.puzzle-piece');
 
 					if(this.movingElement){
 						diffX = clientPos.x - Math.floor(this.movingElement.offsetLeft * this.zoomLevel);
@@ -1521,12 +1524,12 @@ class Puzzly {
 					}
 				} else {
 					this.isMovingSinglePiece = true;
-					this.movingElement = this.getElementByPieceId(thisPiece.id);
+					this.movingElement = element;
 					diffX = clientPos.x - this.movingElement.offsetLeft * this.zoomLevel;
 					diffY = clientPos.y - this.movingElement.offsetTop * this.zoomLevel;					
 				}
-
-				this.movingElement.style.zIndex = 10;
+				
+				this.keepOnTop(this.movingElement)
 			} else {
 				return;
 			}
@@ -1617,6 +1620,10 @@ class Puzzly {
 		return value && value !== "undefined" ? value : undefined;
 	}
 
+	keepOnTop(el){
+		el.style.zIndex = this.currentZIndex++;
+	}
+
 	onMouseUp(e){
 		let el, pieces;
 	
@@ -1627,15 +1634,13 @@ class Puzzly {
 		}
 
 		if(el){
-			console.log|('remove hili')
 			const thisPiece = this.getPieceFromElement(el, ['connects-to']);
 			this.removeHighlightFromConnectingPieces(JSON.parse(thisPiece.connectsTo));
 		}
 		
 		this.isMouseDown = false;
 		
-		if(this.movingElement){
-
+		if(this.movingElement){			
 			let hasConnection = false, noneFound = false, connection, i = 0;
 
 			if(!this.isMovingSinglePiece){
@@ -1714,10 +1719,6 @@ class Puzzly {
 					this.save([el])
 				}
 
-			}
-
-			if(this.movingElement){
-				this.movingElement.style.zIndex = 3;
 			}
 
 			this.movingElement = null;
@@ -2622,8 +2623,9 @@ class Puzzly {
 		}
 	}
 
-	getSolvedConnectorBoundingBox(piece, side){
-		const solvedBB = this.getPieceSolvedBoundingBox(piece)
+	getSolvedConnectorBoundingBox(el, side){
+		const piece = this.getPieceFromElement(el, ['jigsaw-type']);
+		const solvedBB = this.getPieceSolvedBoundingBox(el);
 		const hasLeftPlug = Utils.has(piece, "plug", "left");
 		const hasTopPlug = Utils.has(piece, "plug", "top");
 		const tolerance = this.config.connectorTolerance;
@@ -2852,8 +2854,8 @@ class Puzzly {
 		}
 	}
 
-	getPieceSolvedBoundingBox(piece){
-		let el = this.getElementByPieceId(piece.id);
+	getPieceSolvedBoundingBox(el){
+		const piece = this.getPieceFromElement(el, ['num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type'])
 		let gridPosX = piece.numPiecesFromLeftEdge === 0 ? this.config.boardBoundary : this.config.boardBoundary + this.config.pieceSize * piece.numPiecesFromLeftEdge;
 		let gridPosY = piece.numPiecesFromTopEdge === 0 ? this.config.boardBoundary : this.config.boardBoundary + this.config.pieceSize * piece.numPiecesFromTopEdge;
 		return {
@@ -2946,8 +2948,10 @@ class Puzzly {
 				} else {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "left");
 				}
+
 				// We aren't targeting an adjacent piece for a floating connection
-				solvedPieceConnectorBoundingBox = this.getSolvedConnectorBoundingBox(piece, "right");
+				solvedPieceConnectorBoundingBox = this.getSolvedConnectorBoundingBox(element, "right");
+				console.log(thisPieceConnectorBoundingBox, solvedPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
 					return "right";
 				} else if(this.hasCollision(thisPieceConnectorBoundingBox, solvedPieceConnectorBoundingBox)){
@@ -2979,7 +2983,7 @@ class Puzzly {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "top");
 				}
 
-				solvedPieceConnectorBoundingBox = this.getSolvedConnectorBoundingBox(piece, "bottom");
+				solvedPieceConnectorBoundingBox = this.getSolvedConnectorBoundingBox(element, "bottom");
 				// console.log('checking bottom collision for piece', piece, element)
 				// console.log(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
@@ -3013,7 +3017,7 @@ class Puzzly {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "right");
 				}
 
-				solvedPieceConnectorBoundingBox = this.getSolvedConnectorBoundingBox(piece, "left");
+				solvedPieceConnectorBoundingBox = this.getSolvedConnectorBoundingBox(element, "left");
 				// console.log('checking left collision for piece', piece, element)
 				// console.log('source BB', thisPieceConnectorBoundingBox)
 				// console.log('target BB', targetPieceConnectorBoundingBox)
@@ -3048,7 +3052,7 @@ class Puzzly {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "bottom");
 				}
 
-				solvedPieceConnectorBoundingBox = this.getSolvedConnectorBoundingBox(piece, "top");
+				solvedPieceConnectorBoundingBox = this.getSolvedConnectorBoundingBox(element, "top");
 				// console.log('checking top collision for piece', piece, element)
 				// console.log('source BB', thisPieceConnectorBoundingBox)
 				// console.log('target BB', targetPieceConnectorBoundingBox)
@@ -3103,11 +3107,11 @@ class Puzzly {
 
 		switch(connection){
 			case "float":
-				let pos = this.getPieceSolvedBoundingBox(thisPiece);
+				let pos = this.getPieceSolvedBoundingBox(el);
 				if(this.isMovingSinglePiece){
 					el.style.top = this.getPxString(pos.top);
 					el.style.left = this.getPxString(pos.left);
-					this.markAsSolved([thisPiece]);
+					this.markAsSolved([this.movingElement]);
 				} else {
 					let elBB = this.getElementBoundingBoxRelativeToTopContainer(el);
 					let topContainer = this.getGroupTopContainer(el);
