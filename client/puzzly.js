@@ -1804,6 +1804,7 @@ class Puzzly {
 		if(this.getGroup(els[0])){
 			container = this.getGroupTopContainer(els[0]);
 			this.setElementAttribute(container, 'data-is-solved', true);
+			container.style.zIndex = 1;
 		}
 		els.forEach( piece => {
 			this.setElementAttribute(piece, "data-is-solved", true);
@@ -2858,6 +2859,7 @@ class Puzzly {
 		const piece = this.getPieceFromElement(el, ['num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type'])
 		let gridPosX = piece.numPiecesFromLeftEdge === 0 ? this.config.boardBoundary : this.config.boardBoundary + this.config.pieceSize * piece.numPiecesFromLeftEdge;
 		let gridPosY = piece.numPiecesFromTopEdge === 0 ? this.config.boardBoundary : this.config.boardBoundary + this.config.pieceSize * piece.numPiecesFromTopEdge;
+		// Would Math.round help each of these values?
 		return {
 			top: (Utils.has(piece, 'plug', 'top') ? gridPosY - this.config.connectorSize : gridPosY),
 			right: (Utils.has(piece, 'plug', 'left') ? gridPosX - this.config.connectorSize : gridPosX) + el.offsetWidth,
@@ -2880,9 +2882,6 @@ class Puzzly {
 			connections,
 		}
 		
-		// console.log(element)
-		// console.log(piece)
-
 		const hasRightConnector = Utils.has(piece, "plug", "right") || Utils.has(piece, "socket", "right");
 		const hasBottomConnector = Utils.has(piece, "plug", "bottom") || Utils.has(piece, "socket", "bottom");
 		const hasLeftConnector = Utils.has(piece, "plug", "left") || Utils.has(piece, "socket", "left");
@@ -2951,7 +2950,6 @@ class Puzzly {
 
 				// We aren't targeting an adjacent piece for a floating connection
 				solvedPieceConnectorBoundingBox = this.getSolvedConnectorBoundingBox(element, "right");
-				console.log(thisPieceConnectorBoundingBox, solvedPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBox, targetPieceConnectorBoundingBox)){
 					return "right";
 				} else if(this.hasCollision(thisPieceConnectorBoundingBox, solvedPieceConnectorBoundingBox)){
@@ -3242,6 +3240,7 @@ class Puzzly {
 						targetContainer = this.getGroupContainer(connectingPieceEl);
 						// console.log('target container', targetContainer)
 						newPos.left = connectingPieceEl.offsetLeft + connectingPieceEl.offsetWidth - this.config.connectorSize;
+						targetContainer.appendChild(el);
 						el.style.left = this.getPxString(newPos.left);
 	
 						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
@@ -3257,10 +3256,9 @@ class Puzzly {
 						}
 	
 						el.style.top = newPos.top + "px";
-						targetContainer.appendChild(el);
 					} else {
 						newPos.left = connectingPieceEl.offsetLeft + connectingPieceEl.offsetWidth - this.config.connectorSize;
-						el.style.left = Math.floor(newPos.left) + "px";
+						el.style.left = this.getPxString(newPos.left);
 		
 						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
 							newPos.top = connectingPieceEl.offsetTop;
@@ -3481,7 +3479,7 @@ class Puzzly {
 						el.style.left = newPos.left + "px";
 					} else {
 						newPos.top = connectingPieceEl.offsetTop + connectingPieceEl.offsetHeight - this.config.connectorSize;
-						el.style.top = this.getPxString(Math.floor(newPos.top));
+						el.style.top = this.getPxString(newPos.top);
 		
 						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
 							newPos.left = connectingPieceEl.offsetLeft;
