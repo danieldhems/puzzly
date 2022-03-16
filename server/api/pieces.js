@@ -82,7 +82,6 @@ var api = {
 
 				pieces.updateOne(query, update, function(err, result){
 					if(err) throw new Error(err);
-					console.info('Piece updated', result.ops)
 				});
 			});
 

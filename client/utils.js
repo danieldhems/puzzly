@@ -1,4 +1,8 @@
 export default {
+	getQueryStringValue (key) { 
+		return decodeURIComponent(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + encodeURIComponent(key).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));  
+	},
+
     isTopLeftCorner(piece) {
 		return piece && piece.type[0] === 0 && piece.type[3] === 0;
 	},

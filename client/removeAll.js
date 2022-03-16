@@ -1,9 +1,12 @@
+import Utils from "./utils.js";
+
 class RemoveAll {
     constructor(){
         this.load()
     }
     load(){
-        fetch('/api/puzzle/removeAll/pieces', {
+        const puzzleId = Utils.getQueryStringValue('puzzleId');
+        fetch(`/api/puzzle/removeAll/pieces/${puzzleId || ""}`, {
             method: 'delete',
             headers: {
                 'content-type': 'application/json'

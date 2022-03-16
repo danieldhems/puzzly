@@ -1,6 +1,11 @@
-var path = require('path');
 var router = require('express').Router();
 var Calipers = require('calipers')('png', 'jpeg');
+var fileUpload = require('express-fileupload');
+
+router.use(fileUpload({
+	createParentPath: true,
+	debug: true
+}));
 
 async function upload(req, res){
     try {

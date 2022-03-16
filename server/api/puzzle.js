@@ -62,12 +62,12 @@ var api = {
 			const pieces = db.collection(piecesCollection);
 
 			const puzzleQuery = { _id: new ObjectID(puzzleId) }
-			const piecesQuery = { puzzleId: new ObjectID(puzzleId) }
+			const piecesQuery = { puzzleId: puzzleId }
 
 		  const puzzle = await puzzles.findOne(puzzleQuery);
-		  const piecesResult = await pieces.find().toArray();
+		  const piecesResult = await pieces.find(piecesQuery).toArray();
 		  console.log('pieces found for puzzle', puzzleId)
-		  console.log(piecesResult)
+		//   console.log(piecesResult)
 
 		  const result = {
 			  ...puzzle,
