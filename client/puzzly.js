@@ -3175,9 +3175,7 @@ class Puzzly {
 					if(Utils.hasGroup(connectingPiece)){
 						console.log('connecting single piece to right piece in group')
 						targetContainer = this.getGroupContainer(connectingPieceEl);
-						const elBB = this.getElementBoundingBoxRelativeToTopContainer(connectingPieceEl);
-						console.log(connectingPieceEl.offsetLeft, elBB.left)
-						newPos.left = elBB.left - el.offsetWidth + this.config.connectorSize;
+						newPos.left = connectingPieceEl.offsetLeft - el.offsetWidth + this.config.connectorSize;
 						targetContainer.appendChild(el);
 	
 						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
