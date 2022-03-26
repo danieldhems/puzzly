@@ -823,15 +823,15 @@ class Puzzly {
 				},
 				cp2: {
 					x: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner - this.config.connectorDistanceFromCorner/4),
-					y: 1,
+					y: topBoundary - this.config.connectorSize + 1,
 				},
 				destX: Math.ceil(leftBoundary + this.config.pieceSize / 2),
-				destY: 1,
+				destY: topBoundary - this.config.connectorSize + 1,
 			},
 			thirdCurve: {
 				cp1: {
 					x: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4),
-					y: 1,
+					y: topBoundary - this.config.connectorSize + 1,
 				},
 				cp2: {
 					x: Math.ceil(rightBoundary - this.config.connectorDistanceFromCorner + this.config.connectorDistanceFromCorner/4),
@@ -849,7 +849,7 @@ class Puzzly {
 		}
 	}
 
-	getTopSocket(leftBoundary, topBoundary, rightBoundary, totalWidth){
+	getTopSocket(leftBoundary, topBoundary, rightBoundary){
 		return {
 			firstCurve: {
 				destX: Math.ceil(leftBoundary + this.config.connectorDistanceFromCorner + (this.config.connectorSize/6)),
@@ -1166,6 +1166,88 @@ class Puzzly {
 		ctx.fill()
 	}
 
+	drawJigsawShape(ctx, piece, {x, y}, outlines = false){
+		// here
+		const hasTopPlug = Utils.has(piece.type, 'plug', 'top')
+		const hasLeftPlug = Utils.has(piece.type, 'plug', 'left')
+		
+		const topBoundary = hasTopPlug ? y + this.config.connectorSize : y;
+		const leftBoundary = hasLeftPlug ? x + this.config.connectorSize : x;
+		let topConnector = null, rightConnector = null, bottomConnector = null, leftConnector = null;
+		
+		const path = new Path2D();
+		path.moveTo(leftBoundary, topBoundary);
+
+		if(Utils.has(piece.type, 'plug', 'top')){
+			topConnector = this.getTopPlug(leftBoundary, topBoundary, leftBoundary + this.config.pieceSize);
+		} else if(Utils.has(piece.type, 'socket', 'top')){
+			topConnector = this.getTopSocket(leftBoundary, topBoundary, leftBoundary + this.config.pieceSize);
+		}
+
+		if(topConnector !== null){
+			path.lineTo(leftBoundary + this.config.connectorDistanceFromCorner, topBoundary);
+			path.quadraticCurveTo(topConnector.firstCurve.cpX, topConnector.firstCurve.cpY, topConnector.firstCurve.destX, topConnector.firstCurve.destY);
+			path.bezierCurveTo(topConnector.secondCurve.cp1.x, topConnector.secondCurve.cp1.y, topConnector.secondCurve.cp2.x, topConnector.secondCurve.cp2.y, topConnector.secondCurve.destX, topConnector.secondCurve.destY)
+			path.bezierCurveTo(topConnector.thirdCurve.cp1.x, topConnector.thirdCurve.cp1.y, topConnector.thirdCurve.cp2.x, topConnector.thirdCurve.cp2.y, topConnector.thirdCurve.destX, topConnector.thirdCurve.destY)
+			path.quadraticCurveTo(topConnector.fourthCurve.cpX, topConnector.fourthCurve.cpY, topConnector.fourthCurve.destX, topConnector.fourthCurve.destY);
+		}
+		path.lineTo(leftBoundary + this.config.pieceSize, topBoundary);
+
+		if(Utils.has(piece.type, 'plug', 'right')){
+			rightConnector = this.getRightPlug(topBoundary, leftBoundary + this.config.pieceSize, leftBoundary);
+		} else if(Utils.has(piece.type, 'socket', 'right')){
+			rightConnector = this.getRightSocket(topBoundary, leftBoundary + this.config.pieceSize, leftBoundary);
+		}
+
+		if(rightConnector !== null){
+			path.lineTo(leftBoundary + this.config.pieceSize, topBoundary + this.config.connectorDistanceFromCorner);
+			path.quadraticCurveTo(rightConnector.firstCurve.cpX, rightConnector.firstCurve.cpY, rightConnector.firstCurve.destX, rightConnector.firstCurve.destY);
+			path.bezierCurveTo(rightConnector.secondCurve.cp1.x, rightConnector.secondCurve.cp1.y, rightConnector.secondCurve.cp2.x, rightConnector.secondCurve.cp2.y, rightConnector.secondCurve.destX, rightConnector.secondCurve.destY)
+			path.bezierCurveTo(rightConnector.thirdCurve.cp1.x, rightConnector.thirdCurve.cp1.y, rightConnector.thirdCurve.cp2.x, rightConnector.thirdCurve.cp2.y, rightConnector.thirdCurve.destX, rightConnector.thirdCurve.destY);
+			path.quadraticCurveTo(rightConnector.fourthCurve.cpX, rightConnector.fourthCurve.cpY, rightConnector.fourthCurve.destX, rightConnector.fourthCurve.destY);
+		}
+		path.lineTo(leftBoundary + this.config.pieceSize, topBoundary + this.config.pieceSize)
+		
+
+		if(Utils.has(piece.type, 'plug', 'bottom')){
+			bottomConnector = this.getBottomPlug(leftBoundary + this.config.pieceSize, topBoundary + this.config.pieceSize, leftBoundary, piece.imgW);
+		} else if(Utils.has(piece.type, 'socket', 'bottom')){
+			bottomConnector = this.getBottomSocket(leftBoundary + this.config.pieceSize, topBoundary + this.config.pieceSize, leftBoundary, piece.imgW);
+		}
+
+		if(bottomConnector !== null){
+			path.lineTo(leftBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner, topBoundary + this.config.pieceSize);
+			path.quadraticCurveTo(bottomConnector.firstCurve.cpX, bottomConnector.firstCurve.cpY, bottomConnector.firstCurve.destX, bottomConnector.firstCurve.destY);
+			path.bezierCurveTo(bottomConnector.secondCurve.cp1.x, bottomConnector.secondCurve.cp1.y, bottomConnector.secondCurve.cp2.x, bottomConnector.secondCurve.cp2.y, bottomConnector.secondCurve.destX, bottomConnector.secondCurve.destY)
+			path.bezierCurveTo(bottomConnector.thirdCurve.cp1.x, bottomConnector.thirdCurve.cp1.y, bottomConnector.thirdCurve.cp2.x, bottomConnector.thirdCurve.cp2.y, bottomConnector.thirdCurve.destX, bottomConnector.thirdCurve.destY);
+			path.quadraticCurveTo(bottomConnector.fourthCurve.cpX, bottomConnector.fourthCurve.cpY, bottomConnector.fourthCurve.destX, bottomConnector.fourthCurve.destY);
+		}
+		path.lineTo(leftBoundary, topBoundary + this.config.pieceSize)
+
+		if(Utils.has(piece.type, 'plug', 'left')){
+			leftConnector = this.getLeftPlug(topBoundary + this.config.pieceSize, leftBoundary, topBoundary, piece.imgH);
+		} else if(Utils.has(piece.type, 'socket', 'left')){
+			leftConnector = this.getLeftSocket(topBoundary + this.config.pieceSize, leftBoundary, topBoundary, piece.imgH);
+		}
+		if(leftConnector !== null){
+			path.lineTo(leftBoundary, topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner)
+			path.quadraticCurveTo(leftConnector.firstCurve.cpX, leftConnector.firstCurve.cpY, leftConnector.firstCurve.destX, leftConnector.firstCurve.destY);
+			path.bezierCurveTo(leftConnector.secondCurve.cp1.x, leftConnector.secondCurve.cp1.y, leftConnector.secondCurve.cp2.x, leftConnector.secondCurve.cp2.y, leftConnector.secondCurve.destX, leftConnector.secondCurve.destY)
+			path.bezierCurveTo(leftConnector.thirdCurve.cp1.x, leftConnector.thirdCurve.cp1.y, leftConnector.thirdCurve.cp2.x, leftConnector.thirdCurve.cp2.y, leftConnector.thirdCurve.destX, leftConnector.thirdCurve.destY);
+			path.quadraticCurveTo(leftConnector.fourthCurve.cpX, leftConnector.fourthCurve.cpY, leftConnector.fourthCurve.destX, leftConnector.fourthCurve.destY);
+		}
+		path.lineTo(leftBoundary, topBoundary);
+		path.closePath();
+
+		// if(topConnector) this.drawPlugGuides(ctx, topConnector)
+		// if(rightConnector) this.drawPlugGuides(ctx, rightConnector)
+		// if(bottomConnector) this.drawPlugGuides(ctx, bottomConnector)
+		// if(leftConnector) this.drawPlugGuides(ctx, leftConnector)
+
+		ctx.clip(path);
+		ctx.drawImage(this.SourceImage, piece.imgX, piece.imgY, piece.imgW, piece.imgH, x, y, piece.imgW, piece.imgH);
+	}
+
 	drawPieceManually(piece){
 		if(Number.isNaN(piece.id) || piece.id === "null"){
 			return;
@@ -1264,89 +1346,10 @@ class Puzzly {
 
 		ctx.strokeStyle = '#000';
 		
-		const hasTopPlug = Utils.has(piece, 'plug', 'top')
-		const hasLeftPlug = Utils.has(piece, 'plug', 'left')
+		this.drawJigsawShape(ctx, piece, {x: 0, y: 0});
 		
-		const topBoundary = hasTopPlug ? this.config.connectorSize : 0;
-		const leftBoundary = hasLeftPlug ? this.config.connectorSize : 0;
-		
-		let topConnector;
-		
-		const path = new Path2D();
-		path.moveTo(leftBoundary, topBoundary);
-
-		if(Utils.has(piece, 'plug', 'top')){
-			topConnector = this.getTopPlug(leftBoundary, topBoundary, leftBoundary + this.config.pieceSize);
-		} else if(Utils.has(piece, 'socket', 'top')){
-			topConnector = this.getTopSocket(leftBoundary, topBoundary, leftBoundary + this.config.pieceSize);
-		}
-
-		if(topConnector){
-			path.lineTo(leftBoundary + this.config.connectorDistanceFromCorner, topBoundary);
-			path.quadraticCurveTo(topConnector.firstCurve.cpX, topConnector.firstCurve.cpY, topConnector.firstCurve.destX, topConnector.firstCurve.destY);
-			path.bezierCurveTo(topConnector.secondCurve.cp1.x, topConnector.secondCurve.cp1.y, topConnector.secondCurve.cp2.x, topConnector.secondCurve.cp2.y, topConnector.secondCurve.destX, topConnector.secondCurve.destY)
-			path.bezierCurveTo(topConnector.thirdCurve.cp1.x, topConnector.thirdCurve.cp1.y, topConnector.thirdCurve.cp2.x, topConnector.thirdCurve.cp2.y, topConnector.thirdCurve.destX, topConnector.thirdCurve.destY)
-			path.quadraticCurveTo(topConnector.fourthCurve.cpX, topConnector.fourthCurve.cpY, topConnector.fourthCurve.destX, topConnector.fourthCurve.destY);
-		}
-		path.lineTo(leftBoundary + this.config.pieceSize, topBoundary);
-
-		let rightConnector = null;
-		if(Utils.has(piece, 'plug', 'right')){
-			rightConnector = this.getRightPlug(topBoundary, leftBoundary + this.config.pieceSize, leftBoundary);
-		} else if(Utils.has(piece, 'socket', 'right')){
-			rightConnector = this.getRightSocket(topBoundary, leftBoundary + this.config.pieceSize, leftBoundary);
-		}
-
-		if(rightConnector){
-			path.lineTo(leftBoundary + this.config.pieceSize, topBoundary + this.config.connectorDistanceFromCorner);
-			path.quadraticCurveTo(rightConnector.firstCurve.cpX, rightConnector.firstCurve.cpY, rightConnector.firstCurve.destX, rightConnector.firstCurve.destY);
-			path.bezierCurveTo(rightConnector.secondCurve.cp1.x, rightConnector.secondCurve.cp1.y, rightConnector.secondCurve.cp2.x, rightConnector.secondCurve.cp2.y, rightConnector.secondCurve.destX, rightConnector.secondCurve.destY)
-			path.bezierCurveTo(rightConnector.thirdCurve.cp1.x, rightConnector.thirdCurve.cp1.y, rightConnector.thirdCurve.cp2.x, rightConnector.thirdCurve.cp2.y, rightConnector.thirdCurve.destX, rightConnector.thirdCurve.destY);
-			path.quadraticCurveTo(rightConnector.fourthCurve.cpX, rightConnector.fourthCurve.cpY, rightConnector.fourthCurve.destX, rightConnector.fourthCurve.destY);
-		}
-		path.lineTo(leftBoundary + this.config.pieceSize, topBoundary + this.config.pieceSize)
-		
-
-		let bottomConnector = null;
-		if(Utils.has(piece, 'plug', 'bottom')){
-			bottomConnector = this.getBottomPlug(leftBoundary + this.config.pieceSize, topBoundary + this.config.pieceSize, leftBoundary, piece.imgW);
-		} else if(Utils.has(piece, 'socket', 'bottom')){
-			bottomConnector = this.getBottomSocket(leftBoundary + this.config.pieceSize, topBoundary + this.config.pieceSize, leftBoundary, piece.imgW);
-		}
-
-		if(bottomConnector){
-			path.lineTo(leftBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner, topBoundary + this.config.pieceSize);
-			path.quadraticCurveTo(bottomConnector.firstCurve.cpX, bottomConnector.firstCurve.cpY, bottomConnector.firstCurve.destX, bottomConnector.firstCurve.destY);
-			path.bezierCurveTo(bottomConnector.secondCurve.cp1.x, bottomConnector.secondCurve.cp1.y, bottomConnector.secondCurve.cp2.x, bottomConnector.secondCurve.cp2.y, bottomConnector.secondCurve.destX, bottomConnector.secondCurve.destY)
-			path.bezierCurveTo(bottomConnector.thirdCurve.cp1.x, bottomConnector.thirdCurve.cp1.y, bottomConnector.thirdCurve.cp2.x, bottomConnector.thirdCurve.cp2.y, bottomConnector.thirdCurve.destX, bottomConnector.thirdCurve.destY);
-			path.quadraticCurveTo(bottomConnector.fourthCurve.cpX, bottomConnector.fourthCurve.cpY, bottomConnector.fourthCurve.destX, bottomConnector.fourthCurve.destY);
-		}
-		path.lineTo(leftBoundary, topBoundary + this.config.pieceSize)
-
-		let leftConnector = null;
-		if(Utils.has(piece, 'plug', 'left')){
-			leftConnector = this.getLeftPlug(topBoundary + this.config.pieceSize, leftBoundary, topBoundary, piece.imgH);
-		} else if(Utils.has(piece, 'socket', 'left')){
-			leftConnector = this.getLeftSocket(topBoundary + this.config.pieceSize, leftBoundary, topBoundary, piece.imgH);
-		}
-
-		if(leftConnector){
-			path.lineTo(leftBoundary, topBoundary + this.config.pieceSize - this.config.connectorDistanceFromCorner)
-			path.quadraticCurveTo(leftConnector.firstCurve.cpX, leftConnector.firstCurve.cpY, leftConnector.firstCurve.destX, leftConnector.firstCurve.destY);
-			path.bezierCurveTo(leftConnector.secondCurve.cp1.x, leftConnector.secondCurve.cp1.y, leftConnector.secondCurve.cp2.x, leftConnector.secondCurve.cp2.y, leftConnector.secondCurve.destX, leftConnector.secondCurve.destY)
-			path.bezierCurveTo(leftConnector.thirdCurve.cp1.x, leftConnector.thirdCurve.cp1.y, leftConnector.thirdCurve.cp2.x, leftConnector.thirdCurve.cp2.y, leftConnector.thirdCurve.destX, leftConnector.thirdCurve.destY);
-			path.quadraticCurveTo(leftConnector.fourthCurve.cpX, leftConnector.fourthCurve.cpY, leftConnector.fourthCurve.destX, leftConnector.fourthCurve.destY);
-		}
-		path.lineTo(leftBoundary, topBoundary)
-		path.closePath()
 		// ctx.stroke(path)
 		
-		// if(topConnector) this.drawPlugGuides(ctx, topConnector)
-		// if(rightConnector) this.drawPlugGuides(ctx, rightConnector)
-		// if(bottomConnector) this.drawPlugGuides(ctx, bottomConnector)
-		// if(leftConnector) this.drawPlugGuides(ctx, leftConnector)
-		ctx.clip(path)
-		ctx.drawImage(this.SourceImage, piece.imgX, piece.imgY, piece.imgW, piece.imgH, 0, 0, piece.imgW, piece.imgH);
 
 		const coverEl = document.createElement('div');
 		coverEl.classList.add('puzzle-piece-cover');
@@ -1845,13 +1848,13 @@ class Puzzly {
 			pieceBehindHasSocket;
 
 		if(pieceAbove){
-			pieceAboveHasSocket = Utils.has(pieceAbove, "socket", "bottom");
-			pieceAboveHasPlug = Utils.has(pieceAbove, "plug", "bottom");
+			pieceAboveHasSocket = Utils.has(pieceAbove.type, "socket", "bottom");
+			pieceAboveHasPlug = Utils.has(pieceAbove.type, "plug", "bottom");
 		}
 
 		if(pieceBehind){
-			pieceBehindHasSocket = Utils.has(pieceBehind, "socket", "right");
-			pieceBehindHasPlug = Utils.has(pieceBehind, "plug", "right");
+			pieceBehindHasSocket = Utils.has(pieceBehind.type, "socket", "right");
+			pieceBehindHasPlug = Utils.has(pieceBehind.type, "plug", "right");
 		}
 
 		let thisPieceHasLeftSocket,
@@ -1863,13 +1866,13 @@ class Puzzly {
 
 		for(let i=0, l=pieces.length; i<l; i++){
 			if(pieceAbove){
-				thisPieceHasTopSocket = Utils.has(pieces[i], "socket", "top");
-				thisPieceHasTopPlug = Utils.has(pieces[i], "plug", "top");
+				thisPieceHasTopSocket = Utils.has(pieces[i].type, "socket", "top");
+				thisPieceHasTopPlug = Utils.has(pieces[i].type, "plug", "top");
 			}
 
 			if(pieceBehind){
-				thisPieceHasLeftSocket = Utils.has(pieces[i], "socket", "left");
-				thisPieceHasLeftPlug = Utils.has(pieces[i], "plug", "left");
+				thisPieceHasLeftSocket = Utils.has(pieces[i].type, "socket", "left");
+				thisPieceHasLeftPlug = Utils.has(pieces[i].type, "plug", "left");
 			}
 			
 			if(pieceAbove && !pieceBehind){
@@ -1984,18 +1987,18 @@ class Puzzly {
 				if(rowCount > 1){
 					const nextPieceAbove = pieces[pieces.length - piecesPerSideHorizontal];
 
-					if(Utils.has(currentPiece, "plug", "top") && Utils.has(nextPieceAbove, "plug", "bottom")){
+					if(Utils.has(currentPiece.type, "plug", "top") && Utils.has(nextPieceAbove.type, "plug", "bottom")){
 						curImgY += this.config.connectorSize;
-					} else if(Utils.has(currentPiece, "socket", "top") && Utils.has(nextPieceAbove, "socket", "bottom")){
+					} else if(Utils.has(currentPiece.type, "socket", "top") && Utils.has(nextPieceAbove.type, "socket", "bottom")){
 						curImgY -= this.config.connectorSize;
 					}
 					
-					solvedY += Utils.has(nextPieceAbove, 'plug', 'bottom') ? pieceSize : pieceSize - this.config.connectorSize;
+					solvedY += Utils.has(nextPieceAbove.type, 'plug', 'bottom') ? pieceSize : pieceSize - this.config.connectorSize;
 				}
 				
-				if(Utils.has(currentPiece, "socket", "right")){
+				if(Utils.has(currentPiece.type, "socket", "right")){
 					curImgX += currentPiece.imgW - this.config.connectorSize;
-				} else if(Utils.has(currentPiece, "plug", "right")){
+				} else if(Utils.has(currentPiece.type, "plug", "right")){
 					curImgX += currentPiece.imgW - this.config.connectorSize;
 				}
 
@@ -2026,23 +2029,23 @@ class Puzzly {
 		if(!adjacentPieceAbove){
 			const rightConnector = endOfRow ? 0 : connectorChoices[Math.floor(Math.random() * 2)];
 			const bottomConnector = connectorChoices[Math.floor(Math.random() * 2)];
-			const leftConnector = Utils.has(adjacentPieceBehind, 'plug', 'right') ? -1 : 1;
+			const leftConnector = Utils.has(adjacentPieceBehind.type, 'plug', 'right') ? -1 : 1;
 			return [0,rightConnector,bottomConnector,leftConnector];
 		}
 		// All pieces after top row
 		else {
 			// Last piece of each row, should be right side
 			if(Utils.isTopRightCorner(adjacentPieceAbove) || (!finalRow && Utils.isRightSide(adjacentPieceAbove))){
-				const topConnector = Utils.has(adjacentPieceAbove, 'plug', 'bottom') ? -1 : 1;
+				const topConnector = Utils.has(adjacentPieceAbove.type, 'plug', 'bottom') ? -1 : 1;
 				const rightConnector = 0;
 				const bottomConnector = connectorChoices[Math.floor(Math.random() * 2)];
-				const leftConnector = Utils.has(adjacentPieceBehind, 'plug', 'right') ? -1 : 1;
+				const leftConnector = Utils.has(adjacentPieceBehind.type, 'plug', 'right') ? -1 : 1;
 				return [topConnector, rightConnector, bottomConnector, leftConnector]
 			}
 			
 			// First piece of each row, should be left side
 			if(Utils.isTopLeftCorner(adjacentPieceAbove) || (!finalRow && Utils.isLeftSide(adjacentPieceAbove))){
-				const topConnector = Utils.has(adjacentPieceAbove, 'plug', 'bottom') ? -1 : 1;
+				const topConnector = Utils.has(adjacentPieceAbove.type, 'plug', 'bottom') ? -1 : 1;
 				const rightConnector = connectorChoices[Math.floor(Math.random() * 2)];
 				const bottomConnector = connectorChoices[Math.floor(Math.random() * 2)];
 				const leftConnector = 0;
@@ -2051,15 +2054,15 @@ class Puzzly {
 			
 			// All middle pieces
 			if((!finalRow && Utils.isInnerPiece(adjacentPieceAbove)) || Utils.isTopSide(adjacentPieceAbove)){
-				const topConnector = Utils.has(adjacentPieceAbove, 'plug', 'bottom') ? -1 : 1;
+				const topConnector = Utils.has(adjacentPieceAbove.type, 'plug', 'bottom') ? -1 : 1;
 				const rightConnector = connectorChoices[Math.floor(Math.random() * 2)];
 				const bottomConnector = connectorChoices[Math.floor(Math.random() * 2)];
-				const leftConnector = Utils.has(adjacentPieceBehind, 'plug', 'right') ? -1 : 1;
+				const leftConnector = Utils.has(adjacentPieceBehind.type, 'plug', 'right') ? -1 : 1;
 				return [topConnector, rightConnector, bottomConnector, leftConnector]
 			}
 
 			if(finalRow && Utils.isLeftSide(adjacentPieceAbove)){
-				const topConnector = Utils.has(adjacentPieceAbove, 'plug', 'bottom') ? -1 : 1;
+				const topConnector = Utils.has(adjacentPieceAbove.type, 'plug', 'bottom') ? -1 : 1;
 				const rightConnector = connectorChoices[Math.floor(Math.random() * 2)];
 				const bottomConnector = 0;
 				const leftConnector = 0;
@@ -2067,19 +2070,19 @@ class Puzzly {
 			}
 			
 			if(finalRow && Utils.isInnerPiece(adjacentPieceAbove) && (Utils.isBottomLeftCorner(adjacentPieceBehind) || Utils.isBottomSide(adjacentPieceBehind))){
-				const topConnector = Utils.has(adjacentPieceAbove, 'plug', 'bottom') ? -1 : 1;
+				const topConnector = Utils.has(adjacentPieceAbove.type, 'plug', 'bottom') ? -1 : 1;
 				const rightConnector = connectorChoices[Math.floor(Math.random() * 2)];
 				const bottomConnector = 0;
-				const leftConnector = Utils.has(adjacentPieceBehind, 'plug', 'right') ? -1 : 1;
+				const leftConnector = Utils.has(adjacentPieceBehind.type, 'plug', 'right') ? -1 : 1;
 				return [topConnector, rightConnector, bottomConnector, leftConnector]
 			}
 
 			// Very last piece, should be corner bottom right
 			if(Utils.isRightSide(adjacentPieceAbove) && Utils.isBottomSide(adjacentPieceBehind)){
-				const topConnector = Utils.has(adjacentPieceAbove, 'plug', 'bottom') ? -1 : 1;
+				const topConnector = Utils.has(adjacentPieceAbove.type, 'plug', 'bottom') ? -1 : 1;
 				const rightConnector = 0;
 				const bottomConnector = 0;
-				const leftConnector = Utils.has(adjacentPieceBehind, 'plug', 'right') ? -1 : 1;
+				const leftConnector = Utils.has(adjacentPieceBehind.type, 'plug', 'right') ? -1 : 1;
 				return [topConnector, rightConnector, bottomConnector, leftConnector]
 			}
 		}
@@ -2545,17 +2548,17 @@ class Puzzly {
 		let actualWidth = this.config.pieceSize;
 		let actualHeight = this.config.pieceSize;
 
-		if(Utils.has(piece, 'plug', 'left')){
+		if(Utils.has(piece.type, 'plug', 'left')){
 			actualWidth += this.config.connectorSize; 
 		}
-		if(Utils.has(piece, 'plug', 'right')){
+		if(Utils.has(piece.type, 'plug', 'right')){
 			actualWidth += this.config.connectorSize; 
 		}
 
-		if(Utils.has(piece, 'plug', 'top')){
+		if(Utils.has(piece.type, 'plug', 'top')){
 			actualHeight += this.config.connectorSize; 
 		}
-		if(Utils.has(piece, 'plug', 'bottom')){
+		if(Utils.has(piece.type, 'plug', 'bottom')){
 			actualHeight += this.config.connectorSize; 
 		}
 
@@ -2593,8 +2596,8 @@ class Puzzly {
 
 	getConnectorBoundingBox(element, side){
 		const piece = this.getPieceFromElement(element, ['jigsaw-type']);
-		const hasLeftPlug = Utils.has(piece, "plug", "left");
-		const hasTopPlug = Utils.has(piece, "plug", "top");
+		const hasLeftPlug = Utils.has(piece.type, "plug", "left");
+		const hasTopPlug = Utils.has(piece.type, "plug", "top");
 		const tolerance = this.config.connectorTolerance;
 		switch(side){
 			case "left":
@@ -2631,8 +2634,8 @@ class Puzzly {
 	getSolvedConnectorBoundingBox(el, side){
 		const piece = this.getPieceFromElement(el, ['jigsaw-type']);
 		const solvedBB = this.getPieceSolvedBoundingBox(el);
-		const hasLeftPlug = Utils.has(piece, "plug", "left");
-		const hasTopPlug = Utils.has(piece, "plug", "top");
+		const hasLeftPlug = Utils.has(piece.type, "plug", "left");
+		const hasTopPlug = Utils.has(piece.type, "plug", "top");
 		const tolerance = this.config.connectorTolerance;
 		switch(side){
 			case "left":
@@ -2784,8 +2787,8 @@ class Puzzly {
 
 		const piece = this.getPieceFromElement(element, ['jigsaw-type'])
 
-		const hasLeftPlug = Utils.has(piece, "plug", "left");
-		const hasTopPlug = Utils.has(piece, "plug", "top");
+		const hasLeftPlug = Utils.has(piece.type, "plug", "left");
+		const hasTopPlug = Utils.has(piece.type, "plug", "top");
 		const tolerance = this.config.connectorTolerance;
 
 		switch(connector){
@@ -2863,10 +2866,10 @@ class Puzzly {
 		let gridPosY = piece.numPiecesFromTopEdge === 0 ? this.config.boardBoundary : this.config.boardBoundary + this.config.pieceSize * piece.numPiecesFromTopEdge;
 		// Would Math.round help each of these values?
 		return {
-			top: (Utils.has(piece, 'plug', 'top') ? gridPosY - this.config.connectorSize : gridPosY),
-			right: (Utils.has(piece, 'plug', 'left') ? gridPosX - this.config.connectorSize : gridPosX) + el.offsetWidth,
-			bottom: (Utils.has(piece, 'plug', 'top') ? gridPosY - this.config.connectorSize : gridPosY) + el.offsetHeight,
-			left: (Utils.has(piece, 'plug', 'left') ? gridPosX - this.config.connectorSize : gridPosX)
+			top: (Utils.has(piece.type, 'plug', 'top') ? gridPosY - this.config.connectorSize : gridPosY),
+			right: (Utils.has(piece.type, 'plug', 'left') ? gridPosX - this.config.connectorSize : gridPosX) + el.offsetWidth,
+			bottom: (Utils.has(piece.type, 'plug', 'top') ? gridPosY - this.config.connectorSize : gridPosY) + el.offsetHeight,
+			left: (Utils.has(piece.type, 'plug', 'left') ? gridPosX - this.config.connectorSize : gridPosX)
 		}
 	}
 
@@ -2884,10 +2887,10 @@ class Puzzly {
 			connections,
 		}
 		
-		const hasRightConnector = Utils.has(piece, "plug", "right") || Utils.has(piece, "socket", "right");
-		const hasBottomConnector = Utils.has(piece, "plug", "bottom") || Utils.has(piece, "socket", "bottom");
-		const hasLeftConnector = Utils.has(piece, "plug", "left") || Utils.has(piece, "socket", "left");
-		const hasTopConnector = Utils.has(piece, "plug", "top") || Utils.has(piece, "socket", "top");
+		const hasRightConnector = Utils.has(piece.type, "plug", "right") || Utils.has(piece.type, "socket", "right");
+		const hasBottomConnector = Utils.has(piece.type, "plug", "bottom") || Utils.has(piece.type, "socket", "bottom");
+		const hasLeftConnector = Utils.has(piece.type, "plug", "left") || Utils.has(piece.type, "socket", "left");
+		const hasTopConnector = Utils.has(piece.type, "plug", "top") || Utils.has(piece.type, "socket", "top");
 
 		const shouldCompare = targetPiece => piece.group === undefined || piece.group === null || piece.group !== targetPiece.group;
 
@@ -2932,7 +2935,6 @@ class Puzzly {
 			targetPiece = this.getPieceFromElement(targetElement, ['piece-id', 'group', 'is-solved', 'jigsaw-type'])
 
 			if(shouldCompare(targetPiece)){
-				// here
 				if(Utils.hasGroup(piece)){
 					let container = this.getGroupTopContainer(element);
 					containerBoundingBox = this.getTrueBoundingBox(container);
@@ -3067,13 +3069,13 @@ class Puzzly {
 	}
 
 	hasCollision(source, target, sourceEl, targetEl){
-		console.log('source', source);
+		// console.log('source', source);
 		if(sourceEl){
-			console.log('source element', sourceEl);
+			// console.log('source element', sourceEl);
 		}
 		console.log('target', target);
 		if(targetEl){
-			console.log('target element', targetEl);
+			// console.log('target element', targetEl);
 		}
 		if([source.left, source.right, source.bottom, source.top, target.left, target.top, target.right, target.bottom].includes(NaN)) return false;
 		return !(source.left >= target.right || source.top >= target.bottom || 
@@ -3182,16 +3184,16 @@ class Puzzly {
 
 				if(this.isMovingSinglePiece){
 					if(Utils.hasGroup(connectingPiece)){
-						targetContainer = this.getGroupContainer(connectingPieceEl);
+						targetConta.typeiner = this.getGroupContainer(connectingPieceEl);
 						newPos.left = connectingPieceEl.offsetLeft - el.offsetWidth + this.config.connectorSize;
 	
-						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
+						if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = connectingPieceEl.offsetTop;
-						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = (connectingPieceEl.offsetTop - this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = (connectingPieceEl.offsetTop + this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = connectingPieceEl.offsetTop;
 						} else {
 							newPos.top = connectingPieceEl.offsetTop;
@@ -3206,13 +3208,13 @@ class Puzzly {
 					} else {
 						newPos.left = connectingPieceEl.offsetLeft - el.offsetWidth + this.config.connectorSize;
 						
-						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
+						if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = connectingPieceEl.offsetTop;
-						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = (connectingPieceEl.offsetTop - this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = (connectingPieceEl.offsetTop + this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = connectingPieceEl.offsetTop;
 						} else {
 							newPos.top = connectingPieceEl.offsetTop;
@@ -3231,13 +3233,13 @@ class Puzzly {
 
 						newPos.left = connectingPieceEl.offsetLeft - el.offsetWidth - thisElOffsetWithinTopContainer.left + this.config.connectorSize;
 						
-						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
+						if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top;
-						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top - this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top + this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top;
 						} else {
 							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top;
@@ -3255,16 +3257,16 @@ class Puzzly {
 
 						newPos.left = connectingPieceEl.offsetLeft + this.config.connectorSize - el.offsetWidth - elBB.left;
 
-						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
+						if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = connectingPieceEl.offsetTop - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop;
-						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = (connectingPieceEl.offsetTop - this.config.connectorSize) - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop + this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = (connectingPieceEl.offsetTop + this.config.connectorSize) - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop - this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = connectingPieceEl.offsetTop - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop;
 						} else {
@@ -3295,13 +3297,13 @@ class Puzzly {
 
 						newPos.left = connectingPieceEl.offsetLeft + connectingPieceEl.offsetWidth - this.config.connectorSize;
 	
-						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
+						if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = connectingPieceEl.offsetTop;
-						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = (connectingPieceEl.offsetTop - this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = (connectingPieceEl.offsetTop + this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = connectingPieceEl.offsetTop;
 						} else {
 							newPos.top = connectingPieceEl.offsetTop;
@@ -3315,13 +3317,13 @@ class Puzzly {
 					} else {
 						newPos.left = connectingPieceEl.offsetLeft + connectingPieceEl.offsetWidth - this.config.connectorSize;
 						
-						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
+						if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = connectingPieceEl.offsetTop;
-						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = (connectingPieceEl.offsetTop - this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = (connectingPieceEl.offsetTop + this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = connectingPieceEl.offsetTop;
 						} else {
 							newPos.top = connectingPieceEl.offsetTop;
@@ -3340,13 +3342,13 @@ class Puzzly {
 
 						newPos.left = connectingPieceEl.offsetLeft + connectingPieceEl.offsetWidth - thisElOffsetWithinTopContainer.left - this.config.connectorSize;
 						
-						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
+						if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top;
-						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top - this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top + this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top;
 						} else {
 							newPos.top = connectingPieceEl.offsetTop - thisElOffsetWithinTopContainer.top;
@@ -3364,16 +3366,16 @@ class Puzzly {
 
 						newPos.left = connectingPieceEl.offsetLeft - this.config.connectorSize + connectingPieceEl.offsetWidth - elBB.left;
 
-						if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "plug", "top")){
+						if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = connectingPieceEl.offsetTop - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop;
-						} else if(Utils.has(thisPiece, "plug", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "plug", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = (connectingPieceEl.offsetTop - this.config.connectorSize) - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop + this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "plug", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "plug", "top")){
 							newPos.top = (connectingPieceEl.offsetTop + this.config.connectorSize) - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop - this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "top") && Utils.has(connectingPiece, "socket", "top")){
+						} else if(Utils.has(thisPiece.type, "socket", "top") && Utils.has(connectingPiece.type, "socket", "top")){
 							newPos.top = connectingPieceEl.offsetTop - elBB.top;
 							connectingPieceNewTopPos = el.offsetTop;
 						} else {
@@ -3405,13 +3407,13 @@ class Puzzly {
 
 						newPos.top = connectingPieceEl.offsetTop - el.offsetHeight + this.config.connectorSize;
 						
-						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
+						if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = connectingPieceEl.offsetLeft;
-						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = (connectingPieceEl.offsetLeft - this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = (connectingPieceEl.offsetLeft + this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = connectingPieceEl.offsetLeft;
 						} else {
 							newPos.left = connectingPieceEl.offsetLeft;
@@ -3425,13 +3427,13 @@ class Puzzly {
 					} else {
 						newPos.top = connectingPieceEl.offsetTop - el.offsetHeight + this.config.connectorSize;
 						
-						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
+						if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = connectingPieceEl.offsetLeft;
-						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = (connectingPieceEl.offsetLeft - this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = (connectingPieceEl.offsetLeft + this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = connectingPieceEl.offsetLeft;
 						} else {
 							newPos.left = connectingPieceEl.offsetLeft;
@@ -3450,13 +3452,13 @@ class Puzzly {
 
 						newPos.top = connectingPieceEl.offsetTop + this.config.connectorSize - el.offsetHeight - thisElOffsetWithinTopContainer.top;
 						
-						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
+						if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left;
-						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left - this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left + this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left;
 						} else {
 							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left;
@@ -3474,16 +3476,16 @@ class Puzzly {
 
 						newPos.top = connectingPieceEl.offsetTop - el.offsetHeight + this.config.connectorSize - elBB.top;
 
-						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
+						if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = connectingPieceEl.offsetLeft - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft;
-						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = (connectingPieceEl.offsetLeft - this.config.connectorSize) - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft + this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = (connectingPieceEl.offsetLeft + this.config.connectorSize) - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft - this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = connectingPieceEl.offsetLeft - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft;
 						} else {
@@ -3514,14 +3516,14 @@ class Puzzly {
 						
 						newPos.top = connectingPieceEl.offsetTop + connectingPieceEl.offsetHeight - this.config.connectorSize;
 						
-						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
+						if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = connectingPieceEl.offsetLeft;
-						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = (connectingPieceEl.offsetLeft - this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = (connectingPieceEl.offsetLeft + this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
-							newPos.left = connectingPieceEl.offsetLeft;
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
+							newPos.type.left = connectingPieceEl.offsetLeft;
 						} else {
 							newPos.left = connectingPieceEl.offsetLeft;
 						}
@@ -3533,13 +3535,13 @@ class Puzzly {
 					} else {
 						newPos.top = connectingPieceEl.offsetTop + connectingPieceEl.offsetHeight - this.config.connectorSize;
 						
-						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
+						if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = connectingPieceEl.offsetLeft;
-						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = (connectingPieceEl.offsetLeft - this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = (connectingPieceEl.offsetLeft + this.config.connectorSize);
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = connectingPieceEl.offsetLeft;
 						} else {
 							newPos.left = connectingPieceEl.offsetLeft;
@@ -3558,13 +3560,13 @@ class Puzzly {
 
 						newPos.top = connectingPieceEl.offsetTop + connectingPieceEl.offsetHeight - this.config.connectorSize - thisElOffsetWithinTopContainer.top;
 						
-						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
+						if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left;
-						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left - this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left + this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left;
 						} else {
 							newPos.left = connectingPieceEl.offsetLeft - thisElOffsetWithinTopContainer.left;
@@ -3581,16 +3583,16 @@ class Puzzly {
 
 						newPos.top = connectingPieceEl.offsetTop + connectingPieceEl.offsetHeight - this.config.connectorSize - elBB.top;
 
-						if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "plug", "left")){
+						if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = connectingPieceEl.offsetLeft - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft;
-						} else if(Utils.has(thisPiece, "plug", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "plug", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = (connectingPieceEl.offsetLeft - this.config.connectorSize) - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft + this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "plug", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "plug", "left")){
 							newPos.left = (connectingPieceEl.offsetLeft + this.config.connectorSize) - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft - this.config.connectorSize;
-						} else if(Utils.has(thisPiece, "socket", "left") && Utils.has(connectingPiece, "socket", "left")){
+						} else if(Utils.has(thisPiece.type, "socket", "left") && Utils.has(connectingPiece.type, "socket", "left")){
 							newPos.left = connectingPieceEl.offsetLeft - elBB.left;
 							connectingPieceNewLeftPos = el.offsetLeft;
 						} else {
@@ -3754,23 +3756,34 @@ class Puzzly {
 	}
 
 	createGroupContainer(pieceAEl, pieceBEl, group){
-		const leftPos =  Math.min(pieceAEl.offsetLeft, pieceBEl.offsetLeft);
-		const topPos =  Math.min(pieceAEl.offsetTop, pieceBEl.offsetTop);
-		const container = document.createElement('div');
+		const pieceA = this.getPieceFromElement(pieceAEl, ['piece-id', 'jigsaw-type', 'imgw', 'imgh', 'imgx', 'imgy', 'num-pieces-from-left-edge', 'num-pieces-from-top-edge']);
+		const pieceB = this.getPieceFromElement(pieceBEl, ['piece-id', 'jigsaw-type', 'imgw', 'imgh', 'imgx', 'imgy', 'num-pieces-from-left-edge', 'num-pieces-from-top-edge']);
+
+		const leftPos =  Math.min(pieceAEl.offsetLeft - (pieceA.numPiecesFromLeftEdge * this.config.pieceSize), pieceBEl.offsetLeft - pieceB.numPiecesFromLeftEdge);
+		const topPos =  Math.min(pieceAEl.offsetTop - (pieceB.numPiecesFromTopEdge * this.config.pieceSize), pieceBEl.offsetTop - pieceB.numPiecesFromTopEdge);
+
+		const container = document.createElement('canvas');
 		container.setAttribute('id', `group-${group}`);
 		container.classList.add('group-container');
+
 		container.style.top = this.getPxString(topPos);
 		container.style.left = this.getPxString(leftPos);
-		container.style.width = this.getPxString(this.config.pieceSize);
-		container.style.height = this.getPxString(this.config.pieceSize);
 
-		container.appendChild(pieceAEl);
-		container.appendChild(pieceBEl);
+		container.style.width = this.getPxString(this.boardSize.width);
+		container.width = this.boardSize.width;
+		container.style.height = this.getPxString(this.boardSize.height);
+		container.height = this.boardSize.height;
+
+		// salt
+		const ctx = container.getContext("2d");
+		
+		this.drawJigsawShape(ctx, pieceA, {x: pieceA.imgX, y: pieceA.imgY});
+		this.drawJigsawShape(ctx, pieceB, {x: pieceB.imgX, y: pieceB.imgY});
+
+		// container.appendChild(pieceAEl);
+		// container.appendChild(pieceBEl);
 		container.style.position = 'absolute';
-		this.canvas.appendChild(container);
-
-		const pieceA = this.getPieceFromElement(pieceAEl, ['piece-id', 'jigsaw-type']);
-		const pieceB = this.getPieceFromElement(pieceBEl, ['piece-id', 'jigsaw-type']);
+		this.canvas.prepend(container);
 
 		if(pieceA.id === pieceB.id - 1 || pieceA.id === pieceB.id + 1){
 			// piece A has horizontal connection with piece B
@@ -3782,16 +3795,16 @@ class Puzzly {
 				pieceAEl.style.left = this.getPxString(pieceBEl.offsetWidth - this.config.connectorSize);
 			}
 
-			if(Utils.has(pieceA, "plug", "top") && Utils.has(pieceB, "plug", "top")){
+			if(Utils.has(pieceA.type, "plug", "top") && Utils.has(pieceB.type, "plug", "top")){
 				pieceAEl.style.top = this.getPxString(0);
 				pieceBEl.style.top = this.getPxString(0);
-			} else if(Utils.has(pieceA, "plug", "top") && Utils.has(pieceB, "socket", "top")){
+			} else if(Utils.has(pieceA.type, "plug", "top") && Utils.has(pieceB.type, "socket", "top")){
 				pieceAEl.style.top = this.getPxString(0);
 				pieceBEl.style.top = this.getPxString(this.config.connectorSize);
-			} else if(Utils.has(pieceA, "socket", "top") && Utils.has(pieceB, "plug", "top")){
+			} else if(Utils.has(pieceA.type, "socket", "top") && Utils.has(pieceB.type, "plug", "top")){
 				pieceAEl.style.top = this.getPxString(this.config.connectorSize);
 				pieceBEl.style.top = this.getPxString(0);
-			} else if(Utils.has(pieceA, "socket", "top") && Utils.has(pieceB, "socket", "top")){
+			} else if(Utils.has(pieceA.type, "socket", "top") && Utils.has(pieceB.type, "socket", "top")){
 				pieceAEl.style.top = this.getPxString(0);
 				pieceBEl.style.top = this.getPxString(0);
 			} else {
@@ -3808,16 +3821,16 @@ class Puzzly {
 				pieceAEl.style.top = this.getPxString(pieceBEl.offsetHeight - this.config.connectorSize);
 			}
 
-			if(Utils.has(pieceA, "plug", "left") && Utils.has(pieceB, "plug", "left")){
+			if(Utils.has(pieceA.type, "plug", "left") && Utils.has(pieceB.type, "plug", "left")){
 				pieceAEl.style.left = this.getPxString(0);
 				pieceBEl.style.left = this.getPxString(0);
-			} else if(Utils.has(pieceA, "plug", "left") && Utils.has(pieceB, "socket", "left")){
+			} else if(Utils.has(pieceA.type, "plug", "left") && Utils.has(pieceB.type, "socket", "left")){
 				pieceAEl.style.left = this.getPxString(0);
 				pieceBEl.style.left = this.getPxString(this.config.connectorSize);
-			} else if(Utils.has(pieceA, "socket", "left") && Utils.has(pieceB, "plug", "left")){
+			} else if(Utils.has(pieceA.type, "socket", "left") && Utils.has(pieceB.type, "plug", "left")){
 				pieceAEl.style.left = this.getPxString(this.config.connectorSize);
 				pieceBEl.style.left = this.getPxString(0);
-			} else if(Utils.has(pieceA, "socket", "left") && Utils.has(pieceB, "socket", "left")){
+			} else if(Utils.has(pieceA.type, "socket", "left") && Utils.has(pieceB.type, "socket", "left")){
 				pieceAEl.style.left = this.getPxString(0);
 				pieceBEl.style.left = this.getPxString(0);
 			} else {
@@ -3826,8 +3839,8 @@ class Puzzly {
 			}
 		}
 
-		this.setPiecePositionsWithinContainer(pieceAEl);
-		this.setPiecePositionsWithinContainer(pieceBEl);
+		// this.setPiecePositionsWithinContainer(pieceAEl);
+		// this.setPiecePositionsWithinContainer(pieceBEl);
 
 		return container;
 	}
@@ -3859,7 +3872,7 @@ class Puzzly {
 		this.setElementAttribute(elementB, "data-position-within-container-left", pieceBPosWithinContainer.left)
 		this.setElementAttribute(elementB, "data-position-within-container-top", pieceBPosWithinContainer.top)
 
-		this.updateConnections(groupId);
+		// this.updateConnections(groupId);
 
 		// TODO: Refactor Util methods to expect type array only, not piece object containing it.
 		// Not sure if this logic is entirely applicable...
@@ -3872,7 +3885,7 @@ class Puzzly {
 			this.setElementAttribute(container, "data-is-solved", true)
 		}
 
-		this.save([elementA, elementB])
+		// this.save([elementA, elementB])
 	}
 
 	getPiecesInGroup(group){
@@ -4106,6 +4119,8 @@ class Puzzly {
 	}
 
 	async save(pieces){
+		// Temp
+		return;
 		const payload = [];
 		const allKeys = [
 			'piece-id', 'piece-id-in-persistence', 'puzzle-id', 'imgx', 'imgy', 'imgw', 'imgh', 'num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type', 'connections', 'connects-to', 'is-inner-piece', 'is-solved', 'group',

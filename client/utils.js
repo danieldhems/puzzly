@@ -67,11 +67,11 @@ export default {
 		return str === 'top-left' || str === 'top-right' || str === 'bottom-right' || str === 'bottom-left';
 	},
 
-	has(piece, connector, side){
+	has(type, connector, side){
 		if(!connector || !side) return false;
 		const c = connector === "plug" ? 1 : connector === "socket" ? -1 : null;
 		const s = side === "top" ? 0 : side === "right" ? 1 : side === "bottom" ? 2 : side === "left" ? 3 : null;
-		return piece.type[s] === c;
+		return type[s] === c;
 	},
 
 	isAdjacent(pieceAId, pieceBId, numPiecesHorizontal){
