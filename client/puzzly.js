@@ -1069,15 +1069,15 @@ class Puzzly {
 				},
 				cp2: {
 					y: Math.ceil(bottomBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
-					x: 0,
+					x: leftBoundary - this.config.connectorSize,
 				},
-				destX: 0,
+				destX: leftBoundary - this.config.connectorSize,
 				destY: Math.ceil(bottomBoundary - (this.config.pieceSize/2)),
 			},
 			thirdCurve: {
 				cp1: {
 					y: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
-					x: 0,
+					x: leftBoundary - this.config.connectorSize,
 				},
 				cp2: {
 					y: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
@@ -1110,15 +1110,15 @@ class Puzzly {
 				},
 				cp2: {
 					y: Math.ceil(bottomBoundary - this.config.connectorDistanceFromCorner + (this.config.connectorDistanceFromCorner/4)),
-					x: this.config.connectorSize -1,
+					x: leftBoundary + this.config.connectorSize -1,
 				},
-				destX: this.config.connectorSize -1,
+				destX: leftBoundary + this.config.connectorSize -1,
 				destY: Math.ceil(bottomBoundary - (this.config.pieceSize/2))
 			},
 			thirdCurve: {
 				cp1: {
 					y: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
-					x: this.config.connectorSize -1,
+					x: leftBoundary + this.config.connectorSize -1,
 				},
 				cp2: {
 					y: Math.ceil(topBoundary + this.config.connectorDistanceFromCorner - (this.config.connectorDistanceFromCorner/4)),
@@ -1166,7 +1166,7 @@ class Puzzly {
 		ctx.fill()
 	}
 
-	drawJigsawShape(ctx, piece, {x, y}, outlines = false){
+	drawJigsawShape(ctx, piece, {x, y}, showGuides = false, outlines = false){
 		// here
 		const hasTopPlug = Utils.has(piece.type, 'plug', 'top')
 		const hasLeftPlug = Utils.has(piece.type, 'plug', 'left')
@@ -1208,7 +1208,6 @@ class Puzzly {
 		}
 		path.lineTo(leftBoundary + this.config.pieceSize, topBoundary + this.config.pieceSize)
 		
-
 		if(Utils.has(piece.type, 'plug', 'bottom')){
 			bottomConnector = this.getBottomPlug(leftBoundary + this.config.pieceSize, topBoundary + this.config.pieceSize, leftBoundary, piece.imgW);
 		} else if(Utils.has(piece.type, 'socket', 'bottom')){
@@ -1237,14 +1236,16 @@ class Puzzly {
 			path.quadraticCurveTo(leftConnector.fourthCurve.cpX, leftConnector.fourthCurve.cpY, leftConnector.fourthCurve.destX, leftConnector.fourthCurve.destY);
 		}
 		path.lineTo(leftBoundary, topBoundary);
-		path.closePath();
 
-		// if(topConnector) this.drawPlugGuides(ctx, topConnector)
-		// if(rightConnector) this.drawPlugGuides(ctx, rightConnector)
-		// if(bottomConnector) this.drawPlugGuides(ctx, bottomConnector)
-		// if(leftConnector) this.drawPlugGuides(ctx, leftConnector)
+		if(showGuides){
+			if(topConnector) this.drawPlugGuides(ctx, topConnector)
+			if(rightConnector) this.drawPlugGuides(ctx, rightConnector)
+			if(bottomConnector) this.drawPlugGuides(ctx, bottomConnector)
+			if(leftConnector) this.drawPlugGuides(ctx, leftConnector)
+		}
 
 		ctx.clip(path);
+		// console.log(piece.imgX, piece.imgY, piece.imgW, piece.imgH, x, y, piece.imgW, piece.imgH)
 		ctx.drawImage(this.SourceImage, piece.imgX, piece.imgY, piece.imgW, piece.imgH, x, y, piece.imgW, piece.imgH);
 	}
 
@@ -1274,6 +1275,8 @@ class Puzzly {
 		pieceContainer.setAttribute('data-puzzle-id', piece.puzzleId)
 		pieceContainer.setAttribute('data-imgX', piece.imgX)
 		pieceContainer.setAttribute('data-imgy', piece.imgY)
+		pieceContainer.setAttribute('data-solvedX', piece.solvedX)
+		pieceContainer.setAttribute('data-solvedY', piece.solvedY)
 		pieceContainer.setAttribute('data-imgW', piece.imgW)
 		pieceContainer.setAttribute('data-imgH', piece.imgH)
 		pieceContainer.setAttribute('data-is-inner-piece', piece.isInnerPiece)
@@ -1917,9 +1920,10 @@ class Puzzly {
 		var curImgY = 0;
 		var curPageX = boardLeft;
 		var curPageY = boardTop;
+		let solvedX = 0,
+			solvedY = 0;
 		var numPiecesFromLeftEdge = 0;
 		var numPiecesFromTopEdge = 0;
-		var solvedY = boardTop;
 
 		let done = false;
 		let i=0;
@@ -1962,9 +1966,10 @@ class Puzzly {
 
 			currentPiece.type = this.getConnectors(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 
-			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
+			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, solvedX, solvedY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
 
 			pieces.push(currentPiece);
+			// console.log(currentPiece)
 			this.drawPieceManually(currentPiece);
 
 			const pieceSize = this.config.pieceSize;
@@ -1973,10 +1978,12 @@ class Puzzly {
 			if(pieces.length % piecesPerSideHorizontal === 0){
 				curImgX = this.config.selectedOffsetX || 0;
 				curPageX = boardLeft;
+				solvedX = 0;
 				
 				const firstPieceOnRowAbove = pieces[pieces.length - piecesPerSideHorizontal];
 				curImgY = firstPieceOnRowAbove.imgY + firstPieceOnRowAbove.imgH - this.config.connectorSize;
 				
+				solvedY += pieceSize;
 				curPageY += pieceSize *1.5;
 
 				numPiecesFromLeftEdge = 0;
@@ -1993,7 +2000,7 @@ class Puzzly {
 						curImgY -= this.config.connectorSize;
 					}
 					
-					solvedY += Utils.has(nextPieceAbove.type, 'plug', 'bottom') ? pieceSize : pieceSize - this.config.connectorSize;
+					// solvedY += Utils.has(nextPieceAbove.type, 'plug', 'bottom') ? pieceSize : pieceSize - this.config.connectorSize;
 				}
 				
 				if(Utils.has(currentPiece.type, "socket", "right")){
@@ -2003,6 +2010,7 @@ class Puzzly {
 				}
 
 				numPiecesFromLeftEdge ++;
+				solvedX += pieceSize;
 				curPageX += pieceSize * 1.5;
 			}
 			
@@ -2568,7 +2576,7 @@ class Puzzly {
 		}
 	}
 
-	assignInitialPieceData(imgX, imgY, canvX, canvY, piece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i){
+	assignInitialPieceData(imgX, imgY, canvX, canvY, solvedX, solvedY, piece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i){
 		const pieceDimensions = this.getPieceWidthAndHeightWithConnectors(piece);
 		const pos = this.piecePositionMap[i];
 		return Object.assign({
@@ -2580,6 +2588,8 @@ class Puzzly {
 			imgH: pieceDimensions.height,
 			pageX: this.config.debug.noDispersal ? canvX : pos.x,
 			pageY: this.config.debug.noDispersal ? canvY : pos.y,
+			solvedX,
+			solvedY,
 			isInnerPiece: Utils.isInnerPiece(piece),
 			isVisible: true,
 			connections: [],
@@ -3073,7 +3083,7 @@ class Puzzly {
 		if(sourceEl){
 			// console.log('source element', sourceEl);
 		}
-		console.log('target', target);
+		// console.log('target', target);
 		if(targetEl){
 			// console.log('target element', targetEl);
 		}
@@ -3203,7 +3213,7 @@ class Puzzly {
 						// el.style.top = this.getPxString(newPos.top);
 
 						this.setPiecePosition(el, newPos);
-						targetContainer.appendChild(el);
+						// targetContainer.appendChild(el);
 
 					} else {
 						newPos.left = connectingPieceEl.offsetLeft - el.offsetWidth + this.config.connectorSize;
@@ -3249,7 +3259,7 @@ class Puzzly {
 						// thisContainer.style.top = this.getPxString(newPos.top);
 
 						this.setPiecePosition(thisContainer, newPos)
-						targetContainer.appendChild(thisContainer);
+						// targetContainer.appendChild(thisContainer);
 
 						thisContainer.classList.add('subgroup');
 					} else {
@@ -3281,7 +3291,7 @@ class Puzzly {
 						// thisTopContainer.style.top = this.getPxString(newPos.top);
 						// thisTopContainer.style.left = this.getPxString(newPos.left);
 						this.setPiecePosition(thisTopContainer, newPos)
-						container.appendChild(connectingPieceEl);
+						// container.appendChild(connectingPieceEl);
 					}
 				}
 
@@ -3312,7 +3322,7 @@ class Puzzly {
 						// el.style.left = this.getPxString(newPos.left);
 						// el.style.top = this.getPxString(newPos.top);
 						this.setPiecePosition(el, newPos)
-						targetContainer.appendChild(el);
+						// targetContainer.appendChild(el);
 
 					} else {
 						newPos.left = connectingPieceEl.offsetLeft + connectingPieceEl.offsetWidth - this.config.connectorSize;
@@ -3357,7 +3367,7 @@ class Puzzly {
 						// thisContainer.style.left = this.getPxString(newPos.left);
 						// thisContainer.style.top = this.getPxString(newPos.top);
 						this.setPiecePosition(thisContainer, newPos)
-						targetContainer.appendChild(thisContainer);
+						// targetContainer.appendChild(thisContainer);
 
 
 						thisContainer.classList.add('subgroup');
@@ -3390,7 +3400,7 @@ class Puzzly {
 						// thisTopContainer.style.top = this.getPxString(newPos.top);
 						// thisTopContainer.style.left = this.getPxString(newPos.left);
 						this.setPiecePosition(thisTopContainer, newPos);
-						container.appendChild(connectingPieceEl);
+						// container.appendChild(connectingPieceEl);
 
 					}
 				}
@@ -3422,7 +3432,7 @@ class Puzzly {
 						// el.style.top = this.getPxString(newPos.top);
 						// el.style.left = this.getPxString(newPos.left;);
 						this.setPiecePosition(el, newPos);
-						targetContainer.appendChild(el);
+						// targetContainer.appendChild(el);
 
 					} else {
 						newPos.top = connectingPieceEl.offsetTop - el.offsetHeight + this.config.connectorSize;
@@ -3467,7 +3477,7 @@ class Puzzly {
 						// thisContainer.style.top = this.getPxString(newPos.top);
 						// thisContainer.style.left = this.getPxString(newPos.left);
 						this.setPiecePosition(thisContainer, newPos);
-						targetContainer.appendChild(thisContainer);
+						// targetContainer.appendChild(thisContainer);
 
 
 						thisContainer.classList.add('subgroup');
@@ -3496,7 +3506,7 @@ class Puzzly {
 						connectingPieceEl.style.top = this.getPxString(el.offsetTop + el.offsetHeight - this.config.connectorSize);
 						connectingPieceEl.style.left = this.getPxString(connectingPieceNewLeftPos);
 						
-						container.appendChild(connectingPieceEl);
+						// container.appendChild(connectingPieceEl);
 						thisTopContainer = this.getGroupTopContainer(el);
 						// thisTopContainer.style.top = this.getPxString(newPos.top);
 						// thisTopContainer.style.left = this.getPxString(newPos.left);
@@ -3531,7 +3541,7 @@ class Puzzly {
 						// el.style.top = this.getPxString(newPos.top);
 						// el.style.left = this.getPxString(newPos.left);
 						this.setPiecePosition(el, newPos);
-						targetContainer.appendChild(el);
+						// targetContainer.appendChild(el);
 					} else {
 						newPos.top = connectingPieceEl.offsetTop + connectingPieceEl.offsetHeight - this.config.connectorSize;
 						
@@ -3576,7 +3586,7 @@ class Puzzly {
 						// thisContainer.style.left = this.getPxString(newPos.left);
 						this.setPiecePosition(thisContainer, newPos);
 						thisContainer.classList.add('subgroup');
-						targetContainer.appendChild(thisContainer);
+						// targetContainer.appendChild(thisContainer);
 
 					} else {
 						const elBB = this.getElementBoundingBoxRelativeToTopContainer(el);
@@ -3605,7 +3615,7 @@ class Puzzly {
 						// thisTopContainer.style.left = this.getPxString(newPos.left);
 						this.setPiecePosition(thisTopContainer, newPos);
 						
-						container.appendChild(connectingPieceEl);
+						// container.appendChild(connectingPieceEl);
 						connectingPieceEl.style.top = this.getPxString(el.offsetTop - connectingPieceEl.offsetHeight + this.config.connectorSize);
 						connectingPieceEl.style.left = this.getPxString(connectingPieceNewLeftPos);
 					}
@@ -3756,8 +3766,8 @@ class Puzzly {
 	}
 
 	createGroupContainer(pieceAEl, pieceBEl, group){
-		const pieceA = this.getPieceFromElement(pieceAEl, ['piece-id', 'jigsaw-type', 'imgw', 'imgh', 'imgx', 'imgy', 'num-pieces-from-left-edge', 'num-pieces-from-top-edge']);
-		const pieceB = this.getPieceFromElement(pieceBEl, ['piece-id', 'jigsaw-type', 'imgw', 'imgh', 'imgx', 'imgy', 'num-pieces-from-left-edge', 'num-pieces-from-top-edge']);
+		const pieceA = this.getPieceFromElement(pieceAEl, ['piece-id', 'jigsaw-type', 'imgw', 'imgh', 'imgx', 'imgy', 'solvedx', 'solvedy', 'num-pieces-from-left-edge', 'num-pieces-from-top-edge']);
+		const pieceB = this.getPieceFromElement(pieceBEl, ['piece-id', 'jigsaw-type', 'imgw', 'imgh', 'imgx', 'imgy', 'solvedx', 'solvedy', 'num-pieces-from-left-edge', 'num-pieces-from-top-edge']);
 
 		const leftPos =  Math.min(pieceAEl.offsetLeft - (pieceA.numPiecesFromLeftEdge * this.config.pieceSize), pieceBEl.offsetLeft - pieceB.numPiecesFromLeftEdge);
 		const topPos =  Math.min(pieceAEl.offsetTop - (pieceB.numPiecesFromTopEdge * this.config.pieceSize), pieceBEl.offsetTop - pieceB.numPiecesFromTopEdge);
@@ -3775,10 +3785,11 @@ class Puzzly {
 		container.height = this.boardSize.height;
 
 		// salt
-		const ctx = container.getContext("2d");
+		let ctx = container.getContext("2d");
 		
-		this.drawJigsawShape(ctx, pieceA, {x: pieceA.imgX, y: pieceA.imgY});
-		this.drawJigsawShape(ctx, pieceB, {x: pieceB.imgX, y: pieceB.imgY});
+		console.log(pieceA, pieceB)
+		// this.drawJigsawShape(ctx, pieceA, {x: pieceA.solvedX, y: pieceA.solvedY}, true);
+		this.drawJigsawShape(ctx, pieceB, {x: pieceB.solvedX, y: pieceB.solvedY}, true);
 
 		// container.appendChild(pieceAEl);
 		// container.appendChild(pieceBEl);
@@ -4017,6 +4028,12 @@ class Puzzly {
 			}
 			if(k == 'imgy'){
 				data.imgY = parseInt(this.getDataAttributeValue(el, 'imgY'));
+			}
+			if(k == 'solvedx'){
+				data.solvedX = parseInt(this.getDataAttributeValue(el, 'solvedX'));
+			}
+			if(k == 'solvedy'){
+				data.solvedY = parseInt(this.getDataAttributeValue(el, 'solvedY'));
 			}
 			if(k == 'imgw'){
 				data.imgW = parseInt(this.getDataAttributeValue(el, 'imgW'));
