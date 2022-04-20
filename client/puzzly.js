@@ -699,19 +699,22 @@ class Puzzly {
 		// this.drawBackground();
 		this.drawBoardArea();
 		this.boardAreaEl = document.getElementById('board-area');
+		this.solvedCnvContainer = document.getElementById('group-canvas-1111');
+
+		// this.makeSolvedCanvas();
 
 		this.initiFullImagePreviewer();
 		this.isFullImageViewerActive = false;
-		// console.log(this.groups)
-		
+
+		// asd
 		if(this.progress.length > 0){
 			this.progress.forEach(p => {
 				this.drawPieceManually(p);
-				if(p.group){
+				if(p.group !== undefined && p.group !== null){
 					this.groups[p.group] && this.groups[p.group].pieces ? this.groups[p.group].pieces.push(p) : this.groups[p.group] = { pieces: [p] };
 				}
 			});
-			// console.log(Object.keys(this.groups))
+			console.log(this.groups)
 			if(Object.keys(this.groups).length){
 				for(let g in this.groups){
 					this.drawPiecesIntoGroup(g, this.groups[g].pieces);
@@ -739,13 +742,26 @@ class Puzzly {
 			this.onMouseDown(e);
 		});
 
-		this.debugWindowInitialise();
-
-
+		// this.debugWindowInitialise();
 
 		window.addEventListener('mouseup', this.onMouseUp.bind(this));
 
 		// window.addEventListener('keydown', this.onKeyDown.bind(this));
+	}
+
+	makeSolvedCanvas(){
+		this.solvedCnvContainer = document.createElement('div');
+		this.solvedCnvContainer.id = 'group-container-1111';
+		this.solvedCnvContainer.classList.add('group-container');
+		this.solvedCnvContainer.style.width = this.boardSize.width;
+		this.solvedCnvContainer.style.height = this.boardSize.height;
+		this.solvedCnv = document.createElement('canvas');
+		this.solvedCnv.width = this.boardSize.width;
+		this.solvedCnv.height = this.boardSize.height;
+		this.solvedCnv.id = 'group-canvas-1111';
+		this.solvedCnvContainer.prepend(this.solvedCnv);
+		this.boardAreaEl.appendChild(this.solvedCnvContainer);
+		console.log('done')
 	}
 	
 	onKeyDown(event){
@@ -1331,7 +1347,7 @@ class Puzzly {
 			}
 		}
 
-		if(Utils.hasGroup(piece)){
+		if(Utils.hasGroup(piece) && piece.isSolved === undefined){
 			let groupContainer = document.querySelector(`#group-container-${piece.group}`);
 
 			if(!groupContainer){
@@ -1363,6 +1379,9 @@ class Puzzly {
 				this.setElementAttribute(groupContainer, 'data-is-solved', true);
 			}
 
+		} else if(piece.isSolved) {
+			this.solvedCnvContainer.append(pieceContainer);
+			this.addToGroup(pieceContainer, 1111);
 		} else {
 			this.canvas.appendChild(pieceContainer);
 			this.setPiecePositionsWithinContainer(pieceContainer);
@@ -1551,9 +1570,9 @@ class Puzzly {
 
 			const isPuzzlePiece = e.target.classList.contains("puzzle-piece");
 			const isPuzzlePieceCanvas = e.target.classList.contains("puzzle-piece-canvas");
-			const isGroupCanvas = e.target.classList.contains("group-canvas");
+			const lookForPieceUnderneath = e.target.classList.contains("group-canvas") || e.id === 'group-canvas-solved';
 
-			if(isGroupCanvas){
+			if(lookForPieceUnderneath){
 				// We've clicked the empty space of a group canvas, so we need to 
 				let pX = e.pageX, pY = e.pageY;
 				let box = {top: pY, right: pX, bottom: pY, left: pX};
@@ -1707,11 +1726,7 @@ class Puzzly {
 				const piecesToCheck = this.getCollisionCandidatesInGroup(group);
 				console.log('pieces to check', piecesToCheck)
 
-				const adjacentSolvedPieces = this.getAdjacentSolvedPieces(piecesToCheck);
 				const connection = piecesToCheck.map(p => this.checkConnections(p)).filter(e => e)[0];
-
-				console.log('adjacent solved pieces', adjacentSolvedPieces);
-				// .filter(e => e).groupBy(e => this.getGroup(e))
 				console.log('connection', connection)
 
 				if(connection){
@@ -1724,18 +1739,10 @@ class Puzzly {
 					const isCornerConnection = Utils.isCornerConnection(connectionType);
 					console.log('is corner connection', isCornerConnection)
 
-					const solvedPosition = { top: this.config.boardBoundary, left: this.config.boardBoundary };
-					if(isCornerConnection || connectionType === "float" && !adjacentSolvedPieces.length){
-						console.log('not grouping connection')
-						this.setPiecePosition(this.movingElement, solvedPosition);
+					if(isCornerConnection || connectionType === "float"){
+						this.addToGroup(1111, connection.sourceEl);
 					} else {
-						console.log('grouping connection')
-						if(connectionType === "float" && adjacentSolvedPieces.length){
-							console.log('mapping adjacent groups')
-							adjacentSolvedPieces.map(el => this.group(el.targetEl, el.sourceEl));
-						} else {
-							this.group(connection.sourceEl, connection.targetEl);
-						}
+						this.group(connection.sourceEl, connection.targetEl);
 					}
 
 					const updatedGroup = this.getGroup(element);
@@ -1753,8 +1760,6 @@ class Puzzly {
 					}
 
 					hasConnection = true;
-				} else {
-					this.debugInfoSetReadout(this.debugInfoRows.lastConnection, 'None');
 				}
 
 				const piecesInCurrentGroup = this.getPiecesInGroup(group);
@@ -1776,13 +1781,10 @@ class Puzzly {
 					}
 
 					let connectionType = typeof connection == "string" ? connection : connection.type;
+					const isSolvedConnection = Utils.isCornerConnection(connectionType) || connectionType === 'float';
 
-					const isCornerConnection = Utils.isCornerConnection(connection)
-
-					if(isCornerConnection){
-						const piece = this.getPieceFromElement(element, ['solvedx', 'solvedy']);
-						const margin = this.config.boardBoundary;
-						this.setPiecePosition(element, {top: margin + piece.solvedY, left: margin + piece.solvedX });
+					if(isSolvedConnection){
+						this.addToGroup(element, 1111)
 					} else {
 						this.group(element, targetEl);
 					}
@@ -3053,7 +3055,7 @@ class Puzzly {
 			elBBWithinTolerance.right = elBoundingBox.left + this.config.connectorTolerance;
 			elBBWithinTolerance.bottom = elBoundingBox.top + this.config.connectorTolerance;
 			if(this.hasCollision(elBBWithinTolerance, this.getTopLeftCornerBoundingBox())){
-				return "top-left";
+				connectionFound = "top-left";
 			}
 		}
 		if(Utils.isTopRightCorner(piece)){
@@ -3061,7 +3063,7 @@ class Puzzly {
 			elBBWithinTolerance.left = elBoundingBox.right - this.config.connectorTolerance;
 			elBBWithinTolerance.bottom = elBoundingBox.top + this.config.connectorTolerance;
 			if(this.hasCollision(elBoundingBox, this.getTopRightCornerBoundingBox())){
-				return "top-right";
+				connectionFound = "top-right";
 			}
 		}
 		if(Utils.isBottomRightCorner(piece)){
@@ -3069,7 +3071,7 @@ class Puzzly {
 			elBBWithinTolerance.left = elBoundingBox.right - this.config.connectorTolerance;
 			elBBWithinTolerance.top = elBoundingBox.bottom - this.config.connectorTolerance;
 			if(this.hasCollision(elBoundingBox, this.getBottomRightCornerBoundingBox())){
-				return "bottom-right";
+				connectionFound = "bottom-right";
 			}
 		}
 		if(Utils.isBottomLeftCorner(piece)){
@@ -3077,7 +3079,7 @@ class Puzzly {
 			elBBWithinTolerance.right = elBoundingBox.left + this.config.connectorTolerance;
 			elBBWithinTolerance.top = elBoundingBox.bottom - this.config.connectorTolerance;
 			if(this.hasCollision(elBoundingBox, this.getBottomLeftCornerBoundingBox())){
-				return "bottom-left";
+				connectionFound = "bottom-left";
 			}
 		}
 
@@ -3223,7 +3225,7 @@ class Puzzly {
 		return connectionFound && {
 			type: connectionFound,
 			sourceEl: element,
-			targetEl: connectionFound !== 'float' && targetElement
+			targetEl: connectionFound !== 'float' && !Utils.isCornerConnection(connectionFound) && targetElement
 		}
 	}
 
@@ -3394,7 +3396,9 @@ class Puzzly {
 	}
 
 	drawPiecesIntoGroup(groupId, pieces, showGuides = false){
+		console.log('drawPiecesIntoGroup', groupId)
 		const cnv = document.querySelector(`#group-canvas-${groupId}`);
+		console.log(cnv)
 		const ctx = cnv.getContext("2d");
 
 		let group = this.groups[groupId];
@@ -3537,10 +3541,16 @@ console.log('saving')
 	}
 
 	addToGroup(element, group){
-		const piece = this.getPieceFromElement(element, ['piece-id', 'is-solved', 'jigsaw-type', 'solvedx', 'solvedy', 'imgx', 'imgy', 'imgw', 'imgh', 'connections']);
+		console.log('addToGroup', element, group)
+		console.log(element.dataset)
+		// const piece = this.getPieceFromElement(element, ['solvedx', 'solvedy']);
+
+		const solvedX = parseInt(element.dataset.solvedX);
+		const solvedY = parseInt(element.dataset.solvedY);
 
 		const targetGroupContainer = this.getGroupContainer(group);
-		const isTargetGroupSolved = this.isGroupSolved(group);
+		console.log('targetGroupContainer', targetGroupContainer)
+		const isTargetGroupSolved = this.isGroupSolved(group) || group === 1111;
 
 		// Add element(s) to target group container
 		const oldGroup = this.getGroup(element);
@@ -3563,17 +3573,19 @@ console.log('saving')
 			element.setAttribute('data-group', group);
 
 			if(!this.isMovingSinglePiece){
-				targetGroupContainer.style.top = this.getPxString(element.offsetTop - piece.solvedY);
-				targetGroupContainer.style.left = this.getPxString(element.offsetLeft - piece.solvedX);
+				targetGroupContainer.style.top = this.getPxString(element.offsetTop - solvedY);
+				targetGroupContainer.style.left = this.getPxString(element.offsetLeft - solvedX);
 			}
 
 			// Add element to group and set its position
 			targetGroupContainer.prepend(element);
-			this.setPiecePosition(element, {left: piece.solvedX, top: piece.solvedY});
+			this.setPiecePosition(element, {left: solvedX, top: solvedY});
 
 			// Hide original canvas belonging to piece
 			const oldCnv = element.querySelector('canvas');
-			oldCnv.remove()
+			if(oldCnv){
+				oldCnv.remove()
+			}
 
 			followingEls.push(element);
 		}
