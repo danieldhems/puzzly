@@ -698,16 +698,14 @@ class Puzzly {
 
 		// this.drawBackground();
 		this.drawBoardArea();
+		this.makeSolvedCanvas();
 		this.boardAreaEl = document.getElementById('board-area');
-		this.solvedCnvContainer = document.getElementById('group-canvas-1111');
-
-		// this.makeSolvedCanvas();
 
 		this.initiFullImagePreviewer();
 		this.isFullImageViewerActive = false;
 
-		// asd
 		if(this.progress.length > 0){
+			//*/
 			this.progress.forEach(p => {
 				this.drawPieceManually(p);
 				if(p.group !== undefined && p.group !== null){
@@ -721,12 +719,15 @@ class Puzzly {
 				}
 			}
 			this.initGroupContainerPositions(this.progress)
+			//*/
 		} else {
 			this.generatePieceSectorMap();
 			this.piecePositionMap = this.shuffleArray(this.getRandomCoordsFromSectorMap());
 			this.makePieces();
 			this.save(this.allPieces())
 		}
+
+		// asd
 
 		// this.wrapPiecesAroundBoard();
 		// this.arrangePieces()
@@ -749,19 +750,28 @@ class Puzzly {
 		// window.addEventListener('keydown', this.onKeyDown.bind(this));
 	}
 
+	drawBoardArea(){
+		const element = document.getElementById('boardArea');
+		element.id = "board-area";
+		element.style.position = "absolute";
+		element.style.top = this.boardBoundingBox.top + "px";
+		element.style.left = this.boardBoundingBox.left + "px";
+		element.style.border = "3px groove #222";
+		element.style.width = this.boardSize.width + "px";
+		element.style.height = this.boardSize.height + "px";
+	}
+
 	makeSolvedCanvas(){
-		this.solvedCnvContainer = document.createElement('div');
-		this.solvedCnvContainer.id = 'group-container-1111';
-		this.solvedCnvContainer.classList.add('group-container');
-		this.solvedCnvContainer.style.width = this.boardSize.width;
-		this.solvedCnvContainer.style.height = this.boardSize.height;
-		this.solvedCnv = document.createElement('canvas');
-		this.solvedCnv.width = this.boardSize.width;
-		this.solvedCnv.height = this.boardSize.height;
-		this.solvedCnv.id = 'group-canvas-1111';
-		this.solvedCnvContainer.prepend(this.solvedCnv);
-		this.boardAreaEl.appendChild(this.solvedCnvContainer);
-		console.log('done')
+		const solvedCnvContainer = document.getElementById('group-container-1111');
+		solvedCnvContainer.style.top = this.getPxString(this.config.boardBoundary);
+		solvedCnvContainer.style.left = this.getPxString(this.config.boardBoundary);
+		solvedCnvContainer.style.width = this.boardSize.width;
+		solvedCnvContainer.style.height = this.boardSize.height;
+		const solvedCnv = document.getElementById('group-canvas-1111');
+		solvedCnv.width = this.boardSize.width;
+		solvedCnv.height = this.boardSize.height;
+		solvedCnv.style.width = this.getPxString(this.boardSize.width);
+		solvedCnv.style.height = this.getPxString(this.boardSize.height);
 	}
 	
 	onKeyDown(event){
@@ -1286,6 +1296,8 @@ class Puzzly {
 	drawPieceManually(piece){
 		let ctx;
 
+		const solvedCnvContainer = document.getElementById('group-container-1111');
+
 		if(Number.isNaN(piece.id) || piece.id === "null"){
 			return;
 		}
@@ -1380,8 +1392,7 @@ class Puzzly {
 			}
 
 		} else if(piece.isSolved) {
-			this.solvedCnvContainer.append(pieceContainer);
-			this.addToGroup(pieceContainer, 1111);
+			solvedCnvContainer.append(pieceContainer);
 		} else {
 			this.canvas.appendChild(pieceContainer);
 			this.setPiecePositionsWithinContainer(pieceContainer);
@@ -1409,12 +1420,14 @@ class Puzzly {
 
 	initGroupContainerPositions(piecesFromPersistence){
 		const groupContainers = document.querySelectorAll('[id^=group-container-]');
-		groupContainers.forEach(container => {
-			let id = parseInt(container.getAttribute('id').split('-')[2]);
-			let piece = piecesFromPersistence.filter(p => p.group === id)[0];
-			container.style.top = this.getPxString(piece.containerY);
-			container.style.left = this.getPxString(piece.containerX);
-		})
+		if(groupContainers.length > 1){
+			groupContainers.forEach(container => {
+				let id = parseInt(container.getAttribute('id').split('-')[2]);
+				let piece = piecesFromPersistence.filter(p => p.group === id)[0];
+				container.style.top = this.getPxString(piece.containerY);
+				container.style.left = this.getPxString(piece.containerX);
+			})
+		}
 	}
 	
 	drawPiece(piece) {
@@ -1740,7 +1753,7 @@ class Puzzly {
 					console.log('is corner connection', isCornerConnection)
 
 					if(isCornerConnection || connectionType === "float"){
-						this.addToGroup(1111, connection.sourceEl);
+						this.addToGroup(connection.sourceEl, 1111);
 					} else {
 						this.group(connection.sourceEl, connection.targetEl);
 					}
@@ -2679,18 +2692,6 @@ class Puzzly {
 		return array;
 	  }
 
-	drawBoardArea(){
-		const element = document.createElement('div');
-		element.id = "board-area";
-		element.style.position = "absolute";
-		element.style.top = this.boardBoundingBox.top + "px";
-		element.style.left = this.boardBoundingBox.left + "px";
-		element.style.border = "3px groove #222";
-		element.style.width = this.boardSize.width + "px";
-		element.style.height = this.boardSize.height + "px";
-		this.canvas.appendChild(element);
-	}
-
 	getRandomPositionOutsideBoardArea(sector){
 		const randSectorBoundingBox = this.getSectorBoundingBox(sector);
 		
@@ -3542,11 +3543,12 @@ console.log('saving')
 
 	addToGroup(element, group){
 		console.log('addToGroup', element, group)
+		console.log(element)
 		console.log(element.dataset)
 		// const piece = this.getPieceFromElement(element, ['solvedx', 'solvedy']);
 
-		const solvedX = parseInt(element.dataset.solvedX);
-		const solvedY = parseInt(element.dataset.solvedY);
+		const solvedX = parseInt(element.dataset.solvedx);
+		const solvedY = parseInt(element.dataset.solvedy);
 
 		const targetGroupContainer = this.getGroupContainer(group);
 		console.log('targetGroupContainer', targetGroupContainer)
