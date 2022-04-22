@@ -696,6 +696,11 @@ class Puzzly {
 		this.canvasWidth = parseInt(this.canvas.style.width);
 		this.canvasHeight = parseInt(this.canvas.style.height);
 
+		this.ControlsElOriginalPosition = {
+			top: this.ControlsEl.offsetTop,
+			left: this.ControlsEl.offsetLeft,
+		};
+
 		// this.drawBackground();
 		this.drawBoardArea();
 		this.makeSolvedCanvas();
@@ -746,8 +751,7 @@ class Puzzly {
 		// this.debugWindowInitialise();
 
 		window.addEventListener('mouseup', this.onMouseUp.bind(this));
-
-		// window.addEventListener('keydown', this.onKeyDown.bind(this));
+		window.addEventListener('keydown', this.onKeyDown.bind(this));
 	}
 
 	drawBoardArea(){
@@ -782,23 +786,27 @@ class Puzzly {
 		// 173 Min Key  hyphen/underscore key
 		// 61 Plus key  +/= key
 		if ((event.ctrlKey || event.metaKey) && (event.which === 61 || event.which === 107 || event.which === 173 || event.which === 109  || event.which === 187  || event.which === 189 || event.which === 48) ) {
-			event.preventDefault();
+			// event.preventDefault();
 			if(event.which === 187){
-				this.zoomLevel += .1;
+				// this.zoomLevel += .1;
+				this.scaleLevel -= .1;
 			}
 			if(event.which === 189){
-				this.zoomLevel -= .1;
+				// this.zoomLevel -= .1;
+				this.scaleLevel += .1;
 			}
 			
 			if(event.which === 48){
-				this.zoomLevel = 1;
+				// this.zoomLevel = 1;
+				this.scaleLevel = 1;
 			}
 			
 			if(this.isPreviewActive){
 				this.updatePreviewerSizeAndPosition();
 			}
 	
-			this.canvas.style.transform = `scale(${this.zoomLevel})`;
+			// this.canvas.style.transform = `scale(${this.zoomLevel})`;
+			// this.ControlsEl.style.transform = `transform(scale, ${this.scaleLevel})`;
 		}
 	}
 
@@ -2770,31 +2778,31 @@ class Puzzly {
 		switch(side){
 			case "left":
 				return {
-					top: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
-					right: element.offsetLeft + this.config.connectorSize - tolerance,
-					bottom: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
-					left: element.offsetLeft + tolerance,
+					top: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + (tolerance * this.zoomLevel),
+					right: element.offsetLeft + this.config.connectorSize - (tolerance * this.zoomLevel),
+					bottom: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - (tolerance * this.zoomLevel),
+					left: element.offsetLeft + (tolerance * this.zoomLevel),
 				}
 			case "right":
 				return {
-					top: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
-					right: element.offsetLeft + element.offsetWidth - tolerance,
-					bottom: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
-					left: element.offsetLeft + element.offsetWidth - this.config.connectorSize + tolerance,
+					top: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + (tolerance * this.zoomLevel),
+					right: element.offsetLeft + element.offsetWidth - (tolerance * this.zoomLevel),
+					bottom: element.offsetTop + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - (tolerance * this.zoomLevel),
+					left: element.offsetLeft + element.offsetWidth - this.config.connectorSize + (tolerance * this.zoomLevel),
 				}
 			case "bottom":
 				return {
-					top: element.offsetTop + element.offsetHeight - this.config.connectorSize + tolerance,
-					right: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
-					bottom: element.offsetTop + element.offsetHeight - tolerance,
-					left: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
+					top: element.offsetTop + element.offsetHeight - this.config.connectorSize + (tolerance * this.zoomLevel),
+					right: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - (tolerance * this.zoomLevel),
+					bottom: element.offsetTop + element.offsetHeight - (tolerance * this.zoomLevel),
+					left: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + (tolerance * this.zoomLevel),
 				}
 			case "top":
 				return {
-					top: element.offsetTop + tolerance,
-					right: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
-					bottom: element.offsetTop + this.config.connectorSize - tolerance,
-					left: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
+					top: element.offsetTop + (tolerance * this.zoomLevel),
+					right: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - (tolerance * this.zoomLevel),
+					bottom: element.offsetTop + this.config.connectorSize - (tolerance * this.zoomLevel),
+					left: element.offsetLeft + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + (tolerance * this.zoomLevel),
 				}
 		}
 	}
@@ -2808,31 +2816,31 @@ class Puzzly {
 		switch(side){
 			case "left":
 				return {
-					top: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
-					right: solvedBB.left + this.config.connectorSize - tolerance,
-					bottom: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
-					left: solvedBB.left + tolerance,
+					top: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + (tolerance * this.zoomLevel),
+					right: solvedBB.left + this.config.connectorSize - (tolerance * this.zoomLevel),
+					bottom: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - (tolerance * this.zoomLevel),
+					left: solvedBB.left + (tolerance * this.zoomLevel),
 				}
 			case "right":
 				return {
-					top: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
-					right: solvedBB.right - tolerance,
-					bottom: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
-					left: solvedBB.right - this.config.connectorSize + tolerance,
+					top: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + (tolerance * this.zoomLevel),
+					right: solvedBB.right - (tolerance * this.zoomLevel),
+					bottom: solvedBB.top + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - (tolerance * this.zoomLevel),
+					left: solvedBB.right - this.config.connectorSize + (tolerance * this.zoomLevel),
 				}
 			case "bottom":
 				return {
-					top: solvedBB.bottom - this.config.connectorSize + tolerance,
-					right: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
-					bottom: solvedBB.bottom - tolerance,
-					left: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
+					top: solvedBB.bottom - this.config.connectorSize + (tolerance * this.zoomLevel),
+					right: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - (tolerance * this.zoomLevel),
+					bottom: solvedBB.bottom - (tolerance * this.zoomLevel),
+					left: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + (tolerance * this.zoomLevel),
 				}
 			case "top":
 				return {
-					top: solvedBB.top + tolerance,
-					right: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
-					bottom: solvedBB.top + this.config.connectorSize - tolerance,
-					left: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
+					top: solvedBB.top + (tolerance * this.zoomLevel),
+					right: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - (tolerance * this.zoomLevel),
+					bottom: solvedBB.top + this.config.connectorSize - (tolerance * this.zoomLevel),
+					left: solvedBB.left + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + (tolerance * this.zoomLevel),
 				}
 		}
 	}
@@ -2954,34 +2962,34 @@ class Puzzly {
 		switch(connector){
 			case 'right':
 				return {
-					top: containerBoundingBox.top + piece.solvedY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
-					right: containerBoundingBox.left + piece.solvedX + element.offsetWidth - tolerance,
-					bottom: containerBoundingBox.top + piece.solvedY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
-					left: containerBoundingBox.left + piece.solvedX + element.offsetWidth - this.config.connectorSize + tolerance
+					top: (containerBoundingBox.top * this.zoomLevel) + piece.solvedY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + (tolerance * this.zoomLevel),
+					right: (containerBoundingBox.left * this.zoomLevel) + piece.solvedX + element.offsetWidth - (tolerance * this.zoomLevel),
+					bottom: (containerBoundingBox.top * this.zoomLevel) + piece.solvedY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - (tolerance * this.zoomLevel),
+					left: (containerBoundingBox.left * this.zoomLevel) + piece.solvedX + element.offsetWidth - this.config.connectorSize + (tolerance * this.zoomLevel)
 				}
 	
 			case 'bottom':
 				return {
-					top: containerBoundingBox.top + piece.solvedY + element.offsetHeight - this.config.connectorSize + tolerance,
-					right: containerBoundingBox.left + piece.solvedX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
-					bottom: containerBoundingBox.top + piece.solvedY + element.offsetHeight - tolerance,
-					left: containerBoundingBox.left + piece.solvedX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
+					top: (containerBoundingBox.top * this.zoomLevel) + piece.solvedY + element.offsetHeight - this.config.connectorSize + (tolerance * this.zoomLevel),
+					right: (containerBoundingBox.left * this.zoomLevel) + piece.solvedX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - (tolerance * this.zoomLevel),
+					bottom: (containerBoundingBox.top * this.zoomLevel) + piece.solvedY + element.offsetHeight - (tolerance * this.zoomLevel),
+					left: (containerBoundingBox.left * this.zoomLevel) + piece.solvedX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + (tolerance * this.zoomLevel),
 				}
 	
 			case 'left':
 				return {
-					top: containerBoundingBox.top + piece.solvedY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance,
-					right: containerBoundingBox.left + piece.solvedX + this.config.connectorSize - tolerance,
-					bottom: containerBoundingBox.top + piece.solvedY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
-					left: containerBoundingBox.left + piece.solvedX + tolerance
+					top: (containerBoundingBox.top * this.zoomLevel) + piece.solvedY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + (tolerance * this.zoomLevel),
+					right: (containerBoundingBox.left * this.zoomLevel) + piece.solvedX + this.config.connectorSize - (tolerance * this.zoomLevel),
+					bottom: (containerBoundingBox.top * this.zoomLevel) + piece.solvedY + (hasTopPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - (tolerance * this.zoomLevel),
+					left: (containerBoundingBox.left * this.zoomLevel) + piece.solvedX + (tolerance * this.zoomLevel),
 				}
 	
 			case 'top':
 				return {
-					top: containerBoundingBox.top + piece.solvedY + tolerance,
-					right: containerBoundingBox.left + piece.solvedX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - tolerance,
-					bottom: containerBoundingBox.top + piece.solvedY + this.config.connectorSize - tolerance,
-					left: containerBoundingBox.left + piece.solvedX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + tolerance
+					top: (containerBoundingBox.top * this.zoomLevel) + piece.solvedY + (tolerance * this.zoomLevel),
+					right: (containerBoundingBox.left * this.zoomLevel) + piece.solvedX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + this.config.connectorSize - (tolerance * this.zoomLevel),
+					bottom: (containerBoundingBox.top * this.zoomLevel) + piece.solvedY + this.config.connectorSize - (tolerance * this.zoomLevel),
+					left: (containerBoundingBox.left * this.zoomLevel) + piece.solvedX + (hasLeftPlug ? this.config.connectorDistanceFromCorner + this.config.connectorSize : this.config.connectorDistanceFromCorner) + (tolerance * this.zoomLevel)
 				}
 		}
 	}
@@ -3185,6 +3193,7 @@ class Puzzly {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "right");
 				}
 				
+				console.log('checking left', thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox, element, targetElement)){
 					connectionFound = "left";
 				} else {
