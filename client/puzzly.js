@@ -1419,11 +1419,14 @@ class Puzzly {
 	}
 
 	initGroupContainerPositions(piecesFromPersistence){
-		const groupContainers = document.querySelectorAll('[id^=group-container-]');
+		let groupContainers = document.querySelectorAll('[id^=group-container-]');
+		groupContainers = Array.from(groupContainers).filter(c => c.id !== 'group-container-1111');
+
 		if(groupContainers.length > 1){
 			groupContainers.forEach(container => {
 				let id = parseInt(container.getAttribute('id').split('-')[2]);
 				let piece = piecesFromPersistence.filter(p => p.group === id)[0];
+				
 				container.style.top = this.getPxString(piece.containerY);
 				container.style.left = this.getPxString(piece.containerX);
 			})
@@ -1574,6 +1577,32 @@ class Puzzly {
 		}
 	}
 
+	getPieceUnderneath(e){
+			// We've clicked the empty space of a group canvas, so we need to 
+			const pX = e.pageX, pY = e.pageY;
+			const box = {top: pY, right: pX, bottom: pY, left: pX};
+			// haddock
+
+			return [...this.allPieces()].filter(el => {
+				let p = this.getPieceFromElement(el, ['solvedx', 'solvedy']);
+				let cont = this.getGroup(el) && this.getGroupContainer(el);
+				let bb = {};
+
+				if(cont){
+						bb.top = (p.solvedY * this.zoomLevel) + (cont.offsetTop * this.zoomLevel);
+						bb.right = (p.solvedX * this.zoomLevel) + (el.offsetWidth * this.zoomLevel) + (cont.offsetLeft * this.zoomLevel);
+						bb.bottom = (p.solvedY * this.zoomLevel) + (el.offsetHeight * this.zoomLevel) + (cont.offsetTop * this.zoomLevel);
+						bb.left = (p.solvedX * this.zoomLevel) + (cont.offsetLeft * this.zoomLevel);
+				} else {
+						bb.top = el.offsetTop * this.zoomLevel;
+						bb.right = (el.offsetLeft * this.zoomLevel) + (el.offsetWidth * this.zoomLevel);
+						bb.bottom = (el.offsetTop * this.zoomLevel) + (el.offsetHeight * this.zoomLevel);
+						bb.left = el.offsetLeft * this.zoomLevel;
+				}
+				return this.hasCollision(bb, box);
+			})[0];
+	}
+
 	onMouseDown(e){
 		let element, diffX, diffY, thisPiece;
 
@@ -1586,28 +1615,8 @@ class Puzzly {
 			const lookForPieceUnderneath = e.target.classList.contains("group-canvas") || e.id === 'group-canvas-solved';
 
 			if(lookForPieceUnderneath){
-				// We've clicked the empty space of a group canvas, so we need to 
-				let pX = e.pageX, pY = e.pageY;
-				let box = {top: pY, right: pX, bottom: pY, left: pX};
-				// haddock
-
-				element = [...this.allPieces()].filter(el => {
-					let bb = {
-						top: el.offsetTop,
-						right: el.offsetLeft + el.offsetWidth,
-						bottom: el.offsetTop + el.offsetHeight,
-						left: el.offsetLeft
-					};
-
-					let cont = this.getGroup(el) && this.getGroupContainer(el);
-					if(cont){
-						bb.top += cont.offsetTop;
-						bb.left += cont.offsetLeft;
-						bb.bottom += cont.offsetTop;
-						bb.right += cont.offsetLeft;
-					}
-					return this.hasCollision(bb, box);
-				})[0];
+				element = this.getPieceUnderneath(e);
+				console.log('piece found underneath', element)
 			}
 			
 			if(isPuzzlePieceCanvas){
