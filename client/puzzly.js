@@ -506,6 +506,20 @@ class Puzzly {
 		this.sendToEdgeShuffleBtn = document.getElementById('shuffle-pieces');
 		this.sendToEdgeNeatenBtn = document.getElementById('neaten-pieces');
 
+		this.ControlsElHandle = document.getElementById('controls-handle');
+		this.ControlsElPanel = document.getElementById('controls-panel');
+		this.ControlsElPanelIsOpen = false;
+
+		this.ControlsElHandle.addEventListener("click", () => {
+			if(this.ControlsElPanelIsOpen){
+				this.ControlsElPanel.classList.add('is-hidden');
+				this.ControlsElPanelIsOpen = false;
+			} else {
+				this.ControlsElPanel.classList.remove('is-hidden');
+				this.ControlsElPanelIsOpen = true;
+			}
+		});
+
 		this.sendToEdgeShuffleBtn.addEventListener('click', e => {
 			this.shuffleArray(Array.from(this.pieces).filter(p => !this.getIsSolved(p) && !Utils.hasGroup(p)));
 			this.randomisePiecePositions(pieces);
