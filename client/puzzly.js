@@ -413,7 +413,7 @@ document.body.onload = function(){
 		fetch(`/api/puzzle/${puzzleId}`)
 		.then( response => response.json() )
 		.then( response => {
-			new Puzzly('canvas', puzzleId, response, response.pieces)
+			new Puzzly('canvas', puzzleId, response)
 		})
 	} else {
 		newPuzzleForm.style.display = 'flex';
@@ -427,8 +427,7 @@ const isMobile = function() {
   };
 
 class Puzzly {
-	constructor(canvasId, puzzleId, config, progress = []){
-		console.log(progress)
+	constructor(canvasId, puzzleId, config){
 		this.config = {
 			debug: true,
 			boardBoundary: 800,
@@ -471,7 +470,7 @@ class Puzzly {
 		this.movingElement = null;
 		this.pieces = [];
 		this.puzzleId = puzzleId;
-		this.progress = progress;
+		this.progress = config.pieces || [];
 		
 		this.innerPiecesVisible = config.innerPiecesVisible !== undefined ? config.innerPiecesVisible : true;
 		this.movingPieces = [];
@@ -1436,7 +1435,7 @@ class Puzzly {
 		let groupContainers = document.querySelectorAll('[id^=group-container-]');
 		groupContainers = Array.from(groupContainers).filter(c => c.id !== 'group-container-1111');
 
-		if(groupContainers.length > 1){
+		if(groupContainers.length > 0){
 			groupContainers.forEach(container => {
 				let id = parseInt(container.getAttribute('id').split('-')[2]);
 				let piece = piecesFromPersistence.filter(p => p.group === id)[0];
@@ -1755,7 +1754,7 @@ class Puzzly {
 				this.removeHighlightFromConnectingPieces(JSON.parse(thisPiece.connectsTo));
 			}
 
-			let hasConnection = false, hasSolvedNeighbour = false, connection, i = 0;
+			let hasConnection = false, connection;
 
 			if(!this.isMovingSinglePiece){
 				let group = this.getGroup(element);
@@ -1811,7 +1810,7 @@ class Puzzly {
 				console.log(connection)
 
 				if(connection){
-					const { type, targetEl } = connection;
+					const { targetEl } = connection;
 					if(this.soundsEnabled){
 						this.clickSound.play();
 					}
