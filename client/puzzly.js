@@ -1,4 +1,3 @@
-import { SpriteMap } from "./jigsaw.js";
 import Utils from "./utils.js";
 
 window.PuzzlyCreator = {
@@ -550,6 +549,10 @@ class Puzzly {
 		this.previewBtn.addEventListener('click', this.togglePreviewer.bind(this))
 		this.filterBtn.addEventListener('click', this.toggleInnerPieces.bind(this))
 		this.soundsBtn.addEventListener('click', this.toggleSounds.bind(this))
+
+		this.DATA_ATTR_KEYS = [
+			'piece-id', 'piece-id-in-persistence', 'puzzle-id', 'imgx', 'imgy', 'imgw', 'imgh', 'num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type', 'connections', 'connects-to', 'is-inner-piece', 'is-solved', 'group', 'solvedx', 'solvedy'
+		];
 
 		if(this.config.showDebugInfo){
 			this.displayElement(this.debugInfoWindow)
@@ -1271,7 +1274,7 @@ class Puzzly {
 		ctx.fill()
 	}
 
-	drawJigsawShape(ctx, path, piece, {x, y}, showGuides = false, outlines = false){
+	drawJigsawShape(ctx, path, piece, {x, y}, showGuides = false, outlines = false, stroke = false){
 		// console.log('drawJigsawShape', piece)
 		const hasTopPlug = Utils.has(piece.type, 'plug', 'top')
 		const hasLeftPlug = Utils.has(piece.type, 'plug', 'left')
@@ -1350,9 +1353,10 @@ class Puzzly {
 			if(leftConnector) this.drawPlugGuides(ctx, leftConnector)
 		}
 
-		// console.log(piece.imgX, piece.imgY, piece.imgW, piece.imgH, x, y, piece.imgW, piece.imgH)
-		// ctx.stroke(path)
-		// ctx.drawImage(this.SourceImage, piece.imgX, piece.imgY, piece.imgW, piece.imgH, x, y, piece.imgW, piece.imgH);
+		if(stroke){
+			ctx.stroke(path)
+		}
+
 		return path;
 	}
 
@@ -3461,9 +3465,7 @@ class Puzzly {
 	}
 
 	drawPiecesIntoGroup(groupId, pieces, showGuides = false){
-		console.log('drawPiecesIntoGroup', groupId)
 		const cnv = document.querySelector(`#group-canvas-${groupId}`);
-		console.log(cnv)
 		const ctx = cnv.getContext("2d");
 
 		let group = this.groups[groupId];
@@ -3817,31 +3819,14 @@ console.log('saving')
 
 	async save(pieces){
 		const payload = [];
-		const allKeys = [
-			'piece-id', 'piece-id-in-persistence', 'puzzle-id', 'imgx', 'imgy', 'imgw', 'imgh', 'num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type', 'connections', 'connects-to', 'is-inner-piece', 'is-solved', 'group', 'solvedx', 'solvedy'
-		];
-		
-		const useLocalStorage = true;
+		const useLocalStorage = false;
 
 		if(useLocalStorage){
-			let time = Date.now();
-
-			[...this.allPieces()].forEach(p => {
-				delete p._id;
-				payload.push(this.getPieceFromElement(p, allKeys));
-			});
-
-			const progressKey = this.getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_PROGRESS_KEY");
-			const lastSaveKey = this.getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY");
-
-			console.info(`[Puzzly] Saving to local storage, key ${progressKey}:`, payload)
-			localStorage.setItem(progressKey, JSON.stringify(payload));
-			console.info(`[Puzzly] Saving to local storage, key ${lastSaveKey}:`, time)
-			localStorage.setItem(lastSaveKey, time);
+			
 		} else {
 			pieces.forEach( p => {
 				delete p._id;
-				payload.push(this.getPieceFromElement(p, allKeys));
+				payload.push(this.getPieceFromElement(p, this.DATA_ATTR_KEYS));
 			});
 			
 			const isFirstSave = !payload[0]?._id;
@@ -3852,7 +3837,14 @@ console.log('saving')
 				},
 				body: JSON.stringify(payload)
 			})
-			.then( res => res.json() )
+			.then( res => {
+				console.log('checking response', res)
+				if(!res.ok){
+					this.saveToLocalStorage();
+					return;
+				}
+				return res.json() 
+			})
 			.then( res => {
 				if(isFirstSave){
 					this.setElementIdsFromPersistence(res.data)
@@ -3869,6 +3861,24 @@ console.log('saving')
 		}
 	}
 
+	saveToLocalStorage(){
+		const payload = [];
+		let time = Date.now();
+
+		[...this.allPieces()].forEach(p => {
+			delete p._id;
+			payload.push(this.getPieceFromElement(p, this.DATA_ATTR_KEYS));
+		});
+
+		const progressKey = this.getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_PROGRESS_KEY");
+		const lastSaveKey = this.getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY");
+
+		console.info(`[Puzzly] Saving to local storage, key ${progressKey}:`, payload)
+		localStorage.setItem(progressKey, JSON.stringify(payload));
+		console.info(`[Puzzly] Saving to local storage, key ${lastSaveKey}:`, time)
+		localStorage.setItem(lastSaveKey, time);
+	}
+
 	async saveInnerPieceVisibility(visible){
 		fetch(`/api/toggleVisibility/${this.puzzleId}`, {
 			method: 'put',
@@ -3876,7 +3886,7 @@ console.log('saving')
 				'Content-Type': 'Application/json'
 			},
 			body: JSON.stringify({piecesVisible: visible})
-		})
+		});
 	}
 }
 

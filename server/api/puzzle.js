@@ -11,8 +11,8 @@ const url = 'mongodb://localhost:27017';
 // Database Name
 const dbName = 'puzzly';
 
-const puzzlesCollection = 'puzzles'
-const piecesCollection = 'pieces'
+const puzzlesCollection = 'puzzles';
+const piecesCollection = 'pieces';
 
 // Create a new MongoClient
 const client = new MongoClient(url);
@@ -66,8 +66,8 @@ var api = {
 
 		  const puzzle = await puzzles.findOne(puzzleQuery);
 		  const piecesResult = await pieces.find(piecesQuery).toArray();
+			console.log('puzzle found', puzzle)
 		  console.log('pieces found for puzzle', puzzleId)
-		//   console.log(piecesResult)
 
 		  const result = {
 			  ...puzzle,

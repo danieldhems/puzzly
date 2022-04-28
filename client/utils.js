@@ -67,6 +67,10 @@ export default {
 		return str === 'top-left' || str === 'top-right' || str === 'bottom-right' || str === 'bottom-left';
 	},
 
+	isEdgePiece(piece){
+		return this.isSidePiece(piece) || this.isCornerPiece(piece);
+	},
+
 	has(type, connector, side){
 		if(!connector || !side) return false;
 		const c = connector === "plug" ? 1 : connector === "socket" ? -1 : null;
@@ -94,5 +98,9 @@ export default {
 		return [].filter.call(elements, function(element) {
 			return element.matches(selector);
 		});
+	},
+
+	isNumber(val){
+		return !Number.isNaN(val);
 	}
 }

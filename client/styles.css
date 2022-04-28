@@ -179,8 +179,11 @@ label {
     width: 100%;
 }
 
+label, input[type=checkbox] {
+    display: inline;
+}
+
 #puzzle-setup--options {
-    width: 60%;
     display: flex;
 }
 
@@ -196,6 +199,7 @@ label {
     left: 70px;
     font-size: 100%;
     z-index: 100;
+    display: none;
 }
 
 #controls-handle {
