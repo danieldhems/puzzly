@@ -88,26 +88,29 @@
     <div id="debug-info"></div>
     <canvas id="full-image-viewer"></canvas>
     <div id="controls">
-      <div id="preview">
-        <span id='preview-show'>Show image</span>
-        <span id='preview-hide'>Hide image</span>
+      <div id="controls-handle">O / X</div>
+      <div id="controls-panel" class="is-hidden">
+        <div id="preview">
+          <span id='preview-show'>Show image</span>
+          <span id='preview-hide'>Hide image</span>
+        </div>
+        <div id="filter-pieces">
+          <span id='inner-pieces-off'>Edges only</span>
+          <span id='inner-pieces-on'>All pieces</span>
+        </div>
+        <div id="sound-toggle">
+          <span id='sounds-off'>Turn sound off</span>
+          <span id='sounds-on'>Turn sound on</span>
+        </div>
+        <div id="shuffle-pieces">
+          <span id=''>Send pieces to edge: Shuffle</span>
+        </div>
+        <div id="neaten-pieces">
+          <span id=''>Send pieces to edge: Neaten</span>
+        </div>
+        <a href="/gallery" title="All puzzles">Go to Gallery</a>
+        <a href="/" title="New puzzle">Create new puzzle</a>
       </div>
-      <div id="filter-pieces">
-        <span id='inner-pieces-off'>Edges only</span>
-        <span id='inner-pieces-on'>All pieces</span>
-      </div>
-      <div id="sound-toggle">
-        <span id='sounds-off'>Turn sound off</span>
-        <span id='sounds-on'>Turn sound on</span>
-      </div>
-      <div id="shuffle-pieces">
-        <span id=''>Send pieces to edge: Shuffle</span>
-      </div>
-      <div id="neaten-pieces">
-        <span id=''>Send pieces to edge: Neaten</span>
-      </div>
-      <a href="/gallery" title="All puzzles">Go to Gallery</a>
-      <a href="/" title="New puzzle">Create new puzzle</a>
     </div>
     <script type="module" src="./puzzly.js"></script>
   </body>

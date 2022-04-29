@@ -1,4 +1,3 @@
-import { SpriteMap } from "./jigsaw.js";
 import Utils from "./utils.js";
 
 window.PuzzlyCreator = {
@@ -413,7 +412,7 @@ document.body.onload = function(){
 		fetch(`/api/puzzle/${puzzleId}`)
 		.then( response => response.json() )
 		.then( response => {
-			new Puzzly('canvas', puzzleId, response, response.pieces)
+			new Puzzly('canvas', puzzleId, response)
 		})
 	} else {
 		newPuzzleForm.style.display = 'flex';
@@ -427,8 +426,7 @@ const isMobile = function() {
   };
 
 class Puzzly {
-	constructor(canvasId, puzzleId, config, progress = []){
-		console.log(progress)
+	constructor(canvasId, puzzleId, config){
 		this.config = {
 			debug: true,
 			boardBoundary: 800,
@@ -450,6 +448,11 @@ class Puzzly {
 			drawSquares: false
 		};
 
+		this.localStorageStringReplaceKey = "{}";
+		this.LOCAL_STORAGE_PUZZLY_PROGRESS_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_progress`;
+		this.LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_lastSave`;
+
+		this.puzzleId = puzzleId;
 		this.movingPiece = null;
 
 		this.groups = {};
@@ -471,7 +474,7 @@ class Puzzly {
 		this.movingElement = null;
 		this.pieces = [];
 		this.puzzleId = puzzleId;
-		this.progress = progress;
+		this.progress = config.pieces || [];
 		
 		this.innerPiecesVisible = config.innerPiecesVisible !== undefined ? config.innerPiecesVisible : true;
 		this.movingPieces = [];
@@ -506,6 +509,20 @@ class Puzzly {
 		this.sendToEdgeShuffleBtn = document.getElementById('shuffle-pieces');
 		this.sendToEdgeNeatenBtn = document.getElementById('neaten-pieces');
 
+		this.ControlsElHandle = document.getElementById('controls-handle');
+		this.ControlsElPanel = document.getElementById('controls-panel');
+		this.ControlsElPanelIsOpen = false;
+
+		this.ControlsElHandle.addEventListener("click", () => {
+			if(this.ControlsElPanelIsOpen){
+				this.ControlsElPanel.classList.add('is-hidden');
+				this.ControlsElPanelIsOpen = false;
+			} else {
+				this.ControlsElPanel.classList.remove('is-hidden');
+				this.ControlsElPanelIsOpen = true;
+			}
+		});
+
 		this.sendToEdgeShuffleBtn.addEventListener('click', e => {
 			this.shuffleArray(Array.from(this.pieces).filter(p => !this.getIsSolved(p) && !Utils.hasGroup(p)));
 			this.randomisePiecePositions(pieces);
@@ -533,6 +550,10 @@ class Puzzly {
 		this.filterBtn.addEventListener('click', this.toggleInnerPieces.bind(this))
 		this.soundsBtn.addEventListener('click', this.toggleSounds.bind(this))
 
+		this.DATA_ATTR_KEYS = [
+			'piece-id', 'piece-id-in-persistence', 'puzzle-id', 'imgx', 'imgy', 'imgw', 'imgh', 'num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type', 'connections', 'connects-to', 'is-inner-piece', 'is-solved', 'group', 'solvedx', 'solvedy'
+		];
+
 		if(this.config.showDebugInfo){
 			this.displayElement(this.debugInfoWindow)
 		}
@@ -542,9 +563,141 @@ class Puzzly {
 			this.JigsawSprite,
 		];
 
+		// here
 		this.loadAssets(assets).then( () => {
 			this.init()
 		})
+	}
+
+	getApplicablePersistence(progressFromServer, lastSaveTimeFromServer){
+		const progressKey = this.getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_PROGRESS_KEY");
+		const lastSaveKey = this.getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY");
+		const hasLocalStorageSupport = window.localStorage;
+		const progressInLocalStorage = hasLocalStorageSupport && localStorage.getItem(progressKey);
+		const lastSaveInLocalStorage = hasLocalStorageSupport && localStorage.getItem(lastSaveKey);
+
+		let availableStorage;
+		const storage = {};
+
+		if(!lastSaveTimeFromServer && !lastSaveInLocalStorage){
+			console.info('Puzzly: No saved data found')
+			return;
+		}
+
+		if(progressFromServer && progressFromServer.length){
+			if(lastSaveInLocalStorage && lastSaveInLocalStorage > lastSaveTimeFromServer){
+				availableStorage = 'local';
+			} else {
+				availableStorage = 'server';
+			}
+		} else if(lastSaveInLocalStorage && progressInLocalStorage.length){
+			availableStorage = 'local';
+		}
+
+		switch(availableStorage){
+			case 'server':
+				console.info(`[Puzzly] Restoring from server-side storage`);
+				storage.pieces = progressFromServer;
+				storage.latestSave = parseInt(lastSaveTimeFromServer);
+				break;
+			case 'local':
+				console.info(`[Puzzly] Restoring from local storage`);
+				storage.pieces = JSON.parse(progressInLocalStorage);
+				storage.latestSave = parseInt(lastSaveInLocalStorage);
+				break;
+		}
+
+		return storage;
+	}
+
+	init(){
+		console.log(this.config)
+
+		this.zoomLevel = 1;
+
+		this.config.pieceSize = Math.ceil(this.config.pieceSize)
+		this.config.connectorDistanceFromCornerRatio = this.config.connectorRatio = 33;
+		this.config.connectorSize = Math.ceil(this.config.pieceSize / 100 * this.config.connectorRatio);
+		this.config.connectorTolerance = this.config.connectorSize / 100 * (50 - this.collisionTolerance / 2);
+
+		this.config.connectorDistanceFromCorner = Math.ceil(this.config.pieceSize / 100 * this.config.connectorDistanceFromCornerRatio);
+
+		this.largestPieceSpan = this.config.pieceSize + (this.config.connectorSize * 2);
+		this.boardBoundingBox = {
+			top: this.config.boardBoundary * this.zoomLevel,
+			right: this.config.boardBoundary + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
+			left: this.config.boardBoundary * this.zoomLevel,
+			bottom: this.config.boardBoundary + (this.config.piecesPerSideVertical * this.config.pieceSize),
+			width: this.config.boardBoundary * this.zoomLevel + this.config.boardBoundary + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
+			height: this.config.boardBoundary * this.zoomLevel + this.config.boardBoundary + (this.config.piecesPerSideVertical * this.config.pieceSize),
+		};
+
+		this.boardSize = {
+			width: this.config.piecesPerSideHorizontal * this.config.pieceSize,
+			height: this.config.piecesPerSideVertical * this.config.pieceSize,
+		}
+	
+		this.canvas.style.width = this.boardSize.width + (this.config.boardBoundary * 2) + "px";
+		this.canvas.style.height = this.boardSize.height + (this.config.boardBoundary * 2) + "px";
+
+		this.canvasWidth = parseInt(this.canvas.style.width);
+		this.canvasHeight = parseInt(this.canvas.style.height);
+
+		// this.drawBackground();
+		this.drawBoardArea();
+		this.makeSolvedCanvas();
+		this.boardAreaEl = document.getElementById('board-area');
+
+		this.initiFullImagePreviewer();
+		this.isFullImageViewerActive = false;
+
+		const storage = this.getApplicablePersistence(this.config.pieces, this.config.lastSaveDate);
+		console.log(storage)
+
+		if(storage?.pieces?.length > 0){
+			//*/
+			storage.pieces.forEach(p => {
+				this.drawPieceManually(p);
+				if(p.group !== undefined && p.group !== null){
+					this.groups[p.group] && this.groups[p.group].pieces ? this.groups[p.group].pieces.push(p) : this.groups[p.group] = { pieces: [p] };
+				}
+			});
+			console.log(this.groups)
+			if(Object.keys(this.groups).length){
+				for(let g in this.groups){
+					this.drawPiecesIntoGroup(g, this.groups[g].pieces);
+				}
+			}
+			this.initGroupContainerPositions(storage.pieces)
+			//*/
+		} else {
+			this.generatePieceSectorMap();
+			this.piecePositionMap = this.shuffleArray(this.getRandomCoordsFromSectorMap());
+			this.makePieces();
+			this.save(this.allPieces())
+		}
+
+		// asd
+
+		// this.wrapPiecesAroundBoard();
+		// this.arrangePieces()
+		this.timeStarted = new Date().getTime();
+
+		addEventListener("beforeunload", function(e) {
+			this.updateElapsedTime();
+		}.bind(this))
+		
+		this.innerPieces = document.querySelectorAll('.inner-piece');
+
+		window.addEventListener(isMobile() ? 'touchstart' : 'mousedown', (e) => {
+			this.onMouseDown(e);
+		});
+
+		// this.debugWindowInitialise();
+
+		window.addEventListener('mouseup', this.onMouseUp.bind(this));
+
+		// window.addEventListener('keydown', this.onKeyDown.bind(this));
 	}
 
 	debugWindowAddRow(label, readoutElementId){
@@ -661,97 +814,6 @@ class Puzzly {
 		} else {
 			return this.config.connectorSize - parseInt(distance.substr(1));
 		}
-	}
-	
-	init(){
-		console.log(this.config)
-
-		this.zoomLevel = 1;
-
-		this.config.pieceSize = Math.ceil(this.config.pieceSize)
-		this.config.connectorDistanceFromCornerRatio = this.config.connectorRatio = 33;
-		this.config.connectorSize = Math.ceil(this.config.pieceSize / 100 * this.config.connectorRatio);
-		this.config.connectorTolerance = this.config.connectorSize / 100 * (50 - this.collisionTolerance / 2);
-
-		this.config.connectorDistanceFromCorner = Math.ceil(this.config.pieceSize / 100 * this.config.connectorDistanceFromCornerRatio);
-
-		this.largestPieceSpan = this.config.pieceSize + (this.config.connectorSize * 2);
-		this.boardBoundingBox = {
-			top: this.config.boardBoundary * this.zoomLevel,
-			right: this.config.boardBoundary + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
-			left: this.config.boardBoundary * this.zoomLevel,
-			bottom: this.config.boardBoundary + (this.config.piecesPerSideVertical * this.config.pieceSize),
-			width: this.config.boardBoundary * this.zoomLevel + this.config.boardBoundary + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
-			height: this.config.boardBoundary * this.zoomLevel + this.config.boardBoundary + (this.config.piecesPerSideVertical * this.config.pieceSize),
-		};
-
-		this.boardSize = {
-			width: this.config.piecesPerSideHorizontal * this.config.pieceSize,
-			height: this.config.piecesPerSideVertical * this.config.pieceSize,
-		}
-	
-		this.canvas.style.width = this.boardSize.width + (this.config.boardBoundary * 2) + "px";
-		this.canvas.style.height = this.boardSize.height + (this.config.boardBoundary * 2) + "px";
-
-		this.canvasWidth = parseInt(this.canvas.style.width);
-		this.canvasHeight = parseInt(this.canvas.style.height);
-
-		this.ControlsElOriginalPosition = {
-			top: this.ControlsEl.offsetTop,
-			left: this.ControlsEl.offsetLeft,
-		};
-
-		// this.drawBackground();
-		this.drawBoardArea();
-		this.makeSolvedCanvas();
-		this.boardAreaEl = document.getElementById('board-area');
-
-		this.initiFullImagePreviewer();
-		this.isFullImageViewerActive = false;
-
-		if(this.progress.length > 0){
-			//*/
-			this.progress.forEach(p => {
-				this.drawPieceManually(p);
-				if(p.group !== undefined && p.group !== null){
-					this.groups[p.group] && this.groups[p.group].pieces ? this.groups[p.group].pieces.push(p) : this.groups[p.group] = { pieces: [p] };
-				}
-			});
-			console.log(this.groups)
-			if(Object.keys(this.groups).length){
-				for(let g in this.groups){
-					this.drawPiecesIntoGroup(g, this.groups[g].pieces);
-				}
-			}
-			this.initGroupContainerPositions(this.progress)
-			//*/
-		} else {
-			this.generatePieceSectorMap();
-			this.piecePositionMap = this.shuffleArray(this.getRandomCoordsFromSectorMap());
-			this.makePieces();
-			this.save(this.allPieces())
-		}
-
-		// asd
-
-		// this.wrapPiecesAroundBoard();
-		// this.arrangePieces()
-		this.timeStarted = new Date().getTime();
-
-		addEventListener("beforeunload", function(e) {
-			this.updateElapsedTime();
-		}.bind(this))
-		
-		this.innerPieces = document.querySelectorAll('.inner-piece');
-
-		window.addEventListener(isMobile() ? 'touchstart' : 'mousedown', (e) => {
-			this.onMouseDown(e);
-		});
-
-		// this.debugWindowInitialise();
-
-		window.addEventListener('mouseup', this.onMouseUp.bind(this));
-		window.addEventListener('keydown', this.onKeyDown.bind(this));
 	}
 
 	drawBoardArea(){
@@ -1216,7 +1278,7 @@ class Puzzly {
 		ctx.fill()
 	}
 
-	drawJigsawShape(ctx, path, piece, {x, y}, showGuides = false, outlines = false){
+	drawJigsawShape(ctx, path, piece, {x, y}, showGuides = false, outlines = false, stroke = false){
 		// console.log('drawJigsawShape', piece)
 		const hasTopPlug = Utils.has(piece.type, 'plug', 'top')
 		const hasLeftPlug = Utils.has(piece.type, 'plug', 'left')
@@ -1295,9 +1357,10 @@ class Puzzly {
 			if(leftConnector) this.drawPlugGuides(ctx, leftConnector)
 		}
 
-		// console.log(piece.imgX, piece.imgY, piece.imgW, piece.imgH, x, y, piece.imgW, piece.imgH)
-		// ctx.stroke(path)
-		// ctx.drawImage(this.SourceImage, piece.imgX, piece.imgY, piece.imgW, piece.imgH, x, y, piece.imgW, piece.imgH);
+		if(stroke){
+			ctx.stroke(path)
+		}
+
 		return path;
 	}
 
@@ -1430,7 +1493,7 @@ class Puzzly {
 		let groupContainers = document.querySelectorAll('[id^=group-container-]');
 		groupContainers = Array.from(groupContainers).filter(c => c.id !== 'group-container-1111');
 
-		if(groupContainers.length > 1){
+		if(groupContainers.length > 0){
 			groupContainers.forEach(container => {
 				let id = parseInt(container.getAttribute('id').split('-')[2]);
 				let piece = piecesFromPersistence.filter(p => p.group === id)[0];
@@ -1732,14 +1795,6 @@ class Puzzly {
 		}
 	}
 
-	groupContainsType(group, typeCheck){
-		return [...this.getPiecesInGroup(group)].some(el => {
-			let p = this.getPieceFromElement(el, ['jigsaw-type']);
-			console.log(p)
-			return typeCheck(p);
-		})
-	}
-
 	onMouseUp(e){
 		if(this.isMouseDown){
 			const element = this.movingPiece;
@@ -1749,7 +1804,7 @@ class Puzzly {
 				this.removeHighlightFromConnectingPieces(JSON.parse(thisPiece.connectsTo));
 			}
 
-			let hasConnection = false, hasSolvedNeighbour = false, connection, i = 0;
+			let hasConnection = false, connection;
 
 			if(!this.isMovingSinglePiece){
 				let group = this.getGroup(element);
@@ -1805,7 +1860,7 @@ class Puzzly {
 				console.log(connection)
 
 				if(connection){
-					const { type, targetEl } = connection;
+					const { targetEl } = connection;
 					if(this.soundsEnabled){
 						this.clickSound.play();
 					}
@@ -3415,9 +3470,7 @@ class Puzzly {
 	}
 
 	drawPiecesIntoGroup(groupId, pieces, showGuides = false){
-		console.log('drawPiecesIntoGroup', groupId)
 		const cnv = document.querySelector(`#group-canvas-${groupId}`);
-		console.log(cnv)
 		const ctx = cnv.getContext("2d");
 
 		let group = this.groups[groupId];
@@ -3765,38 +3818,70 @@ console.log('saving')
 		})
 	}
 
+	getUniqueLocalStorageKeyForPuzzle(key){
+		return this[key].replace(this.localStorageStringReplaceKey, this.puzzleId)
+	}
+
 	async save(pieces){
 		const payload = [];
-		const allKeys = [
-			'piece-id', 'piece-id-in-persistence', 'puzzle-id', 'imgx', 'imgy', 'imgw', 'imgh', 'num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type', 'connections', 'connects-to', 'is-inner-piece', 'is-solved', 'group', 'solvedx', 'solvedy'
-		];
-		pieces.forEach( p => {
+		const useLocalStorage = false;
+
+		if(useLocalStorage){
+			
+		} else {
+			pieces.forEach( p => {
+				delete p._id;
+				payload.push(this.getPieceFromElement(p, this.DATA_ATTR_KEYS));
+			});
+			
+			const isFirstSave = !payload[0]?._id;
+			fetch(`/api/pieces/${this.puzzleId}`, {
+				method: isFirstSave ? 'post' : 'put',
+				headers: {
+					'Content-Type': 'Application/json'
+				},
+				body: JSON.stringify(payload)
+			})
+			.then( res => {
+				console.log('checking response', res)
+				if(!res.ok){
+					this.saveToLocalStorage();
+					return;
+				}
+				return res.json() 
+			})
+			.then( res => {
+				if(isFirstSave){
+					this.setElementIdsFromPersistence(res.data)
+				}
+	
+				if(res.status === "failure"){
+					console.info('[Puzzly] Save to DB failed, saving to Local Storage instead.');
+					localStorage.setItem('puzzly', {
+						lastSaveDate: Date.now(),
+						progress: payload
+					})
+				}
+			})
+		}
+	}
+
+	saveToLocalStorage(){
+		const payload = [];
+		let time = Date.now();
+
+		[...this.allPieces()].forEach(p => {
 			delete p._id;
-			payload.push(this.getPieceFromElement(p, allKeys))
+			payload.push(this.getPieceFromElement(p, this.DATA_ATTR_KEYS));
 		});
 
-		const isFirstSave = !payload[0]._id;
-		fetch(`/api/pieces/${this.puzzleId}`, {
-			method: isFirstSave ? 'post' : 'put',
-			headers: {
-				'Content-Type': 'Application/json'
-			},
-			body: JSON.stringify(payload)
-		})
-		.then( res => res.json() )
-		.then( res => {
-			if(isFirstSave){
-				this.setElementIdsFromPersistence(res.data)
-			}
+		const progressKey = this.getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_PROGRESS_KEY");
+		const lastSaveKey = this.getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY");
 
-			if(res.status === "failure"){
-				console.info('[Puzzly] Save to DB failed, saving to Local Storage instead.');
-				localStorage.setItem('puzzly', {
-					lastSaveDate: Date.now(),
-					progress: payload
-				})
-			}
-		})
+		console.info(`[Puzzly] Saving to local storage, key ${progressKey}:`, payload)
+		localStorage.setItem(progressKey, JSON.stringify(payload));
+		console.info(`[Puzzly] Saving to local storage, key ${lastSaveKey}:`, time)
+		localStorage.setItem(lastSaveKey, time);
 	}
 
 	async saveInnerPieceVisibility(visible){
@@ -3806,7 +3891,7 @@ console.log('saving')
 				'Content-Type': 'Application/json'
 			},
 			body: JSON.stringify({piecesVisible: visible})
-		})
+		});
 	}
 }
 

@@ -11,7 +11,8 @@ const url = 'mongodb://localhost:27017';
 // Database Name
 const dbName = 'puzzly';
 
-const piecesCollection = 'pieces'
+const piecesCollection = 'pieces';
+const puzzlesCollection = 'puzzles';
 
 // Create a new MongoClient
 const client = new MongoClient(url);
@@ -43,7 +44,13 @@ var api = {
 
 		  collection.insertMany(data, function(err, result){
 			  if(err) throw new Error(err);
-			  res.status(200).send(result.ops)
+
+			  const response = {
+				  status: "success",
+				  data: result.ops
+			  };
+
+			  res.status(200).send(response)
 		  });
 		});
 	},
@@ -69,23 +76,42 @@ var api = {
 		var data = req.body;
 
 		client.connect().then(async (client, err) => {
-			assert.strictEqual(err, undefined);
-			db = client.db(dbName);
-			
-			let pieces = db.collection(piecesCollection);
-			let query, update;
-			
-			data.forEach(d => {
-				query = { _id: new ObjectID(d._id) };
-				delete d._id;
-				update = { "$set": {...d}};
+			const response = {};
 
-				pieces.updateOne(query, update, function(err, result){
-					if(err) throw new Error(err);
-				});
-			});
+			if(!err){
+				db = client.db(dbName);
+				
+				let pieces = db.collection(piecesCollection);
+				let puzzles = db.collection(puzzlesCollection);
+				let query, update;
+				
+				try {
+					data.forEach(async d => {
+						query = { _id: new ObjectID(d._id) };
+						delete d._id;
+						update = { "$set": {...d}};
+						await pieces.updateOne(query, update) ? "failure" : "success";
+					});
 
-			res.status(200).send([])
+					const puzzleUpdateQuery = {
+						_id: new ObjectID(data[0].puzzleId),
+					}
+	
+					const puzzleUpdateOp = {
+						"$set": {
+							lastSaveDate: Date.now()
+						},
+					}
+
+					await puzzles.updateOne(puzzleUpdateQuery, puzzleUpdateOp);
+
+					response.lastSaveDate = Date.now();
+					res.status(200).send(response)
+				} catch(e){
+					res.status(500).send(e)
+				}
+			}
+
 		});
 	},
 	destroy: function(req, res){

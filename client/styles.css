@@ -172,10 +172,6 @@ label {
     display: flex;
 }
 
-#puzzle-setup--image_input {
-
-}
-
 #puzzle-setup--image_preview {
     display: none;
 }
@@ -183,8 +179,11 @@ label {
     width: 100%;
 }
 
+label, input[type=checkbox] {
+    display: inline;
+}
+
 #puzzle-setup--options {
-    width: 60%;
     display: flex;
 }
 
@@ -196,15 +195,36 @@ label {
 
 #controls {
     position: fixed;
+    top: 0;
+    left: 70px;
+    font-size: 100%;
     z-index: 100;
-    color: #000;
-    top: 5%;
-    left: 5%;
     display: none;
+}
+
+#controls-handle {
+    top: 0;
+    left: -70px;
+    position: absolute;
+    color: #000;
     padding: 15px;
     background: #fefefe;
     opacity: .8;
-    font-size: 100%;
+    width: 66px;
+}
+#controls-panel {
+    color: #000;
+    padding: 15px;
+    background: #fefefe;
+    opacity: .8;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 300px;
+}
+
+#controls-panel.is-hidden {
+    left: -9999px;
 }
 
 #preview-hide {
