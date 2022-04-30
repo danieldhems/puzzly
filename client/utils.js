@@ -102,5 +102,14 @@ export default {
 
 	isNumber(val){
 		return !Number.isNaN(val);
+	},
+
+	adjustForZoomLevel(obj, zoomLevel){
+		return {
+			top: obj.top && obj.top * zoomLevel,
+			right: obj.right && obj.right * zoomLevel,
+			bottom: obj.bottom && obj.bottom * zoomLevel,
+			left: obj.left && obj.left * zoomLevel,
+		}
 	}
 }
