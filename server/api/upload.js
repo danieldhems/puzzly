@@ -24,6 +24,7 @@ async function upload(req, res){
 
             Calipers.measure(savePath)
             .then(function (result) {
+                console.log('Calipers result', result)
                 res.send({
                     status: true,
                     message: 'File is uploaded',

@@ -324,37 +324,38 @@ startBtn.addEventListener('click', function(e){
 	createPuzzle();
 });
 
+let imageUploadResponse;
+const imageUploadPreviewEl = document.getElementById("puzzle-setup--image_preview-imgEl");
+
 function onUploadSuccess(response){
-	imageUploadCtrlEl.style.display = "none";
+	console.log('onUploadSuccess', response)
 
-	imageCrop.style.display = "block";
-
-	imagePreviewEl.style.display = "flex";
+	if(response.data){
+		imageUploadResponse = response.data;
+		imageCrop.style.display = "block";
 	
-	const imageEl = document.createElement('img');
-	imageEl.addEventListener('load', () => {
-		const containerPos = imagePreviewEl.getBoundingClientRect();
-		imageCrop.style.top = containerPos.top + "px";
-		imageCrop.style.left = containerPos.left + "px";
-		imageCrop.style.width = containerPos.height + "px";
-		imageCrop.style.height = containerPos.height + "px";
-		setPuzzleImageOffsetAndWidth(imageCrop);
-		// setImageCropDragHandles();
-	});
-
-	const uploadPath = uploadDir + response.data.path
-	imageEl.src = uploadPath;
-	imagePreviewEl.appendChild(imageEl);
-	imagePreviewEl.style.display = 'flex';
-	PuzzlyCreator.puzzleSetup.sourceImage.path = uploadPath;
-	PuzzlyCreator.puzzleSetup.sourceImage.dimensions = response.data.dimensions;
+		imagePreviewEl.style.display = "flex";
+		
+		imageUploadPreviewEl.addEventListener('load', () => {
+			const containerPos = imagePreviewEl.getBoundingClientRect();
+			imageCrop.style.top = containerPos.top + "px";
+			imageCrop.style.left = containerPos.left + "px";
+			imageCrop.style.width = containerPos.height + "px";
+			imageCrop.style.height = containerPos.height + "px";
+			setPuzzleImageOffsetAndWidth(imageCrop);
+			// setImageCropDragHandles();
+		});
+	
+		const uploadPath = uploadDir + imageUploadResponse.path
+		imageUploadPreviewEl.src = uploadPath;
+		imagePreviewEl.style.display = 'flex';
+		PuzzlyCreator.puzzleSetup.sourceImage.path = uploadPath;
+		PuzzlyCreator.puzzleSetup.sourceImage.dimensions = response.data.dimensions;
+	}
 }
 
 function onUploadFailure(response){
-	//todo
-	const errorTextEl = document.createElement('p');
-	errorTextEl.innerHTML = response.toString();
-	puzzleSetupEl.appendChild(errorTextEl)
+	console.log('onUploadFailure', response)
 }
 
 function upload(){
@@ -652,7 +653,6 @@ class Puzzly {
 		this.isFullImageViewerActive = false;
 
 		const storage = this.getApplicablePersistence(this.config.pieces, this.config.lastSaveDate);
-		console.log(storage)
 
 		if(storage?.pieces?.length > 0){
 			//*/
@@ -3826,7 +3826,6 @@ console.log('saving')
 				body: JSON.stringify(payload)
 			})
 			.then( res => {
-				console.log('checking response', res)
 				if(!res.ok){
 					this.saveToLocalStorage();
 					return;
