@@ -20,7 +20,6 @@ window.PuzzlyCreator = {
 	imageCropDragHandle: {},
 };
 
-const uploadDir = './uploads/';
 
 const PuzzleSizes = [
 	{numPieces: 9, piecesPerSide: 3},
@@ -142,23 +141,22 @@ const imageCropDragHandleTR = document.querySelector('#image-crop-drag-handle-tr
 const imageCropDragHandleBR = document.querySelector('#image-crop-drag-handle-br');
 const imageCropDragHandleBL = document.querySelector('#image-crop-drag-handle-bl');
 
-const ImageCropDragHandlesInUse = false;
+let ImageCropDragHandlesInUse = false;
 
 function setImageCropDragHandles(){
 	imageCropDragHandles.forEach(el => el.style.display = "block")
 
-	const imageCropBoundingBox = imageCrop.getBoundingClientRect();
-	imageCropDragHandleTL.style.top = imageCropBoundingBox.top - imageCropDragHandleTL.clientHeight + "px";
-	imageCropDragHandleTL.style.left = imageCropBoundingBox.left - imageCropDragHandleTL.clientWidth + "px";
+	imageCropDragHandleTL.style.top = 0 - imageCropDragHandleTL.clientHeight + "px";
+	imageCropDragHandleTL.style.left = imageCrop.offsetLeft - imageCropDragHandleTL.clientWidth + "px";
 	
-	imageCropDragHandleTR.style.top = imageCropBoundingBox.top - imageCropDragHandleTL.clientHeight + "px";
-	imageCropDragHandleTR.style.left = imageCropBoundingBox.left + imageCropBoundingBox.width + "px";
+	imageCropDragHandleTR.style.top = 0 - imageCropDragHandleTL.clientHeight + "px";
+	imageCropDragHandleTR.style.left = imageCrop.offsetLeft + imageCrop.offsetWidth + "px";
 	
-	imageCropDragHandleBR.style.top = imageCropBoundingBox.bottom + "px";
-	imageCropDragHandleBR.style.left = imageCropBoundingBox.right + "px";
+	imageCropDragHandleBR.style.top = imageCrop.offsetTop + imageCrop.offsetHeight + "px";
+	imageCropDragHandleBR.style.left = imageCrop.offsetLeft + imageCrop.offsetWidth + "px";
 
-	imageCropDragHandleBL.style.top = imageCropBoundingBox.top + imageCropBoundingBox.height + "px";
-	imageCropDragHandleBL.style.left = imageCropBoundingBox.left - imageCropDragHandleBL.clientWidth + "px";
+	imageCropDragHandleBL.style.top = imageCrop.offsetTop + imageCrop.offsetHeight + "px";
+	imageCropDragHandleBL.style.left = imageCrop.offsetLeft - imageCropDragHandleBL.clientWidth + "px";
 
 	ImageCropDragHandlesInUse = true;
 }
@@ -167,6 +165,9 @@ imageCrop && imageCrop.addEventListener('mousedown', function(e){
 	const el = e.target;
 	const diffX = e.clientX - el.offsetLeft;
 	const diffY = e.clientY - el.offsetTop;
+	const w = imageUploadPreviewEl.offsetWidth;
+	const h = imageUploadPreviewEl.offsetHeight;
+
 	PuzzlyCreator.imageCrop = {
 		currX: el.offsetLeft,
 		currY: el.offsetTop,
@@ -174,11 +175,16 @@ imageCrop && imageCrop.addEventListener('mousedown', function(e){
 		diffY,
 		width: el.clientWidth,
 		height: el.clientHeight,
+		isMoving: true,
 	};
 
-	imageCrop.addEventListener('mousemove', onImageCropMove);
+	const limitToAxis = w > h ? "x" : h > w ? "y" : null;
+
+	const moveListener = imageCrop.addEventListener('mousemove', (e) => onImageCropMove(e, limitToAxis));
 	imageCrop.addEventListener('mouseup', function(e){
-		imageCrop.removeEventListener('mousemove', onImageCropMove);
+		imageCrop.removeEventListener('mousemove', moveListener);
+		PuzzlyCreator.imageCrop.isMoving = false;
+		setPuzzleImageOffsetAndWidth(e.target);
 	})
 });
 
@@ -190,15 +196,11 @@ function setPuzzleImageOffsetAndWidth(cropElement){
 	const cropLeftOffsetPercentage = leftPos / imageRect.width * 100;
 	const cropWidthPercentage = width / imageRect.width * 100;
 
-	PuzzlyCreator.puzzleSetup.selectedOffsetX = PuzzlyCreator.puzzleSetup.sourceImage.dimensions.width / 100 * cropLeftOffsetPercentage;
-	PuzzlyCreator.puzzleSetup.selectedWidth = PuzzlyCreator.puzzleSetup.sourceImage.dimensions.width / 100 * cropWidthPercentage;
+	PuzzlyCreator.puzzleSetup.selectedOffsetX = 0;
+	PuzzlyCreator.puzzleSetup.selectedWidth = PuzzlyCreator.puzzleSetup.sourceImage.dimensions.width;
 }
 
-imageCrop && imageCrop.addEventListener('mouseup', function(e){
-	setPuzzleImageOffsetAndWidth(e.target);
-})
-
-function imageCropWithinBounds(newX, newY){
+function imageCropWithinBounds(newX, newY, axis = null){
 	const elBoundingBox = {
 		top: newY,
 		right: newX + imageCrop.clientWidth,
@@ -206,17 +208,27 @@ function imageCropWithinBounds(newX, newY){
 		left: newX
 	};
 	const containerBoundingBox = imagePreviewEl.getBoundingClientRect();
-	
+
+	if(axis && axis === "x"){
+		return elBoundingBox.left >= Math.ceil(imageUploadPreviewEl.offsetLeft) && elBoundingBox.right <= Math.ceil(imageUploadPreviewEl.offsetLeft + imageUploadPreviewEl.offsetWidth);
+	}
+	if(axis && axis === "y"){
+		return elBoundingBox.top >= Math.ceil(imageUploadPreviewEl.offsetTop) && elBoundingBox.bottom <= Math.ceil(imageUploadPreviewEl.offsetTop + imageUploadPreviewEl.offsetHeight);
+	}
 	return elBoundingBox.left >= Math.ceil(containerBoundingBox.left) && elBoundingBox.right <= Math.ceil(containerBoundingBox.right) && elBoundingBox.top >= Math.ceil(containerBoundingBox.top) && elBoundingBox.bottom <= Math.ceil(containerBoundingBox.bottom);
 }
 
-function onImageCropMove(e){
+function onImageCropMove(e, axis = null){
 	const newX = e.clientX - PuzzlyCreator.imageCrop.diffX;
 	const newY = e.clientY - PuzzlyCreator.imageCrop.diffY;
 
-	if(imageCropWithinBounds(newX, newY)){
-		imageCrop.style.top = newY + "px";
-		imageCrop.style.left = newX + "px";
+	if(PuzzlyCreator.imageCrop.isMoving && imageCropWithinBounds(newX, newY, axis)){
+		if(axis && axis === "y" || !axis){
+			imageCrop.style.top = newY + "px";
+		}
+		if(axis && axis === "x" || !axis){
+			imageCrop.style.left = newX + "px";
+		}
 		if(ImageCropDragHandlesInUse){
 			setImageCropDragHandles()
 		}
@@ -331,28 +343,53 @@ function onUploadSuccess(response){
 	console.log('onUploadSuccess', response)
 
 	if(response.data){
-		imageUploadResponse = response.data;
-		imageCrop.style.display = "block";
-	
 		imagePreviewEl.style.display = "flex";
-		
-		imageUploadPreviewEl.addEventListener('load', () => {
-			const containerPos = imagePreviewEl.getBoundingClientRect();
-			imageCrop.style.top = containerPos.top + "px";
-			imageCrop.style.left = containerPos.left + "px";
-			imageCrop.style.width = containerPos.height + "px";
-			imageCrop.style.height = containerPos.height + "px";
-			setPuzzleImageOffsetAndWidth(imageCrop);
-			// setImageCropDragHandles();
-		});
-	
-		const uploadPath = uploadDir + imageUploadResponse.path
-		imageUploadPreviewEl.src = uploadPath;
-		imagePreviewEl.style.display = 'flex';
-		PuzzlyCreator.puzzleSetup.sourceImage.path = uploadPath;
-		PuzzlyCreator.puzzleSetup.sourceImage.dimensions = response.data.dimensions;
+		PuzzlyCreator.puzzleSetup.sourceImage.path = imageUploadPreviewEl.src = response.data.path;
 	}
 }
+
+function initiateImageCrop(imageEl){
+	const width = imageEl.offsetWidth;
+	const height = imageEl.offsetHeight;
+	if(width === height) return;
+
+	imageCrop.style.display = "block";
+	imageCrop.id = "image-crop";
+	imageCrop.style.top = imageEl.offsetTop + "px";
+	imageCrop.style.left = imageEl.offsetLeft + "px";
+	imageCrop.style.height = height > width ? width + "px" : height + "px";
+	imageCrop.style.width = width > height ? height + "px" : width + "px";
+	setImageCropDragHandles();
+}
+
+imageUploadPreviewEl.addEventListener('load', (e) => {
+	console.log('image info', e)
+
+	const imgObj = e.path[0];
+	const dimensions = {
+		width: imgObj.naturalWidth,
+		height: imgObj.naturalHeight,
+	};
+	
+	if(dimensions.width > dimensions.height){
+		imageUploadPreviewEl.style.width = "100%";
+		imageUploadPreviewEl.style.height = dimensions.height / dimensions.width * 100 + "%";
+	} else if(dimensions.height > dimensions.width){
+
+	}
+
+	const containerPos = imagePreviewEl.getBoundingClientRect();
+	imageCrop.style.top = containerPos.top + "px";
+	imageCrop.style.left = containerPos.left + "px";
+	imageCrop.style.width = containerPos.height + "px";
+	imageCrop.style.height = containerPos.height + "px";
+
+	initiateImageCrop(imageUploadPreviewEl);
+
+	imagePreviewEl.style.display = 'flex';
+	PuzzlyCreator.puzzleSetup.sourceImage.dimensions = dimensions;
+	setPuzzleImageOffsetAndWidth(imageCrop);
+});
 
 function onUploadFailure(response){
 	console.log('onUploadFailure', response)
@@ -372,6 +409,7 @@ function upload(){
 }
 
 function createPuzzle(opts = {}){
+	console.log('PuzzlyCreator', PuzzlyCreator)
 	const puzzleConfig = {
 		...PuzzlyCreator.puzzleSetup,
 		pieceSize: Math.round(PuzzlyCreator.puzzleSetup.selectedWidth / Math.sqrt(PuzzlyCreator.puzzleSetup.selectedNumPieces)),
@@ -420,17 +458,15 @@ document.body.onload = function(){
 	}
 }
 
-const isMobile = function() {
-	let check = false;
-	(function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
-	return check;
-  };
+/** 
+ * Puzzly
+ * 
+*/
 
 class Puzzly {
 	constructor(canvasId, puzzleId, config){
 		this.config = {
 			debug: true,
-			boardBoundary: 800,
 			drawBoundingBox: false,
 			showDebugInfo: false,
 			backgroundImages: [
@@ -446,7 +482,8 @@ class Puzzly {
 			piecesPerSideHorizontal: config.selectedShape === 'Rectangle' ? config.piecesPerSideHorizontal : Math.sqrt(config.selectedNumPieces),
 			piecesPerSideVertical: config.selectedShape === 'Rectangle' ? config.piecesPerSideVertical : Math.sqrt(config.selectedNumPieces),
 			drawOutlines: config.drawOutlines || false,
-			drawSquares: false
+			drawSquares: false,
+			boardBoundary: 800
 		};
 
 		this.localStorageStringReplaceKey = "{}";
@@ -463,7 +500,7 @@ class Puzzly {
 
 		this.currentZIndex = 3;
 
-		this.isMobile = isMobile();
+		this.isMobile = Utils.isMobile();
 
 		this.pieceSectors = [];
 		this.usedPieceSectors = [];
@@ -473,7 +510,6 @@ class Puzzly {
 
 		this.isMovingSinglePiece = false;
 		this.movingElement = null;
-		this.pieces = [];
 		this.puzzleId = puzzleId;
 		this.progress = config.pieces || [];
 		
@@ -483,10 +519,8 @@ class Puzzly {
 		this.SourceImage = new Image();
 		this.SourceImage.src = config.sourceImage.path;
 
-		this.canvas = document.getElementById(canvasId)
-
-		this.JigsawSprite = new Image();
-		this.JigsawSprite.src = './jigsaw-sprite.png';
+		this.canvas = document.getElementById(canvasId);
+		this.boardAreaEl = document.getElementById("boardArea");
 
 		this.clickSound = new Audio('./mixkit-plastic-bubble-click-1124.wav');
 
@@ -525,13 +559,14 @@ class Puzzly {
 		});
 
 		this.sendToEdgeShuffleBtn.addEventListener('click', e => {
-			this.shuffleArray(Array.from(this.pieces).filter(p => !this.getIsSolved(p) && !Utils.hasGroup(p)));
+			const allPieces = this.allPieces();
+			this.shuffleArray(Array.from(allPieces).filter(p => !this.getIsSolved(p) && !Utils.hasGroup(p)));
 			this.randomisePiecePositions(pieces);
-			this.save(this.pieces);
+			this.save(allPieces);
 		})
 
 		this.sendToEdgeNeatenBtn.addEventListener('click', e => {
-			let pieces = this.shuffleArray(Array.from(this.pieces).filter(p => !this.getIsSolved(p) && !Utils.hasGroup(p)));
+			let pieces = this.shuffleArray(Array.from(this.allPieces()).filter(p => !this.getIsSolved(p) && !Utils.hasGroup(p)));
 			this.arrangePieces(pieces);
 		})
 
@@ -555,13 +590,8 @@ class Puzzly {
 			'piece-id', 'piece-id-in-persistence', 'puzzle-id', 'imgx', 'imgy', 'imgw', 'imgh', 'num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type', 'connections', 'connects-to', 'is-inner-piece', 'is-solved', 'group', 'solvedx', 'solvedy'
 		];
 
-		if(this.config.showDebugInfo){
-			this.displayElement(this.debugInfoWindow)
-		}
-
 		const assets = [
 			this.SourceImage,
-			this.JigsawSprite,
 		];
 
 		// here
@@ -616,6 +646,8 @@ class Puzzly {
 
 		this.zoomLevel = 1;
 
+		this.maxScale = 0.3;
+
 		this.config.pieceSize = Math.ceil(this.config.pieceSize)
 		this.config.connectorDistanceFromCornerRatio = this.config.connectorRatio = 33;
 		this.config.connectorSize = Math.ceil(this.config.pieceSize / 100 * this.config.connectorRatio);
@@ -638,24 +670,21 @@ class Puzzly {
 			height: this.config.piecesPerSideVertical * this.config.pieceSize,
 		}
 	
-		this.canvas.style.width = this.boardSize.width + (this.config.boardBoundary * 2) + "px";
-		this.canvas.style.height = this.boardSize.height + (this.config.boardBoundary * 2) + "px";
+		this.canvas.style.width = this.boardSize.width + (this.config.boardBoundary * 2) * 2 + "px";
+		this.canvas.style.height = this.boardSize.height + (this.config.boardBoundary * 2) * 2 + "px";
 
 		this.canvasWidth = parseInt(this.canvas.style.width);
 		this.canvasHeight = parseInt(this.canvas.style.height);
-
-		// this.drawBackground();
-		this.drawBoardArea();
+		
+		this.drawBoardArea();		
 		this.makeSolvedCanvas();
-		this.boardAreaEl = document.getElementById('board-area');
-
 		this.initiFullImagePreviewer();
+		
 		this.isFullImageViewerActive = false;
 
 		const storage = this.getApplicablePersistence(this.config.pieces, this.config.lastSaveDate);
 
 		if(storage?.pieces?.length > 0){
-			//*/
 			storage.pieces.forEach(p => {
 				this.drawPieceManually(p);
 				if(p.group !== undefined && p.group !== null){
@@ -669,15 +698,12 @@ class Puzzly {
 				}
 			}
 			this.initGroupContainerPositions(storage.pieces)
-			//*/
 		} else {
 			this.generatePieceSectorMap();
 			this.piecePositionMap = this.shuffleArray(this.getRandomCoordsFromSectorMap());
 			this.makePieces();
 			this.save(this.allPieces())
 		}
-
-		// asd
 
 		// this.wrapPiecesAroundBoard();
 		// this.arrangePieces()
@@ -689,58 +715,47 @@ class Puzzly {
 		
 		this.innerPieces = document.querySelectorAll('.inner-piece');
 
-		window.addEventListener(isMobile() ? 'touchstart' : 'mousedown', (e) => {
+		window.addEventListener('mousedown', (e) => {
 			this.onMouseDown(e);
 		});
 
-		// this.debugWindowInitialise();
+		this.scaling = false;
+		window.addEventListener('touchstart', (e) => {
+			e.preventDefault();
+			console.log('touchstart', e)
+			if(e.touches.length === 2){
+				this.scaling = true;
+			}
+
+			this.onMouseDown(e);
+		})
+		
+		window.addEventListener('touchmove', (e) => {
+			e.preventDefault();
+			console.log('touchmove', e)
+			if(this.scaling){
+				
+			}
+
+			this.onMouseMove(e);
+		})
+
+		window.addEventListener('touchend', (e) => {
+			e.preventDefault();
+			this.movingPiece = null;
+			this.movingElement = null;
+			this.isTouching = false;
+		})
+
+		window.addEventListener('touchcancel', (e) => {
+			e.preventDefault();
+			this.movingPiece = null;
+			this.movingElement = null;
+			this.isTouching = false;
+		})
 
 		window.addEventListener('mouseup', this.onMouseUp.bind(this));
 		window.addEventListener('keydown', this.onKeyDown.bind(this));
-	}
-
-	debugWindowAddRow(label, readoutElementId){
-		const row = document.createElement('div');
-		row.classList.add('debug-info-row');
-		row.classList.add('group');
-		const rowLabelEl = document.createElement('div');
-		rowLabelEl.classList.add('label');
-		const rowLabelText = label + ':';
-		rowLabelEl.innerText = rowLabelText;
-		const rowReadoutEl = document.createElement('div');
-		rowReadoutEl.classList.add('readout');
-		const readoutId = `debug-readout--${readoutElementId}`;
-		rowReadoutEl.setAttribute('id', readoutId);
-		row.appendChild(rowLabelEl)
-		row.appendChild(rowReadoutEl)
-		this.debugInfoRows[readoutElementId] = rowReadoutEl;
-		this.debugInfoWindow.appendChild(row)
-	}
-
-	debugInfoSetReadout(el, content){
-		if(this.config.showDebugInfo){
-			el.innerHTML = content;
-		}
-	}
-
-	debugInfoClearReadout(id){
-		this.debugInfoRows[id].innerHTML = '';
-	}
-	
-	debugWindowInitialise(){
-		this.debugInfoRows = [];
-		this.debugWindowAddRow('Dragged element', 'draggedEl');
-		this.debugWindowAddRow('Dragged element container', 'draggedElContainer');
-		this.debugWindowAddRow('Dragged element top container', 'draggedElTopContainer');
-		this.debugWindowAddRow('Target element', 'targetEl');
-		this.debugWindowAddRow('Target element container', 'targetElContainer');
-		this.debugWindowAddRow('Target element top container', 'targetElTopContainer');
-		this.debugWindowAddRow('Last connection', 'lastConnection');
-		this.config.debugInfoRows = this.debugInfoRows;
-	}
-
-	displayElement(el, cssDisplayType = 'block'){
-		el.style.display = cssDisplayType;
 	}
 
 	toggleSounds(){
@@ -1675,7 +1690,7 @@ class Puzzly {
 	onMouseDown(e){
 		let element, diffX, diffY, thisPiece;
 
-		if(e.which === 1 || this.isMobile){
+		if(e.which === 1 || e.touches){
 			// console.log('onmousedown', e.target)
 			const clientPos = this.getClientPos(e);
 
@@ -1735,9 +1750,14 @@ class Puzzly {
 			this.keepOnTop(this.movingElement)
 
 			this.mouseMoveFunc = this.onMouseMove(diffX, diffY);
-			this.isMouseDown = true;
 
-			window.addEventListener(this.isMobile ? 'touchmove' : 'mousemove', this.mouseMoveFunc);
+			if(e.touches){
+				this.isTouching = true;
+			} else {
+				this.isMouseDown = true;
+			}
+
+			window.addEventListener(e.touches ? 'touchmove' : 'mousemove', this.mouseMoveFunc);
 		}
 	}
 
@@ -1794,7 +1814,7 @@ class Puzzly {
 	}
 
 	onMouseUp(e){
-		if(this.isMouseDown){
+		if(this.isMouseDown || this.isTouching){
 			const element = this.movingPiece;
 			console.log('element position top', element.offsetTop, 'left', element.offsetLeft)
 			const thisPiece = this.getPieceFromElement(element, ['connects-to']);
@@ -1898,6 +1918,7 @@ class Puzzly {
 		}
 
 		this.isMouseDown = false;
+		this.isTouching = false;
 
 		window.removeEventListener('mousemove', this.moveCanvas);
 		window.removeEventListener('mousemove', this.mouseMoveFunc);

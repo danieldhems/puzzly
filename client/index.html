@@ -14,65 +14,57 @@
   <body>
     <div id="form-container">
       <form enctype="multipart/form-data">
-        <!--
-          <div id="image-upload-ctrl" class="form-control form-page centered form-page"></div>
-          <div id="puzzle-shape-ctrl" class="form-control form-page centered form-page">
-            <div>
-              <p>Choose puzzle shape</p>
-              <select name="puzzle-shape">
-                <option value="">Select</option>
-                <option value="square">Square</option>
-                <option value="rectangle">Rectangle</option>
-              </select>
-              <div class="form-navigation">
-                <a href="#" class="previous">Go back</a>
-                <a href="#" class="next">Next</a>
-              </div>
-            </div>
-          </div>
-        -->
         <div id="puzzle-setup" class="form-page">
           <!--
             <div>
               <p>Drag the white square to select the part of the image you'd like to make your puzzle from<br/><small>(The parts of the image outside the white box will be cropped)</small></p>
             </div>
           -->
-          <div class="flex">
-            <div id="puzzle-setup--image">
-              <div id="puzzle-setup--image_preview">
-                <img id="puzzle-setup--image_preview-imgEl" />
-              </div>
-              <div id="puzzle-setup--image_input">
-                <label id="image-upload-label" for="upload">Choose your image</label>
-                <input name="image" id="upload" type="file" value="No file chosen" />
-              </div>
-            </div>
-            <div>
-              <div id="puzzle-setup--options">
-                <p>How many pieces?</p>
-                <div>
-                  <label for="puzzle-size-input-field" id="puzzle-size-input-label"></label>
-                  <input type="range" class="form-range" min="0" max="19" id="puzzle-size-input-field">
+          <div class="vertical-center">
+            <div class="horizontal-center">
+              <div class="inner">
+                <div class="bg-screen"></div>
+                <div class="inner-content">
+                  <div id="puzzle-setup--main-options">
+                    <div id="puzzle-setup--image">
+                      <div id="puzzle-setup--image_preview">
+                        <img id="puzzle-setup--image_preview-imgEl" />
+                        <div id="image-crop"></div>
+                        <div id="image-crop-drag-handle-tl" class="image-crop-drag-handle"></div>
+                        <div id="image-crop-drag-handle-tr" class="image-crop-drag-handle"></div>
+                        <div id="image-crop-drag-handle-br" class="image-crop-drag-handle"></div>
+                        <div id="image-crop-drag-handle-bl" class="image-crop-drag-handle"></div>
+                      </div>
+                      <div id="puzzle-setup--image_input">
+                        <label id="image-upload-label" for="upload">Choose your image</label>
+                        <input name="image" id="upload" type="file" value="No file chosen" />
+                      </div>
+                    </div>
+                    <div id="puzzle-setup--options">
+                      <label>How many pieces?</label>
+                      <div>
+                        <label for="puzzle-size-input-field" id="puzzle-size-input-label"></label>
+                        <input type="range" class="form-range" min="0" max="19" id="puzzle-size-input-field">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="js-admin-only">
+                    <div id="puzzle-setup--debug-highlights" class="form-label-row align-content-row">
+                      <label for="chk-highlights">Highlight pieces?</label>
+                      <input type="checkbox" id="chk-highlights" />
+                    </div>
+                    <div id="puzzle-setup--debug-no-disperse" class="form-label-row align-content-row">
+                      <label for="chk-no-disperse">Don't disperse pieces?</label>
+                      <input type="checkbox" id="chk-no-disperse" />
+                    </div>
+                  </div>
+                  <div class="centered">
+                    <input type="submit" id="start-btn" value="Start">
+                  </div>
                 </div>
               </div>
-              <div id="puzzle-setup--debug-highlights">
-                <label for="chk-highlights">Highlight pieces?</label>
-                <input type="checkbox" id="chk-highlights" />
-              </div>
-              <div id="puzzle-setup--debug-no-disperse">
-                <label for="chk-no-disperse">Don't disperse pieces?</label>
-                <input type="checkbox" id="chk-no-disperse" />
-              </div>
             </div>
           </div>
-          <div class="form-ctrl">
-            <input type="submit" id="start-btn" value="Start">
-          </div>
-          <div id="image-crop"></div>
-          <div id="image-crop-drag-handle-tl" class="image-crop-drag-handle"></div>
-          <div id="image-crop-drag-handle-tr" class="image-crop-drag-handle"></div>
-          <div id="image-crop-drag-handle-br" class="image-crop-drag-handle"></div>
-          <div id="image-crop-drag-handle-bl" class="image-crop-drag-handle"></div>
         </div>
         <div id="submit-ctrl" class="form-control centered">
           <div>

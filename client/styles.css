@@ -1,8 +1,9 @@
 body {
     margin: 0;
     background-color: #000;
-    background: url('./bg-wood.jpg');
     height: 100%;
+    overflow-y: hidden;
+    overflow-x: hidden;
 }
 
 .centered {
@@ -29,12 +30,17 @@ body {
     align-items: center;
 }
 
-.flex {
+.form-row {
     display: flex;
+    flex-direction: row;
 }
+
+
 
 #canvas {
     transform-origin: 0 0;
+    overflow-x: scroll;
+    overflow-y: scroll;
 }
 
 #form-container {
@@ -52,6 +58,10 @@ body {
 .form-control {
     background: transparent;
     border: none;
+}
+
+.form-row {
+    margin-bottom: 2em;
 }
 
 #form-container form {
@@ -97,7 +107,7 @@ label {
 }
 
 #image-preview img {
-    width: 100%;
+    height: 100%;
 }
 
 #image-crop {
@@ -105,8 +115,6 @@ label {
     display: none;
     top: 0;
     left: 0;
-    width: 100px;
-    height: 100px;
     cursor: move;
     background-color: #fff;
     opacity: .3;
@@ -114,37 +122,37 @@ label {
 
 #image-crop-drag-handle-tl {
     position: absolute;
-    top: -30px;
-    left: -30px;
-    width: 30px;
-    height: 30px;
+    top: -15px;
+    left: -15px;
+    width: 15px;
+    height: 15px;
     cursor: move;
     background-color: #fff;
 }
 #image-crop-drag-handle-tr {
     position: absolute;
-    top: -30px;
-    right: -30px;
-    width: 30px;
-    height: 30px;
+    top: -15px;
+    right: -15px;
+    width: 15px;
+    height: 15px;
     cursor: move;
     background-color: #fff;
 }
 #image-crop-drag-handle-br {
     position: absolute;
-    bottom: -30px;
-    right: -30px;
-    width: 30px;
-    height: 30px;
+    bottom: -15px;
+    right: -15px;
+    width: 15px;
+    height: 15px;
     cursor: move;
     background-color: #fff;
 }
 #image-crop-drag-handle-bl {
     position: absolute;
-    bottom: -30px;
-    left: -30px;
-    width: 30px;
-    height: 30px;
+    bottom: -15px;
+    left: -15px;
+    width: 15px;
+    height: 15px;
     cursor: move;
     background-color: #fff;
 }
@@ -152,6 +160,14 @@ label {
 #image-crop:before {
     content: ' ';
     display: inline-block;
+}
+
+#puzzle-setup--main-options {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 60%;
+    margin-bottom: 5em;
 }
 
 #puzzle-shape-ctrl {
@@ -163,29 +179,74 @@ label {
 }
 
 #puzzle-setup {
-    flex-direction: row;
     width: 100%;
+    height: 100%;
+}
+
+#puzzle-setup .inner {
+    position: relative;
+    width: 95%;
+    height: 95%;
+}
+
+#puzzle-setup .inner .bg-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: .7;
+    background-color: #cecece;
+}
+
+#puzzle-setup .inner .inner-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 1em;
 }
 
 #puzzle-setup--image {
-    width: 40%;
-    display: flex;
-    flex-direction: column;
+    width: 50%;
 }
 
 #puzzle-setup--image_preview {
     display: none;
+    height: 100%;
+    position: relative;
 }
 #puzzle-setup--image_preview img {
-    width: 100%;
+
+}
+
+#puzzle-setup--image_input {
+    margin: 0 auto;
+}
+
+#puzzle-setup--options {
+    width: 40%;
+}
+
+#puzzle-setup--image_input .inner {
 }
 
 label, input[type=checkbox] {
     display: inline;
 }
+.align-content-row {
+    flex-direction: row;
+}
 
-#puzzle-setup--options {
+.form-label-row {
+    display: block;
+}
+
+.centered {
     display: flex;
+    justify-content: center;
+    width: 100%;
 }
 
 #full-image-viewer {
@@ -308,4 +369,41 @@ label, input[type=checkbox] {
 
 .js-highlight {
    border: 4px solid red;
+}
+
+.vertical-center {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.horizontal-center {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.centered {
+    align-items: center;
+}
+
+@media only screen and (min-width: 800px){
+    .form-row {
+        flex-direction: column;
+    }
+
+    #puzzle-setup .inner {
+        width: 70%;
+        height: 70%;
+    }
+    
+    #puzzle-setup .inner .inner-content {
+        padding: 2em;
+    }
 }
