@@ -188,16 +188,19 @@ imageCrop && imageCrop.addEventListener('mousedown', function(e){
 	})
 });
 
-function setPuzzleImageOffsetAndWidth(cropElement){
-	const imageRect = imagePreviewEl.getBoundingClientRect();
-
-	const leftPos = cropElement.offsetLeft - imageRect.left;
-	const width = cropElement.clientWidth;
-	const cropLeftOffsetPercentage = leftPos / imageRect.width * 100;
-	const cropWidthPercentage = width / imageRect.width * 100;
-
-	PuzzlyCreator.puzzleSetup.selectedOffsetX = 0;
-	PuzzlyCreator.puzzleSetup.selectedWidth = PuzzlyCreator.puzzleSetup.sourceImage.dimensions.width;
+function setPuzzleImageOffsetAndWidth(cropElement, noCrop = false){
+	if(noCrop){
+		PuzzlyCreator.puzzleSetup.selectedOffsetX = 0;
+		PuzzlyCreator.puzzleSetup.selectedWidth = imageUploadPreviewEl.naturalWidth;
+	} else {
+		const leftPos = cropElement.offsetLeft;
+		const width = cropElement.clientWidth;
+		const cropLeftOffsetPercentage = leftPos / imageUploadPreviewEl.offsetWidth * 100;
+		const cropWidthPercentage = width / imageUploadPreviewEl.offsetWidth * 100;
+	
+		PuzzlyCreator.puzzleSetup.selectedOffsetX = imageUploadPreviewEl.naturalWidth / 100 * cropLeftOffsetPercentage;
+		PuzzlyCreator.puzzleSetup.selectedWidth = imageUploadPreviewEl.naturalWidth / 100 * cropWidthPercentage;
+	}
 }
 
 function imageCropWithinBounds(newX, newY, axis = null){
@@ -370,6 +373,8 @@ imageUploadPreviewEl.addEventListener('load', (e) => {
 		width: imgObj.naturalWidth,
 		height: imgObj.naturalHeight,
 	};
+
+	const isSquare = dimensions.width === dimensions.height;
 	
 	if(dimensions.width > dimensions.height){
 		imageUploadPreviewEl.style.width = "100%";
@@ -378,17 +383,14 @@ imageUploadPreviewEl.addEventListener('load', (e) => {
 
 	}
 
-	const containerPos = imagePreviewEl.getBoundingClientRect();
-	imageCrop.style.top = containerPos.top + "px";
-	imageCrop.style.left = containerPos.left + "px";
-	imageCrop.style.width = containerPos.height + "px";
-	imageCrop.style.height = containerPos.height + "px";
-
-	initiateImageCrop(imageUploadPreviewEl);
+	if(!isSquare){
+		initiateImageCrop(imageUploadPreviewEl);
+	} else {
+		setPuzzleImageOffsetAndWidth(imageCrop, true);
+	}
 
 	imagePreviewEl.style.display = 'flex';
 	PuzzlyCreator.puzzleSetup.sourceImage.dimensions = dimensions;
-	setPuzzleImageOffsetAndWidth(imageCrop);
 });
 
 function onUploadFailure(response){
@@ -485,6 +487,9 @@ class Puzzly {
 			drawSquares: false,
 			boardBoundary: 800
 		};
+
+		this.cropOffsetX = config.selectedOffsetX;
+		this.cropOffsetY = config.selectedOffsetY;
 
 		this.localStorageStringReplaceKey = "{}";
 		this.LOCAL_STORAGE_PUZZLY_PROGRESS_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_progress`;
@@ -1700,7 +1705,6 @@ class Puzzly {
 
 			if(lookForPieceUnderneath){
 				element = this.getPieceUnderneath(e);
-				console.log('piece found underneath', element)
 			}
 			
 			if(isPuzzlePieceCanvas){
@@ -1816,7 +1820,7 @@ class Puzzly {
 	onMouseUp(e){
 		if(this.isMouseDown || this.isTouching){
 			const element = this.movingPiece;
-			console.log('element position top', element.offsetTop, 'left', element.offsetLeft)
+			// console.log('element position top', element.offsetTop, 'left', element.offsetLeft)
 			const thisPiece = this.getPieceFromElement(element, ['connects-to']);
 
 			if(this.config.highlightConnectingPieces){
@@ -1828,7 +1832,7 @@ class Puzzly {
 			if(!this.isMovingSinglePiece){
 				let group = this.getGroup(element);
 				const piecesToCheck = this.getCollisionCandidatesInGroup(group);
-				console.log('pieces to check', piecesToCheck)
+				// console.log('pieces to check', piecesToCheck)
 
 				const connection = piecesToCheck.map(p => this.checkConnections(p)).filter(e => e)[0];
 				console.log('connection', connection)
@@ -2223,7 +2227,7 @@ class Puzzly {
 
 			currentPiece.type = this.getConnectors(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 
-			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, curImgX, curImgY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
+			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, curImgX - this.cropOffsetX, curImgY - this.cropOffsetY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
 
 			// console.log(currentPiece)
 			pieces.push(currentPiece);
@@ -3187,7 +3191,7 @@ class Puzzly {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "left");
 				}
 
-				console.log('chekcing right', thisPieceConnectorBoundingBoxRight, targetPieceConnectorBoundingBox)
+				// console.log('chekcing right', thisPieceConnectorBoundingBoxRight, targetPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBoxRight, targetPieceConnectorBoundingBox, element, targetElement)){
 					connectionFound = "right";
 				} else {
@@ -3252,7 +3256,7 @@ class Puzzly {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "right");
 				}
 				
-				console.log('checking left', thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox)
+				// console.log('checking left', thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox, element, targetElement)){
 					connectionFound = "left";
 				} else {
@@ -3617,16 +3621,15 @@ console.log('saving')
 	}
 
 	addToGroup(element, group){
-		console.log('addToGroup', element, group)
-		console.log(element)
-		console.log(element.dataset)
+		// console.log('addToGroup', element, group)
+		// console.log(element)
+		// console.log(element.dataset)
 		// const piece = this.getPieceFromElement(element, ['solvedx', 'solvedy']);
 
 		const solvedX = parseInt(element.dataset.solvedx);
 		const solvedY = parseInt(element.dataset.solvedy);
 
 		const targetGroupContainer = this.getGroupContainer(group);
-		console.log('targetGroupContainer', targetGroupContainer)
 		const isTargetGroupSolved = this.isGroupSolved(group) || group === 1111;
 
 		// Add element(s) to target group container
@@ -3740,10 +3743,10 @@ console.log('saving')
 				data.puzzleId = this.getDataAttributeValue(el, 'puzzle-id');
 			}
 			if(k == 'imgx'){
-				data.imgX = parseInt(this.getDataAttributeValue(el, 'imgX'));
+				data.imgX = parseFloat(this.getDataAttributeValue(el, 'imgX'));
 			}
 			if(k == 'imgy'){
-				data.imgY = parseInt(this.getDataAttributeValue(el, 'imgY'));
+				data.imgY = parseFloat(this.getDataAttributeValue(el, 'imgY'));
 			}
 			if(k == 'solvedx'){
 				data.solvedX = parseInt(this.getDataAttributeValue(el, 'solvedX'));
