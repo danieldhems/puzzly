@@ -1,21 +1,4 @@
 import Utils from "./utils.js";
-import Creator from "./puzzlyCreator.js";
-
-Utils.drawBackground();
-
-document.body.onload = function(){
-	const puzzleId = Utils.getQueryStringValue('puzzleId');
-
-	if(puzzleId){
-		fetch(`/api/puzzle/${puzzleId}`)
-		.then( response => response.json() )
-		.then( response => {
-			new Puzzly('canvas', puzzleId, response)
-		})
-	} else {
-		new Creator();
-	}
-}
 
 /** 
  * Puzzly
@@ -25,6 +8,7 @@ document.body.onload = function(){
 class Puzzly {
 	constructor(canvasId, puzzleId, config){
 		this.config = {
+			...config,
 			debug: true,
 			drawBoundingBox: false,
 			showDebugInfo: false,
@@ -37,7 +21,6 @@ class Puzzly {
 			// jigsawSpriteConnectorSize: 41, // True size in sprite
 			jigsawSpriteConnectorSize: 42,
 			jigsawSpriteConnectorDistanceFromCorner: 43,
-			...config,
 			piecesPerSideHorizontal: config.selectedShape === 'Rectangle' ? config.piecesPerSideHorizontal : Math.sqrt(config.selectedNumPieces),
 			piecesPerSideVertical: config.selectedShape === 'Rectangle' ? config.piecesPerSideVertical : Math.sqrt(config.selectedNumPieces),
 			drawOutlines: config.drawOutlines || false,
@@ -57,8 +40,8 @@ class Puzzly {
 
 		this.groups = {};
 
-		this.config.highlightConnectingPieces = config.debug.highlightConnectingPieces;
-		this.config.noDispersal = config.debug.noDispersal;
+		this.config.highlightConnectingPieces = config.debugOptions.highlightConnectingPieces;
+		this.config.noDispersal = config.debugOptions.noDispersal;
 
 		this.currentZIndex = 3;
 
@@ -3360,10 +3343,6 @@ console.log('saving')
 		})
 		return data;
 	}
-
-	
-
-	
 }
 
-export default Puzzly;
+window.Puzzly = Puzzly;

@@ -1,4 +1,4 @@
-saveToLocalStorage(){
+export function saveToLocalStorage(){
   const payload = [];
   let time = Date.now();
 
@@ -16,7 +16,7 @@ saveToLocalStorage(){
   localStorage.setItem(lastSaveKey, time);
 }
 
-async function saveInnerPieceVisibility(visible){
+export async function saveInnerPieceVisibility(visible){
   fetch(`/api/toggleVisibility/${this.puzzleId}`, {
     method: 'put',
     headers: {
@@ -26,9 +26,9 @@ async function saveInnerPieceVisibility(visible){
   });
 }
 
-setElementIdsFromPersistence(pieces){
+export function setElementIdsFromPersistence(pieces){
   const allPieces = this.allPieces();
-  pieces.map(p => {
+  pieces.forEach(p => {
     let { imgX, imgY, _id } = p;
     imgX = "" + imgX;
     imgY = "" + imgY;
@@ -37,11 +37,11 @@ setElementIdsFromPersistence(pieces){
   })
 }
 
-getUniqueLocalStorageKeyForPuzzle(key){
+export function getUniqueLocalStorageKeyForPuzzle(key){
   return this[key].replace(this.localStorageStringReplaceKey, this.puzzleId)
 }
 
-async function save(pieces){
+export async function save(pieces){
   const payload = [];
   const useLocalStorage = false;
 
