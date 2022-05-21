@@ -28,8 +28,8 @@ class Puzzly {
 			boardBoundary: 800
 		};
 
-		this.cropOffsetX = config.selectedOffsetX;
-		this.cropOffsetY = config.selectedOffsetY;
+		this.cropOffsetX = config.crop.selectedOffsetX;
+		this.cropOffsetY = config.crop.selectedOffsetY;
 
 		this.localStorageStringReplaceKey = "{}";
 		this.LOCAL_STORAGE_PUZZLY_PROGRESS_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_progress`;
@@ -143,6 +143,10 @@ class Puzzly {
 		this.loadAssets(assets).then( () => {
 			this.init()
 		})
+	}
+
+	getUniqueLocalStorageKeyForPuzzle(key){
+		return this[key].replace(this.localStorageStringReplaceKey, this.puzzleId)
 	}
 
 	getApplicablePersistence(progressFromServer, lastSaveTimeFromServer){
@@ -365,6 +369,16 @@ class Puzzly {
 		}
 
 		this.saveInnerPieceVisibility(this.innerPiecesVisible);
+	}
+
+	saveInnerPieceVisibility(visible){
+		fetch(`/api/toggleVisibility/${this.puzzleId}`, {
+			method: 'put',
+			headers: {
+				'Content-Type': 'Application/json'
+			},
+			body: JSON.stringify({piecesVisible: visible})
+		});
 	}
 
 	getConnectorSnapAdjustment(distance){
@@ -1721,8 +1735,8 @@ class Puzzly {
 		var curImgY = 0;
 		var curPageX = boardLeft;
 		var curPageY = boardTop;
-		let solvedX = 0,
-			solvedY = 0;
+		let solvedX = 0;
+		let solvedY = 0;
 		var numPiecesFromLeftEdge = 0;
 		var numPiecesFromTopEdge = 0;
 
@@ -1766,7 +1780,6 @@ class Puzzly {
 			}
 
 			currentPiece.type = this.getConnectors(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
-
 			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, curImgX - this.cropOffsetX, curImgY - this.cropOffsetY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
 
 			// console.log(currentPiece)
@@ -2371,8 +2384,8 @@ class Puzzly {
 			imgY: imgY,
 			imgW: pieceDimensions.width,
 			imgH: pieceDimensions.height,
-			pageX: this.config.debug.noDispersal ? canvX : pos.x,
-			pageY: this.config.debug.noDispersal ? canvY : pos.y,
+			pageX: this.config.debugOptions.noDispersal ? canvX : pos.x,
+			pageY: this.config.debugOptions.noDispersal ? canvY : pos.y,
 			solvedX,
 			solvedY,
 			isInnerPiece: Utils.isInnerPiece(piece),
@@ -3342,6 +3355,74 @@ console.log('saving')
 			}
 		})
 		return data;
+	}
+
+	saveToLocalStorage(){
+		const payload = [];
+		let time = Date.now();
+	
+		[...this.allPieces()].forEach(p => {
+			delete p._id;
+			payload.push(this.getPieceFromElement(p, this.DATA_ATTR_KEYS));
+		});
+	
+		const progressKey = getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_PROGRESS_KEY");
+		const lastSaveKey = getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY");
+	
+		console.info(`[Puzzly] Saving to local storage, key ${progressKey}:`, payload)
+		localStorage.setItem(progressKey, JSON.stringify(payload));
+		console.info(`[Puzzly] Saving to local storage, key ${lastSaveKey}:`, time)
+		localStorage.setItem(lastSaveKey, time);
+	}
+
+	setElementIdsFromPersistence(pieces){
+		const allPieces = this.allPieces();
+		pieces.forEach(p => {
+			let { imgX, imgY, _id } = p;
+			imgX = "" + imgX;
+			imgY = "" + imgY;
+			const el = Utils.querySelectorFrom(`[data-imgx='${imgX}'][data-imgy='${imgY}']`, allPieces)[0];
+			this.setElementAttribute(el, 'data-piece-id-in-persistence', _id)
+		})
+	}
+
+	async save(pieces){
+		const payload = [];
+	
+		pieces.forEach( p => {
+			delete p._id;
+			payload.push(this.getPieceFromElement(p, this.DATA_ATTR_KEYS));
+		});
+		
+		const isFirstSave = !payload[0]?._id;
+	
+		fetch(`/api/pieces/${this.puzzleId}`, {
+			method: isFirstSave ? 'post' : 'put',
+			headers: {
+				'Content-Type': 'Application/json'
+			},
+			body: JSON.stringify(payload)
+		})
+		.then( res => {
+			if(!res.ok){
+				this.saveToLocalStorage();
+				return;
+			}
+			return res.json() 
+		})
+		.then( res => {
+			if(isFirstSave){
+				this.setElementIdsFromPersistence(res.data)
+			}
+	
+			if(res.status === "failure"){
+				console.info('[Puzzly] Save to DB failed, saving to Local Storage instead.');
+				localStorage.setItem('puzzly', {
+					lastSaveDate: Date.now(),
+					progress: payload
+				})
+			}
+		})
 	}
 }
 

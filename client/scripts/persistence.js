@@ -1,3 +1,44 @@
+export function getApplicablePersistence(progressFromServer, lastSaveTimeFromServer){
+  const progressKey = this.getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_PROGRESS_KEY");
+  const lastSaveKey = this.getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY");
+  const hasLocalStorageSupport = window.localStorage;
+  const progressInLocalStorage = hasLocalStorageSupport && localStorage.getItem(progressKey);
+  const lastSaveInLocalStorage = hasLocalStorageSupport && localStorage.getItem(lastSaveKey);
+
+  let availableStorage;
+  const storage = {};
+
+  if(!lastSaveTimeFromServer && !lastSaveInLocalStorage){
+    console.info('Puzzly: No saved data found')
+    return;
+  }
+
+  if(progressFromServer && progressFromServer.length){
+    if(lastSaveInLocalStorage && lastSaveInLocalStorage > lastSaveTimeFromServer){
+      availableStorage = 'local';
+    } else {
+      availableStorage = 'server';
+    }
+  } else if(lastSaveInLocalStorage && progressInLocalStorage.length){
+    availableStorage = 'local';
+  }
+
+  switch(availableStorage){
+    case 'server':
+      console.info(`[Puzzly] Restoring from server-side storage`);
+      storage.pieces = progressFromServer;
+      storage.latestSave = parseInt(lastSaveTimeFromServer);
+      break;
+    case 'local':
+      console.info(`[Puzzly] Restoring from local storage`);
+      storage.pieces = JSON.parse(progressInLocalStorage);
+      storage.latestSave = parseInt(lastSaveInLocalStorage);
+      break;
+  }
+
+  return storage;
+}
+
 export function saveToLocalStorage(){
   const payload = [];
   let time = Date.now();

@@ -12,7 +12,6 @@ document.body.onload = function(){
 			new Puzzly('canvas', puzzleId, response)
 		})
 	} else {
-		console.log(window.PuzzlyCreator)
 		new PuzzlyCreator();
 	}
 }

@@ -121,11 +121,18 @@ class PuzzlyCreator {
 			this.imageUploadPreviewEl.style.width = "100%";
 			this.imageUploadPreviewEl.style.height = dimensions.height / dimensions.width * 100 + "%";
 		} else if(dimensions.height > dimensions.width){
-
+			this.imageUploadPreviewEl.style.height = "100%";
+			this.imageUploadPreviewEl.style.width = dimensions.width / dimensions.height * 100 + "%";
+		} else {
+			this.imageUploadPreviewEl.style.width = "100%";
+			this.imageUploadPreviewEl.style.height = "100%";
 		}
 
 		if(cropNotNeeded){
 			this.setPuzzleImageOffsetAndWidth(this.imageCrop, true);
+			if(this.imageCropVisible){
+				this.destroyImageCrop();
+			}
 		} else {
 			this.initiateImageCrop(this.imageUploadPreviewEl);
 		}
@@ -133,7 +140,6 @@ class PuzzlyCreator {
 		this.imagePreviewEl.style.display = 'flex';
 		this.sourceImage.dimensions = dimensions;
 	}
-
 
 	onUploadFailure(response){
 		console.log('onUploadFailure', response)
@@ -156,9 +162,9 @@ class PuzzlyCreator {
 
 	setImageCropDragHandles(){
 		this.imageCropDragHandles.forEach(el => el.style.display = "block")
-		this.imageCropDragHandleTL.style.top = 0 - this.imageCropDragHandleTL.clientHeight + "px";
+		this.imageCropDragHandleTL.style.top = this.imageCrop.offsetTop - this.imageCropDragHandleTL.clientHeight + "px";
 		this.imageCropDragHandleTL.style.left = this.imageCrop.offsetLeft - this.imageCropDragHandleTL.clientWidth + "px";
-		this.imageCropDragHandleTR.style.top = 0 - this.imageCropDragHandleTL.clientHeight + "px";
+		this.imageCropDragHandleTR.style.top = this.imageCrop.offsetTop - this.imageCropDragHandleTL.clientHeight + "px";
 		this.imageCropDragHandleTR.style.left = this.imageCrop.offsetLeft + this.imageCrop.offsetWidth + "px";
 		this.imageCropDragHandleBR.style.top = this.imageCrop.offsetTop + this.imageCrop.offsetHeight + "px";
 		this.imageCropDragHandleBR.style.left = this.imageCrop.offsetLeft + this.imageCrop.offsetWidth + "px";
@@ -325,11 +331,17 @@ class PuzzlyCreator {
 
 		this.imageCropElement.style.display = "block";
 		this.imageCrop.id = "image-crop";
-		this.imageCropElement.style.top = imageEl.offsetTop + "px";
-		this.imageCropElement.style.left = imageEl.offsetLeft + "px";
+		this.imageCropElement.style.top = this.imageUploadPreviewEl.offsetTop + "px";
+		this.imageCropElement.style.left = this.imageUploadPreviewEl.offsetLeft + "px";
 		this.imageCropElement.style.height = height > width ? width + "px" : height + "px";
 		this.imageCropElement.style.width = width > height ? height + "px" : width + "px";
 		this.setImageCropDragHandles();
+		this.imageCropVisible = true;
+	}
+
+	destroyImageCrop(){
+		this.imageCropElement.style.display = "none";
+		this.imageCropDragHandles.forEach(el => el.style.display = "none");
 	}
 
 	upload(){

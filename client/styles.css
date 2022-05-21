@@ -219,6 +219,8 @@ label {
     height: 250px;
     width: 250px;
     position: relative;
+    flex-direction: column;
+    justify-content: center;
 }
 
 #puzzle-setup--image_preview img {
