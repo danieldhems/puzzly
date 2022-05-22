@@ -25,7 +25,6 @@ class Puzzly {
 			piecesPerSideVertical: config.selectedShape === 'Rectangle' ? config.piecesPerSideVertical : Math.sqrt(config.selectedNumPieces),
 			drawOutlines: config.drawOutlines || false,
 			drawSquares: false,
-			boardBoundary: 800
 		};
 
 		this.cropOffsetX = config.crop.selectedOffsetX;
@@ -193,6 +192,15 @@ class Puzzly {
 	init(){
 		console.log(this.config)
 
+		const requiredWidth = this.config.selectedWidth * 4;
+		const requiredHeight = this.config.selectedHeight * 3;
+
+		this.boardBoundaryY = (requiredHeight - this.config.selectedHeight) / 2;
+		this.boardBoundaryX = (requiredWidth - this.config.selectedWidth) / 2;
+
+		console.log('boundary x', this.boardBoundaryX)
+		console.log('boundary y', this.boardBoundaryY)
+
 		this.zoomLevel = 1;
 
 		this.maxScale = 0.3;
@@ -206,10 +214,10 @@ class Puzzly {
 
 		this.largestPieceSpan = this.config.pieceSize + (this.config.connectorSize * 2);
 		this.boardBoundingBox = {
-			top: this.config.boardBoundary * this.zoomLevel,
-			right: this.config.boardBoundary + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
-			left: this.config.boardBoundary * this.zoomLevel,
-			bottom: this.config.boardBoundary + (this.config.piecesPerSideVertical * this.config.pieceSize),
+			top: this.boardBoundaryY * this.zoomLevel,
+			right: this.boardBoundaryX + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
+			left: this.boardBoundaryX * this.zoomLevel,
+			bottom: this.boardBoundaryY + (this.config.piecesPerSideVertical * this.config.pieceSize),
 			width: this.config.boardBoundary * this.zoomLevel + this.config.boardBoundary + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
 			height: this.config.boardBoundary * this.zoomLevel + this.config.boardBoundary + (this.config.piecesPerSideVertical * this.config.pieceSize),
 		};
@@ -219,8 +227,10 @@ class Puzzly {
 			height: this.config.piecesPerSideVertical * this.config.pieceSize,
 		}
 	
-		this.canvas.style.width = this.boardSize.width + (this.config.boardBoundary * 2) * 2 + "px";
-		this.canvas.style.height = this.boardSize.height + (this.config.boardBoundary * 2) * 2 + "px";
+		
+
+		this.canvas.style.width = this.getPxString(requiredWidth);
+		this.canvas.style.height = this.getPxString(requiredHeight)
 
 		this.canvasWidth = parseInt(this.canvas.style.width);
 		this.canvasHeight = parseInt(this.canvas.style.height);
@@ -228,6 +238,10 @@ class Puzzly {
 		this.drawBoardArea();		
 		this.makeSolvedCanvas();
 		this.initiFullImagePreviewer();
+
+		this.setPageScale();
+
+		window.addEventListener("resize", this.setPageScale.bind(this));
 		
 		this.isFullImageViewerActive = false;
 
@@ -305,6 +319,11 @@ class Puzzly {
 
 		window.addEventListener('mouseup', this.onMouseUp.bind(this));
 		window.addEventListener('keydown', this.onKeyDown.bind(this));
+	}
+
+	setPageScale(){
+		this.currentScaleValue = this.fullPageScaleValue = window.innerWidth / this.canvasWidth;
+		this.canvas.style.transform = `scale(${this.currentScaleValue})`;
 	}
 
 	toggleSounds(){
@@ -421,24 +440,24 @@ class Puzzly {
 			
 			// Plus key
 			if(event.which === 187){
-				this.zoomLevel += .1;
+				this.currentScaleValue += .05;
 			}
 
 			// Minus key
 			if(event.which === 189){
-				this.zoomLevel -= .1;
+				this.currentScaleValue -= .05;
 			}
 
 			// "0" Number key
 			if(event.which === 48){
-				this.zoomLevel = 1;
+				this.currentScaleValue = this.fullPageScaleValue;
 			}
 			
 			if(this.isPreviewActive){
 				this.updatePreviewerSizeAndPosition();
 			}
 	
-			this.canvas.style.transform = `scale(${this.zoomLevel})`;
+			this.canvas.style.transform = `scale(${this.currentScaleValue})`;
 		}
 	}
 
@@ -1727,8 +1746,8 @@ class Puzzly {
 
 	makePieces(){
 		const pieces = [];
-		var boardLeft = this.canvas.offsetLeft + this.config.boardBoundary;
-		var boardTop = this.canvas.offsetTop + this.config.boardBoundary;
+		var boardLeft = this.boardBoundaryX;
+		var boardTop = this.boardBoundaryY;
 
 		// prepare draw options
 		var curImgX = this.config.selectedOffsetX || 0;

@@ -185,13 +185,13 @@ label {
     height: 100%;
 }
 
-#puzzle-setup .inner {
+#puzzle-creator {
     position: relative;
     width: 95%;
     height: 95%;
 }
 
-#puzzle-setup .inner .bg-screen {
+.bg-screen {
     position: absolute;
     top: 0;
     left: 0;
@@ -201,7 +201,7 @@ label {
     background-color: #cecece;
 }
 
-#puzzle-setup .inner .inner-content {
+.inner-content {
     position: absolute;
     top: 0;
     left: 0;
@@ -404,12 +404,12 @@ label, input[type=checkbox] {
         flex-direction: column;
     }
 
-    #puzzle-setup .inner {
-        width: 70%;
+    #puzzle-creator {
+        width: 700px;
         height: 70%;
     }
     
-    #puzzle-setup .inner .inner-content {
+    .inner-content {
         padding: 2em;
     }
 

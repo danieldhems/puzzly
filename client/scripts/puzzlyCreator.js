@@ -149,6 +149,7 @@ class PuzzlyCreator {
 		if(noCrop){
 			this.selectedOffsetX = 0;
 			this.selectedWidth = this.imageUploadPreviewEl.naturalWidth;
+			this.selectedHeight = this.imageUploadPreviewEl.naturalWidth;
 		} else {
 			const leftPos = cropElement.offsetLeft;
 			const width = cropElement.clientWidth;
@@ -157,6 +158,7 @@ class PuzzlyCreator {
 		
 			this.selectedOffsetX = this.imageUploadPreviewEl.naturalWidth / 100 * cropLeftOffsetPercentage;
 			this.selectedWidth = this.imageUploadPreviewEl.naturalWidth / 100 * cropWidthPercentage;
+			this.selectedHeight = this.imageUploadPreviewEl.naturalHeight / 100 * cropWidthPercentage;
 		}
 	}
 
