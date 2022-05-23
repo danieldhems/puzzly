@@ -329,21 +329,38 @@ class PuzzlyCreator {
 	initiateImageCrop(imageEl){
 		const width = imageEl.offsetWidth;
 		const height = imageEl.offsetHeight;
+
 		if(width === height) return;
 
 		this.imageCropElement.style.display = "block";
-		this.imageCrop.id = "image-crop";
+		this.setImageCropSizeAndPosition();
+	
+		this.imageCropVisible = true;
+
+		window.addEventListener("resize", this.setImageCropSizeAndPosition.bind(this));
+	}
+
+	setImageCropSizeAndPosition(){
+		const el = this.imageUploadPreviewEl;
+		const width = el.offsetWidth;
+		const height = el.offsetHeight;
+
+		if(width === height) return;
+
+		const cropSize = width > height ? this.imageUploadPreviewEl.style.height : this.imageUploadPreviewEl.style.width;
+
 		this.imageCropElement.style.top = this.imageUploadPreviewEl.offsetTop + "px";
 		this.imageCropElement.style.left = this.imageUploadPreviewEl.offsetLeft + "px";
-		this.imageCropElement.style.height = height > width ? width + "px" : height + "px";
-		this.imageCropElement.style.width = width > height ? height + "px" : width + "px";
+		this.imageCropElement.style.height = cropSize;
+		this.imageCropElement.style.width = cropSize;
+
 		this.setImageCropDragHandles();
-		this.imageCropVisible = true;
 	}
 
 	destroyImageCrop(){
 		this.imageCropElement.style.display = "none";
 		this.imageCropDragHandles.forEach(el => el.style.display = "none");
+		window.removeEventListener("resize", this.setImageCropSizeAndPosition);
 	}
 
 	upload(){
