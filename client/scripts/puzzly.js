@@ -192,18 +192,16 @@ class Puzzly {
 	init(){
 		console.log(this.config)
 
-		const requiredWidth = this.config.selectedWidth * 4;
+		const requiredWidth = this.config.selectedWidth * 3;
 		const requiredHeight = this.config.selectedHeight * 3;
 
-		this.boardBoundaryY = (requiredHeight - this.config.selectedHeight) / 2;
-		this.boardBoundaryX = (requiredWidth - this.config.selectedWidth) / 2;
+		this.boardBoundaryY = window.innerHeight - this.config.selectedHeight / 2;
+		this.boardBoundaryX = window.innerWidth - this.config.selectedWidth / 1.5;
 
 		console.log('boundary x', this.boardBoundaryX)
 		console.log('boundary y', this.boardBoundaryY)
 
 		this.zoomLevel = 1;
-
-		this.maxScale = 0.3;
 
 		this.config.pieceSize = Math.ceil(this.config.pieceSize)
 		this.config.connectorDistanceFromCornerRatio = this.config.connectorRatio = 33;
@@ -228,18 +226,28 @@ class Puzzly {
 		}
 	
 		
-
+		
 		this.canvas.style.width = this.getPxString(requiredWidth);
 		this.canvas.style.height = this.getPxString(requiredHeight)
-
+		
+		// this.canvas.style.transformOrigin = `${window.innerHeight / 2}px ${window.innerHeight / 2}px`;	
+		
 		this.canvasWidth = parseInt(this.canvas.style.width);
 		this.canvasHeight = parseInt(this.canvas.style.height);
 		
-		this.drawBoardArea();		
+		this.drawBoardArea();
+
+		console.log(this.boardAreaEl.offsetTop)
+		console.log(this.boardAreaEl.offsetLeft)
+		this.boardTop = this.boardAreaEl.offsetTop;
+		this.boardRight = this.boardAreaEl.offsetLeft + this.boardAreaEl.offsetWidth;
+		this.boardBottom = this.boardAreaEl.offsetTop + this.boardAreaEl.offsetHeight;
+		this.boardLeft = this.boardAreaEl.offsetLeft;
+
 		this.makeSolvedCanvas();
 		this.initiFullImagePreviewer();
 
-		this.setPageScale();
+		// this.setPageScale();
 
 		window.addEventListener("resize", this.setPageScale.bind(this));
 		
@@ -322,7 +330,8 @@ class Puzzly {
 	}
 
 	setPageScale(){
-		this.currentScaleValue = this.fullPageScaleValue = window.innerWidth / this.canvasWidth;
+		this.currentScaleValue = this.fullPageScaleValue = this.zoomLevel = window.innerWidth / this.canvasWidth; 
+		this.canvas.style.transformOrigin = "0 0";
 		this.canvas.style.transform = `scale(${this.currentScaleValue})`;
 	}
 
@@ -410,7 +419,6 @@ class Puzzly {
 
 	drawBoardArea(){
 		const element = document.getElementById('boardArea');
-		element.id = "board-area";
 		element.style.position = "absolute";
 		element.style.top = this.boardBoundingBox.top + "px";
 		element.style.left = this.boardBoundingBox.left + "px";
@@ -421,8 +429,8 @@ class Puzzly {
 
 	makeSolvedCanvas(){
 		const solvedCnvContainer = document.getElementById('group-container-1111');
-		solvedCnvContainer.style.top = this.getPxString(this.config.boardBoundary);
-		solvedCnvContainer.style.left = this.getPxString(this.config.boardBoundary);
+		solvedCnvContainer.style.top = this.getPxString(this.boardAreaEl.offsetTop);
+		solvedCnvContainer.style.left = this.getPxString(this.boardAreaEl.offsetLeft);
 		solvedCnvContainer.style.width = this.boardSize.width;
 		solvedCnvContainer.style.height = this.boardSize.height;
 		const solvedCnv = document.getElementById('group-canvas-1111');
@@ -440,24 +448,24 @@ class Puzzly {
 			
 			// Plus key
 			if(event.which === 187){
-				this.currentScaleValue += .05;
+				this.zoomLevel += .05;
 			}
 
 			// Minus key
 			if(event.which === 189){
-				this.currentScaleValue -= .05;
+				this.zoomLevel -= .05;
 			}
 
 			// "0" Number key
 			if(event.which === 48){
-				this.currentScaleValue = this.fullPageScaleValue;
+				this.zoomLevel = 1;
 			}
 			
 			if(this.isPreviewActive){
 				this.updatePreviewerSizeAndPosition();
 			}
 	
-			this.canvas.style.transform = `scale(${this.currentScaleValue})`;
+			this.canvas.style.transform = `scale(${this.zoomLevel})`;
 		}
 	}
 
@@ -1342,18 +1350,8 @@ class Puzzly {
 		return function(e){
 			e.preventDefault();
 			if(this.movingElement){
-				// alert(this.movingElement.classList[0])
-
-				// alert('mouse move')
-				const clientPos = this.getClientPos(e);
-				// alert(`${clientX}, ${clientY}`)
-				// alert(`${clientPos.x}, ${clientPos.y}`)
-				// alert(`${clientPos.y}, ${this.zoomLevel}, ${diffY}`)
-				// alert(clientPos.y / this.zoomLevel)
-				// alert((clientPos.y / this.zoomLevel) - (diffY / this.zoomLevel))
-				let newPosTop = (clientPos.y / this.zoomLevel) - (diffY / this.zoomLevel);
-				let newPosLeft = (clientPos.x / this.zoomLevel) - (diffX / this.zoomLevel);
-				// alert(`${newPosLeft}, ${newPosTop}`)
+				const newPosTop = (e.clientY / this.zoomLevel) - (diffY / this.zoomLevel);
+				const newPosLeft = (e.clientX / this.zoomLevel) - (diffX / this.zoomLevel);
 				this.movingElement.style.top = newPosTop + "px";
 				this.movingElement.style.left = newPosLeft + "px";
 			}
@@ -2498,37 +2496,37 @@ class Puzzly {
 
 	getTopLeftCornerBoundingBox(){
 		return {
-			top: this.config.boardBoundary,
-			right: this.config.boardBoundary + this.config.connectorTolerance,
-			bottom: this.config.boardBoundary + this.config.connectorTolerance,
-			left: this.config.boardBoundary,
+			top: this.boardTop,
+			right: this.boardLeft+ this.config.connectorTolerance,
+			bottom: this.boardTop + this.config.connectorTolerance,
+			left: this.boardLeft,
 		}
 	}
 
 	getTopRightCornerBoundingBox(){
 		return {
-			top: this.config.boardBoundary,
-			right: this.canvasWidth - this.config.boardBoundary,
-			bottom: this.config.boardBoundary + this.config.connectorTolerance,
-			left: this.canvasWidth - this.config.boardBoundary - this.config.connectorTolerance,
+			top: this.boardTop,
+			right: this.boardRight,
+			bottom: this.boardTop + this.config.connectorTolerance,
+			left: this.boardRight - this.config.connectorTolerance,
 		}
 	}
 
 	getBottomRightCornerBoundingBox(){
 		return {
-			top: this.canvasHeight - this.config.boardBoundary - this.config.connectorTolerance,
-			right: this.canvasWidth - this.config.boardBoundary,
-			bottom: this.canvasHeight - this.config.boardBoundary,
-			left: this.canvasWidth - this.config.boardBoundary - this.config.connectorTolerance,
+			top: this.boardBottom - this.config.connectorTolerance,
+			right: this.boardRight,
+			bottom: this.boardBottom,
+			left: this.boardRight - this.config.connectorTolerance,
 		}
 	}
 
 	getBottomLeftCornerBoundingBox(){
 		return {
-			top: this.canvasHeight - this.config.boardBoundary - this.config.connectorTolerance,
-			right: this.config.boardBoundary + this.config.connectorTolerance,
-			bottom: this.canvasHeight - this.config.boardBoundary,
-			left: this.config.boardBoundary,
+			top: this.boardBottom - this.config.connectorTolerance,
+			right: this.boardLeft + this.config.connectorTolerance,
+			bottom: this.boardBottom,
+			left: this.boardLeft,
 		}
 	}
 
@@ -2706,32 +2704,47 @@ class Puzzly {
 		let elBoundingBox = this.getBoundingBox(element);
 		let elBBWithinTolerance = elBoundingBox;
 
-		if(Utils.isTopLeftCorner(piece)){
-			elBBWithinTolerance.right = elBoundingBox.left + this.config.connectorTolerance;
-			elBBWithinTolerance.bottom = elBoundingBox.top + this.config.connectorTolerance;
-			if(this.hasCollision(elBBWithinTolerance, this.getTopLeftCornerBoundingBox())){
-				connectionFound = "top-left";
+		if(Utils.isCornerPiece(piece)){
+			let container;
+
+			if(Utils.hasGroup(piece)){
+				container = this.getGroupContainer(element);
 			}
-		}
-		if(Utils.isTopRightCorner(piece)){
-			elBBWithinTolerance.left = elBoundingBox.right - this.config.connectorTolerance;
-			elBBWithinTolerance.bottom = elBoundingBox.top + this.config.connectorTolerance;
-			if(this.hasCollision(elBoundingBox, this.getTopRightCornerBoundingBox())){
-				connectionFound = "top-right";
+
+			elBBWithinTolerance.top = container ? container.offsetTop : elBoundingBox.top;
+			elBBWithinTolerance.left = container ? container.offsetLeft : elBoundingBox.left;
+			elBBWithinTolerance.right = container ? container.offsetLeft + container.offsetWidth : elBoundingBox.right;
+			elBBWithinTolerance.bottom = container ? container.offsetTop + container.offsetHeight : elBoundingBox.bottom;
+
+			if(Utils.isTopLeftCorner(piece)){
+				elBBWithinTolerance.right = elBoundingBox.left + this.config.connectorTolerance;
+				elBBWithinTolerance.bottom = elBoundingBox.top + this.config.connectorTolerance;
+				if(this.hasCollision(elBBWithinTolerance, this.getTopLeftCornerBoundingBox())){
+					connectionFound = "top-left";
+				}
 			}
-		}
-		if(Utils.isBottomRightCorner(piece)){
-			elBBWithinTolerance.left = elBoundingBox.right - this.config.connectorTolerance;
-			elBBWithinTolerance.top = elBoundingBox.bottom - this.config.connectorTolerance;
-			if(this.hasCollision(elBoundingBox, this.getBottomRightCornerBoundingBox())){
-				connectionFound = "bottom-right";
+			if(Utils.isTopRightCorner(piece)){
+				elBBWithinTolerance.left = elBoundingBox.right - this.config.connectorTolerance;
+				elBBWithinTolerance.bottom = elBoundingBox.top + this.config.connectorTolerance;
+	
+				if(this.hasCollision(elBoundingBox, this.getTopRightCornerBoundingBox())){
+					connectionFound = "top-right";
+				}
 			}
-		}
-		if(Utils.isBottomLeftCorner(piece)){
-			elBBWithinTolerance.right = elBoundingBox.left + this.config.connectorTolerance;
-			elBBWithinTolerance.top = elBoundingBox.bottom - this.config.connectorTolerance;
-			if(this.hasCollision(elBoundingBox, this.getBottomLeftCornerBoundingBox())){
-				connectionFound = "bottom-left";
+			if(Utils.isBottomRightCorner(piece)){
+				elBBWithinTolerance.left = elBoundingBox.right - this.config.connectorTolerance;
+				elBBWithinTolerance.top = elBoundingBox.bottom - this.config.connectorTolerance;
+				if(this.hasCollision(elBoundingBox, this.getBottomRightCornerBoundingBox())){
+					connectionFound = "bottom-right";
+				}
+			}
+			if(Utils.isBottomLeftCorner(piece)){
+				elBBWithinTolerance.right = elBoundingBox.left + this.config.connectorTolerance;
+				elBBWithinTolerance.top = elBoundingBox.bottom - this.config.connectorTolerance;
+	
+				if(this.hasCollision(elBoundingBox, this.getBottomLeftCornerBoundingBox())){
+					connectionFound = "bottom-left";
+				}
 			}
 		}
 
