@@ -189,21 +189,42 @@ class Puzzly {
 		return storage;
 	}
 
+	getPieceSize(){
+		// console.log(this.boardWidth, this.config.selectedWidth, this.config.pieceSize)
+		const scale = this.boardWidth / this.config.selectedWidth * 100;
+		console.log(scale)
+		return Math.ceil(this.config.pieceSize / 100 * scale);
+	}
+
 	init(){
 		console.log(this.config)
 
 		const requiredWidth = this.config.selectedWidth * 3;
 		const requiredHeight = this.config.selectedHeight * 3;
 
-		this.boardBoundaryY = window.innerHeight - this.config.selectedHeight / 2;
-		this.boardBoundaryX = window.innerWidth - this.config.selectedWidth / 1.5;
-
-		console.log('boundary x', this.boardBoundaryX)
-		console.log('boundary y', this.boardBoundaryY)
-
 		this.zoomLevel = 1;
 
-		this.config.pieceSize = Math.ceil(this.config.pieceSize)
+		this.boardHeight = this.boardWidth = window.innerHeight / 100 * 60;
+		const boardVerticalSpace = window.innerHeight / 100 * 20;
+		const leftPos = window.innerWidth / 2 - this.boardHeight / 2;
+		this.boardBoundingBox = {
+			top: boardVerticalSpace,
+			right: leftPos + this.boardHeight,
+			left: leftPos,
+			bottom: boardVerticalSpace + this.boardHeight,
+			width: this.boardHeight,
+			height: this.boardHeight,
+		};
+
+		console.log(this.boardBoundingBox)
+
+		this.boardSize = {
+			width: this.boardHeight,
+			height: this.boardHeight,
+		}
+
+		// console.log(this.getPieceSize())
+		this.config.pieceSize = this.getPieceSize();
 		this.config.connectorDistanceFromCornerRatio = this.config.connectorRatio = 33;
 		this.config.connectorSize = Math.ceil(this.config.pieceSize / 100 * this.config.connectorRatio);
 		this.config.connectorTolerance = this.config.connectorSize / 100 * (50 - this.collisionTolerance / 2);
@@ -211,34 +232,15 @@ class Puzzly {
 		this.config.connectorDistanceFromCorner = Math.ceil(this.config.pieceSize / 100 * this.config.connectorDistanceFromCornerRatio);
 
 		this.largestPieceSpan = this.config.pieceSize + (this.config.connectorSize * 2);
-		this.boardBoundingBox = {
-			top: this.boardBoundaryY * this.zoomLevel,
-			right: this.boardBoundaryX + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
-			left: this.boardBoundaryX * this.zoomLevel,
-			bottom: this.boardBoundaryY + (this.config.piecesPerSideVertical * this.config.pieceSize),
-			width: this.config.boardBoundary * this.zoomLevel + this.config.boardBoundary + (this.config.piecesPerSideHorizontal * this.config.pieceSize),
-			height: this.config.boardBoundary * this.zoomLevel + this.config.boardBoundary + (this.config.piecesPerSideVertical * this.config.pieceSize),
-		};
-
-		this.boardSize = {
-			width: this.config.piecesPerSideHorizontal * this.config.pieceSize,
-			height: this.config.piecesPerSideVertical * this.config.pieceSize,
-		}
-	
 		
+		// this.canvas.style.width = this.getPxString(requiredWidth);
+		// this.canvas.style.height = this.getPxString(requiredHeight);	
 		
-		this.canvas.style.width = this.getPxString(requiredWidth);
-		this.canvas.style.height = this.getPxString(requiredHeight)
-		
-		// this.canvas.style.transformOrigin = `${window.innerHeight / 2}px ${window.innerHeight / 2}px`;	
-		
-		this.canvasWidth = parseInt(this.canvas.style.width);
-		this.canvasHeight = parseInt(this.canvas.style.height);
+		this.canvasWidth = window.innerWidth;
+		this.canvasHeight = window.innerHeight;
 		
 		this.drawBoardArea();
 
-		console.log(this.boardAreaEl.offsetTop)
-		console.log(this.boardAreaEl.offsetLeft)
 		this.boardTop = this.boardAreaEl.offsetTop;
 		this.boardRight = this.boardAreaEl.offsetLeft + this.boardAreaEl.offsetWidth;
 		this.boardBottom = this.boardAreaEl.offsetTop + this.boardAreaEl.offsetHeight;
@@ -452,7 +454,7 @@ class Puzzly {
 			}
 
 			// Minus key
-			if(event.which === 189){
+			if(event.which === 189 && this.zoomLevel > 1){
 				this.zoomLevel -= .05;
 			}
 
@@ -1079,6 +1081,7 @@ class Puzzly {
 			pieceContainer.appendChild(el);
 
 			ctx = el.getContext("2d");
+			ctx.imageSmoothingEnabled = false;
 			ctx.strokeStyle = '#000';
 			let path = new Path2D();
 			ctx.clip(this.drawJigsawShape(ctx, path, piece, {x: 0, y: 0}));
@@ -1132,6 +1135,7 @@ class Puzzly {
 		})
 
 		const cvctx = canvasEl.getContext("2d");
+		cvctx.imageSmoothingEnabled = false;
 
 		const sprite = SpriteMap.find(s => s._shape_id === piece.shapeId);
 
@@ -1744,14 +1748,12 @@ class Puzzly {
 
 	makePieces(){
 		const pieces = [];
-		var boardLeft = this.boardBoundaryX;
-		var boardTop = this.boardBoundaryY;
 
 		// prepare draw options
 		var curImgX = this.config.selectedOffsetX || 0;
 		var curImgY = 0;
-		var curPageX = boardLeft;
-		var curPageY = boardTop;
+		var curPageX = this.boardLeft;
+		var curPageY = this.boardTop;
 		let solvedX = 0;
 		let solvedY = 0;
 		var numPiecesFromLeftEdge = 0;
@@ -1808,7 +1810,7 @@ class Puzzly {
 			// reached last piece, start next row
 			if(pieces.length % piecesPerSideHorizontal === 0){
 				curImgX = this.config.selectedOffsetX || 0;
-				curPageX = boardLeft;
+				curPageX = this.boardLeft;
 				solvedX = 0;
 				
 				const firstPieceOnRowAbove = pieces[pieces.length - piecesPerSideHorizontal];
@@ -2170,7 +2172,7 @@ class Puzzly {
 	
 	// Generate map of sectors that can be used for even dispersal of pieces around outside of puzzle board
 	generatePieceSectorMap(){
-		const totalArea = ((this.canvasWidth * this.canvasHeight) - (this.boardSize.width * this.boardSize.height));
+		const totalArea = (this.canvasWidth * this.canvasHeight);
 		const pieceSectorSize = totalArea / this.config.selectedNumPieces;
 
 		const sqr = Math.abs(Math.sqrt(pieceSectorSize));
@@ -3065,6 +3067,7 @@ class Puzzly {
 	drawPiecesIntoGroup(groupId, pieces, showGuides = false){
 		const cnv = document.querySelector(`#group-canvas-${groupId}`);
 		const ctx = cnv.getContext("2d");
+		ctx.imageSmoothingEnabled = false;
 
 		let group = this.groups[groupId];
 		const { path, imageData } = this.draw(ctx, pieces, group?.imageData, showGuides);
@@ -3115,6 +3118,7 @@ class Puzzly {
 		cnv.height = this.boardSize.height;
 
 		const ctx = cnv.getContext("2d");
+		ctx.imageSmoothingEnabled = false;
 		ctx.save();
 		
 		this.drawPiecesIntoGroup(group, [pieceA, pieceB])
