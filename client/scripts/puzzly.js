@@ -27,6 +27,8 @@ class Puzzly {
 			drawSquares: false,
 		};
 
+		// alert(JSON.stringify(this.config))
+
 		this.cropOffsetX = config.crop.selectedOffsetX;
 		this.cropOffsetY = config.crop.selectedOffsetY;
 
@@ -66,6 +68,10 @@ class Puzzly {
 		this.canvas = document.getElementById(canvasId);
 		this.boardAreaEl = document.getElementById("boardArea");
 
+		this.interactionEventDown = Utils.isMobile() ? "touchstart" : "mousedown";
+		this.interactionEventUp = Utils.isMobile() ? "touchend" : "mouseup";
+		this.interactionEventMove = Utils.isMobile() ? "touchmove" : "mousemove";
+
 		this.clickSound = new Audio('./mixkit-plastic-bubble-click-1124.wav');
 
 		this.ControlsEl = document.getElementById('controls');
@@ -92,24 +98,16 @@ class Puzzly {
 		this.ControlsElPanel = document.getElementById('controls-panel');
 		this.ControlsElPanelIsOpen = false;
 
-		this.ControlsElHandle.addEventListener("click", () => {
-			if(this.ControlsElPanelIsOpen){
-				this.ControlsElPanel.classList.add('is-hidden');
-				this.ControlsElPanelIsOpen = false;
-			} else {
-				this.ControlsElPanel.classList.remove('is-hidden');
-				this.ControlsElPanelIsOpen = true;
-			}
-		});
+		this.ControlsElHandle.addEventListener(this.interactionEventDown, this.onControlsHandleClick.bind(this))
 
-		this.sendToEdgeShuffleBtn.addEventListener('click', e => {
+		this.sendToEdgeShuffleBtn.addEventListener(this.interactionEventDown, e => {
 			const allPieces = this.allPieces();
 			this.shuffleArray(Array.from(allPieces).filter(p => !this.getIsSolved(p) && !Utils.hasGroup(p)));
 			this.randomisePiecePositions(pieces);
 			this.save(allPieces);
 		})
 
-		this.sendToEdgeNeatenBtn.addEventListener('click', e => {
+		this.sendToEdgeNeatenBtn.addEventListener(this.interactionEventDown, e => {
 			let pieces = this.shuffleArray(Array.from(this.allPieces()).filter(p => !this.getIsSolved(p) && !Utils.hasGroup(p)));
 			this.arrangePieces(pieces);
 		})
@@ -126,9 +124,9 @@ class Puzzly {
 		this.soundsBtnOnLabel.style.display = 'none';
 		this.isPreviewActive = false;
 
-		this.previewBtn.addEventListener('click', this.togglePreviewer.bind(this))
-		this.filterBtn.addEventListener('click', this.toggleInnerPieces.bind(this))
-		this.soundsBtn.addEventListener('click', this.toggleSounds.bind(this))
+		this.previewBtn.addEventListener(this.interactionEventDown, this.togglePreviewer.bind(this))
+		this.filterBtn.addEventListener(this.interactionEventDown, this.toggleInnerPieces.bind(this))
+		this.soundsBtn.addEventListener(this.interactionEventDown, this.toggleSounds.bind(this))
 
 		this.DATA_ATTR_KEYS = [
 			'piece-id', 'piece-id-in-persistence', 'puzzle-id', 'imgx', 'imgy', 'imgw', 'imgh', 'num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type', 'connections', 'connects-to', 'is-inner-piece', 'is-solved', 'group', 'solvedx', 'solvedy'
@@ -138,10 +136,51 @@ class Puzzly {
 			this.SourceImage,
 		];
 
+		this.zoomThrottleRate = 7;
+
+		window.addEventListener(this.interactionEventMove, (e) => {
+			if(e.touches?.length === 2){
+				e.preventDefault();
+				const dist = this.getDistanceBetweenTouches(e);
+				let moved;
+				
+				if(this.initialTouchesDistance > dist){
+					moved = (this.initialTouchesDistance - dist / this.zoomThrottleRate).toFixed(6) / 5000;
+					this.zoomLevel = this.zoomLevel - moved > 1 ? this.zoomLevel - moved : this.zoomLevel;
+				} else {
+					moved = (dist - this.initialTouchesDistance / this.zoomThrottleRate).toFixed(6) / 5000;
+					this.zoomLevel += moved;
+				}
+
+				if(moved > 0){
+					this.canvas.style.transform = `scale(${this.zoomLevel})`;
+				}
+			} else {
+				this.mouseMoveFunc
+			}
+		}, { passive: false });
+
 		// here
 		this.loadAssets(assets).then( () => {
 			this.init()
 		})
+	}
+
+	getDistanceBetweenTouches(e){
+		return e.touches?.length === 2 && Math.hypot(
+			e.touches[0].pageX - e.touches[1].pageX,
+			e.touches[0].pageY - e.touches[1].pageY
+		)
+	}
+
+	onControlsHandleClick(e){
+		if(this.ControlsElPanelIsOpen){
+			this.ControlsElPanel.classList.add('is-hidden');
+			this.ControlsElPanelIsOpen = false;
+		} else {
+			this.ControlsElPanel.classList.remove('is-hidden');
+			this.ControlsElPanelIsOpen = true;
+		}
 	}
 
 	getUniqueLocalStorageKeyForPuzzle(key){
@@ -190,17 +229,12 @@ class Puzzly {
 	}
 
 	getPieceSize(){
-		// console.log(this.boardWidth, this.config.selectedWidth, this.config.pieceSize)
-		const scale = this.boardWidth / this.config.selectedWidth * 100;
-		console.log(scale)
-		return Math.ceil(this.config.pieceSize / 100 * scale);
+		this.puzzleScale = this.boardWidth / this.config.selectedWidth * 100;
+		return Math.ceil(this.config.pieceSize / 100 * this.puzzleScale);
 	}
 
 	init(){
 		console.log(this.config)
-
-		const requiredWidth = this.config.selectedWidth * 3;
-		const requiredHeight = this.config.selectedHeight * 3;
 
 		this.zoomLevel = 1;
 
@@ -223,7 +257,7 @@ class Puzzly {
 			height: this.boardHeight,
 		}
 
-		// console.log(this.getPieceSize())
+		this.naturalPieceSize = this.config.pieceSize;
 		this.config.pieceSize = this.getPieceSize();
 		this.config.connectorDistanceFromCornerRatio = this.config.connectorRatio = 33;
 		this.config.connectorSize = Math.ceil(this.config.pieceSize / 100 * this.config.connectorRatio);
@@ -245,6 +279,8 @@ class Puzzly {
 		this.boardRight = this.boardAreaEl.offsetLeft + this.boardAreaEl.offsetWidth;
 		this.boardBottom = this.boardAreaEl.offsetTop + this.boardAreaEl.offsetHeight;
 		this.boardLeft = this.boardAreaEl.offsetLeft;
+		this.boardWidth = this.boardAreaEl.offsetWidth;
+		this.boardHeight = this.boardAreaEl.offsetHeight;
 
 		this.makeSolvedCanvas();
 		this.initiFullImagePreviewer();
@@ -288,46 +324,32 @@ class Puzzly {
 		
 		this.innerPieces = document.querySelectorAll('.inner-piece');
 
-		window.addEventListener('mousedown', (e) => {
-			this.onMouseDown(e);
+		window.addEventListener(this.interactionEventDown, this.onMouseDown.bind(this));
+		// window.addEventListener('gesturestart', this.onGestureStart.bind(this));
+
+		const newPuzzleBtn = document.getElementById("js-create-new-puzzle");
+		newPuzzleBtn.addEventListener(this.interactionEventDown, () => {
+			window.location = "/";
+		})
+
+		navigator.permissions.query({name: "accelerometer"}).then((perm) => {
+			const laSensor = new window.LinearAccelerationSensor({frequency: 60});
+			laSensor.addEventListener("reading", e => {
+				console.log("accelerating", e);
+				this.acceleration = e;
+			})
+			laSensor.start();
 		});
 
-		this.scaling = false;
-		window.addEventListener('touchstart', (e) => {
-			e.preventDefault();
-			console.log('touchstart', e)
-			if(e.touches.length === 2){
-				this.scaling = true;
-			}
-
-			this.onMouseDown(e);
-		})
-		
-		window.addEventListener('touchmove', (e) => {
-			e.preventDefault();
-			console.log('touchmove', e)
-			if(this.scaling){
-				
-			}
-
-			this.onMouseMove(e);
-		})
-
-		window.addEventListener('touchend', (e) => {
-			e.preventDefault();
-			this.movingPiece = null;
-			this.movingElement = null;
-			this.isTouching = false;
-		})
+		this.acceleration = null;
 
 		window.addEventListener('touchcancel', (e) => {
-			e.preventDefault();
 			this.movingPiece = null;
 			this.movingElement = null;
 			this.isTouching = false;
 		})
 
-		window.addEventListener('mouseup', this.onMouseUp.bind(this));
+		window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
 		window.addEventListener('keydown', this.onKeyDown.bind(this));
 	}
 
@@ -344,10 +366,10 @@ class Puzzly {
 	}
 
 	updatePreviewerSizeAndPosition(){
-		this.fullImageViewerEl.style.left = this.config.boardBoundary * this.zoomLevel + 'px';
-		this.fullImageViewerEl.style.top = this.config.boardBoundary * this.zoomLevel + 'px';
-		this.fullImageViewerEl.style.width = this.config.selectedWidth * this.zoomLevel + 'px';
-		this.fullImageViewerEl.style.height = this.config.selectedWidth * this.zoomLevel + 'px';
+		this.fullImageViewerEl.style.left = this.boardLeft * this.zoomLevel + 'px';
+		this.fullImageViewerEl.style.top = this.boardTop * this.zoomLevel + 'px';
+		this.fullImageViewerEl.style.width = this.boardWidth * this.zoomLevel + 'px';
+		this.fullImageViewerEl.style.height = this.boardHeight * this.zoomLevel + 'px';
 	}
 
 	togglePreviewer(){
@@ -367,12 +389,10 @@ class Puzzly {
 
 	showPiece(el){
 		el.style.display = 'block';
-		// el.style.zIndex = '100';
 	}
 	
 	hidePiece(el){
 		el.style.display = 'none';
-		// el.style.zIndex = '-1';
 	}
 
 	toggleInnerPieces(){
@@ -431,15 +451,15 @@ class Puzzly {
 
 	makeSolvedCanvas(){
 		const solvedCnvContainer = document.getElementById('group-container-1111');
-		solvedCnvContainer.style.top = this.getPxString(this.boardAreaEl.offsetTop);
-		solvedCnvContainer.style.left = this.getPxString(this.boardAreaEl.offsetLeft);
-		solvedCnvContainer.style.width = this.boardSize.width;
-		solvedCnvContainer.style.height = this.boardSize.height;
+		solvedCnvContainer.style.top = this.getPxString(this.boardTop);
+		solvedCnvContainer.style.left = this.getPxString(this.boardLeft);
+		solvedCnvContainer.style.width = this.boardWidth;
+		solvedCnvContainer.style.height = this.boardHeight;
 		const solvedCnv = document.getElementById('group-canvas-1111');
-		solvedCnv.width = this.boardSize.width;
-		solvedCnv.height = this.boardSize.height;
-		solvedCnv.style.width = this.getPxString(this.boardSize.width);
-		solvedCnv.style.height = this.getPxString(this.boardSize.height);
+		solvedCnv.width = this.boardWidth;
+		solvedCnv.height = this.boardHeight;
+		solvedCnv.style.width = this.getPxString(this.boardWidth);
+		solvedCnv.style.height = this.getPxString(this.boardHeight);
 	}
 	
 	onKeyDown(event){
@@ -965,7 +985,7 @@ class Puzzly {
 
 	drawPieceManually(piece){
 		let ctx;
-
+console.log('piece', piece)
 		const solvedCnvContainer = document.getElementById('group-container-1111');
 
 		if(Number.isNaN(piece.id) || piece.id === "null"){
@@ -1165,8 +1185,6 @@ class Puzzly {
 			piece.imgH,
 		);
 
-		
-
 		if(this.config.drawOutlines){
 			/**
 			 * Borrowed from: https://stackoverflow.com/questions/37115530/how-do-i-create-a-puzzle-piece-with-bevel-effect-in-edged-in-canvas-html5
@@ -1232,11 +1250,7 @@ class Puzzly {
 	}
 
 	getClientPos(e){
-		let touches;
-		if(this.isMobile){
-			touches = e.touches;
-		}
-		if(this.isMobile && touches.length === 1){
+		if(e.touches){
 			return {
 				x: e.touches[0].clientX,
 				y: e.touches[0].clientY
@@ -1277,12 +1291,31 @@ class Puzzly {
 			})[0];
 	}
 
+	getCentreBetweenTwoTouches(touches){
+		const xTouch1 = touches[0].clientX;
+		const yTouch1 = touches[0].clientY;
+		const xTouch2 = touches[1].clientX;
+		const yTouch2 = touches[1].clientY;
+		const x = Math.min(xTouch1, xTouch2);
+		const y = Math.min(yTouch1, yTouch2);
+		return {x: x + this.initialTouchesDistance / 2, y: y + this.initialTouchesDistance / 2}
+	}
+
 	onMouseDown(e){
 		let element, diffX, diffY, thisPiece;
 
 		if(e.which === 1 || e.touches){
-			// console.log('onmousedown', e.target)
 			const clientPos = this.getClientPos(e);
+
+			if(e.touches?.length === 2){
+				this.initialTouchesDistance = this.getDistanceBetweenTouches(e);
+				const touchCenter = this.getCentreBetweenTwoTouches(e.touches);
+				if(this.zoomLevel === 1){
+					this.canvas.style.transformOrigin = `${this.getPxString(touchCenter.x)} ${this.getPxString(touchCenter.y)}`;
+				} else {
+					this.canvas.style.transformOrigin = `0 0`;
+				}
+			}
 
 			const isPuzzlePiece = e.target.classList.contains("puzzle-piece");
 			const isPuzzlePieceCanvas = e.target.classList.contains("puzzle-piece-canvas");
@@ -1299,6 +1332,8 @@ class Puzzly {
 			if(isPuzzlePiece){
 				element = e.target;
 			}
+
+			console.log("element", element)
 
 			if(!element){
 				this.isMouseDown = false;
@@ -1335,7 +1370,7 @@ class Puzzly {
 
 			diffX = clientPos.x - this.movingElement.offsetLeft * this.zoomLevel;
 			diffY = clientPos.y - this.movingElement.offsetTop * this.zoomLevel;					
-			
+
 			this.keepOnTop(this.movingElement)
 
 			this.mouseMoveFunc = this.onMouseMove(diffX, diffY);
@@ -1346,16 +1381,18 @@ class Puzzly {
 				this.isMouseDown = true;
 			}
 
-			window.addEventListener(e.touches ? 'touchmove' : 'mousemove', this.mouseMoveFunc);
+			window.addEventListener(this.interactionEventMove, this.mouseMoveFunc);
 		}
 	}
 
 	onMouseMove(diffX, diffY){
 		return function(e){
-			e.preventDefault();
+			let eventX, eventY, newPosTop, newPosLeft;
 			if(this.movingElement){
-				const newPosTop = (e.clientY / this.zoomLevel) - (diffY / this.zoomLevel);
-				const newPosLeft = (e.clientX / this.zoomLevel) - (diffX / this.zoomLevel);
+				eventX = e.touches ? e.touches[0].clientX : e.clientX;
+				eventY = e.touches ? e.touches[0].clientY : e.clientY;
+				newPosTop = (eventY / this.zoomLevel) - (diffY / this.zoomLevel);
+				newPosLeft = (eventX / this.zoomLevel) - (diffX / this.zoomLevel);
 				this.movingElement.style.top = newPosTop + "px";
 				this.movingElement.style.left = newPosLeft + "px";
 			}
@@ -1499,9 +1536,9 @@ class Puzzly {
 		this.isMouseDown = false;
 		this.isTouching = false;
 
-		window.removeEventListener('mousemove', this.moveCanvas);
-		window.removeEventListener('mousemove', this.mouseMoveFunc);
-		window.removeEventListener('mouseup', this.onMouseUp);
+		// window.removeEventListener(this.interactionEventMove, this.moveCanvas);
+		window.removeEventListener(this.interactionEventMove, this.mouseMoveFunc);
+		window.removeEventListener(this.interactionEventUp, this.onMouseUp);
 	}
 
 	getDataAttributeRaw(el, key){
@@ -1770,6 +1807,8 @@ class Puzzly {
 
 		const piecesPerSideHorizontal = this.config.piecesPerSideHorizontal;
 		const piecesPerSideVertical = this.config.piecesPerSideVertical;
+
+		console.log(this.naturalPieceSize, this.puzzleScale)
 
 		while(!done){
 			let currentPiece = {};
@@ -2179,10 +2218,10 @@ class Puzzly {
 		const area = {w: sqr, h: sqr};
 
 		const quadrants = [
-			{x:0,y:0,w:this.canvasWidth,h:this.config.boardBoundary},
-			{x:0,y:this.config.boardBoundary,w:this.config.boardBoundary,h:this.boardSize.height},
-			{x:this.config.boardBoundary + this.boardSize.width,y:this.config.boardBoundary,w:this.config.boardBoundary,h:this.boardSize.height},
-			{x:0,y:this.config.boardBoundary + this.boardSize.height,w:this.canvasWidth,h:this.config.boardBoundary},
+			{x:0,y:0,w:window.innerWidth,h:this.boardTop - this.largestPieceSpan},
+			{x:0,y:this.boardTop - this.largestPieceSpan,w:this.boardLeft - this.largestPieceSpan,h:this.boardAreaEl.offsetHeight + this.largestPieceSpan},
+			{x:this.boardRight,y:this.boardTop - this.largestPieceSpan,w:window.innerWidth - this.boardRight,h:this.boardAreaEl.offsetHeight + this.largestPieceSpan},
+			{x:0,y:this.boardBottom,w:window.innerWidth,h:this.boardTop - this.largestPieceSpan},
 		];
 
 		let quad = 0;
@@ -2728,7 +2767,6 @@ class Puzzly {
 			if(Utils.isTopRightCorner(piece)){
 				elBBWithinTolerance.left = elBoundingBox.right - this.config.connectorTolerance;
 				elBBWithinTolerance.bottom = elBoundingBox.top + this.config.connectorTolerance;
-	
 				if(this.hasCollision(elBoundingBox, this.getTopRightCornerBoundingBox())){
 					connectionFound = "top-right";
 				}
@@ -2743,7 +2781,6 @@ class Puzzly {
 			if(Utils.isBottomLeftCorner(piece)){
 				elBBWithinTolerance.right = elBoundingBox.left + this.config.connectorTolerance;
 				elBBWithinTolerance.top = elBoundingBox.bottom - this.config.connectorTolerance;
-	
 				if(this.hasCollision(elBoundingBox, this.getBottomLeftCornerBoundingBox())){
 					connectionFound = "bottom-left";
 				}
@@ -3284,22 +3321,21 @@ console.log('saving')
 	}
 
 	initiFullImagePreviewer(){
-		const boardAreaElRect = this.boardAreaEl.getBoundingClientRect();
-		this.fullImageViewerEl.style.left = boardAreaElRect.left + "px";
-		this.fullImageViewerEl.style.top = boardAreaElRect.top + "px";
-		this.fullImageViewerEl.setAttribute('width', boardAreaElRect.width);
-		this.fullImageViewerEl.setAttribute('height', boardAreaElRect.height);
+		this.fullImageViewerEl.style.left = this.boardLeft + "px";
+		this.fullImageViewerEl.style.top = this.boardTop + "px";
+		this.fullImageViewerEl.setAttribute('width', this.boardWidth);
+		this.fullImageViewerEl.setAttribute('height', this.boardHeight);
 		const previewctx = this.fullImageViewerEl.getContext('2d');
 		previewctx.drawImage(
 			this.SourceImage, 
 			this.config.selectedOffsetX,
 			this.config.selectedOffsetY,
-			Math.round(boardAreaElRect.width),
-			Math.round(boardAreaElRect.height),
+			Math.round(this.config.selectedWidth),
+			Math.round(this.config.selectedHeight),
 			0,
 			0, 
-			Math.round(boardAreaElRect.width), 
-			Math.round(boardAreaElRect.height)
+			Math.round(this.boardWidth), 
+			Math.round(this.boardHeight)
 		)
 	}
 

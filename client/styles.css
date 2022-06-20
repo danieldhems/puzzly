@@ -2,6 +2,14 @@ body {
     margin: 0;
     background-color: #000;
     height: 100%;
+    font-size: 1em;
+}
+
+.button {
+    cursor: pointer;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
 }
 
 .centered {
@@ -36,8 +44,10 @@ body {
 
 
 #canvas {
-    overflow-x: scroll;
-    overflow-y: scroll;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    position: fixed;
     transform-origin: 0 0;
 }
 
@@ -79,7 +89,6 @@ body {
 }
 
 label {
-    font-size: 20px;
     width: 100%;
     margin-bottom: 15px;
 }
@@ -187,8 +196,8 @@ label {
 
 #puzzle-creator {
     position: relative;
-    width: 95%;
-    height: 60%;
+    width: calc(100% - 1em);
+    height: calc(100% - 1em);
 }
 
 .bg-screen {
@@ -216,17 +225,14 @@ label {
 
 #puzzle-setup--image_preview {
     display: none;
-    height: 250px;
-    width: 250px;
+    height: 100%;
     position: relative;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     margin-bottom: 2em;
 }
 
 #puzzle-setup--image_preview img {
-    height: 100%;
+    max-height: 100%;
+    max-width: 100%;
 }
 
 #puzzle-setup--image_input {
@@ -235,9 +241,6 @@ label {
 
 #puzzle-setup--options {
     width: 40%;
-}
-
-#puzzle-setup--image_input .inner {
 }
 
 label, input[type=checkbox] {
@@ -249,12 +252,17 @@ label, input[type=checkbox] {
 
 .form-label-row {
     display: block;
+    margin-bottom: 1em;
 }
 
 .centered {
     display: flex;
     justify-content: center;
     width: 100%;
+}
+
+#puzzle-size-input-label {
+    display: inline;
 }
 
 #full-image-viewer {
@@ -405,22 +413,25 @@ label, input[type=checkbox] {
     margin-bottom: 2em;
 }
 
-@media only screen and (min-width: 800px){
+@media only screen and (min-width: 800px) and (min-height: 800px){
+    body {
+        font-size: 1em;
+    }
     .form-row {
         flex-direction: column;
     }
 
     #puzzle-creator {
         width: 700px;
-        height: 70%;
+        height: 45%;
+    }
+
+    #puzzle-setup--image_preview {
+        height: 250px;
+        width: 250px;
     }
     
     .inner-content {
         padding: 2em;
-    }
-
-    #puzzle-setup--image_preview {
-        height: 300px;
-        width: 300px;
     }
 }

@@ -29,7 +29,6 @@ class PuzzlyCreator {
 		this.imagePreviewEl = document.querySelector('#puzzle-setup--image_preview');
 		this.imageUpload = document.querySelector('#upload');
 		this.newPuzzleForm = document.querySelector('#form-container');
-		this.imageCrop = document.querySelector('#image-crop');
 		this.startBtn = document.querySelector('#start-btn');
 		this.puzzleSizeField = document.getElementById("puzzle-size-input-field");
 		this.imageUploadPreviewEl = document.getElementById("puzzle-setup--image_preview-imgEl");
@@ -75,8 +74,8 @@ class PuzzlyCreator {
 		}.bind(this));
 		
 		this.imageUpload.addEventListener('change', this.onImageUploadChange.bind(this));
-		this.imageCrop.addEventListener('mousedown', this.onImageCropMouseDown.bind(this));
-		this.imageCrop.addEventListener('mouseup', this.onImageCropMouseUp.bind(this));
+		this.imageCropElement.addEventListener('mousedown', this.onImageCropMouseDown.bind(this));
+		this.imageCropElement.addEventListener('mouseup', this.onImageCropMouseUp.bind(this));
 		this.imageUploadPreviewEl.addEventListener('load', this.onImagePreviewLoad.bind(this));
 		this.startBtn.addEventListener('click', this.onStartBtnClick.bind(this));
 	}
@@ -117,19 +116,8 @@ class PuzzlyCreator {
 
 		const cropNotNeeded = dimensions.width === dimensions.height;
 		
-		if(dimensions.width > dimensions.height){
-			this.imageUploadPreviewEl.style.width = "100%";
-			this.imageUploadPreviewEl.style.height = dimensions.height / dimensions.width * 100 + "%";
-		} else if(dimensions.height > dimensions.width){
-			this.imageUploadPreviewEl.style.height = "100%";
-			this.imageUploadPreviewEl.style.width = dimensions.width / dimensions.height * 100 + "%";
-		} else {
-			this.imageUploadPreviewEl.style.width = "100%";
-			this.imageUploadPreviewEl.style.height = "100%";
-		}
-
 		if(cropNotNeeded){
-			this.setPuzzleImageOffsetAndWidth(this.imageCrop, true);
+			this.setPuzzleImageOffsetAndWidth(true);
 			if(this.imageCropVisible){
 				this.destroyImageCrop();
 			}
@@ -137,7 +125,7 @@ class PuzzlyCreator {
 			this.initiateImageCrop(this.imageUploadPreviewEl);
 		}
 
-		this.imagePreviewEl.style.display = 'flex';
+		this.imagePreviewEl.style.display = 'block';
 		this.sourceImage.dimensions = dimensions;
 	}
 
@@ -145,14 +133,16 @@ class PuzzlyCreator {
 		console.log('onUploadFailure', response)
 	}
 
-	setPuzzleImageOffsetAndWidth(cropElement, noCrop = false){
+	setPuzzleImageOffsetAndWidth(noCrop = false){
 		if(noCrop){
+			console.log('img', this.imageUploadPreviewEl.naturalWidth, this.imageUploadPreviewEl.naturalHeight)
 			this.selectedOffsetX = 0;
+			this.selectedOffsetY = 0;
 			this.selectedWidth = this.imageUploadPreviewEl.naturalWidth;
 			this.selectedHeight = this.imageUploadPreviewEl.naturalWidth;
 		} else {
-			const leftPos = cropElement.offsetLeft;
-			const width = cropElement.clientWidth;
+			const leftPos = this.imageCropElement.offsetLeft;
+			const width = this.imageCropElement.clientWidth;
 			const cropLeftOffsetPercentage = leftPos / this.imageUploadPreviewEl.offsetWidth * 100;
 			const cropWidthPercentage = width / this.imageUploadPreviewEl.offsetWidth * 100;
 		
@@ -164,14 +154,14 @@ class PuzzlyCreator {
 
 	setImageCropDragHandles(){
 		this.imageCropDragHandles.forEach(el => el.style.display = "block")
-		this.imageCropDragHandleTL.style.top = this.imageCrop.offsetTop - this.imageCropDragHandleTL.clientHeight + "px";
-		this.imageCropDragHandleTL.style.left = this.imageCrop.offsetLeft - this.imageCropDragHandleTL.clientWidth + "px";
-		this.imageCropDragHandleTR.style.top = this.imageCrop.offsetTop - this.imageCropDragHandleTL.clientHeight + "px";
-		this.imageCropDragHandleTR.style.left = this.imageCrop.offsetLeft + this.imageCrop.offsetWidth + "px";
-		this.imageCropDragHandleBR.style.top = this.imageCrop.offsetTop + this.imageCrop.offsetHeight + "px";
-		this.imageCropDragHandleBR.style.left = this.imageCrop.offsetLeft + this.imageCrop.offsetWidth + "px";
-		this.imageCropDragHandleBL.style.top = this.imageCrop.offsetTop + this.imageCrop.offsetHeight + "px";
-		this.imageCropDragHandleBL.style.left = this.imageCrop.offsetLeft - this.imageCropDragHandleBL.clientWidth + "px";
+		this.imageCropDragHandleTL.style.top = this.imageCropElement.offsetTop - this.imageCropDragHandleTL.clientHeight + "px";
+		this.imageCropDragHandleTL.style.left = this.imageCropElement.offsetLeft - this.imageCropDragHandleTL.clientWidth + "px";
+		this.imageCropDragHandleTR.style.top = this.imageCropElement.offsetTop - this.imageCropDragHandleTL.clientHeight + "px";
+		this.imageCropDragHandleTR.style.left = this.imageCropElement.offsetLeft + this.imageCropElement.offsetWidth + "px";
+		this.imageCropDragHandleBR.style.top = this.imageCropElement.offsetTop + this.imageCropElement.offsetHeight + "px";
+		this.imageCropDragHandleBR.style.left = this.imageCropElement.offsetLeft + this.imageCropElement.offsetWidth + "px";
+		this.imageCropDragHandleBL.style.top = this.imageCropElement.offsetTop + this.imageCropElement.offsetHeight + "px";
+		this.imageCropDragHandleBL.style.left = this.imageCropElement.offsetLeft - this.imageCropDragHandleBL.clientWidth + "px";
 	
 		this.imageCropDragHandlesInUse = true;
 	}
@@ -228,7 +218,7 @@ class PuzzlyCreator {
 		this.imageCropElement.addEventListener('mouseup', function(e){
 			this.imageCropElement.removeEventListener('mousemove', moveListener);
 			this.imageCropData.inUse = false;
-			this.setPuzzleImageOffsetAndWidth(e.target);
+			this.setPuzzleImageOffsetAndWidth();
 		}.bind(this))
 	};
 
@@ -345,16 +335,19 @@ class PuzzlyCreator {
 		const width = el.offsetWidth;
 		const height = el.offsetHeight;
 
+		console.log(width, height)
+
 		if(width === height) return;
 
-		const cropSize = width > height ? this.imageUploadPreviewEl.style.height : this.imageUploadPreviewEl.style.width;
+		const cropSize = width > height ? height : width;
 
 		this.imageCropElement.style.top = this.imageUploadPreviewEl.offsetTop + "px";
 		this.imageCropElement.style.left = this.imageUploadPreviewEl.offsetLeft + "px";
-		this.imageCropElement.style.height = cropSize;
-		this.imageCropElement.style.width = cropSize;
+		this.imageCropElement.style.height = cropSize + "px";
+		this.imageCropElement.style.width = cropSize + "px";
 
 		this.setImageCropDragHandles();
+		this.setPuzzleImageOffsetAndWidth();
 	}
 
 	destroyImageCrop(){

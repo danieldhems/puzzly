@@ -40,26 +40,26 @@
                         <input name="image" id="upload" type="file" value="No file chosen" />
                       </div>
                     </div>
-                    <div id="puzzle-setup--options">
-                      <label>How many pieces?</label>
-                      <div>
-                        <label for="puzzle-size-input-field" id="puzzle-size-input-label"></label>
-                        <input type="range" class="form-range" min="0" max="19" id="puzzle-size-input-field">
+                    <div id="puzzle-setup--options" class="form-label-row">
+                      <div class="form-label-row">
+                        <label>How many pieces?</label>
+                        <div>
+                          <label for="puzzle-size-input-field" id="puzzle-size-input-label"></label>
+                          <input type="range" class="form-range" min="0" max="19" id="puzzle-size-input-field">
+                        </div>
                       </div>
+                      <div class="js-admin-only">
+                        <div id="puzzle-setup--debug-highlights" class="form-label-row align-content-row">
+                          <label for="chk-highlights">Highlight pieces?</label>
+                          <input type="checkbox" id="chk-highlights" />
+                        </div>
+                        <div id="puzzle-setup--debug-no-disperse" class="form-label-row align-content-row">
+                          <label for="chk-no-disperse">Don't disperse pieces?</label>
+                          <input type="checkbox" id="chk-no-disperse" />
+                        </div>
+                      </div>
+                      <input type="submit" id="start-btn" value="Start">
                     </div>
-                  </div>
-                  <div class="js-admin-only">
-                    <div id="puzzle-setup--debug-highlights" class="form-label-row align-content-row">
-                      <label for="chk-highlights">Highlight pieces?</label>
-                      <input type="checkbox" id="chk-highlights" />
-                    </div>
-                    <div id="puzzle-setup--debug-no-disperse" class="form-label-row align-content-row">
-                      <label for="chk-no-disperse">Don't disperse pieces?</label>
-                      <input type="checkbox" id="chk-no-disperse" />
-                    </div>
-                  </div>
-                  <div class="centered">
-                    <input type="submit" id="start-btn" value="Start">
                   </div>
                 </div>
               </div>
@@ -85,25 +85,25 @@
       <div id="controls-handle">O / X</div>
       <div id="controls-panel" class="is-hidden">
         <div id="preview">
-          <span id='preview-show'>Show image</span>
-          <span id='preview-hide'>Hide image</span>
+          <span id='preview-show' class="button">Show image</span>
+          <span id='preview-hide' class="button">Hide image</span>
         </div>
         <div id="filter-pieces">
-          <span id='inner-pieces-off'>Edges only</span>
-          <span id='inner-pieces-on'>All pieces</span>
+          <span id='inner-pieces-off' class="button">Edges only</span>
+          <span id='inner-pieces-on' class="button">All pieces</span>
         </div>
         <div id="sound-toggle">
-          <span id='sounds-off'>Turn sound off</span>
-          <span id='sounds-on'>Turn sound on</span>
+          <span id='sounds-off' class="button">Turn sound off</span>
+          <span id='sounds-on' class="button">Turn sound on</span>
         </div>
         <div id="shuffle-pieces">
-          <span id=''>Send pieces to edge: Shuffle</span>
+          <span id='' class="button">Send pieces to edge: Shuffle</span>
         </div>
         <div id="neaten-pieces">
-          <span id=''>Send pieces to edge: Neaten</span>
+          <span id='' class="button">Send pieces to edge: Neaten</span>
         </div>
-        <a href="/gallery" title="All puzzles">Go to Gallery</a>
-        <a href="/" title="New puzzle">Create new puzzle</a>
+        <a href="/gallery" title="All puzzles" class="button">Go to Gallery</a>
+        <a id="js-create-new-puzzle" class="button" href="/" title="New puzzle">Create new puzzle</a>
       </div>
     </div>
     <script type="module" src="./scripts/puzzlyCreator.js"></script>
