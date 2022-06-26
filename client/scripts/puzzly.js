@@ -29,8 +29,8 @@ class Puzzly {
 
 		// alert(JSON.stringify(this.config))
 
-		this.cropOffsetX = config.crop.selectedOffsetX;
-		this.cropOffsetY = config.crop.selectedOffsetY;
+		// this.cropOffsetX = config.crop.selectedOffsetX;
+		// this.cropOffsetY = config.crop.selectedOffsetY;
 
 		this.localStorageStringReplaceKey = "{}";
 		this.LOCAL_STORAGE_PUZZLY_PROGRESS_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_progress`;
@@ -63,7 +63,7 @@ class Puzzly {
 		this.movingPieces = [];
 		this.loadedAssets = [];
 		this.SourceImage = new Image();
-		this.SourceImage.src = config.sourceImage.path;
+		this.SourceImage.src = config.path;
 
 		this.canvas = document.getElementById(canvasId);
 		this.boardAreaEl = document.getElementById("boardArea");
@@ -228,17 +228,12 @@ class Puzzly {
 		return storage;
 	}
 
-	getPieceSize(){
-		this.puzzleScale = this.boardWidth / this.config.selectedWidth * 100;
-		return Math.ceil(this.config.pieceSize / 100 * this.puzzleScale);
-	}
-
 	init(){
 		console.log(this.config)
 
 		this.zoomLevel = 1;
 
-		this.boardHeight = this.boardWidth = window.innerHeight / 100 * 60;
+		this.boardHeight = this.boardWidth = Math.ceil(window.innerHeight / 100 * 60);
 		const boardVerticalSpace = window.innerHeight / 100 * 20;
 		const leftPos = window.innerWidth / 2 - this.boardHeight / 2;
 		this.boardBoundingBox = {
@@ -250,15 +245,13 @@ class Puzzly {
 			height: this.boardHeight,
 		};
 
-		console.log(this.boardBoundingBox)
-
 		this.boardSize = {
 			width: this.boardHeight,
 			height: this.boardHeight,
 		}
 
-		this.naturalPieceSize = this.config.pieceSize;
-		this.config.pieceSize = this.getPieceSize();
+		this.puzzleScale = this.boardWidth / this.config.selectedWidth * 100;
+
 		this.config.connectorDistanceFromCornerRatio = this.config.connectorRatio = 33;
 		this.config.connectorSize = Math.ceil(this.config.pieceSize / 100 * this.config.connectorRatio);
 		this.config.connectorTolerance = this.config.connectorSize / 100 * (50 - this.collisionTolerance / 2);
@@ -985,7 +978,7 @@ class Puzzly {
 
 	drawPieceManually(piece){
 		let ctx;
-console.log('piece', piece)
+
 		const solvedCnvContainer = document.getElementById('group-container-1111');
 
 		if(Number.isNaN(piece.id) || piece.id === "null"){
@@ -1787,7 +1780,7 @@ console.log('piece', piece)
 		const pieces = [];
 
 		// prepare draw options
-		var curImgX = this.config.selectedOffsetX || 0;
+		var curImgX = 0;
 		var curImgY = 0;
 		var curPageX = this.boardLeft;
 		var curPageY = this.boardTop;
@@ -1807,8 +1800,6 @@ console.log('piece', piece)
 
 		const piecesPerSideHorizontal = this.config.piecesPerSideHorizontal;
 		const piecesPerSideVertical = this.config.piecesPerSideVertical;
-
-		console.log(this.naturalPieceSize, this.puzzleScale)
 
 		while(!done){
 			let currentPiece = {};
@@ -1838,9 +1829,8 @@ console.log('piece', piece)
 			}
 
 			currentPiece.type = this.getConnectors(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
-			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, curImgX - this.cropOffsetX, curImgY - this.cropOffsetY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
+			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, curImgX, curImgY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
 
-			// console.log(currentPiece)
 			pieces.push(currentPiece);
 			this.drawPieceManually(currentPiece);
 
@@ -1848,13 +1838,13 @@ console.log('piece', piece)
 
 			// reached last piece, start next row
 			if(pieces.length % piecesPerSideHorizontal === 0){
-				curImgX = this.config.selectedOffsetX || 0;
+				curImgX = 0;
 				curPageX = this.boardLeft;
 				solvedX = 0;
 				
 				const firstPieceOnRowAbove = pieces[pieces.length - piecesPerSideHorizontal];
+
 				curImgY = firstPieceOnRowAbove.imgY + firstPieceOnRowAbove.imgH - this.config.connectorSize;
-				
 				solvedY += pieceSize;
 				curPageY += pieceSize *1.5;
 

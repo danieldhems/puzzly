@@ -13,13 +13,15 @@ class PuzzlyCreator {
 			selectedOffsetX: 0,
 			selectedOffsetY: 0,
 			selectedWidth: null,
-			selectedNumPieces: null,
+			hasCrop: false,
 		};
 
 		this.debugOptions = {
 			noDispersal: false,
 			highlightConnectingPieces: false,
 		}
+
+		this.boardSize = Math.ceil(window.innerHeight / 100 * 60);
 
 		this.puzzleSizeInputField = document.querySelector('#puzzle-size-input-field');
 		this.puzzleSizeInputLabel = document.querySelector('#puzzle-size-input-label');
@@ -52,7 +54,9 @@ class PuzzlyCreator {
 	}
 
 	setDefaultNumPieces(){
-		this.puzzleSizeInputLabel.textContent = this.selectedNumPieces = PuzzleSizes[10].numPieces;
+		const defaultPuzzleSize = PuzzleSizes[10]
+		this.puzzleSizeInputLabel.textContent = this.selectedNumPieces = defaultPuzzleSize.numPieces;
+		this.piecesPerSide = defaultPuzzleSize.piecesPerSide;
 	}
 
 	addEventListeners(){
@@ -97,22 +101,26 @@ class PuzzlyCreator {
 	}
 	
 	onUploadSuccess(response) {
-		console.log('onUploadSuccess', response)
+		// console.log('onUploadSuccess', response)
 
 		if(response.data){
 			this.imagePreviewEl.style.display = "flex";
-			this.sourceImage.path = this.imageUploadPreviewEl.src = response.data.path;
+			this.sourceImage.previewPath = this.imageUploadPreviewEl.src = response.data.previewPath;
+			this.sourceImage.fullSizePath = response.data.fullSizePath;
+			this.sourceImage.imageName = response.data.filename;
 		}
 	}
 
 	onImagePreviewLoad(e) {
-		console.log('image info', e)
+		// console.log('image info', e)
 
 		const imgObj = e.path[0];
 		const dimensions = {
 			width: imgObj.naturalWidth,
 			height: imgObj.naturalHeight,
 		};
+
+		// console.log(dimensions)
 
 		const cropNotNeeded = dimensions.width === dimensions.height;
 		
@@ -135,20 +143,25 @@ class PuzzlyCreator {
 
 	setPuzzleImageOffsetAndWidth(noCrop = false){
 		if(noCrop){
-			console.log('img', this.imageUploadPreviewEl.naturalWidth, this.imageUploadPreviewEl.naturalHeight)
 			this.selectedOffsetX = 0;
 			this.selectedOffsetY = 0;
 			this.selectedWidth = this.imageUploadPreviewEl.naturalWidth;
 			this.selectedHeight = this.imageUploadPreviewEl.naturalWidth;
 		} else {
 			const leftPos = this.imageCropElement.offsetLeft;
+			const topPos = this.imageCropElement.offsetTop;
 			const width = this.imageCropElement.clientWidth;
-			const cropLeftOffsetPercentage = leftPos / this.imageUploadPreviewEl.offsetWidth * 100;
-			const cropWidthPercentage = width / this.imageUploadPreviewEl.offsetWidth * 100;
-		
-			this.selectedOffsetX = this.imageUploadPreviewEl.naturalWidth / 100 * cropLeftOffsetPercentage;
-			this.selectedWidth = this.imageUploadPreviewEl.naturalWidth / 100 * cropWidthPercentage;
-			this.selectedHeight = this.imageUploadPreviewEl.naturalHeight / 100 * cropWidthPercentage;
+
+			const cropLeftOffsetPercentage = leftPos / this.imageUploadPreviewEl.naturalWidth * 100;
+			const cropTopOffsetPercentage = topPos / this.imageUploadPreviewEl.naturalHeight * 100;
+			const cropWidthPercentage = width / this.imageUploadPreviewEl.naturalWidth * 100;
+
+			this.crop.selectedOffsetX = this.imageUploadPreviewEl.naturalWidth / 100 * cropLeftOffsetPercentage;
+			this.crop.selectedOffsetY = this.imageUploadPreviewEl.naturalHeight / 100 * cropTopOffsetPercentage;
+			this.crop.selectedWidth = this.imageUploadPreviewEl.naturalWidth / 100 * cropWidthPercentage;
+			this.crop.selectedHeight = this.crop.selectedWidth;
+
+			this.crop.hasCrop = true;
 		}
 	}
 
@@ -215,10 +228,10 @@ class PuzzlyCreator {
 			this.onImageCropMove(e, limitToAxis)
 		}.bind(this));
 
-		this.imageCropElement.addEventListener('mouseup', function(e){
+		window.addEventListener('mouseup', function(e){
+			this.setPuzzleImageOffsetAndWidth();
 			this.imageCropElement.removeEventListener('mousemove', moveListener);
 			this.imageCropData.inUse = false;
-			this.setPuzzleImageOffsetAndWidth();
 		}.bind(this))
 	};
 
@@ -316,12 +329,7 @@ class PuzzlyCreator {
 		}
 	}
 
-	initiateImageCrop(imageEl){
-		const width = imageEl.offsetWidth;
-		const height = imageEl.offsetHeight;
-
-		if(width === height) return;
-
+	initiateImageCrop(){
 		this.imageCropElement.style.display = "block";
 		this.setImageCropSizeAndPosition();
 	
@@ -332,10 +340,8 @@ class PuzzlyCreator {
 
 	setImageCropSizeAndPosition(){
 		const el = this.imageUploadPreviewEl;
-		const width = el.offsetWidth;
-		const height = el.offsetHeight;
-
-		console.log(width, height)
+		const width = el.naturalWidth;
+		const height = el.naturalHeight;
 
 		if(width === height) return;
 
@@ -360,7 +366,10 @@ class PuzzlyCreator {
 		const image = document.querySelector('[type=file]').files;
 		
 		const fd = new FormData();
-		fd.append('files[]', image[0])
+		fd.append('files[]', image[0]);
+		fd.append('previewWidth', this.imagePreviewEl.offsetWidth);
+		fd.append('previewHeight', this.imagePreviewEl.offsetHeight);
+		fd.append('boardSize', this.boardSize);
 
 		return fetch('/api/upload', {
 				body: fd,
@@ -372,8 +381,12 @@ class PuzzlyCreator {
 	createPuzzle(opts = {}){
 		console.log('PuzzlyCreator', this)
 		const puzzleConfig = {
-			...this,
-			pieceSize: Math.round(this.selectedWidth / Math.sqrt(this.selectedNumPieces)),
+			...this.sourceImage,
+			...this.crop,
+			debugOptions: this.debugOptions,
+			selectedNumPieces: this.selectedNumPieces,
+			boardSize: this.boardSize,
+			pieceSize: this.boardSize / this.piecesPerSide,
 		}
 		
 		fetch('/api/puzzle', {
@@ -385,9 +398,11 @@ class PuzzlyCreator {
 		})
 		.then( response => response.json() )
 		.then( function(response){
+			console.log('response', response);
 			const puzzleId = response._id;
 			Utils.insertUrlParam('puzzleId', puzzleId);
 			this.newPuzzleForm.style.display = 'none';
+			puzzleConfig.path = response.puzzleImgPath;
 			new Puzzly('canvas', puzzleId, puzzleConfig);
 		}.bind(this)).catch( function(err){
 			console.log(err);

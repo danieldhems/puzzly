@@ -1,9 +1,9 @@
-var path = require('path');
 var router = require('express').Router();
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
-const assert = require('assert')
+const assert = require('assert');
+var Sharp = require('sharp');
 
 // Connection URL
 const url = 'mongodb://localhost:27017';
@@ -34,22 +34,61 @@ module.exports.clean = function(){
 
 var api = {
 	create: function(req, res){
-		client.connect().then((client, err) => {
+		client.connect().then(async (client, err) => {
 			assert.strictEqual(err, undefined);
 			db = client.db(dbName);
 			collection = db.collection(puzzlesCollection);
 
 			const data = req.body;
+			console.log('create', data);
 			data.numberOfSolvedPieces = 0;
 			data.dateCreated = new Date();
 			data.elapsedTime = 0;
 
-		  collection.insertOne(data, function(err, result){
-			  if(err) throw new Error(err);
-			  res.status(200).send({
-				  ...result.ops[0]
-			  })
-		  });
+			const puzzleImgPath = `./uploads/puzzle_${data.imageName}`;
+
+			const img = Sharp(data.fullSizePath);
+			const imgMetadata = await img.metadata();
+			const { width: origW, height: origH } = imgMetadata;
+
+			const { width, height } = data.dimensions;
+
+			let ratio, cropTop, cropLeft, cropP, cropSize;
+			if(data.hasCrop){
+				if(origW > origH){
+					ratio = origW / origH;
+				} else {
+					ratio = origH / origW;
+				}
+
+				if(width > height){
+					cropP = data.selectedOffsetX / width * 100;
+					cropLeft = Math.floor(origW / 100 * cropP);
+					cropSize = origH;
+				} else {
+					cropP = data.selectedOffsetY / height * 100;
+					cropTop = Math.floor(origH / 100 * cropP);
+					cropSize = origW;
+				}
+			}
+
+			let processed = img;
+			if(data.hasCrop){
+				processed = img.extract({ left: cropLeft || 0, top: cropTop || 0, width: cropSize, height: cropSize })
+			}
+			
+			processed
+				.resize({ width: data.boardSize })
+				.toFile(puzzleImgPath)
+				.then((err, _) => {
+					collection.insertOne(data, function(err, result){
+						if(err) throw new Error(err);
+						res.status(200).send({
+							...result.ops[0],
+							puzzleImgPath
+						})
+					});
+				});
 		});
 	},
 	read: function(req, res){

@@ -224,7 +224,6 @@ label {
 }
 
 #puzzle-setup--image_preview {
-    display: none;
     height: 100%;
     position: relative;
     margin-bottom: 2em;
