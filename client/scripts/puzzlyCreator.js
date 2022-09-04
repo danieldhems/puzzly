@@ -34,6 +34,7 @@ class PuzzlyCreator {
 		this.startBtn = document.querySelector('#start-btn');
 		this.puzzleSizeField = document.getElementById("puzzle-size-input-field");
 		this.imageUploadPreviewEl = document.getElementById("puzzle-setup--image_preview-imgEl");
+		this.fullSizeImageHidden = document.getElementById("full-size-image");
 
 		this.imageCropElement = document.getElementById('image-crop');
 		this.imageCropDragHandles = document.querySelectorAll('.image-crop-drag-handle');
@@ -81,6 +82,7 @@ class PuzzlyCreator {
 		this.imageCropElement.addEventListener('mousedown', this.onImageCropMouseDown.bind(this));
 		this.imageCropElement.addEventListener('mouseup', this.onImageCropMouseUp.bind(this));
 		this.imageUploadPreviewEl.addEventListener('load', this.onImagePreviewLoad.bind(this));
+		this.fullSizeImageHidden.addEventListener('load', this.onFullSizeImageLoad.bind(this));
 		this.startBtn.addEventListener('click', this.onStartBtnClick.bind(this));
 	}
 	
@@ -106,7 +108,7 @@ class PuzzlyCreator {
 		if(response.data){
 			this.imagePreviewEl.style.display = "flex";
 			this.sourceImage.previewPath = this.imageUploadPreviewEl.src = response.data.previewPath;
-			this.sourceImage.fullSizePath = response.data.fullSizePath;
+			this.sourceImage.fullSizePath = this.fullSizeImageHidden.src = response.data.fullSizePath;
 			this.sourceImage.imageName = response.data.filename;
 		}
 	}
@@ -120,7 +122,7 @@ class PuzzlyCreator {
 			height: imgObj.naturalHeight,
 		};
 
-		// console.log(dimensions)
+		console.log(dimensions)
 
 		const cropNotNeeded = dimensions.width === dimensions.height;
 		
@@ -134,6 +136,16 @@ class PuzzlyCreator {
 		}
 
 		this.imagePreviewEl.style.display = 'block';
+	}
+	
+	onFullSizeImageLoad(e){
+		const imgObj = e.path[0];
+		const dimensions = {
+			width: imgObj.naturalWidth,
+			height: imgObj.naturalHeight,
+		};
+		console.log("full size dimensions", dimensions)
+		
 		this.sourceImage.dimensions = dimensions;
 	}
 
@@ -372,22 +384,25 @@ class PuzzlyCreator {
 		fd.append('boardSize', this.boardSize);
 
 		return fetch('/api/upload', {
-				body: fd,
-				method: 'POST',
-			})
-			.then( response => response.json() )
+			body: fd,
+			method: 'POST',
+		})
+		.then( response => response.json() )
 	}
 
 	createPuzzle(opts = {}){
-		console.log('PuzzlyCreator', this)
+		// console.log('PuzzlyCreator', this)
 		const puzzleConfig = {
 			...this.sourceImage,
 			...this.crop,
 			debugOptions: this.debugOptions,
 			selectedNumPieces: this.selectedNumPieces,
 			boardSize: this.boardSize,
-			pieceSize: this.boardSize / this.piecesPerSide,
+			originalImageSize: this.sourceImage.dimensions,
+			pieceSize: this.sourceImage.dimensions.width / this.piecesPerSide,
 		}
+
+		console.log(puzzleConfig)
 		
 		fetch('/api/puzzle', {
 			body: JSON.stringify(puzzleConfig),
@@ -398,7 +413,7 @@ class PuzzlyCreator {
 		})
 		.then( response => response.json() )
 		.then( function(response){
-			console.log('response', response);
+			// console.log('response', response);
 			const puzzleId = response._id;
 			Utils.insertUrlParam('puzzleId', puzzleId);
 			this.newPuzzleForm.style.display = 'none';

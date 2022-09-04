@@ -41,7 +41,9 @@ body {
     flex-direction: row;
 }
 
-
+#full-size-image {
+    display: none;
+}
 
 #canvas {
     overflow: hidden;

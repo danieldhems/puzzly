@@ -63,7 +63,7 @@ class Puzzly {
 		this.movingPieces = [];
 		this.loadedAssets = [];
 		this.SourceImage = new Image();
-		this.SourceImage.src = config.path;
+		this.SourceImage.src = config.fullSizePath;
 
 		this.canvas = document.getElementById(canvasId);
 		this.boardAreaEl = document.getElementById("boardArea");
@@ -252,13 +252,22 @@ class Puzzly {
 
 		this.puzzleScale = this.boardWidth / this.config.selectedWidth * 100;
 
+		// Requested piece size based on original image size
+		this.originalPieceSize = this.config.pieceSize = this.config.originalImageSize.width / this.config.piecesPerSideHorizontal;
+		// Board size percentage based on original image size
+		// this.scaledPieceSizeRatio = this.boardWidth / this.config.originalImageSize.width * 100;
+		this.pieceSize = this.boardWidth / this.config.piecesPerSideHorizontal;
+
+		this.pieceScale = this.pieceSize / this.originalPieceSize;
+		console.log('value to scale by', this.pieceScale)
+
 		this.config.connectorDistanceFromCornerRatio = this.config.connectorRatio = 33;
-		this.config.connectorSize = Math.ceil(this.config.pieceSize / 100 * this.config.connectorRatio);
+		this.config.connectorSize = Math.ceil(this.originalPieceSize / 100 * this.config.connectorRatio);
 		this.config.connectorTolerance = this.config.connectorSize / 100 * (50 - this.collisionTolerance / 2);
 
-		this.config.connectorDistanceFromCorner = Math.ceil(this.config.pieceSize / 100 * this.config.connectorDistanceFromCornerRatio);
+		this.config.connectorDistanceFromCorner = Math.ceil(this.originalPieceSize / 100 * this.config.connectorDistanceFromCornerRatio);
 
-		this.largestPieceSpan = this.config.pieceSize + (this.config.connectorSize * 2);
+		this.largestPieceSpan = this.originalPieceSize + (this.config.connectorSize * 2);
 		
 		// this.canvas.style.width = this.getPxString(requiredWidth);
 		// this.canvas.style.height = this.getPxString(requiredHeight);	
@@ -280,7 +289,7 @@ class Puzzly {
 
 		// this.setPageScale();
 
-		window.addEventListener("resize", this.setPageScale.bind(this));
+		// window.addEventListener("resize", this.setPageScale.bind(this));
 		
 		this.isFullImageViewerActive = false;
 
@@ -304,6 +313,8 @@ class Puzzly {
 			this.generatePieceSectorMap();
 			this.piecePositionMap = this.shuffleArray(this.getRandomCoordsFromSectorMap());
 			this.makePieces();
+			this.scalePieces();
+
 			this.save(this.allPieces())
 		}
 
@@ -344,6 +355,10 @@ class Puzzly {
 
 		window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
 		window.addEventListener('keydown', this.onKeyDown.bind(this));
+	}
+
+	scalePieces() {
+		Array.from(this.allPieces()).forEach(el => el.style.transform = `scale(${this.pieceScale})`);
 	}
 
 	setPageScale(){
@@ -463,12 +478,12 @@ class Puzzly {
 			
 			// Plus key
 			if(event.which === 187){
-				this.zoomLevel += .05;
+				this.zoomLevel += 1;
 			}
 
 			// Minus key
 			if(event.which === 189 && this.zoomLevel > 1){
-				this.zoomLevel -= .05;
+				this.zoomLevel -= 1;
 			}
 
 			// "0" Number key
@@ -481,6 +496,7 @@ class Puzzly {
 			}
 	
 			this.canvas.style.transform = `scale(${this.zoomLevel})`;
+			this.canvas.style.transformOrigin = "50% 50%";
 		}
 	}
 
@@ -890,13 +906,17 @@ class Puzzly {
 		ctx.fill()
 	}
 
-	drawJigsawShape(ctx, path, piece, {x, y}, showGuides = false, outlines = false, stroke = false){
+	drawJigsawShape(ctx, path, piece, {x, y}, showGuides = false, outlines = false, stroke = false, applyScale = false){
 		// console.log('drawJigsawShape', piece)
+
+		// Where applicable, we can use applyScale to draw the jigsaw shape to the correct scale
+
+		console.log(this.config.pieceSize, this.config.connectorDistanceFromCorner)
 		const hasTopPlug = Utils.has(piece.type, 'plug', 'top')
 		const hasLeftPlug = Utils.has(piece.type, 'plug', 'left')
 		
-		const topBoundary = hasTopPlug ? y + this.config.connectorSize : y;
-		const leftBoundary = hasLeftPlug ? x + this.config.connectorSize : x;
+		const topBoundary = hasTopPlug ? y + this.config.connectorSize / this.pieceScale : y;
+		const leftBoundary = hasLeftPlug ? x + this.config.connectorSize / this.pieceScale : x;
 		let topConnector = null, rightConnector = null, bottomConnector = null, leftConnector = null;
 		
 		path.moveTo(leftBoundary, topBoundary);
@@ -1098,7 +1118,7 @@ class Puzzly {
 			ctx.strokeStyle = '#000';
 			let path = new Path2D();
 			ctx.clip(this.drawJigsawShape(ctx, path, piece, {x: 0, y: 0}));
-			ctx.drawImage(this.SourceImage, piece.imgX, piece.imgY, piece.imgW, piece.imgH, 0, 0, piece.imgW, piece.imgH);
+			ctx.drawImage(this.SourceImage, piece.imgX, piece.imgY, piece.imgW / this.pieceScale, piece.imgH / this.pieceScale, 0, 0, piece.imgW / this.pieceScale, piece.imgH / this.pieceScale);
 		}
 	}
 
@@ -1798,8 +1818,12 @@ class Puzzly {
 		let rowCount = 1;
 		let finalRow = false;
 
+		const pieceSize = this.originalPieceSize;
+
 		const piecesPerSideHorizontal = this.config.piecesPerSideHorizontal;
 		const piecesPerSideVertical = this.config.piecesPerSideVertical;
+
+		const pieceSpacingForDebug = this.boardWidth / this.config.piecesPerSideHorizontal + this.config.connectorSize
 
 		while(!done){
 			let currentPiece = {};
@@ -1830,11 +1854,10 @@ class Puzzly {
 
 			currentPiece.type = this.getConnectors(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 			currentPiece = this.assignInitialPieceData(curImgX, curImgY, curPageX, curPageY, curImgX, curImgY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
+			// console.log(currentPiece)
 
 			pieces.push(currentPiece);
 			this.drawPieceManually(currentPiece);
-
-			const pieceSize = this.config.pieceSize;
 
 			// reached last piece, start next row
 			if(pieces.length % piecesPerSideHorizontal === 0){
@@ -1846,7 +1869,7 @@ class Puzzly {
 
 				curImgY = firstPieceOnRowAbove.imgY + firstPieceOnRowAbove.imgH - this.config.connectorSize;
 				solvedY += pieceSize;
-				curPageY += pieceSize *1.5;
+				curPageY += pieceSpacingForDebug;
 
 				numPiecesFromLeftEdge = 0;
 				numPiecesFromTopEdge++;
@@ -1870,7 +1893,7 @@ class Puzzly {
 				}
 
 				numPiecesFromLeftEdge ++;
-				curPageX += pieceSize * 1.5;
+				curPageX += pieceSpacingForDebug;
 			}
 			
 			i++;
@@ -2399,8 +2422,10 @@ class Puzzly {
 	}
 
 	getPieceWidthAndHeightWithConnectors(piece){
-		let actualWidth = this.config.pieceSize;
-		let actualHeight = this.config.pieceSize;
+		// let actualWidth = this.config.pieceSize;
+		// let actualHeight = this.config.pieceSize;
+		let actualWidth = this.originalPieceSize;
+		let actualHeight = this.originalPieceSize;
 
 		if(Utils.has(piece.type, 'plug', 'left')){
 			actualWidth += this.config.connectorSize; 
@@ -2935,8 +2960,8 @@ class Puzzly {
 			// console.log('target element', targetEl);
 		}
 		if([source.left, source.right, source.bottom, source.top, target.left, target.top, target.right, target.bottom].includes(NaN)) return false;
-		return !(source.left >= target.right || source.top >= target.bottom || 
-		source.right <= target.left || source.bottom <= target.top);
+		return !(source.left >= target.right / this.pieceScale || source.top >= target.bottom / this.pieceScale || 
+		source.right / this.pieceScale <= target.left || source.bottom / this.pieceScale <= target.top);
 	}
 
 	getElementByPieceId(id){
@@ -3075,7 +3100,7 @@ class Puzzly {
 		}
 		
 		pieces.forEach(p => {
-			ctx.drawImage(this.SourceImage, p.imgX, p.imgY, p.imgW, p.imgH, p.solvedX, p.solvedY, p.imgW, p.imgH);
+			ctx.drawImage(this.SourceImage, p.imgX, p.imgY, p.imgW / this.pieceScale, p.imgH / this.pieceScale, p.solvedX, p.solvedY, p.imgW / this.pieceScale, p.imgH / this.pieceScale);
 		});
 
 		// const newX = Math.min(...pieces.map(p => p.solvedX));
