@@ -1,7 +1,6 @@
 var router = require('express').Router();
 var fileUpload = require('express-fileupload');
 var Sharp = require('sharp');
-
 const uploadDir = './uploads/';
 
 router.use(fileUpload({
@@ -49,6 +48,8 @@ async function upload(req, res){
         await previewImg
             .resize({width: resizeW, height: resizeH})
             .toFile(previewPath);
+
+        
 
         res.status(200).send({
             status: true,

@@ -1,4 +1,5 @@
 var router = require('express').Router();
+var { default: PuzzleGenerator } = require("./puzzleGenerator");
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
@@ -46,6 +47,7 @@ var api = {
 			data.elapsedTime = 0;
 
 			const puzzleImgPath = `./uploads/puzzle_${data.imageName}`;
+			const fullSizePath = './uploads/fullsize_' + data.imageName;
 
 			const img = Sharp(data.fullSizePath);
 			const imgMetadata = await img.metadata();
@@ -76,11 +78,12 @@ var api = {
 			if(data.hasCrop){
 				processed = img.extract({ left: cropLeft || 0, top: cropTop || 0, width: cropSize, height: cropSize })
 			}
-			
+
 			processed
-				.resize({ width: data.boardSize })
 				.toFile(puzzleImgPath)
-				.then((err, _) => {
+				.then(async (err, _) => {
+        	const puzzle = new PuzzleGenerator(fullSizePath, data);
+
 					collection.insertOne(data, function(err, result){
 						if(err) throw new Error(err);
 						res.status(200).send({
