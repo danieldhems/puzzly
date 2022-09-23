@@ -7,40 +7,54 @@ const jigsawPath = require("../jigsawPath").default;
 class PuzzleGenerator {
   constructor(imagePath, puzzleConfig){
 
-    this.connectorRatio = 33;
+    this.connectorRatio = this.connectorDistanceFromCornerRatio = 33;
     this.piecesPerSideHorizontal = Math.sqrt(puzzleConfig.selectedNumPieces);
     this.piecesPerSideVertical = Math.sqrt(puzzleConfig.selectedNumPieces);
     this.selectedNumberOfPieces = puzzleConfig.selectedNumPieces;
-    this.connectorDistanceFromCorner = Math.ceil(this.pieceSize / 100 * this.connectorDistanceFromCornerRatio);
-
+		
     this.start(imagePath);
   }
-
+	
   async start(imagePath){
-    const img = await loadImage(imagePath);
+		const img = await loadImage(imagePath);
     this.image = img;
     this.pieceSize = this.image.naturalWidth / this.piecesPerSideHorizontal;
+		this.connectorDistanceFromCorner = Math.ceil(this.pieceSize / 100 * this.connectorDistanceFromCornerRatio);
     this.connectorSize = this.pieceSize / 100 * this.connectorRatio;
+		this.largestPieceSpan = this.pieceSize + (this.connectorSize * 2);
     this.generateDataForPuzzlePieces(this.image, this.piecesPerSideHorizontal);
   }
 
-  createPuzzlePiece(data){
-    const cnv = createCanvas(data.imgW, data.imgH);
-    cnv.width = data.imgW;
-    cnv.height = data.imgH;
-    const ctx = cnv.getContext("2d");
-    ctx.imageSmoothingEnabled = false;
-    ctx.strokeStyle = '#000';
+  createPuzzlePiece(data, ctxForSprite, writeToOwnFile = false){
+		const tmpCnv = createCanvas(data.imgW, data.imgH);
+		tmpCnv.width = data.imgW;
+		tmpCnv.height = data.imgH;
+		const tmpCtx = tmpCnv.getContext("2d");
+		tmpCtx.imageSmoothingEnabled = false;
+		tmpCtx.strokeStyle = '#000';
 
     let path = new Path2D();
-    ctx.clip(this.drawJigsawShape(ctx, path, data, {x: 0, y: 0}, false, false, true));
-    ctx.drawImage(this.image, data.imgX, data.imgY, data.imgW, data.imgH, 0, 0, cnv.width, cnv.height);
+		
+		const pathResult = this.drawJigsawShape(tmpCtx, path, data, { x: 0, y: 0 });
+		tmpCtx.clip(pathResult);
+    tmpCtx.drawImage(this.image, data.imgX, data.imgY, data.imgW, data.imgH, 0, 0, tmpCnv.width, tmpCnv.height);
+		
+		const tmpImgData = tmpCtx.getImageData(0, 0, tmpCnv.width, tmpCnv.height);
+		ctxForSprite.putImageData(tmpImgData, data.spriteX, data.spriteY)
     
-    const out = fs.createWriteStream(`${data.id}.png`);
-    const stream = cnv.createPNGStream();
-    stream.pipe(out);
-    out.on('finish', () =>  console.log(`PNG file ${data.id}.png was created.`))
+		if(writeToOwnFile){
+			writeToPngFile(cnv, data.id);
+		}
   }
+	
+	async writeToPngFile(cnv, fileName){
+		const out = fs.createWriteStream(`${fileName}.png`);
+		const stream = cnv.createPNGStream();
+		stream.pipe(out);
+		out.on('finish', () => {
+			console.log(`PNG file ${fileName}.png was created.`)
+		})
+	}
 
   getPieceWidthAndHeightWithConnectors(piece){
 		let actualWidth = this.pieceSize;
@@ -155,6 +169,7 @@ class PuzzleGenerator {
 
   assignInitialPieceData(imgX, imgY, solvedX, solvedY, piece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i){
 		const pieceDimensions = this.getPieceWidthAndHeightWithConnectors(piece);
+		const piecePositionOnSprite = { x: this.largestPieceSpan * numPiecesFromLeftEdge, y: this.largestPieceSpan * numPiecesFromTopEdge };
 		return Object.assign({
 			id: i,
 			imgX,
@@ -163,6 +178,8 @@ class PuzzleGenerator {
 			imgH: pieceDimensions.height,
 			solvedX,
 			solvedY,
+			spriteX: piecePositionOnSprite.x,
+			spriteY: piecePositionOnSprite.y,
 			isInnerPiece: piece.type.join(",").indexOf("0") === -1,
 			isVisible: true,
 			connections: [],
@@ -188,7 +205,10 @@ class PuzzleGenerator {
     let rowCount = 1;
     let finalRow = false;
   
-    const pieceSize = image.naturalWidth / piecesPerSideHorizontal;
+		const cnvWidth = this.largestPieceSpan * this.piecesPerSideHorizontal;
+		const cnvHeight = this.largestPieceSpan * this.piecesPerSideVertical;
+		const cnv = createCanvas(cnvWidth, cnvHeight);
+		const ctx = cnv.getContext("2d");
   
     while(!done){
       let currentPiece = {};
@@ -219,11 +239,10 @@ class PuzzleGenerator {
   
       currentPiece.type = this.getConnectors(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
       currentPiece = this.assignInitialPieceData(curImgX, curImgY, curImgX, curImgY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
-      console.log(currentPiece)
+      // console.log(currentPiece)
   
       pieces.push(currentPiece);
-      this.createPuzzlePiece(currentPiece);
-      // this.drawPieceManually(currentPiece);
+      this.createPuzzlePiece(currentPiece, ctx);
   
       // reached last piece, start next row
       if(pieces.length % piecesPerSideHorizontal === 0){
@@ -262,49 +281,51 @@ class PuzzleGenerator {
       if(i >= this.selectedNumberOfPieces) done = true;
     }
 
+		this.writeToPngFile(cnv, "puzzle");
+
     return pieces;
   }
 
-  drawJigsawShape(ctx, path, piece, {x, y}, showGuides = false, outlines = false, stroke = false){
+  drawJigsawShape(ctx, path, piece, {x, y}, showGuides = false, stroke = false){
 		// console.log('drawJigsawShape', piece)
 
 		const hasTopPlug = pieceHelper.has(piece.type, 'plug', 'top')
 		const hasLeftPlug = pieceHelper.has(piece.type, 'plug', 'left')
 		
 		const topBoundary = hasTopPlug ? y + this.connectorSize : y;
+		const bottomBoundary = hasTopPlug ? y + this.pieceSize + this.connectorSize : y + this.pieceSize;
 		const leftBoundary = hasLeftPlug ? x + this.connectorSize : x;
+		const rightBoundary = hasLeftPlug ? x + this.pieceSize + this.connectorSize : x + this.pieceSize;
+
 		let topConnector = null, rightConnector = null, bottomConnector = null, leftConnector = null;
+		
+    const jigsawShapes = new jigsawPath(this.pieceSize, this.connectorSize, this.connectorDistanceFromCorner);
 		
 		path.moveTo(leftBoundary, topBoundary);
 
-    const jigsawShapes = new jigsawPath(this.pieceSize, this.connectorSize, this.connectorDistanceFromCorner);
-
-    console.log('piece type', piece.type)
 		if(pieceHelper.has(piece.type, 'plug', 'top')){
-			topConnector = jigsawShapes.getTopPlug(leftBoundary, topBoundary, leftBoundary + this.pieceSize);
+			topConnector = jigsawShapes.getTopPlug(leftBoundary, topBoundary, rightBoundary);
 		} else if(pieceHelper.has(piece.type, 'socket', 'top')){
-			topConnector = jigsawShapes.getTopSocket(leftBoundary, topBoundary, leftBoundary + this.pieceSize);
+			topConnector = jigsawShapes.getTopSocket(leftBoundary, topBoundary, rightBoundary);
 		}
 
-		// console.log('connections includes top?', piece.connections.includes('top'))
 		if(topConnector){
-			// console.log('drawing top connector')
 			path.lineTo(leftBoundary + this.connectorDistanceFromCorner, topBoundary);
 			path.quadraticCurveTo(topConnector.firstCurve.cpX, topConnector.firstCurve.cpY, topConnector.firstCurve.destX, topConnector.firstCurve.destY);
 			path.bezierCurveTo(topConnector.secondCurve.cp1.x, topConnector.secondCurve.cp1.y, topConnector.secondCurve.cp2.x, topConnector.secondCurve.cp2.y, topConnector.secondCurve.destX, topConnector.secondCurve.destY)
 			path.bezierCurveTo(topConnector.thirdCurve.cp1.x, topConnector.thirdCurve.cp1.y, topConnector.thirdCurve.cp2.x, topConnector.thirdCurve.cp2.y, topConnector.thirdCurve.destX, topConnector.thirdCurve.destY)
 			path.quadraticCurveTo(topConnector.fourthCurve.cpX, topConnector.fourthCurve.cpY, topConnector.fourthCurve.destX, topConnector.fourthCurve.destY);
 		}
-		path.lineTo(leftBoundary + this.pieceSize, topBoundary);
+		path.lineTo(rightBoundary, topBoundary);
 
 		if(pieceHelper.has(piece.type, 'plug', 'right')){
-			rightConnector = jigsawShapes.getRightPlug(topBoundary, leftBoundary + this.pieceSize, leftBoundary);
+			rightConnector = jigsawShapes.getRightPlug(topBoundary, rightBoundary, bottomBoundary);	
 		} else if(pieceHelper.has(piece.type, 'socket', 'right')){
-			rightConnector = jigsawShapes.getRightSocket(topBoundary, leftBoundary + this.pieceSize, leftBoundary);
+			rightConnector = jigsawShapes.getRightSocket(topBoundary, rightBoundary, bottomBoundary);
 		}
 
 		if(rightConnector !== null){
-			path.lineTo(leftBoundary + this.pieceSize, topBoundary + this.connectorDistanceFromCorner);
+			path.lineTo(rightBoundary, topBoundary + this.connectorDistanceFromCorner);
 			path.quadraticCurveTo(rightConnector.firstCurve.cpX, rightConnector.firstCurve.cpY, rightConnector.firstCurve.destX, rightConnector.firstCurve.destY);
 			path.bezierCurveTo(rightConnector.secondCurve.cp1.x, rightConnector.secondCurve.cp1.y, rightConnector.secondCurve.cp2.x, rightConnector.secondCurve.cp2.y, rightConnector.secondCurve.destX, rightConnector.secondCurve.destY)
 			path.bezierCurveTo(rightConnector.thirdCurve.cp1.x, rightConnector.thirdCurve.cp1.y, rightConnector.thirdCurve.cp2.x, rightConnector.thirdCurve.cp2.y, rightConnector.thirdCurve.destX, rightConnector.thirdCurve.destY);
