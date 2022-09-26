@@ -49,8 +49,6 @@ async function upload(req, res){
             .resize({width: resizeW, height: resizeH})
             .toFile(previewPath);
 
-        
-
         res.status(200).send({
             status: true,
             message: 'File is uploaded',

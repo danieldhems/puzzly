@@ -391,7 +391,6 @@ class PuzzlyCreator {
 	}
 
 	createPuzzle(opts = {}){
-		// console.log('PuzzlyCreator', this)
 		const puzzleConfig = {
 			...this.sourceImage,
 			...this.crop,
@@ -401,8 +400,6 @@ class PuzzlyCreator {
 			originalImageSize: this.sourceImage.dimensions,
 			pieceSize: this.sourceImage.dimensions.width / this.piecesPerSide,
 		}
-
-		console.log(puzzleConfig)
 		
 		fetch('/api/puzzle', {
 			body: JSON.stringify(puzzleConfig),
@@ -413,11 +410,13 @@ class PuzzlyCreator {
 		})
 		.then( response => response.json() )
 		.then( function(response){
-			// console.log('response', response);
+			console.log('response', response);
 			const puzzleId = response._id;
 			Utils.insertUrlParam('puzzleId', puzzleId);
 			this.newPuzzleForm.style.display = 'none';
 			puzzleConfig.path = response.puzzleImgPath;
+			puzzleConfig.spritePath = response.spritePath;
+			puzzleConfig.pieces = response.pieces;
 			new Puzzly('canvas', puzzleId, puzzleConfig);
 		}.bind(this)).catch( function(err){
 			console.log(err);

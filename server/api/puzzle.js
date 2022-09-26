@@ -1,5 +1,5 @@
 var router = require('express').Router();
-var { default: PuzzleGenerator } = require("./puzzleGenerator");
+var { default: generatePuzzle } = require("./puzzleGenerator");
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
@@ -46,16 +46,18 @@ var api = {
 			data.dateCreated = new Date();
 			data.elapsedTime = 0;
 
-			const puzzleImgPath = `./uploads/puzzle_${data.imageName}`;
-			const fullSizePath = './uploads/fullsize_' + data.imageName;
+			const imageNameWithoutExt = data.imageName.split(".")[0];
 
-			const img = Sharp(data.fullSizePath);
+			let img = Sharp(data.fullSizePath);
 			const imgMetadata = await img.metadata();
 			const { width: origW, height: origH } = imgMetadata;
 
 			const { width, height } = data.dimensions;
 
 			let ratio, cropTop, cropLeft, cropP, cropSize;
+
+			await img.resize(data.boardSize, data.boardSize);
+
 			if(data.hasCrop){
 				if(origW > origH){
 					ratio = origW / origH;
@@ -72,26 +74,27 @@ var api = {
 					cropTop = Math.floor(origH / 100 * cropP);
 					cropSize = origW;
 				}
+
+				await img.extract({ left: cropLeft || 0, top: cropTop || 0, width: cropSize, height: cropSize })
 			}
 
-			let processed = img;
-			if(data.hasCrop){
-				processed = img.extract({ left: cropLeft || 0, top: cropTop || 0, width: cropSize, height: cropSize })
-			}
+			const puzzleImgPath = `./uploads/puzzle_${data.imageName}`;
+			await img.toFile(puzzleImgPath);
 
-			processed
-				.toFile(puzzleImgPath)
-				.then(async (err, _) => {
-        	const puzzle = new PuzzleGenerator(fullSizePath, data);
+			const spritePath = './uploads/sprite_' + imageNameWithoutExt + '_' + data.selectedNumPieces;
+			const pieces = await generatePuzzle(puzzleImgPath, data, spritePath);
 
-					collection.insertOne(data, function(err, result){
-						if(err) throw new Error(err);
-						res.status(200).send({
-							...result.ops[0],
-							puzzleImgPath
-						})
-					});
-				});
+			collection.insertOne(data, function(err, result){
+				if(err) throw new Error(err);
+				// console.log(pieces)
+				res.status(200).send({
+					...result.ops[0],
+					spritePath: spritePath + ".png",
+					puzzleImgPath,
+					fullSizePath: './uploads/fullsize_' + data.imageName,
+					pieces,
+				})
+			});
 		});
 	},
 	read: function(req, res){
