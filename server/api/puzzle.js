@@ -81,7 +81,7 @@ var api = {
 			const puzzleImgPath = `./uploads/puzzle_${data.imageName}`;
 			await img.toFile(puzzleImgPath);
 
-			const spritePath = './uploads/sprite_' + imageNameWithoutExt + '_' + data.selectedNumPieces;
+			const spritePath = './uploads/sprite_' + imageNameWithoutExt + '_' + data.selectedNumPieces + "_" + new Date().getMilliseconds();
 			const pieces = await generatePuzzle(puzzleImgPath, data, spritePath);
 
 			collection.insertOne(data, function(err, result){

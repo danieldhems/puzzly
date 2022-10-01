@@ -282,14 +282,17 @@ label, input[type=checkbox] {
 }
 
 #controls-handle {
+    cursor: pointer;
     top: 0;
     left: -70px;
     position: absolute;
     color: #000;
     padding: 15px;
-    background: #fefefe;
     opacity: .8;
     width: 66px;
+}
+#controls-handle:hover {
+    background: #fefefe;
 }
 #controls-panel {
     color: #000;
@@ -382,6 +385,7 @@ label, input[type=checkbox] {
 
 .puzzle-piece {
     background-color: transparent;
+    background-repeat: no-repeat    ;
 }
 
 .js-highlight {

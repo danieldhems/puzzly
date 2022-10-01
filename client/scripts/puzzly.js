@@ -694,7 +694,8 @@ class Puzzly {
 			el.style.top = piece.pageY + "px";
 			el.style.left = piece.pageX + "px";
 			el.style.backgroundImage = `url(${this.spritePath}`;
-			el.style.backgroundPosition = `${piece.imgX}px ${piece.imgY}px`;
+			el.style.backgroundPositionX = piece.pageX === 0 ? 0 : '-' + piece.pageX + 'px';
+			el.style.backgroundPositionY = piece.pageY === 0 ? 0 : '-' + piece.pageY + 'px';
 
 			el.setAttribute('data-jigsaw-type', piece.type.join(","))
 			el.setAttribute('data-piece-id', piece.id)

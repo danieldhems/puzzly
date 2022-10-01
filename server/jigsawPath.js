@@ -4,7 +4,7 @@ class jigsawPaths {
     this.connectorSize = connectorSize;
     this.connectorDistanceFromCorner = connectorDistanceFromCorner;
   }
-  getTopPlug(leftBoundary, topBoundary, rightBoundary){
+  getTopPlug(leftBoundary, topBoundary, rightBoundary, strokeWidth = 0){
 		return {
 			firstCurve: {
 				destX: leftBoundary + this.connectorDistanceFromCorner + this.connectorSize/6,
@@ -19,10 +19,10 @@ class jigsawPaths {
 				},
 				cp2: {
 					x: leftBoundary + this.connectorDistanceFromCorner - this.connectorDistanceFromCorner/4,
-					y: topBoundary - this.connectorSize + 1,
+					y: topBoundary - this.connectorSize + strokeWidth,
 				},
 				destX: leftBoundary + this.pieceSize / 2,
-				destY: topBoundary - this.connectorSize + 1,
+				destY: topBoundary - this.connectorSize + strokeWidth,
 			},
 			thirdCurve: {
 				cp1: {
@@ -40,12 +40,12 @@ class jigsawPaths {
 				cpX: rightBoundary - this.connectorDistanceFromCorner - this.connectorSize/5,
 				cpY: topBoundary - this.connectorSize/10,
 				destX: rightBoundary - this.connectorDistanceFromCorner,
-				destY: topBoundary,
+				destY: topBoundary + strokeWidth,
 			}
 		}
 	}
 
-	getTopSocket(leftBoundary, topBoundary, rightBoundary){
+	getTopSocket(leftBoundary, topBoundary, rightBoundary, strokeWidth = 0){
 		return {
 			firstCurve: {
 				destX: leftBoundary + this.connectorDistanceFromCorner + (this.connectorSize/6),
@@ -60,15 +60,15 @@ class jigsawPaths {
 				},
 				cp2: {
 					x: leftBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					y: topBoundary + this.connectorSize -1,
+					y: topBoundary + this.connectorSize - strokeWidth,
 				},
 				destX: leftBoundary + (this.pieceSize/2),
-				destY: topBoundary + this.connectorSize -1,
+				destY: topBoundary + this.connectorSize - strokeWidth,
 			},
 			thirdCurve: {
 				cp1: {
 					x: rightBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					y: topBoundary + this.connectorSize -1,
+					y: topBoundary + this.connectorSize - strokeWidth,
 				},
 				cp2: {
 					x: rightBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
@@ -81,12 +81,12 @@ class jigsawPaths {
 				cpX: rightBoundary - this.connectorDistanceFromCorner - (this.connectorSize/5),
 				cpY: topBoundary + (this.connectorSize/10),
 				destX: rightBoundary - this.connectorDistanceFromCorner,
-				destY: topBoundary,
+				destY: topBoundary + strokeWidth,
 			}
 		}
 	}
 
-	getRightPlug(topBoundary, rightBoundary, bottomBoundary){
+	getRightPlug(topBoundary, rightBoundary, bottomBoundary, strokeWidth = 0){
 		return {
 			firstCurve: {
 				destX: rightBoundary + (this.connectorSize/5),
@@ -101,15 +101,15 @@ class jigsawPaths {
 				},
 				cp2: {
 					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					x: rightBoundary + this.connectorSize - 2,
+					x: rightBoundary + this.connectorSize - strokeWidth,
 				},
-				destX: rightBoundary + this.connectorSize - 2,
+				destX: rightBoundary + this.connectorSize - strokeWidth,
 				destY: bottomBoundary - (this.pieceSize/2),
 			},
 			thirdCurve: {
 				cp1: {
 					y: bottomBoundary - this.connectorDistanceFromCorner + this.connectorDistanceFromCorner/4,
-					x: rightBoundary + this.connectorSize - 2,
+					x: rightBoundary + this.connectorSize - strokeWidth,
 				},
 				cp2: {
 					y: bottomBoundary - this.connectorDistanceFromCorner + this.connectorDistanceFromCorner/4,
@@ -127,7 +127,7 @@ class jigsawPaths {
 		}
 	}
 
-	getRightSocket(topBoundary, rightBoundary, bottomBoundary){
+	getRightSocket(topBoundary, rightBoundary, bottomBoundary, strokeWidth = 0){
 		return {
 			firstCurve: {
 				destX: rightBoundary - (this.connectorSize/5),
@@ -168,7 +168,7 @@ class jigsawPaths {
 		}
 	}
 
-	getBottomPlug(rightBoundary, bottomBoundary, leftBoundary){
+	getBottomPlug(rightBoundary, bottomBoundary, leftBoundary, strokeWidth = 0){
 		return {
 			firstCurve: {
 				destX: rightBoundary - this.connectorDistanceFromCorner - (this.connectorSize/6),
@@ -183,15 +183,15 @@ class jigsawPaths {
 				},
 				cp2: {
 					x: rightBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					y: bottomBoundary + this.connectorSize -1,
+					y: bottomBoundary + this.connectorSize - strokeWidth,
 				},
 				destX: leftBoundary + this.pieceSize - (this.pieceSize/2),
-				destY: bottomBoundary + this.connectorSize -1,
+				destY: bottomBoundary + this.connectorSize - strokeWidth,
 			},
 			thirdCurve: {
 				cp1: {
 					x: leftBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					y: bottomBoundary + this.connectorSize-1,
+					y: bottomBoundary + this.connectorSize - strokeWidth,
 				},
 				cp2: {
 					x: leftBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
@@ -209,7 +209,7 @@ class jigsawPaths {
 		}
 	}
 
-	getBottomSocket(rightBoundary, bottomBoundary, leftBoundary){
+	getBottomSocket(rightBoundary, bottomBoundary, leftBoundary, strokeWidth = 0){
 		return {
 			firstCurve: {
 				destX: rightBoundary - this.connectorDistanceFromCorner - (this.connectorSize/6),
@@ -224,15 +224,15 @@ class jigsawPaths {
 				},
 				cp2: {
 					x: rightBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					y: bottomBoundary - this.connectorSize +1,
+					y: bottomBoundary - this.connectorSize - strokeWidth,
 				},
 				destX: rightBoundary - (this.pieceSize/2),
-				destY: bottomBoundary - this.connectorSize +1,
+				destY: bottomBoundary - this.connectorSize - strokeWidth,
 			},
 			thirdCurve: {
 				cp1: {
 					x: leftBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					y: bottomBoundary - this.connectorSize +1,
+					y: bottomBoundary - this.connectorSize - strokeWidth,
 				},
 				cp2: {
 					x: leftBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
@@ -250,7 +250,7 @@ class jigsawPaths {
 		}
 	}
 
-	getLeftPlug(bottomBoundary, leftBoundary, topBoundary){
+	getLeftPlug(bottomBoundary, leftBoundary, topBoundary, strokeWidth = 0){
 		return {
 			firstCurve: {
 				destX: leftBoundary - (this.connectorSize/5),
@@ -265,15 +265,15 @@ class jigsawPaths {
 				},
 				cp2: {
 					y: bottomBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					x: leftBoundary - this.connectorSize + 1,
+					x: leftBoundary - this.connectorSize - strokeWidth,
 				},
-				destX: leftBoundary - this.connectorSize + 1,
+				destX: leftBoundary - this.connectorSize - strokeWidth,
 				destY: bottomBoundary - (this.pieceSize/2),
 			},
 			thirdCurve: {
 				cp1: {
 					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					x: leftBoundary - this.connectorSize + 1,
+					x: leftBoundary - this.connectorSize - strokeWidth,
 				},
 				cp2: {
 					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
@@ -291,7 +291,7 @@ class jigsawPaths {
 		}
 	}
 
-	getLeftSocket(bottomBoundary, leftBoundary, topBoundary){
+	getLeftSocket(bottomBoundary, leftBoundary, topBoundary, strokeWidth = 0){
 		return {
 			firstCurve: {
 				destX: leftBoundary + (this.connectorSize/5),
@@ -306,15 +306,15 @@ class jigsawPaths {
 				},
 				cp2: {
 					y: bottomBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					x: leftBoundary + this.connectorSize -1,
+					x: leftBoundary + this.connectorSize - strokeWidth,
 				},
-				destX: leftBoundary + this.connectorSize -1,
+				destX: leftBoundary + this.connectorSize - strokeWidth,
 				destY: bottomBoundary - (this.pieceSize/2)
 			},
 			thirdCurve: {
 				cp1: {
 					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					x: leftBoundary + this.connectorSize -1,
+					x: leftBoundary + this.connectorSize - strokeWidth,
 				},
 				cp2: {
 					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
