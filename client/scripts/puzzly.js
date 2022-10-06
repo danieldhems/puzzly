@@ -561,38 +561,6 @@ class Puzzly {
 		return value / (shouldApply ? this.pieceScale : 1);
 	}
 
-	
-
-	drawPlugGuides(ctx, plug){
-		ctx.fillStyle = 'blue';
-		ctx.beginPath();
-		ctx.arc(plug.firstCurve.cpX, plug.firstCurve.cpY, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-		
-		ctx.fillStyle = 'brown';
-		ctx.beginPath();
-		ctx.arc(plug.secondCurve.cp1.x, plug.secondCurve.cp1.y, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-
-		ctx.beginPath();
-		ctx.arc(plug.secondCurve.cp2.x, plug.secondCurve.cp2.y, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-		
-		ctx.fillStyle = 'green';
-		ctx.beginPath();
-		ctx.arc(plug.thirdCurve.cp1.x, plug.thirdCurve.cp1.y, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-
-		ctx.beginPath();
-		ctx.arc(plug.thirdCurve.cp2.x, plug.thirdCurve.cp2.y, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-
-		ctx.fillStyle = 'purple';
-		ctx.beginPath();
-		ctx.arc(plug.fourthCurve.cpX, plug.fourthCurve.cpY, 5, 0, 2 * Math.PI);  // Control point one
-		ctx.fill()
-	}
-
 	drawJigsawShape(ctx, path, piece, {x, y}, showGuides = false, outlines = false, stroke = false){
 		// console.log('drawJigsawShape', piece)
 

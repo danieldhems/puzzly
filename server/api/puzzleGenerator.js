@@ -16,7 +16,7 @@ const GeneratorConfig = {
 	connectorDistanceFromCorner: null,
 	connectorSize: null,
 	largestPieceSpan: null,
-	strokeWidth: 1,
+	strokeWidth: .5,
 }
 
 const generatePuzzle = async (imagePath, puzzleConfig, spriteName) => {
@@ -24,12 +24,13 @@ const generatePuzzle = async (imagePath, puzzleConfig, spriteName) => {
 	
 	GeneratorConfig.spriteName = spriteName;
 	GeneratorConfig.connectorRatio = GeneratorConfig.connectorDistanceFromCornerRatio = 33;
+	GeneratorConfig.connectorWidthRatio = 30;
 	GeneratorConfig.piecesPerSideHorizontal = Math.sqrt(puzzleConfig.selectedNumPieces);
 	GeneratorConfig.piecesPerSideVertical = Math.sqrt(puzzleConfig.selectedNumPieces);
 	GeneratorConfig.selectedNumberOfPieces = puzzleConfig.selectedNumPieces;
-	console.log("loaded image", loadedImage.naturalWidth)
 	GeneratorConfig.pieceSize = loadedImage.naturalWidth / GeneratorConfig.piecesPerSideHorizontal;
 	GeneratorConfig.connectorDistanceFromCorner = Math.ceil(GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorDistanceFromCornerRatio);
+	GeneratorConfig.connectorWidth = Math.ceil(GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorWidthRatio);
 	GeneratorConfig.connectorSize = GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorRatio;
 	GeneratorConfig.largestPieceSpan = GeneratorConfig.pieceSize + (GeneratorConfig.connectorSize * 2);
 
@@ -40,9 +41,13 @@ const generatePuzzle = async (imagePath, puzzleConfig, spriteName) => {
 
 const createPuzzlePiece = async (data, ctxForSprite, writeToOwnFile = false) => {
 	const tmpCnv = createCanvas(data.imgW, data.imgH);
+	const tmpCtx = tmpCnv.getContext("2d");
 	tmpCnv.width = data.imgW;
 	tmpCnv.height = data.imgH;
-	const tmpCtx = tmpCnv.getContext("2d");
+	tmpCtx.shadowOffsetX = 1;
+	tmpCtx.shadowOffsetY = 1;
+	tmpCtx.shadowBlur = 1;
+	tmpCtx.shadowColor = "#000";
 	tmpCtx.imageSmoothingEnabled = false;
 	tmpCtx.strokeStyle = '#000';
 
@@ -56,7 +61,6 @@ const createPuzzlePiece = async (data, ctxForSprite, writeToOwnFile = false) => 
 	ctxForSprite.putImageData(tmpImgData, data.pageX, data.pageY)
 	
 	if(writeToOwnFile){
-		// console.log(`writing puzzle piece to file ${data.id}`)
 		writeToPngFile(tmpCnv, `${data.id}`);
 	}
 }
@@ -326,81 +330,106 @@ const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = 
 	const hasTopPlug = pieceHelper.has(piece.type, 'plug', 'top')
 	const hasLeftPlug = pieceHelper.has(piece.type, 'plug', 'left')
 	
-	const topBoundary = hasTopPlug ? y + GeneratorConfig.connectorSize : y;
-	const bottomBoundary = hasTopPlug ? y + GeneratorConfig.pieceSize + GeneratorConfig.connectorSize : y + GeneratorConfig.pieceSize;
-	const leftBoundary = hasLeftPlug ? x + GeneratorConfig.connectorSize : x;
-	const rightBoundary = hasLeftPlug ? x + GeneratorConfig.pieceSize + GeneratorConfig.connectorSize : x + GeneratorConfig.pieceSize;
+	let topBoundary = hasTopPlug ? y + GeneratorConfig.connectorSize : y;
+	let bottomBoundary = hasTopPlug ? y + GeneratorConfig.pieceSize + GeneratorConfig.connectorSize : y + GeneratorConfig.pieceSize;
+	let leftBoundary = hasLeftPlug ? x + GeneratorConfig.connectorSize : x;
+	let rightBoundary = hasLeftPlug ? x + GeneratorConfig.pieceSize + GeneratorConfig.connectorSize : x + GeneratorConfig.pieceSize;
+
+	// topBoundary += strokeWidth + 1;
+	// rightBoundary -= strokeWidth * 2;
+	// bottomBoundary -= strokeWidth * 2;
+	// leftBoundary += strokeWidth + 1;
 
 	let topConnector = null, rightConnector = null, bottomConnector = null, leftConnector = null;
 	
-	const jigsawShapes = new jigsawPath(GeneratorConfig.pieceSize, GeneratorConfig.connectorSize, GeneratorConfig.connectorDistanceFromCorner);
+	const jigsawShapes = new jigsawPath(GeneratorConfig.pieceSize, GeneratorConfig.connectorSize, GeneratorConfig.connectorWidth);
 	
-	path.moveTo(leftBoundary + strokeWidth, topBoundary + strokeWidth);
+	path.moveTo(leftBoundary, topBoundary);
 
+	let pos = {
+		x: leftBoundary + GeneratorConfig.connectorDistanceFromCorner,
+		y: topBoundary
+	};
 	if(pieceHelper.has(piece.type, 'plug', 'top')){
-		topConnector = jigsawShapes.getTopPlug(leftBoundary, topBoundary, rightBoundary, strokeWidth);
+		topConnector = jigsawShapes.getPlug("top", pos);
 	} else if(pieceHelper.has(piece.type, 'socket', 'top')){
-		topConnector = jigsawShapes.getTopSocket(leftBoundary, topBoundary, rightBoundary);
+		topConnector = jigsawShapes.getSocket("top", pos);
 	}
 
 	if(topConnector){
-		path.lineTo(leftBoundary + GeneratorConfig.connectorDistanceFromCorner, topBoundary + strokeWidth);
-		path.quadraticCurveTo(topConnector.firstCurve.cpX, topConnector.firstCurve.cpY, topConnector.firstCurve.destX, topConnector.firstCurve.destY);
-		path.bezierCurveTo(topConnector.secondCurve.cp1.x, topConnector.secondCurve.cp1.y, topConnector.secondCurve.cp2.x, topConnector.secondCurve.cp2.y, topConnector.secondCurve.destX, topConnector.secondCurve.destY)
-		path.bezierCurveTo(topConnector.thirdCurve.cp1.x, topConnector.thirdCurve.cp1.y, topConnector.thirdCurve.cp2.x, topConnector.thirdCurve.cp2.y, topConnector.thirdCurve.destX, topConnector.thirdCurve.destY)
-		path.quadraticCurveTo(topConnector.fourthCurve.cpX, topConnector.fourthCurve.cpY, topConnector.fourthCurve.destX, topConnector.fourthCurve.destY);
+		path.lineTo(leftBoundary + GeneratorConfig.connectorDistanceFromCorner, topBoundary);
+		// path.quadraticCurveTo(topConnector.firstCurve.cpX, topConnector.firstCurve.cpY, topConnector.firstCurve.destX, topConnector.firstCurve.destY);
+		// path.bezierCurveTo(topConnector.secondCurve.cp1.x, topConnector.secondCurve.cp1.y, topConnector.secondCurve.cp2.x, topConnector.secondCurve.cp2.y, topConnector.secondCurve.destX, topConnector.secondCurve.destY)
+		// path.bezierCurveTo(topConnector.thirdCurve.cp1.x, topConnector.thirdCurve.cp1.y, topConnector.thirdCurve.cp2.x, topConnector.thirdCurve.cp2.y, topConnector.thirdCurve.destX, topConnector.thirdCurve.destY)
+		// path.quadraticCurveTo(topConnector.fourthCurve.cpX, topConnector.fourthCurve.cpY, topConnector.fourthCurve.destX, topConnector.fourthCurve.destY);
+		path.bezierCurveTo(topConnector.cp1.x, topConnector.cp1.y, topConnector.cp2.x, topConnector.cp2.y, topConnector.destX, topConnector.destY)
 	}
-	path.lineTo(rightBoundary - strokeWidth, topBoundary + strokeWidth);
+	path.lineTo(rightBoundary, topBoundary);
 
+	pos = {
+		x: rightBoundary,
+		y: topBoundary + GeneratorConfig.connectorDistanceFromCorner
+	};
 	if(pieceHelper.has(piece.type, 'plug', 'right')){
-		rightConnector = jigsawShapes.getRightPlug(topBoundary, rightBoundary, bottomBoundary, strokeWidth);	
+		rightConnector = jigsawShapes.getPlug("right", pos);
 	} else if(pieceHelper.has(piece.type, 'socket', 'right')){
-		rightConnector = jigsawShapes.getRightSocket(topBoundary, rightBoundary, bottomBoundary);
+		rightConnector = jigsawShapes.getSocket("right", pos);
 	}
 
 	if(rightConnector !== null){
-		path.lineTo(rightBoundary - strokeWidth, topBoundary + GeneratorConfig.connectorDistanceFromCorner);
-		path.quadraticCurveTo(rightConnector.firstCurve.cpX, rightConnector.firstCurve.cpY, rightConnector.firstCurve.destX, rightConnector.firstCurve.destY);
-		path.bezierCurveTo(rightConnector.secondCurve.cp1.x, rightConnector.secondCurve.cp1.y, rightConnector.secondCurve.cp2.x, rightConnector.secondCurve.cp2.y, rightConnector.secondCurve.destX, rightConnector.secondCurve.destY)
-		path.bezierCurveTo(rightConnector.thirdCurve.cp1.x, rightConnector.thirdCurve.cp1.y, rightConnector.thirdCurve.cp2.x, rightConnector.thirdCurve.cp2.y, rightConnector.thirdCurve.destX, rightConnector.thirdCurve.destY);
-		path.quadraticCurveTo(rightConnector.fourthCurve.cpX, rightConnector.fourthCurve.cpY, rightConnector.fourthCurve.destX, rightConnector.fourthCurve.destY);
+		path.lineTo(rightBoundary, topBoundary + GeneratorConfig.connectorDistanceFromCorner);
+		// path.quadraticCurveTo(rightConnector.firstCurve.cpX, rightConnector.firstCurve.cpY, rightConnector.firstCurve.destX, rightConnector.firstCurve.destY);
+		// path.bezierCurveTo(rightConnector.secondCurve.cp1.x, rightConnector.secondCurve.cp1.y, rightConnector.secondCurve.cp2.x, rightConnector.secondCurve.cp2.y, rightConnector.secondCurve.destX, rightConnector.secondCurve.destY)
+		// path.bezierCurveTo(rightConnector.thirdCurve.cp1.x, rightConnector.thirdCurve.cp1.y, rightConnector.thirdCurve.cp2.x, rightConnector.thirdCurve.cp2.y, rightConnector.thirdCurve.destX, rightConnector.thirdCurve.destY);
+		// path.quadraticCurveTo(rightConnector.fourthCurve.cpX, rightConnector.fourthCurve.cpY, rightConnector.fourthCurve.destX, rightConnector.fourthCurve.destY);
+		path.bezierCurveTo(rightConnector.cp1.x, rightConnector.cp1.y, rightConnector.cp2.x, rightConnector.cp2.y, rightConnector.destX, rightConnector.destY)
 	}
-	path.lineTo(rightBoundary - strokeWidth, topBoundary + GeneratorConfig.pieceSize)
+	path.lineTo(rightBoundary, bottomBoundary)
 
+	pos = {
+		x: rightBoundary - GeneratorConfig.connectorDistanceFromCorner,
+		y: bottomBoundary
+	}
 	if(pieceHelper.has(piece.type, 'plug', 'bottom')){
-		bottomConnector = jigsawShapes.getBottomPlug(leftBoundary + GeneratorConfig.pieceSize, topBoundary + GeneratorConfig.pieceSize, leftBoundary, strokeWidth);
+		bottomConnector = jigsawShapes.getPlug("bottom", pos);
 	} else if(pieceHelper.has(piece.type, 'socket', 'bottom')){
-		bottomConnector = jigsawShapes.getBottomSocket(leftBoundary + GeneratorConfig.pieceSize, topBoundary + GeneratorConfig.pieceSize, leftBoundary);
+		bottomConnector = jigsawShapes.getSocket("bottom", pos);
 	}
 
 	if(bottomConnector){
-		path.lineTo(leftBoundary + GeneratorConfig.pieceSize - GeneratorConfig.connectorDistanceFromCorner, topBoundary + GeneratorConfig.pieceSize);
-		path.quadraticCurveTo(bottomConnector.firstCurve.cpX, bottomConnector.firstCurve.cpY, bottomConnector.firstCurve.destX, bottomConnector.firstCurve.destY);
-		path.bezierCurveTo(bottomConnector.secondCurve.cp1.x, bottomConnector.secondCurve.cp1.y, bottomConnector.secondCurve.cp2.x, bottomConnector.secondCurve.cp2.y, bottomConnector.secondCurve.destX, bottomConnector.secondCurve.destY)
-		path.bezierCurveTo(bottomConnector.thirdCurve.cp1.x, bottomConnector.thirdCurve.cp1.y, bottomConnector.thirdCurve.cp2.x, bottomConnector.thirdCurve.cp2.y, bottomConnector.thirdCurve.destX, bottomConnector.thirdCurve.destY);
-		path.quadraticCurveTo(bottomConnector.fourthCurve.cpX, bottomConnector.fourthCurve.cpY, bottomConnector.fourthCurve.destX, bottomConnector.fourthCurve.destY);
+		path.lineTo(rightBoundary - GeneratorConfig.connectorDistanceFromCorner, bottomBoundary);
+		// path.quadraticCurveTo(bottomConnector.firstCurve.cpX, bottomConnector.firstCurve.cpY, bottomConnector.firstCurve.destX, bottomConnector.firstCurve.destY);
+		// path.bezierCurveTo(bottomConnector.secondCurve.cp1.x, bottomConnector.secondCurve.cp1.y, bottomConnector.secondCurve.cp2.x, bottomConnector.secondCurve.cp2.y, bottomConnector.secondCurve.destX, bottomConnector.secondCurve.destY)
+		// path.bezierCurveTo(bottomConnector.thirdCurve.cp1.x, bottomConnector.thirdCurve.cp1.y, bottomConnector.thirdCurve.cp2.x, bottomConnector.thirdCurve.cp2.y, bottomConnector.thirdCurve.destX, bottomConnector.thirdCurve.destY);
+		// path.quadraticCurveTo(bottomConnector.fourthCurve.cpX, bottomConnector.fourthCurve.cpY, bottomConnector.fourthCurve.destX, bottomConnector.fourthCurve.destY);
+		path.bezierCurveTo(bottomConnector.cp1.x, bottomConnector.cp1.y, bottomConnector.cp2.x, bottomConnector.cp2.y, bottomConnector.destX, bottomConnector.destY)
 	}
-	path.lineTo(leftBoundary, topBoundary + GeneratorConfig.pieceSize)
+	path.lineTo(leftBoundary, bottomBoundary)
 
+	pos = {
+		x: leftBoundary,
+		y: bottomBoundary - GeneratorConfig.connectorDistanceFromCorner
+	}
 	if(pieceHelper.has(piece.type, 'plug', 'left')){
-		leftConnector = jigsawShapes.getLeftPlug(topBoundary + GeneratorConfig.pieceSize, leftBoundary, topBoundary, strokeWidth);
+		leftConnector = jigsawShapes.getPlug("left", pos);
 	} else if(pieceHelper.has(piece.type, 'socket', 'left')){
-		leftConnector = jigsawShapes.getLeftSocket(topBoundary + GeneratorConfig.pieceSize, leftBoundary, topBoundary);
+		leftConnector = jigsawShapes.getSocket("left", pos);
 	}
 	if(leftConnector !== null){
-		path.lineTo(leftBoundary, topBoundary + GeneratorConfig.pieceSize - GeneratorConfig.connectorDistanceFromCorner);
-		path.quadraticCurveTo(leftConnector.firstCurve.cpX, leftConnector.firstCurve.cpY, leftConnector.firstCurve.destX, leftConnector.firstCurve.destY);
-		path.bezierCurveTo(leftConnector.secondCurve.cp1.x, leftConnector.secondCurve.cp1.y, leftConnector.secondCurve.cp2.x, leftConnector.secondCurve.cp2.y, leftConnector.secondCurve.destX, leftConnector.secondCurve.destY)
-		path.bezierCurveTo(leftConnector.thirdCurve.cp1.x, leftConnector.thirdCurve.cp1.y, leftConnector.thirdCurve.cp2.x, leftConnector.thirdCurve.cp2.y, leftConnector.thirdCurve.destX, leftConnector.thirdCurve.destY);
-		path.quadraticCurveTo(leftConnector.fourthCurve.cpX, leftConnector.fourthCurve.cpY, leftConnector.fourthCurve.destX, leftConnector.fourthCurve.destY);
+		path.lineTo(leftBoundary, bottomBoundary - GeneratorConfig.connectorDistanceFromCorner);
+		// path.quadraticCurveTo(leftConnector.firstCurve.cpX, leftConnector.firstCurve.cpY, leftConnector.firstCurve.destX, leftConnector.firstCurve.destY);
+		// path.bezierCurveTo(leftConnector.secondCurve.cp1.x, leftConnector.secondCurve.cp1.y, leftConnector.secondCurve.cp2.x, leftConnector.secondCurve.cp2.y, leftConnector.secondCurve.destX, leftConnector.secondCurve.destY)
+		// path.bezierCurveTo(leftConnector.thirdCurve.cp1.x, leftConnector.thirdCurve.cp1.y, leftConnector.thirdCurve.cp2.x, leftConnector.thirdCurve.cp2.y, leftConnector.thirdCurve.destX, leftConnector.thirdCurve.destY);
+		// path.quadraticCurveTo(leftConnector.fourthCurve.cpX, leftConnector.fourthCurve.cpY, leftConnector.fourthCurve.destX, leftConnector.fourthCurve.destY);
+		path.bezierCurveTo(leftConnector.cp1.x, leftConnector.cp1.y, leftConnector.cp2.x, leftConnector.cp2.y, leftConnector.destX, leftConnector.destY)
 	}
 	path.lineTo(leftBoundary, topBoundary);
 
 	if(showGuides){
-		if(topConnector) GeneratorConfig.drawPlugGuides(ctx, topConnector)
-		if(rightConnector) GeneratorConfig.drawPlugGuides(ctx, rightConnector)
-		if(bottomConnector) GeneratorConfig.drawPlugGuides(ctx, bottomConnector)
-		if(leftConnector) GeneratorConfig.drawPlugGuides(ctx, leftConnector)
+		if(topConnector) jigsawShapes.drawPlugGuides(ctx, topConnector)
+		if(rightConnector) jigsawShapes.drawPlugGuides(ctx, rightConnector)
+		if(bottomConnector) jigsawShapes.drawPlugGuides(ctx, bottomConnector)
+		if(leftConnector) jigsawShapes.drawPlugGuides(ctx, leftConnector)
 	}
 
 	if(stroke){
