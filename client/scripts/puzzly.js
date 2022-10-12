@@ -655,10 +655,10 @@ class Puzzly {
 			el.classList.add('puzzle-piece')
 			
 			el.style.position = "absolute";
-			el.width = piece.imgW;
-			el.height = piece.imgH;
-			el.style.width = piece.imgW + "px";
-			el.style.height = piece.imgH + 'px';
+			el.width = piece.pieceWidth;
+			el.height = piece.pieceHeight;
+			el.style.width = piece.pieceWidth + "px";
+			el.style.height = piece.pieceHeight + 'px';
 			el.style.top = piece.pageY + "px";
 			el.style.left = piece.pageX + "px";
 			el.style.backgroundImage = `url(${this.spritePath}`;

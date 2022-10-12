@@ -6,33 +6,33 @@ class jigsawPaths {
   }
 	getPlug(side, startPos){
 		let cp1x, cp1y, cp2x, cp2y, destX, destY;
-		const connectorSize = this.connectorSize;
-		const halfConnectorSize = connectorSize / 2;
+		const humpSize = this.connectorSize * 1.2;
+		const halfConnectorSize = this.connectorSize / 2;
 		if(side === "top"){
 			cp1x = startPos.x - halfConnectorSize;
-			cp1y = startPos.y - connectorSize;
+			cp1y = startPos.y - humpSize;
 			cp2x = startPos.x + this.connectorWidth + halfConnectorSize;
-			cp2y = startPos.y - connectorSize;
+			cp2y = startPos.y - humpSize;
 			destX = startPos.x + this.connectorWidth;
 			destY = startPos.y;
 		} else if(side === "right"){
-			cp1x = startPos.x + connectorSize;
+			cp1x = startPos.x + humpSize;
 			cp1y = startPos.y - halfConnectorSize;
-			cp2x = startPos.x + connectorSize;
+			cp2x = startPos.x + humpSize;
 			cp2y = startPos.y + this.connectorWidth + halfConnectorSize;
 			destX = startPos.x;
 			destY = startPos.y + this.connectorWidth
 		} else if(side === "bottom"){
 			cp1x = startPos.x + halfConnectorSize;
-			cp1y = startPos.y + connectorSize;
+			cp1y = startPos.y + humpSize;
 			cp2x = startPos.x - this.connectorWidth - halfConnectorSize;
-			cp2y = startPos.y + connectorSize;
+			cp2y = startPos.y + humpSize;
 			destX = startPos.x - this.connectorWidth;
 			destY = startPos.y;
 		} else if(side === "left"){
-			cp1x = startPos.x - connectorSize;
+			cp1x = startPos.x - humpSize;
 			cp1y = startPos.y + halfConnectorSize;
-			cp2x = startPos.x - connectorSize;
+			cp2x = startPos.x - humpSize;
 			cp2y = startPos.y - this.connectorWidth - halfConnectorSize;
 			destX = startPos.x;
 			destY = startPos.y - this.connectorWidth
@@ -52,7 +52,7 @@ class jigsawPaths {
 	}
 	getSocket(side, startPos){
 		let cp1x, cp1y, cp2x, cp2y, destX, destY;
-		const connectorSize = this.connectorSize;
+		const connectorSize = this.connectorSize * 1.2;
 		const halfConnectorSize = this.connectorSize / 2;
 		if(side === "top"){
 			cp1x = startPos.x - halfConnectorSize;

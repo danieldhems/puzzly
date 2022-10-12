@@ -15,8 +15,12 @@ const GeneratorConfig = {
 	pieceSize: null,
 	connectorDistanceFromCorner: null,
 	connectorSize: null,
+	connectorLateralControlPointDistance: null,
 	largestPieceSpan: null,
-	strokeWidth: .5,
+	strokeWidth: 1,
+	shadowOffset: 2,
+	shadowColor: "black",
+	strokeStyle: "#000"
 }
 
 const generatePuzzle = async (imagePath, puzzleConfig, spriteName) => {
@@ -32,6 +36,7 @@ const generatePuzzle = async (imagePath, puzzleConfig, spriteName) => {
 	GeneratorConfig.connectorDistanceFromCorner = Math.ceil(GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorDistanceFromCornerRatio);
 	GeneratorConfig.connectorWidth = Math.ceil(GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorWidthRatio);
 	GeneratorConfig.connectorSize = GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorRatio;
+	GeneratorConfig.connectorLateralControlPointDistance = GeneratorConfig.connectorSize * 1.2;
 	GeneratorConfig.largestPieceSpan = GeneratorConfig.pieceSize + (GeneratorConfig.connectorSize * 2);
 
 	console.log("GeneratorConfig", GeneratorConfig)
@@ -40,32 +45,40 @@ const generatePuzzle = async (imagePath, puzzleConfig, spriteName) => {
 }
 
 const createPuzzlePiece = async (data, ctxForSprite, writeToOwnFile = false) => {
+	const shadowCnv = createCanvas(data.imgW, data.imgH);
+	const shdCtx = shadowCnv.getContext("2d");
+	shadowCnv.width = data.imgW;
+	shadowCnv.height = data.imgH;
+
+	let shdPath = new Path2D();
+	const pathResult = drawJigsawShape(shdCtx, shdPath, data, { x: 0, y: 0 }, false, true);
+	shdCtx.fill(GeneratorConfig.shadowColor);
+
+	const shadowImgData = shdCtx.getImageData(0, 0, data.imgW, data.imgH);
+	const shadowPosition = GeneratorConfig.shadowOffset;
+	ctxForSprite.putImageData(shadowImgData, data.pageX + shadowPosition, data.pageY + shadowPosition);
+
 	const tmpCnv = createCanvas(data.imgW, data.imgH);
 	const tmpCtx = tmpCnv.getContext("2d");
+	tmpCtx.imageSmoothingEnabled = false;
+	tmpCtx.strokeStyle = GeneratorConfig.strokeStyle;
+	tmpCtx.lineWidth = GeneratorConfig.strokeWidth;
 	tmpCnv.width = data.imgW;
 	tmpCnv.height = data.imgH;
-	tmpCtx.shadowOffsetX = 1;
-	tmpCtx.shadowOffsetY = 1;
-	tmpCtx.shadowBlur = 1;
-	tmpCtx.shadowColor = "#000";
-	tmpCtx.imageSmoothingEnabled = false;
-	tmpCtx.strokeStyle = '#000';
-
-	let path = new Path2D();
 	
-	const pathResult = drawJigsawShape(tmpCtx, path, data, { x: 0, y: 0 }, false, true);
 	tmpCtx.clip(pathResult);
-	tmpCtx.drawImage(loadedImage, data.imgX, data.imgY, data.imgW, data.imgH, 0, 0, tmpCnv.width, tmpCnv.height);
-	
-	const tmpImgData = tmpCtx.getImageData(0, 0, tmpCnv.width, tmpCnv.height);
-	ctxForSprite.putImageData(tmpImgData, data.pageX, data.pageY)
-	
+	tmpCtx.drawImage(loadedImage, data.imgX, data.imgY, data.imgW, data.imgH, 0, 0, data.imgW, data.imgH);
+	tmpCtx.stroke(pathResult);
+
+	const img = await loadImage(tmpCnv.toDataURL());
+	ctxForSprite.drawImage(img, data.pageX, data.pageY);
+
 	if(writeToOwnFile){
 		writeToPngFile(tmpCnv, `${data.id}`);
 	}
 }
 
-const writeToPngFile = (cnv, fileName) => {
+const writeToPngFile = async (cnv, fileName) => {
 	const out = fs.createWriteStream(`${fileName}.png`);
 	const stream = cnv.createPNGStream();
 	stream.pipe(out);
@@ -196,6 +209,8 @@ const assignInitialPieceData = (imgX, imgY, piece, numPiecesFromLeftEdge, numPie
 		y: GeneratorConfig.largestPieceSpan * 1.1 * numPiecesFromTopEdge
 	};
 
+	const { strokeWidth, shadowOffset, shadowBlur } = GeneratorConfig;
+
 	return Object.assign({
 		id: i,
 		imgX: imgX,
@@ -204,6 +219,8 @@ const assignInitialPieceData = (imgX, imgY, piece, numPiecesFromLeftEdge, numPie
 		pageY: piecePositionOnSprite.y,
 		imgW: width,
 		imgH: height,
+		pieceWidth: width + shadowOffset + strokeWidth,
+		pieceHeight: height + shadowOffset + strokeWidth,
 		solvedX: imgX,
 		solvedY: imgY,
 		isInnerPiece: piece.type.join(",").indexOf("0") === -1,
@@ -276,7 +293,7 @@ const generateDataForPuzzlePieces = async(piecesPerSideHorizontal, piecesPerSide
 		// console.log("generated piece", currentPiece)
 
 		pieces.push(currentPiece);
-		createPuzzlePiece(currentPiece, ctx);
+		createPuzzlePiece(currentPiece, ctx, true);
 
 		// reached last piece, start next row
 		if(pieces.length % piecesPerSideHorizontal === 0){
@@ -322,7 +339,7 @@ const generateDataForPuzzlePieces = async(piecesPerSideHorizontal, piecesPerSide
 	return pieces;
 }
 
-const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = false) => {
+const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = true, stroke = false) => {
 	// console.log('drawJigsawShape', piece)
 
 	const strokeWidth = GeneratorConfig.strokeWidth;
@@ -335,10 +352,10 @@ const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = 
 	let leftBoundary = hasLeftPlug ? x + GeneratorConfig.connectorSize : x;
 	let rightBoundary = hasLeftPlug ? x + GeneratorConfig.pieceSize + GeneratorConfig.connectorSize : x + GeneratorConfig.pieceSize;
 
-	// topBoundary += strokeWidth + 1;
-	// rightBoundary -= strokeWidth * 2;
-	// bottomBoundary -= strokeWidth * 2;
-	// leftBoundary += strokeWidth + 1;
+	topBoundary += strokeWidth;
+	// rightBoundary += strokeWidth;
+	// bottomBoundary += strokeWidth;
+	leftBoundary += strokeWidth;
 
 	let topConnector = null, rightConnector = null, bottomConnector = null, leftConnector = null;
 	
@@ -433,7 +450,7 @@ const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = 
 	}
 
 	if(stroke){
-		ctx.strokeStyle = "#fff";
+		ctx.strokeStyle = GeneratorConfig.strokeStyle;
 		ctx.stroke(path)
 	}
 
