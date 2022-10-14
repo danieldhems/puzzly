@@ -66,9 +66,11 @@ class Puzzly {
 		this.movingPieces = [];
 		this.loadedAssets = [];
 		this.SourceImage = new Image();
-		this.SourceImage.src = config.fullSizePath;
+		this.SourceImage.src = this.fullSizePath;
 		this.sprite = new Image();
-		this.sprite.src = config.spritePath;
+		this.sprite.src = this.spritePath;
+		this.shdsprite = new Image();
+		this.shdsprite.src = this.shadowSpritePath;
 
 		this.canvas = document.getElementById(canvasId);
 		this.boardAreaEl = document.getElementById("boardArea");
@@ -263,6 +265,7 @@ class Puzzly {
 		// Board size percentage based on original image size
 		// this.scaledPieceSizeRatio = this.boardWidth / this.originalImageSize.width * 100;
 		this.pieceSize = this.boardWidth / this.piecesPerSideHorizontal;
+		this.shadowOffset = this.pieceSize / 100 * 5;
 
 		this.pieceScale = this.pieceSize / this.originalPieceSize;
 		console.log('value to scale by', this.pieceScale)
@@ -649,7 +652,7 @@ class Puzzly {
 	}
 
 	renderJigsawPiece(piece){
-		let el;
+		let el, fgEl, bgEl;
 		if(!piece.isSolved && !Utils.hasGroup(piece)){
 			el = document.createElement('div');
 			el.classList.add('puzzle-piece')
@@ -661,9 +664,6 @@ class Puzzly {
 			el.style.height = piece.pieceHeight + 'px';
 			el.style.top = piece.pageY + "px";
 			el.style.left = piece.pageX + "px";
-			el.style.backgroundImage = `url(${this.spritePath}`;
-			el.style.backgroundPositionX = piece.pageX === 0 ? 0 : '-' + piece.pageX + 'px';
-			el.style.backgroundPositionY = piece.pageY === 0 ? 0 : '-' + piece.pageY + 'px';
 
 			el.setAttribute('data-jigsaw-type', piece.type.join(","))
 			el.setAttribute('data-piece-id', piece.id)
@@ -677,6 +677,35 @@ class Puzzly {
 			el.setAttribute('data-is-inner-piece', piece.isInnerPiece)
 			el.setAttribute('data-num-pieces-from-top-edge', piece.numPiecesFromTopEdge)
 			el.setAttribute('data-num-pieces-from-left-edge', piece.numPiecesFromLeftEdge)
+
+			fgEl = document.createElement('div');
+			fgEl.style.backgroundImage = `url(${this.spritePath}`;
+			fgEl.style.backgroundPositionX = piece.pageX === 0 ? 0 : '-' + piece.pageX + 'px';
+			fgEl.style.backgroundPositionY = piece.pageY === 0 ? 0 : '-' + piece.pageY + 'px';
+			fgEl.style.position = "absolute";
+			fgEl.width = piece.pieceWidth;
+			fgEl.height = piece.pieceHeight;
+			fgEl.style.width = piece.pieceWidth + "px";
+			fgEl.style.height = piece.pieceHeight + 'px';
+			fgEl.style.top = 0;
+			fgEl.style.left = 0;
+			fgEl.style.zIndex = 2;
+
+			bgEl = document.createElement("div");
+			bgEl.style.position = "absolute";
+			bgEl.width = piece.pieceWidth;
+			bgEl.height = piece.pieceHeight;
+			bgEl.style.width = piece.pieceWidth + "px";
+			bgEl.style.height = piece.pieceHeight + 'px';
+			bgEl.style.top = this.shadowOffset + "px";
+			bgEl.style.left = this.shadowOffset + "px";
+			bgEl.style.backgroundImage = `url(${this.shadowSpritePath}`;
+			bgEl.style.backgroundPositionX = piece.pageX === 0 ? 0 : '-' + piece.pageX + 'px';
+			bgEl.style.backgroundPositionY = piece.pageY === 0 ? 0 : '-' + piece.pageY + 'px';
+			bgEl.style.zIndex = 1;
+
+			el.appendChild(fgEl);
+			el.appendChild(bgEl);
 
 			this.canvas.appendChild(el);
 		}

@@ -81,8 +81,11 @@ var api = {
 			const puzzleImgPath = `./uploads/puzzle_${data.imageName}`;
 			await img.toFile(puzzleImgPath);
 
-			const spritePath = './uploads/sprite_' + imageNameWithoutExt + '_' + data.selectedNumPieces + "_" + new Date().getMilliseconds();
-			const pieces = await generatePuzzle(puzzleImgPath, data, spritePath);
+			const timeStamp = new Date().getMilliseconds();
+			const spritePath = './uploads/sprite_' + imageNameWithoutExt + '_' + data.selectedNumPieces + "_" + timeStamp;
+			const shadowSpritePath = './uploads/shdsprite_' + imageNameWithoutExt + '_' + data.selectedNumPieces + "_" + timeStamp;
+
+			const pieces = await generatePuzzle(puzzleImgPath, data, spritePath, shadowSpritePath);
 
 			collection.insertOne(data, function(err, result){
 				if(err) throw new Error(err);
@@ -90,6 +93,7 @@ var api = {
 				res.status(200).send({
 					...result.ops[0],
 					spritePath: spritePath + ".png",
+					shadowSpritePath: shadowSpritePath + ".png",
 					puzzleImgPath,
 					fullSizePath: './uploads/fullsize_' + data.imageName,
 					pieces,

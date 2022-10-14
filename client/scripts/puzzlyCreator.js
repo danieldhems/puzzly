@@ -416,6 +416,7 @@ class PuzzlyCreator {
 			this.newPuzzleForm.style.display = 'none';
 			puzzleConfig.path = response.puzzleImgPath;
 			puzzleConfig.spritePath = response.spritePath;
+			puzzleConfig.shadowSpritePath = response.shadowSpritePath;
 			puzzleConfig.pieces = response.pieces;
 			new Puzzly('canvas', puzzleId, puzzleConfig);
 		}.bind(this)).catch( function(err){
