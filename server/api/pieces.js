@@ -41,6 +41,7 @@ var api = {
 			collection = db.collection(piecesCollection);
 
 			const data = req.body;
+			console.log("attempting to save data", data)
 
 		  collection.insertMany(data, function(err, result){
 			  if(err) throw new Error(err);

@@ -26,12 +26,12 @@ const GeneratorConfig = {
 const generatePuzzle = async (imagePath, puzzleConfig, spriteName, shadowSpriteName) => {
 	loadedImage = await loadImage(imagePath);
 
-	const connectorWitdhRatio = 30;
+	const connectorWidthRatio = 30;
 	
 	GeneratorConfig.spriteName = spriteName;
 	GeneratorConfig.shadowSpriteName = shadowSpriteName;
-	GeneratorConfig.connectorWidthRatio = connectorWitdhRatio;
-	GeneratorConfig.connectorRatio = GeneratorConfig.connectorDistanceFromCornerRatio = 50 - (connectorWitdhRatio/2);
+	GeneratorConfig.connectorWidthRatio = connectorWidthRatio;
+	GeneratorConfig.connectorRatio = GeneratorConfig.connectorDistanceFromCornerRatio = 50 - (connectorWidthRatio/2);
 	GeneratorConfig.piecesPerSideHorizontal = Math.sqrt(puzzleConfig.selectedNumPieces);
 	GeneratorConfig.piecesPerSideVertical = Math.sqrt(puzzleConfig.selectedNumPieces);
 	GeneratorConfig.selectedNumberOfPieces = puzzleConfig.selectedNumPieces;
@@ -205,11 +205,13 @@ const getConnectors = (adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalR
 }
 
 const assignInitialPieceData = (imgX, imgY, piece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i) => {
-	const { width, height } = getPieceWidthAndHeightWithConnectors(piece);
+	let { width, height } = getPieceWidthAndHeightWithConnectors(piece);
+	width = Math.floor(width);
+	height = Math.floor(height);
 	
 	const piecePositionOnSprite = {
-		x: GeneratorConfig.largestPieceSpan * 1.1 * numPiecesFromLeftEdge,
-		y: GeneratorConfig.largestPieceSpan * 1.1 * numPiecesFromTopEdge
+		x: Math.floor(GeneratorConfig.largestPieceSpan * 1.1 * numPiecesFromLeftEdge),
+		y: Math.floor(GeneratorConfig.largestPieceSpan * 1.1 * numPiecesFromTopEdge)
 	};
 
 	const { strokeWidth, shadowOffset, shadowBlur } = GeneratorConfig;
