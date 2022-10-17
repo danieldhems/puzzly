@@ -35,13 +35,14 @@ const generatePuzzle = async (imagePath, puzzleConfig, spriteName, shadowSpriteN
 	GeneratorConfig.piecesPerSideHorizontal = Math.sqrt(puzzleConfig.selectedNumPieces);
 	GeneratorConfig.piecesPerSideVertical = Math.sqrt(puzzleConfig.selectedNumPieces);
 	GeneratorConfig.selectedNumberOfPieces = puzzleConfig.selectedNumPieces;
-	GeneratorConfig.pieceSize = loadedImage.naturalWidth / GeneratorConfig.piecesPerSideHorizontal;
+
+	GeneratorConfig.pieceSize = Math.floor(loadedImage.naturalWidth / GeneratorConfig.piecesPerSideHorizontal);
+
 	GeneratorConfig.connectorDistanceFromCorner = GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorDistanceFromCornerRatio;
 	GeneratorConfig.connectorWidth = GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorWidthRatio;
-	GeneratorConfig.connectorSize = GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorRatio;
+	GeneratorConfig.connectorSize = Math.floor(GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorRatio);
 	GeneratorConfig.connectorLateralControlPointDistance = GeneratorConfig.connectorSize * 1.2;
 	GeneratorConfig.largestPieceSpan = GeneratorConfig.pieceSize + (GeneratorConfig.connectorSize * 2);
-	GeneratorConfig.shadowOffset = GeneratorConfig.pieceSize / 100 * GeneratorConfig.shadowOffsetRatio;
 
 	console.log("GeneratorConfig", GeneratorConfig)
 	
@@ -214,7 +215,7 @@ const assignInitialPieceData = (imgX, imgY, piece, numPiecesFromLeftEdge, numPie
 		y: Math.floor(GeneratorConfig.largestPieceSpan * 1.1 * numPiecesFromTopEdge)
 	};
 
-	const { strokeWidth, shadowOffset, shadowBlur } = GeneratorConfig;
+	const { strokeWidth } = GeneratorConfig;
 
 	return Object.assign({
 		id: i,
@@ -224,8 +225,8 @@ const assignInitialPieceData = (imgX, imgY, piece, numPiecesFromLeftEdge, numPie
 		pageY: piecePositionOnSprite.y,
 		imgW: width,
 		imgH: height,
-		pieceWidth: width + shadowOffset + strokeWidth,
-		pieceHeight: height + shadowOffset + strokeWidth,
+		pieceWidth: width + strokeWidth,
+		pieceHeight: height + strokeWidth,
 		solvedX: imgX,
 		solvedY: imgY,
 		isInnerPiece: piece.type.join(",").indexOf("0") === -1,
@@ -302,7 +303,7 @@ const generateDataForPuzzlePieces = async(piecesPerSideHorizontal, piecesPerSide
 
 		pieces.push(currentPiece);
 
-		createPuzzlePiece(currentPiece, ctx, shdCtx, true);
+		createPuzzlePiece(currentPiece, ctx, shdCtx);
 
 		// reached last piece, start next row
 		if(pieces.length % piecesPerSideHorizontal === 0){
@@ -346,7 +347,12 @@ const generateDataForPuzzlePieces = async(piecesPerSideHorizontal, piecesPerSide
 	writeToPngFile(cnv, GeneratorConfig.spriteName);
 	writeToPngFile(shdCnv, GeneratorConfig.shadowSpriteName);
 
-	return pieces;
+	return {
+		pieces, 
+		pieceSize: GeneratorConfig.pieceSize, 
+		connectorSize: GeneratorConfig.connectorSize,
+		connectorDistanceFromCorner: GeneratorConfig.connectorDistanceFromCorner
+	};
 }
 
 const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = false) => {

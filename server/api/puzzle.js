@@ -85,7 +85,7 @@ var api = {
 			const spritePath = './uploads/sprite_' + imageNameWithoutExt + '_' + data.selectedNumPieces + "_" + timeStamp;
 			const shadowSpritePath = './uploads/shdsprite_' + imageNameWithoutExt + '_' + data.selectedNumPieces + "_" + timeStamp;
 
-			const pieces = await generatePuzzle(puzzleImgPath, data, spritePath, shadowSpritePath);
+			const { pieces, pieceSize, connectorSize, connectorDistanceFromCorner } = await generatePuzzle(puzzleImgPath, data, spritePath, shadowSpritePath);
 
 			collection.insertOne(data, function(err, result){
 				if(err) throw new Error(err);
@@ -97,6 +97,9 @@ var api = {
 					puzzleImgPath,
 					fullSizePath: './uploads/fullsize_' + data.imageName,
 					pieces,
+					pieceSize,
+					connectorSize,
+					connectorDistanceFromCorner
 				})
 			});
 		});

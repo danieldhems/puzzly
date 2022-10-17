@@ -418,6 +418,9 @@ class PuzzlyCreator {
 			puzzleConfig.spritePath = response.spritePath;
 			puzzleConfig.shadowSpritePath = response.shadowSpritePath;
 			puzzleConfig.pieces = response.pieces;
+			puzzleConfig.pieceSize = response.pieceSize,
+			puzzleConfig.connectorSize = response.connectorSize,
+			puzzleConfig.connectorDistanceFromCorner = response.connectorDistanceFromCorner
 			new Puzzly('canvas', puzzleId, puzzleConfig);
 		}.bind(this)).catch( function(err){
 			console.log(err);

@@ -142,41 +142,116 @@ class Puzzly {
 			this.sprite,
 		];
 
-		this.zoomThrottleRate = 7;
-
-		window.addEventListener(this.interactionEventMove, (e) => {
-			if(e.touches?.length === 2){
-				e.preventDefault();
-				const dist = this.getDistanceBetweenTouches(e);
-				let moved;
-				
-				if(this.initialTouchesDistance > dist){
-					moved = (this.initialTouchesDistance - dist / this.zoomThrottleRate).toFixed(6) / 5000;
-					this.zoomLevel = this.zoomLevel - moved > 1 ? this.zoomLevel - moved : this.zoomLevel;
-				} else {
-					moved = (dist - this.initialTouchesDistance / this.zoomThrottleRate).toFixed(6) / 5000;
-					this.zoomLevel += moved;
-				}
-
-				if(moved > 0){
-					this.canvas.style.transform = `scale(${this.zoomLevel})`;
-				}
-			} else {
-				this.mouseMoveFunc
-			}
-		}, { passive: false });
-
-		// here
 		this.loadAssets(assets).then( () => {
 			this.init()
 		})
 	}
 
-	getDistanceBetweenTouches(e){
-		return e.touches?.length === 2 && Math.hypot(
-			e.touches[0].pageX - e.touches[1].pageX,
-			e.touches[0].pageY - e.touches[1].pageY
-		)
+	init(){
+		console.log(this)
+
+		this.zoomLevel = 1;
+
+		this.boardHeight = this.boardWidth = Math.ceil(window.innerHeight / 100 * 60);
+		const boardVerticalSpace = window.innerHeight / 100 * 20;
+		const leftPos = window.innerWidth / 2 - this.boardHeight / 2;
+		this.boardBoundingBox = {
+			top: boardVerticalSpace,
+			right: leftPos + this.boardHeight,
+			left: leftPos,
+			bottom: boardVerticalSpace + this.boardHeight,
+			width: this.boardHeight,
+			height: this.boardHeight,
+		};
+
+		this.boardSize = {
+			width: this.boardHeight,
+			height: this.boardHeight,
+		}
+
+		this.puzzleScale = this.boardWidth / this.selectedWidth * 100;
+
+		this.shadowOffset = this.pieceSize / 100 * 5;
+
+		this.connectorTolerance = Math.round(this.connectorSize / 100 * 50);
+		// this.connectorTolerance = 0;
+
+		this.largestPieceSpan = this.pieceSize + (this.connectorSize * 2);
+
+
+		
+		// this.canvas.style.width = this.getPxString(requiredWidth);
+		// this.canvas.style.height = this.getPxString(requiredHeight);	
+		
+		this.canvasWidth = window.innerWidth;
+		this.canvasHeight = window.innerHeight;
+		
+		this.drawBoardArea();
+
+		this.boardTop = this.boardAreaEl.offsetTop;
+		this.boardRight = this.boardAreaEl.offsetLeft + this.boardAreaEl.offsetWidth;
+		this.boardBottom = this.boardAreaEl.offsetTop + this.boardAreaEl.offsetHeight;
+		this.boardLeft = this.boardAreaEl.offsetLeft;
+		this.boardWidth = this.boardAreaEl.offsetWidth;
+		this.boardHeight = this.boardAreaEl.offsetHeight;
+
+		this.makeSolvedCanvas();
+		this.initiFullImagePreviewer();
+		
+		this.isFullImageViewerActive = false;
+
+		const storage = this.getApplicablePersistence(this.pieces, this.lastSaveDate);
+
+		if(storage?.pieces?.length > 0){
+			storage.pieces.forEach(p => {
+				this.drawPieceManually(p);
+				if(p.group !== undefined && p.group !== null){
+					this.groups[p.group]?.pieces ? this.groups[p.group].pieces.push(p) : this.groups[p.group] = { pieces: [p] };
+				}
+			});
+
+			if(Object.keys(this.groups).length){
+				for(let g in this.groups){
+					this.drawPiecesIntoGroup(g, this.groups[g].pieces);
+				}
+			}
+
+			this.initGroupContainerPositions(storage.pieces)
+		} else {
+			this.generatePieceSectorMap();
+			this.piecePositionMap = this.shuffleArray(this.getRandomCoordsFromSectorMap());
+			this.renderPieces(this.pieces);
+			this.assignPieceConnections();
+
+			this.save(this.allPieces())
+		}
+
+		// this.wrapPiecesAroundBoard();
+		// this.arrangePieces()
+
+		this.timeStarted = new Date().getTime();
+
+		addEventListener("beforeunload", function(e) {
+			this.updateElapsedTime();
+		}.bind(this))
+		
+		this.innerPieces = document.querySelectorAll('.inner-piece');
+
+		window.addEventListener(this.interactionEventDown, this.onMouseDown.bind(this));
+
+		const newPuzzleBtn = document.getElementById("js-create-new-puzzle");
+		newPuzzleBtn.addEventListener(this.interactionEventDown, () => {
+			window.location = "/";
+		})
+
+		window.addEventListener('touchcancel', () => {
+			this.movingPiece = null;
+			this.movingElement = null;
+			this.isTouching = false;
+		})
+
+		window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
+		window.addEventListener('keydown', this.onKeyDown.bind(this));
 	}
 
 	onControlsHandleClick(e){
@@ -232,140 +307,6 @@ class Puzzly {
 		}
 
 		return storage;
-	}
-
-	init(){
-		console.log(this)
-
-		this.zoomLevel = 1;
-
-		this.boardHeight = this.boardWidth = Math.ceil(window.innerHeight / 100 * 60);
-		const boardVerticalSpace = window.innerHeight / 100 * 20;
-		const leftPos = window.innerWidth / 2 - this.boardHeight / 2;
-		this.boardBoundingBox = {
-			top: boardVerticalSpace,
-			right: leftPos + this.boardHeight,
-			left: leftPos,
-			bottom: boardVerticalSpace + this.boardHeight,
-			width: this.boardHeight,
-			height: this.boardHeight,
-		};
-
-		this.boardSize = {
-			width: this.boardHeight,
-			height: this.boardHeight,
-		}
-
-		this.puzzleScale = this.boardWidth / this.selectedWidth * 100;
-
-		// Requested piece size based on original image size
-		this.originalPieceSize = this.originalImageSize.width / this.piecesPerSideHorizontal;
-		// Board size percentage based on original image size
-		// this.scaledPieceSizeRatio = this.boardWidth / this.originalImageSize.width * 100;
-		this.pieceSize = this.boardWidth / this.piecesPerSideHorizontal;
-		this.shadowOffset = this.pieceSize / 100 * 5;
-
-		this.pieceScale = this.pieceSize / this.originalPieceSize;
-		console.log('value to scale by', this.pieceScale)
-
-		this.connectorDistanceFromCornerRatio = this.connectorRatio = 33;
-		this.connectorSize = Math.ceil(this.originalPieceSize / 100 * this.connectorRatio);
-		// this.connectorTolerance = this.connectorSize / 100 * 50;
-		this.connectorTolerance = 0;
-
-		this.connectorDistanceFromCorner = Math.ceil(this.originalPieceSize / 100 * this.connectorDistanceFromCornerRatio);
-
-		this.largestPieceSpan = this.originalPieceSize + (this.connectorSize * 2);
-
-
-		
-		// this.canvas.style.width = this.getPxString(requiredWidth);
-		// this.canvas.style.height = this.getPxString(requiredHeight);	
-		
-		this.canvasWidth = window.innerWidth;
-		this.canvasHeight = window.innerHeight;
-		
-		this.drawBoardArea();
-
-		this.boardTop = this.boardAreaEl.offsetTop;
-		this.boardRight = this.boardAreaEl.offsetLeft + this.boardAreaEl.offsetWidth;
-		this.boardBottom = this.boardAreaEl.offsetTop + this.boardAreaEl.offsetHeight;
-		this.boardLeft = this.boardAreaEl.offsetLeft;
-		this.boardWidth = this.boardAreaEl.offsetWidth;
-		this.boardHeight = this.boardAreaEl.offsetHeight;
-
-		this.makeSolvedCanvas();
-		this.initiFullImagePreviewer();
-
-		// this.setPageScale();
-
-		// window.addEventListener("resize", this.setPageScale.bind(this));
-		
-		this.isFullImageViewerActive = false;
-
-		const storage = this.getApplicablePersistence(this.pieces, this.lastSaveDate);
-
-		if(storage?.pieces?.length > 0){
-			storage.pieces.forEach(p => {
-				this.drawPieceManually(p);
-				if(p.group !== undefined && p.group !== null){
-					this.groups[p.group]?.pieces ? this.groups[p.group].pieces.push(p) : this.groups[p.group] = { pieces: [p] };
-				}
-			});
-
-			if(Object.keys(this.groups).length){
-				for(let g in this.groups){
-					this.drawPiecesIntoGroup(g, this.groups[g].pieces);
-				}
-			}
-
-			this.initGroupContainerPositions(storage.pieces)
-		} else {
-			this.generatePieceSectorMap();
-			this.piecePositionMap = this.shuffleArray(this.getRandomCoordsFromSectorMap());
-			this.renderPieces(this.pieces);
-			this.assignPieceConnections();
-
-			this.save(this.allPieces())
-		}
-
-		// this.wrapPiecesAroundBoard();
-		// this.arrangePieces()
-		this.timeStarted = new Date().getTime();
-
-		addEventListener("beforeunload", function(e) {
-			this.updateElapsedTime();
-		}.bind(this))
-		
-		this.innerPieces = document.querySelectorAll('.inner-piece');
-
-		window.addEventListener(this.interactionEventDown, this.onMouseDown.bind(this));
-		// window.addEventListener('gesturestart', this.onGestureStart.bind(this));
-
-		const newPuzzleBtn = document.getElementById("js-create-new-puzzle");
-		newPuzzleBtn.addEventListener(this.interactionEventDown, () => {
-			window.location = "/";
-		})
-
-		navigator.permissions.query({name: "accelerometer"}).then((perm) => {
-			const laSensor = new window.LinearAccelerationSensor({frequency: 60});
-			laSensor.addEventListener("reading", e => {
-				console.log("accelerating", e);
-				this.acceleration = e;
-			})
-			laSensor.start();
-		});
-
-		this.acceleration = null;
-
-		window.addEventListener('touchcancel', (e) => {
-			this.movingPiece = null;
-			this.movingElement = null;
-			this.isTouching = false;
-		})
-
-		window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
-		window.addEventListener('keydown', this.onKeyDown.bind(this));
 	}
 
 	renderPieces(pieces){
@@ -1869,16 +1810,19 @@ class Puzzly {
 		const piece = this.getPieceFromElement(element, ['jigsaw-type']);
 		const hasLeftPlug = Utils.has(piece.type, "plug", "left");
 		const hasTopPlug = Utils.has(piece.type, "plug", "top");
-		const tolerance = this.connectorTolerance;
+		const tolerance = this.connectorSize / 100 * this.connectorTolerance;
+		
 		switch(side){
 			case "left":
 				const topCalc = hasTopPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner;
-				return {
+				
+				const box = {
 					top: element.offsetTop + topCalc + tolerance,
 					right: element.offsetLeft + this.connectorSize - tolerance,
-					bottom: element.offsetTop + (hasTopPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + this.connectorSize - tolerance,
+					bottom: element.offsetTop + topCalc + this.connectorSize - tolerance,
 					left: element.offsetLeft + tolerance,
 				}
+				return box;
 			case "right":
 				return {
 					top: element.offsetTop + (hasTopPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + tolerance,
@@ -2055,7 +1999,7 @@ class Puzzly {
 
 		const hasLeftPlug = Utils.has(piece.type, "plug", "left");
 		const hasTopPlug = Utils.has(piece.type, "plug", "top");
-		const tolerance = this.connectorTolerance;
+		const tolerance = this.connectorSize / 100 * this.connectorTolerance;
 
 		switch(connector){
 			case 'right':
@@ -2255,7 +2199,7 @@ class Puzzly {
 				} else {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "top");
 				}
-	
+				console.log('checking bottom', thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBoxBottom, targetPieceConnectorBoundingBox, element, targetElement)){
 					connectionFound = "bottom";
 				} else {
@@ -2267,8 +2211,6 @@ class Puzzly {
 		if(checkLeft && !connectionFound){
 			targetElement = this.getElementByPieceId(piece.id - 1);
 			targetPiece = this.getPieceFromElement(targetElement, ['piece-id', 'group', 'is-solved', 'jigsaw-type'])
-			// console.log('checking left connection');
-			// console.log('source', element, 'target', targetElement);
 
 			if(shouldCompare(targetPiece)){
 				if(!this.isMovingSinglePiece){
@@ -2280,7 +2222,7 @@ class Puzzly {
 				}
 
 				let targetContainer, targetPieceConnectorBoundingBox, targetContainerBoundingBox;
-				// console.log('checking left', Utils.hasGroup(targetPiece), targetPiece)
+
 				if(Utils.hasGroup(targetPiece)){
 					targetContainer = this.getGroupTopContainer(targetElement);
 					targetContainerBoundingBox = this.getBoundingBox(targetContainer);
@@ -2320,6 +2262,7 @@ class Puzzly {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "bottom");
 				}
 
+				console.log('checking top', thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBoxTop, targetPieceConnectorBoundingBox)){
 					connectionFound = "top";
 				} else {
@@ -2345,32 +2288,7 @@ class Puzzly {
 	}
 
 	hasCollision(source, target, sourceEl, targetEl){
-		// console.log('source', source);
-		// if(sourceEl){
-		// 	console.log('source element', sourceEl);
-		// }
-		// console.log('target', target);
-		// if(targetEl){
-		// 	console.log('target element', targetEl);
-		// }
 		if([source.left, source.right, source.bottom, source.top, target.left, target.top, target.right, target.bottom].includes(NaN)) return false;
-
-		const sourceInd = document.createElement("div");
-		sourceInd.style.width = source.right - source.left + "px";
-		sourceInd.style.height = source.bottom - source.top + "px";
-		sourceInd.style.position = "fixed";
-		sourceInd.style.top = source.top + "px";
-		sourceInd.style.left = source.left + "px";
-		sourceInd.style.backgroundColor = "red";
-		document.body.prepend(sourceInd);
-		const targetInd = document.createElement("div");
-		targetInd.style.width = target.right - target.left + "px";
-		targetInd.style.height = target.bottom - target.top + "px";
-		targetInd.style.position = "fixed";
-		targetInd.style.top = target.top + "px";
-		targetInd.style.left = target.left + "px";
-		targetInd.style.backgroundColor = "green";
-		document.body.prepend(targetInd);
 		return !(source.left >= target.right || source.top >= target.bottom || 
 		source.right <= target.left || source.bottom <= target.top);
 	}
@@ -2496,13 +2414,12 @@ class Puzzly {
 		const cnv = document.querySelector(`#group-canvas-${groupId}`);
 		const ctx = cnv.getContext("2d");
 		ctx.imageSmoothingEnabled = false;
-console.log('drawing pieces', pieces)
+
 // herron
 		pieces.forEach(p => {
 			const { solvedx, solvedy, pagex, pagey, imgw, imgh } = p.dataset;
-			console.log(solvedx + this.shadowOffset)
 			ctx.drawImage(this.shadowSprite, pagex, pagey, imgw, imgh, parseInt(solvedx) + this.shadowOffset, parseInt(solvedy) + this.shadowOffset, imgw, imgh)
-			p.style.left = "-9999px";
+			p.style.visibility = "hidden";
 		});
 		
 		pieces.forEach(p => {
@@ -2534,7 +2451,7 @@ console.log('drawing pieces', pieces)
 
 		container.style.position = 'absolute';
 
-		this.canvas.prepend(container);
+		this.canvas.appendChild(container);
 		
 		const cnv = document.createElement('canvas');
 		container.prepend(cnv);
@@ -2674,7 +2591,7 @@ console.log('drawing pieces', pieces)
 
 		// Re-draw group with new piece
 		const elementsInTargetGroup = this.getPiecesInGroup(group);
-		const allPieces = [...elementsInTargetGroup, ...followingEls].map(el => this.getPieceFromElement(el, ['piece-id', 'is-solved', 'jigsaw-type', 'solvedx', 'solvedy', 'imgx', 'imgy', 'imgw', 'imgh', 'connections']))
+		const allPieces = [...elementsInTargetGroup, ...followingEls];
 		this.drawPiecesIntoGroup(group, allPieces);
 
 		// Update all connections
@@ -2789,7 +2706,6 @@ console.log('drawing pieces', pieces)
 			if(k == 'is-solved'){
 				let groupIsSolved;
 				if(this.getGroup(el)){
-					console.log("getting group container for el", el)
 					const container = this.getGroupContainer(parseInt(el.dataset.group));
 					if(this.getDataAttributeValue(container, 'is-solved')){
 						groupIsSolved = true;
