@@ -87,13 +87,24 @@ var api = {
 
 			const { pieces, pieceSize, connectorSize, connectorDistanceFromCorner } = await generatePuzzle(puzzleImgPath, data, spritePath, shadowSpritePath);
 
-			collection.insertOne(data, function(err, result){
+			const spritePathWithExt = spritePath + ".png";
+			const shadowSpritePathWithExt = shadowSpritePath + ".png";
+
+			const dbPayload = {
+				...data,
+				pieceSize,
+				connectorSize,
+				connectorDistanceFromCorner,
+				spritePathWithExt,
+				shadowSpritePathWithExt,
+			};
+
+			collection.insertOne(dbPayload, function(err, result){
 				if(err) throw new Error(err);
-				// console.log(pieces)
 				res.status(200).send({
 					...result.ops[0],
-					spritePath: spritePath + ".png",
-					shadowSpritePath: shadowSpritePath + ".png",
+					spritePath: spritePathWithExt,
+					shadowSpritePath: shadowSpritePathWithExt,
 					puzzleImgPath,
 					fullSizePath: './uploads/fullsize_' + data.imageName,
 					pieces,
@@ -119,7 +130,7 @@ var api = {
 		  const puzzle = await puzzles.findOne(puzzleQuery);
 		  const piecesResult = await pieces.find(piecesQuery).toArray();
 			console.log('puzzle found', puzzle)
-		  console.log('pieces found for puzzle', puzzleId)
+		  console.log('pieces found for puzzle', puzzleId, piecesResult)
 
 		  const result = {
 			  ...puzzle,

@@ -30,11 +30,6 @@ class Puzzly {
 
 		this.pieces = config.pieces;
 
-		// alert(JSON.stringify(this.config))
-
-		// this.cropOffsetX = config.crop.selectedOffsetX;
-		// this.cropOffsetY = config.crop.selectedOffsetY;
-
 		this.localStorageStringReplaceKey = "{}";
 		this.LOCAL_STORAGE_PUZZLY_PROGRESS_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_progress`;
 		this.LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_lastSave`;
@@ -169,19 +164,10 @@ class Puzzly {
 			height: this.boardHeight,
 		}
 
-		this.puzzleScale = this.boardWidth / this.selectedWidth * 100;
-
 		this.shadowOffset = this.pieceSize / 100 * 5;
-
 		this.connectorTolerance = Math.round(this.connectorSize / 100 * 50);
-		// this.connectorTolerance = 0;
 
 		this.largestPieceSpan = this.pieceSize + (this.connectorSize * 2);
-
-
-		
-		// this.canvas.style.width = this.getPxString(requiredWidth);
-		// this.canvas.style.height = this.getPxString(requiredHeight);	
 		
 		this.canvasWidth = window.innerWidth;
 		this.canvasHeight = window.innerHeight;
@@ -204,7 +190,7 @@ class Puzzly {
 
 		if(storage?.pieces?.length > 0){
 			storage.pieces.forEach(p => {
-				this.drawPieceManually(p);
+				this.renderJigsawPiece(p);
 				if(p.group !== undefined && p.group !== null){
 					this.groups[p.group]?.pieces ? this.groups[p.group].pieces.push(p) : this.groups[p.group] = { pieces: [p] };
 				}
@@ -2417,13 +2403,13 @@ class Puzzly {
 
 // herron
 		pieces.forEach(p => {
-			const { solvedx, solvedy, pagex, pagey, imgw, imgh } = p.dataset;
+			const { solvedx, solvedy, pagex, pagey, imgw, imgh } = p.dataset || p;
 			ctx.drawImage(this.shadowSprite, pagex, pagey, imgw, imgh, parseInt(solvedx) + this.shadowOffset, parseInt(solvedy) + this.shadowOffset, imgw, imgh)
 			p.style.visibility = "hidden";
 		});
 		
 		pieces.forEach(p => {
-			const { solvedx, solvedy, pagex, pagey, imgw, imgh } = p.dataset;
+			const { solvedx, solvedy, pagex, pagey, imgw, imgh } = p.dataset || p;
 			ctx.drawImage(this.sprite, pagex, pagey, imgw, imgh, solvedx, solvedy, imgw, imgh)
 		});
 	}
