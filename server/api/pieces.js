@@ -34,14 +34,13 @@ module.exports.clean = function(){
 
 var api = {
 	create: function(req, res){
-        const puzzleId = req.params.id;
 		client.connect().then((client, err) => {
 			assert.strictEqual(err, undefined);
 			db = client.db(dbName);
 			collection = db.collection(piecesCollection);
 
 			const data = req.body;
-			// console.log("attempting to save data", data)
+			console.log("attempting to save pieces for first time", data)
 
 		  collection.insertMany(data, function(err, result){
 			  if(err) throw new Error(err);
@@ -85,17 +84,25 @@ var api = {
 				let pieces = db.collection(piecesCollection);
 				let puzzles = db.collection(puzzlesCollection);
 				let query, update;
-				
+				let puzzleId;
+
 				try {
+					puzzleId = data[0].puzzleId;
+
 					data.forEach(async d => {
+						console.log("atempting to save piece", d)
 						query = { _id: new ObjectID(d._id) };
 						delete d._id;
-						update = { "$set": {...d}};
-						await pieces.updateOne(query, update) ? "failure" : "success";
+						delete d.puzzleId;
+						update = { "$set": d };
+						console.log(query)
+						console.log(update)
+						const result = await pieces.updateOne(query, update);
+						console.log("piece update result", result)
 					});
 
 					const puzzleUpdateQuery = {
-						_id: new ObjectID(data[0].puzzleId),
+						_id: new ObjectID(puzzleId),
 					}
 	
 					const puzzleUpdateOp = {
@@ -143,7 +150,7 @@ api.unsolvePiece = function(req, res) {
 
 // Set API CRUD endpoints
 router.get('/:puzzleId', api.read);
-router.post('/:puzzleId', api.create);
-router.put('/:puzzleId', api.update);
+router.post('/', api.create);
+router.put('/', api.update);
 
 module.exports.router = router;

@@ -1,5 +1,5 @@
 var router = require('express').Router();
-var { default: generatePuzzle } = require("./puzzleGenerator");
+var { default: PuzzleGenerator } = require("./puzzleGenerator");
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
@@ -13,12 +13,12 @@ const url = 'mongodb://localhost:27017';
 const dbName = 'puzzly';
 
 const puzzlesCollection = 'puzzles';
-const piecesCollection = 'pieces';
+const piecesCollectionName = 'pieces';	
 
 // Create a new MongoClient
 const client = new MongoClient(url);
 
-let db, collection;
+let db, collection, piecesCollection;
 
 module.exports.clean = function(){
 	client.connect().then((client, err) => {
@@ -38,7 +38,8 @@ var api = {
 		client.connect().then(async (client, err) => {
 			assert.strictEqual(err, undefined);
 			db = client.db(dbName);
-			collection = db.collection(puzzlesCollection);
+			puzzleCollection = db.collection(puzzlesCollection);
+			piecesCollection = db.collection(piecesCollectionName);
 
 			const data = req.body;
 			console.log('create', data);
@@ -85,22 +86,33 @@ var api = {
 			const spritePath = './uploads/sprite_' + imageNameWithoutExt + '_' + data.selectedNumPieces + "_" + timeStamp;
 			const shadowSpritePath = './uploads/shdsprite_' + imageNameWithoutExt + '_' + data.selectedNumPieces + "_" + timeStamp;
 
-			const { pieces, pieceSize, connectorSize, connectorDistanceFromCorner } = await generatePuzzle(puzzleImgPath, data, spritePath, shadowSpritePath);
-
 			const spritePathWithExt = spritePath + ".png";
 			const shadowSpritePathWithExt = shadowSpritePath + ".png";
 
+			const generator = await PuzzleGenerator(puzzleImgPath, data, spritePath, shadowSpritePath);
+
+			const pieceConfigData = {
+				pieceSize: generator.pieceSize,
+				connectorSize: generator.connectorSize,
+				connectorDistanceFromCorner: generator.connectorDistanceFromCorner,
+			}
+
 			const dbPayload = {
 				...data,
-				pieceSize,
-				connectorSize,
-				connectorDistanceFromCorner,
-				spritePathWithExt,
-				shadowSpritePathWithExt,
+				...pieceConfigData,
+				spritePath: spritePathWithExt,
+				shadowSpritePath: shadowSpritePathWithExt,
 			};
 
-			collection.insertOne(dbPayload, function(err, result){
-				if(err) throw new Error(err);
+			puzzleCollection.insertOne(dbPayload)
+			.then(async (result) => {
+				console.log("puzzle added to DB", result.ops)
+				const puzzleId = result.ops[0]._id;
+				const pieces = await generator.generateDataForPuzzlePieces(puzzleId);
+				
+				const presult = await piecesCollection.insertMany(pieces);
+				// console.log("piece insertion result", presult)
+
 				res.status(200).send({
 					...result.ops[0],
 					spritePath: spritePathWithExt,
@@ -108,9 +120,7 @@ var api = {
 					puzzleImgPath,
 					fullSizePath: './uploads/fullsize_' + data.imageName,
 					pieces,
-					pieceSize,
-					connectorSize,
-					connectorDistanceFromCorner
+					...pieceConfigData
 				})
 			});
 		});
@@ -122,15 +132,15 @@ var api = {
 			assert.strictEqual(err, undefined);
 			db = client.db(dbName);
 			const puzzles = db.collection(puzzlesCollection);
-			const pieces = db.collection(piecesCollection);
+			const pieces = db.collection(piecesCollectionName);
 
 			const puzzleQuery = { _id: new ObjectID(puzzleId) }
-			const piecesQuery = { puzzleId: puzzleId }
+			const piecesQuery = { puzzleId: new ObjectID(puzzleId) }
 
 		  const puzzle = await puzzles.findOne(puzzleQuery);
 		  const piecesResult = await pieces.find(piecesQuery).toArray();
 			console.log('puzzle found', puzzle)
-		  console.log('pieces found for puzzle', puzzleId, piecesResult)
+		  // console.log('pieces found for puzzle', puzzleId, piecesResult)
 
 		  const result = {
 			  ...puzzle,

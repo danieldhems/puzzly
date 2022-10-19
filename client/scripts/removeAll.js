@@ -6,7 +6,7 @@ class RemoveAll {
     }
     load(){
         const puzzleId = Utils.getQueryStringValue('puzzleId');
-        fetch(`/api/puzzle/removeAll/pieces/${puzzleId || ""}`, {
+        fetch(`/api/puzzle/removeAll/pieces`, {
             method: 'delete',
             headers: {
                 'content-type': 'application/json'

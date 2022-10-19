@@ -23,7 +23,7 @@ const GeneratorConfig = {
 	strokeStyle: "#000"
 }
 
-const generatePuzzle = async (imagePath, puzzleConfig, spriteName, shadowSpriteName) => {
+const PuzzleGenerator = async function(imagePath, puzzleConfig, spriteName, shadowSpriteName) {
 	loadedImage = await loadImage(imagePath);
 
 	const connectorWidthRatio = 30;
@@ -46,7 +46,10 @@ const generatePuzzle = async (imagePath, puzzleConfig, spriteName, shadowSpriteN
 
 	console.log("GeneratorConfig", GeneratorConfig)
 	
-	return await generateDataForPuzzlePieces(GeneratorConfig.piecesPerSideHorizontal, GeneratorConfig.piecesPerSideVertical);
+	return {
+		...GeneratorConfig,
+		generateDataForPuzzlePieces
+	}
 }
 
 const createPuzzlePiece = async (data, ctxForSprite, ctxForShadowSprite, writeToOwnFile = false) => {
@@ -205,7 +208,7 @@ const getConnectors = (adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalR
 	}
 }
 
-const assignInitialPieceData = (imgX, imgY, piece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i) => {
+const assignInitialPieceData = (puzzleId, imgX, imgY, piece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i) => {
 	let { width, height } = getPieceWidthAndHeightWithConnectors(piece);
 	width = Math.floor(width);
 	height = Math.floor(height);
@@ -219,6 +222,7 @@ const assignInitialPieceData = (imgX, imgY, piece, numPiecesFromLeftEdge, numPie
 
 	return Object.assign({
 		id: i,
+		puzzleId,
 		imgX: imgX,
 		imgY: imgY,
 		pageX: piecePositionOnSprite.x,
@@ -246,7 +250,7 @@ const getRandomPositionOutsideBoardArea = (sector) => {
 	}
 }
 
-const generateDataForPuzzlePieces = async(piecesPerSideHorizontal, piecesPerSideVertical = null) => {
+const generateDataForPuzzlePieces = async(puzzleId) => {
 	const pieces = [];
 
 	var curImgX = 0;
@@ -263,7 +267,7 @@ const generateDataForPuzzlePieces = async(piecesPerSideHorizontal, piecesPerSide
 	let rowCount = 1;
 	let finalRow = false;
 
-	const cnvWidth = cnvHeight = GeneratorConfig.largestPieceSpan * 1.1 * piecesPerSideHorizontal;
+	const cnvWidth = cnvHeight = GeneratorConfig.largestPieceSpan * 1.1 * GeneratorConfig.piecesPerSideHorizontal;
 	const cnv = createCanvas(cnvWidth, cnvHeight);
 	const ctx = cnv.getContext("2d");
 
@@ -273,18 +277,18 @@ const generateDataForPuzzlePieces = async(piecesPerSideHorizontal, piecesPerSide
 	while(!done){
 		let currentPiece = {};
 		// All pieces not on top row
-		if(pieces.length >= piecesPerSideHorizontal){
-			adjacentPieceAbove = pieces[pieces.length - piecesPerSideHorizontal];
+		if(pieces.length >= GeneratorConfig.piecesPerSideHorizontal){
+			adjacentPieceAbove = pieces[pieces.length - GeneratorConfig.piecesPerSideHorizontal];
 		}
 
 		// Last piece in row, next piece should be a corner or right side
-		if(pieces.length > 1 && pieces.length % (piecesPerSideHorizontal - 1) === 0){
+		if(pieces.length > 1 && pieces.length % (GeneratorConfig.piecesPerSideHorizontal - 1) === 0){
 			endOfRow = true;
 		} else {
 			endOfRow = false;
 		}
 
-		if(rowCount === piecesPerSideVertical){
+		if(rowCount === GeneratorConfig.piecesPerSideVertical){
 			finalRow = true;
 		}
 
@@ -298,7 +302,7 @@ const generateDataForPuzzlePieces = async(piecesPerSideHorizontal, piecesPerSide
 		}
 
 		currentPiece.type = getConnectors(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
-		currentPiece = assignInitialPieceData(curImgX, curImgY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
+		currentPiece = assignInitialPieceData(puzzleId, curImgX, curImgY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
 		// console.log("generated piece", currentPiece)
 
 		pieces.push(currentPiece);
@@ -306,10 +310,10 @@ const generateDataForPuzzlePieces = async(piecesPerSideHorizontal, piecesPerSide
 		createPuzzlePiece(currentPiece, ctx, shdCtx);
 
 		// reached last piece, start next row
-		if(pieces.length % piecesPerSideHorizontal === 0){
+		if(pieces.length % GeneratorConfig.piecesPerSideHorizontal === 0){
 			curImgX = 0;
 
-			const firstPieceOnRowAbove = pieces[pieces.length - piecesPerSideHorizontal];
+			const firstPieceOnRowAbove = pieces[pieces.length - GeneratorConfig.piecesPerSideHorizontal];
 
 			curImgY = firstPieceOnRowAbove.imgY + firstPieceOnRowAbove.imgH - GeneratorConfig.connectorSize;
 
@@ -319,7 +323,7 @@ const generateDataForPuzzlePieces = async(piecesPerSideHorizontal, piecesPerSide
 			rowCount++;
 		} else {
 			if(rowCount > 1){
-				const nextPieceAbove = pieces[pieces.length - piecesPerSideHorizontal];
+				const nextPieceAbove = pieces[pieces.length - GeneratorConfig.piecesPerSideHorizontal];
 
 				if(pieceHelper.has(currentPiece.type, "plug", "top") && pieceHelper.has(nextPieceAbove.type, "plug", "bottom")){
 					curImgY += GeneratorConfig.connectorSize;
@@ -347,12 +351,7 @@ const generateDataForPuzzlePieces = async(piecesPerSideHorizontal, piecesPerSide
 	writeToPngFile(cnv, GeneratorConfig.spriteName);
 	writeToPngFile(shdCnv, GeneratorConfig.shadowSpriteName);
 
-	return {
-		pieces, 
-		pieceSize: GeneratorConfig.pieceSize, 
-		connectorSize: GeneratorConfig.connectorSize,
-		connectorDistanceFromCorner: GeneratorConfig.connectorDistanceFromCorner
-	};
+	return pieces;
 }
 
 const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = false) => {
@@ -473,4 +472,4 @@ const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = 
 	return path;
 }
 
-exports.default = generatePuzzle;
+exports.default = PuzzleGenerator;

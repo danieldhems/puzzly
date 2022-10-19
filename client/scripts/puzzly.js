@@ -135,6 +135,7 @@ class Puzzly {
 		const assets = [
 			this.SourceImage,
 			this.sprite,
+			this.shadowSprite,
 		];
 
 		this.loadAssets(assets).then( () => {
@@ -187,6 +188,7 @@ class Puzzly {
 		this.isFullImageViewerActive = false;
 
 		const storage = this.getApplicablePersistence(this.pieces, this.lastSaveDate);
+		console.log("storage", storage)
 
 		if(storage?.pieces?.length > 0){
 			storage.pieces.forEach(p => {
@@ -196,6 +198,8 @@ class Puzzly {
 				}
 			});
 
+			// trout
+			console.log(this.groups)
 			if(Object.keys(this.groups).length){
 				for(let g in this.groups){
 					this.drawPiecesIntoGroup(g, this.groups[g].pieces);
@@ -208,8 +212,6 @@ class Puzzly {
 			this.piecePositionMap = this.shuffleArray(this.getRandomCoordsFromSectorMap());
 			this.renderPieces(this.pieces);
 			this.assignPieceConnections();
-
-			this.save(this.allPieces())
 		}
 
 		// this.wrapPiecesAroundBoard();
@@ -399,8 +401,8 @@ class Puzzly {
 		const solvedCnvContainer = document.getElementById('group-container-1111');
 		solvedCnvContainer.style.top = this.getPxString(this.boardTop);
 		solvedCnvContainer.style.left = this.getPxString(this.boardLeft);
-		solvedCnvContainer.style.width = this.boardWidth;
-		solvedCnvContainer.style.height = this.boardHeight;
+		solvedCnvContainer.style.width = this.boardWidth + this.shadowOffset;
+		solvedCnvContainer.style.height = this.boardHeight + this.shadowOffset;
 		const solvedCnv = document.getElementById('group-canvas-1111');
 		solvedCnv.width = this.boardWidth;
 		solvedCnv.height = this.boardHeight;
@@ -492,65 +494,111 @@ class Puzzly {
 
 	renderJigsawPiece(piece){
 		let el, fgEl, bgEl;
-		if(!piece.isSolved && !Utils.hasGroup(piece)){
-			el = document.createElement('div');
-			el.classList.add('puzzle-piece')
-			
-			el.style.position = "absolute";
-			el.width = piece.pieceWidth;
-			el.height = piece.pieceHeight;
-			el.style.width = piece.pieceWidth + "px";
-			el.style.height = piece.pieceHeight + 'px';
-			el.style.top = piece.pageY + "px";
-			el.style.left = piece.pageX + "px";
 
-			el.setAttribute('data-jigsaw-type', piece.type.join(","))
-			el.setAttribute('data-piece-id', piece.id)
-			el.setAttribute('data-puzzle-id', piece.puzzleId)
-			el.setAttribute('data-imgX', piece.imgX)
-			el.setAttribute('data-imgy', piece.imgY)
-			el.setAttribute('data-solvedX', piece.solvedX)
-			el.setAttribute('data-solvedY', piece.solvedY)
-			el.setAttribute('data-pageX', piece.pageX)
-			el.setAttribute('data-pageY', piece.pageY)
-			el.setAttribute('data-imgW', piece.imgW)
-			el.setAttribute('data-imgH', piece.imgH)
-			el.setAttribute('data-is-inner-piece', piece.isInnerPiece)
-			el.setAttribute('data-num-pieces-from-top-edge', piece.numPiecesFromTopEdge)
-			el.setAttribute('data-num-pieces-from-left-edge', piece.numPiecesFromLeftEdge)
+		const solvedCnvContainer = document.getElementById('group-container-1111');
 
-			fgEl = document.createElement('div');
-			fgEl.classList.add('puzzle-piece-fg');
-			fgEl.style.backgroundImage = `url(${this.spritePath}`;
-			fgEl.style.backgroundPositionX = piece.pageX === 0 ? 0 : '-' + piece.pageX + 'px';
-			fgEl.style.backgroundPositionY = piece.pageY === 0 ? 0 : '-' + piece.pageY + 'px';
-			fgEl.style.position = "absolute";
-			fgEl.width = piece.pieceWidth;
-			fgEl.height = piece.pieceHeight;
-			fgEl.style.width = piece.pieceWidth + "px";
-			fgEl.style.height = piece.pieceHeight + 'px';
-			fgEl.style.top = 0;
-			fgEl.style.left = 0;
-			fgEl.style.zIndex = 2;
+		el = document.createElement('div');
+		el.classList.add('puzzle-piece')
+		
+		el.style.position = "absolute";
+		el.width = piece.pieceWidth;
+		el.height = piece.pieceHeight;
+		el.style.width = piece.pieceWidth + "px";
+		el.style.height = piece.pieceHeight + 'px';
+		el.style.top = (!!piece.group ? piece.solvedY : piece.pageY) + "px";
+		el.style.left = (!!piece.group ? piece.solvedX : piece.pageX) + "px";
 
-			bgEl = document.createElement("div");
-			bgEl.classList.add('puzzle-piece-bg');
-			bgEl.style.position = "absolute";
-			bgEl.width = piece.pieceWidth;
-			bgEl.height = piece.pieceHeight;
-			bgEl.style.width = piece.pieceWidth + "px";
-			bgEl.style.height = piece.pieceHeight + 'px';
-			bgEl.style.top = this.shadowOffset + "px";
-			bgEl.style.left = this.shadowOffset + "px";
-			bgEl.style.backgroundImage = `url(${this.shadowSpritePath}`;
-			bgEl.style.backgroundPositionX = piece.pageX === 0 ? 0 : '-' + piece.pageX + 'px';
-			bgEl.style.backgroundPositionY = piece.pageY === 0 ? 0 : '-' + piece.pageY + 'px';
-			bgEl.style.zIndex = 1;
+		el.setAttribute('data-jigsaw-type', piece.type.join(","))
+		el.setAttribute('data-piece-id', piece.id)
+		el.setAttribute('data-piece-id-in-persistence', piece._id)
+		el.setAttribute('data-puzzle-id', piece.puzzleId)
+		el.setAttribute('data-imgX', piece.imgX)
+		el.setAttribute('data-imgy', piece.imgY)
+		el.setAttribute('data-solvedX', piece.solvedX)
+		el.setAttribute('data-solvedY', piece.solvedY)
+		el.setAttribute('data-pageX', piece.pageX)
+		el.setAttribute('data-pageY', piece.pageY)
+		el.setAttribute('data-imgW', piece.imgW)
+		el.setAttribute('data-imgH', piece.imgH)
+		el.setAttribute('data-is-inner-piece', piece.isInnerPiece)
+		el.setAttribute('data-num-pieces-from-top-edge', piece.numPiecesFromTopEdge)
+		el.setAttribute('data-num-pieces-from-left-edge', piece.numPiecesFromLeftEdge)
+		
+		if(!!piece.group){
+			el.setAttribute('data-group', piece.group)
+		}
 
-			el.appendChild(fgEl);
-			el.appendChild(bgEl);
+		fgEl = document.createElement('div');
+		fgEl.classList.add('puzzle-piece-fg');
+		fgEl.style.backgroundImage = `url(${this.spritePath}`;
+		fgEl.style.backgroundPositionX = piece.pageX === 0 ? 0 : '-' + piece.pageX + 'px';
+		fgEl.style.backgroundPositionY = piece.pageY === 0 ? 0 : '-' + piece.pageY + 'px';
+		fgEl.style.position = "absolute";
+		fgEl.width = piece.pieceWidth;
+		fgEl.height = piece.pieceHeight;
+		fgEl.style.width = piece.pieceWidth + "px";
+		fgEl.style.height = piece.pieceHeight + 'px';
+		fgEl.style.top = 0;
+		fgEl.style.left = 0;
+		fgEl.style.zIndex = 2;
 
+		bgEl = document.createElement("div");
+		bgEl.classList.add('puzzle-piece-bg');
+		bgEl.style.position = "absolute";
+		bgEl.width = piece.pieceWidth;
+		bgEl.height = piece.pieceHeight;
+		bgEl.style.width = piece.pieceWidth + "px";
+		bgEl.style.height = piece.pieceHeight + 'px';
+		bgEl.style.top = this.shadowOffset + "px";
+		bgEl.style.left = this.shadowOffset + "px";
+		bgEl.style.backgroundImage = `url(${this.shadowSpritePath}`;
+		bgEl.style.backgroundPositionX = piece.pageX === 0 ? 0 : '-' + piece.pageX + 'px';
+		bgEl.style.backgroundPositionY = piece.pageY === 0 ? 0 : '-' + piece.pageY + 'px';
+		bgEl.style.zIndex = 1;
+
+		el.appendChild(fgEl);
+		el.appendChild(bgEl);
+
+		if(!Utils.hasGroup(piece)){
 			this.canvas.appendChild(el);
+		} else {
+			el.style.visibility = "hidden";
+
+			if(piece.isSolved === undefined){
+				let groupContainer = document.querySelector(`#group-container-${piece.group}`);
+	
+				if(!groupContainer){
+					groupContainer = document.createElement('div');
+					groupContainer.classList.add('group-container');
+					groupContainer.setAttribute('id', `group-container-${piece.group}`);
+					groupContainer.style.width = this.getPxString(this.boardSize.width);
+					groupContainer.style.height = this.getPxString(this.boardSize.size);
+					groupContainer.style.position = "absolute";
+					groupContainer.style.top = piece.containerY + "px";
+					groupContainer.style.left = piece.containerX + "px";
+					this.canvas.appendChild(groupContainer);
+				}
+	
+				groupContainer.appendChild(el);
+	
+				let groupCanvas = groupContainer.querySelector(`#group-canvas-${piece.group}`);
+				if(!groupCanvas){
+					groupCanvas = document.createElement('canvas');
+					groupCanvas.id = `group-canvas-${piece.group}`;
+					groupCanvas.classList.add('group-canvas');
+					groupCanvas.width = this.boardSize.width + this.shadowOffset;
+					groupCanvas.height = this.boardSize.height + this.shadowOffset;
+					groupCanvas.style.width = this.getPxString(this.boardSize.width + this.shadowOffset);
+					groupCanvas.style.height = this.getPxString(this.boardSize.height + this.shadowOffset);
+					groupContainer.appendChild(groupCanvas);
+				}
+	
+				if(piece.isSolved && !this.getDataAttributeValue(groupContainer, 'data-is-solved')){
+					this.setElementAttribute(groupContainer, 'data-is-solved', true);
+				}
+			} else {
+				solvedCnvContainer.append(el);
+			}
 		}
 	}
 
@@ -1253,6 +1301,7 @@ class Puzzly {
 	}
 
 	loadAssets(assets){
+		console.log("assets to load", assets)
 		let promises = [];
 		for(let i=0,l=assets.length;i<l;i++){
 			promises.push(this.loadAsset(assets[i]).then(assetData => this.loadedAssets.push(assetData)));
@@ -2403,14 +2452,39 @@ class Puzzly {
 
 // herron
 		pieces.forEach(p => {
-			const { solvedx, solvedy, pagex, pagey, imgw, imgh } = p.dataset || p;
-			ctx.drawImage(this.shadowSprite, pagex, pagey, imgw, imgh, parseInt(solvedx) + this.shadowOffset, parseInt(solvedy) + this.shadowOffset, imgw, imgh)
-			p.style.visibility = "hidden";
+			const d = p.dataset || p;
+			const data = {
+				spriteX: d.pagex || d.pageX,
+				spriteY: d.pagey || d.pageY,
+				pagex: !!d.group ? d.solvedX : (d.pagex || d.pageX), 
+				pagey: !!d.group ? d.solvedY : (d.pagey || d.pageY),
+				imgw: d.imgw || d.imgW, 
+				imgh: d.imgh || d.imgH,
+			};
+
+			ctx.drawImage(this.shadowSprite, data.spriteX, data.spriteY, data.imgw, data.imgh, parseInt(data.pagex) + this.shadowOffset, parseInt(data.pagey) + this.shadowOffset, data.imgw, data.imgh);
+			if(p instanceof HTMLDivElement){
+				p.style.visibility = "hidden";
+			} else {
+				const el = this.getElementByPieceId(p.id);
+				el.style.visibility = "hidden";
+			}
 		});
 		
 		pieces.forEach(p => {
-			const { solvedx, solvedy, pagex, pagey, imgw, imgh } = p.dataset || p;
-			ctx.drawImage(this.sprite, pagex, pagey, imgw, imgh, solvedx, solvedy, imgw, imgh)
+			const d = p.dataset || p;
+			const data = {
+				spriteX: d.pagex || d.pageX,
+				spriteY: d.pagey || d.pageY,
+				pagex: d.solvedx || d.solvedX, 
+				pagey: d.solvedy || d.solvedY,
+				imgw: d.imgw || d.imgW, 
+				imgh: d.imgh || d.imgH,
+			};
+
+			console.log("data", data)
+
+			ctx.drawImage(this.sprite, data.spriteX, data.spriteY, data.imgw, data.imgh, parseInt(data.pagex), parseInt(data.pagey), data.imgw, data.imgh);
 		});
 	}
 
@@ -2443,10 +2517,10 @@ class Puzzly {
 		container.prepend(cnv);
 		cnv.classList.add('group-canvas');
 		cnv.setAttribute('id', `group-canvas-${group}`);
-		cnv.style.width = this.getPxString(this.boardSize.width);
-		cnv.width = this.boardSize.width;
-		cnv.style.height = this.getPxString(this.boardSize.height);
-		cnv.height = this.boardSize.height;
+		cnv.style.width = this.getPxString(this.boardSize.width) + this.shadowOffset;
+		cnv.width = this.boardSize.width + this.shadowOffset;
+		cnv.style.height = this.getPxString(this.boardSize.height) + this.shadowOffset;
+		cnv.height = this.boardSize.height + this.shadowOffset;
 
 		const ctx = cnv.getContext("2d");
 		ctx.imageSmoothingEnabled = false;
@@ -2490,7 +2564,7 @@ class Puzzly {
 
 		this.drawPiecesIntoGroup(groupId, [elementA, elementB]);
 
-		this.save([elementA, elementB]);
+		// this.save([elementA, elementB]);
 
 		return {
 			groupId,
@@ -2732,8 +2806,8 @@ class Puzzly {
 			payload.push(this.getPieceFromElement(p, this.DATA_ATTR_KEYS));
 		});
 	
-		const progressKey = getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_PROGRESS_KEY");
-		const lastSaveKey = getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY");
+		const progressKey = this.getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_PROGRESS_KEY");
+		const lastSaveKey = this.getUniqueLocalStorageKeyForPuzzle("LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY");
 	
 		console.info(`[Puzzly] Saving to local storage, key ${progressKey}:`, payload)
 		localStorage.setItem(progressKey, JSON.stringify(payload));
@@ -2756,14 +2830,11 @@ class Puzzly {
 		const payload = [];
 	
 		pieces.forEach( p => {
-			delete p._id;
 			payload.push(this.getPieceFromElement(p, this.DATA_ATTR_KEYS));
 		});
 		
-		const isFirstSave = !payload[0]?._id;
-	
-		fetch(`/api/pieces/${this.puzzleId}`, {
-			method: isFirstSave ? 'post' : 'put',
+		fetch(`/api/pieces`, {
+			method: 'put',
 			headers: {
 				'Content-Type': 'Application/json'
 			},
@@ -2777,10 +2848,6 @@ class Puzzly {
 			return res.json() 
 		})
 		.then( res => {
-			if(isFirstSave){
-				this.setElementIdsFromPersistence(res.data)
-			}
-	
 			if(res.status === "failure"){
 				console.info('[Puzzly] Save to DB failed, saving to Local Storage instead.');
 				localStorage.setItem('puzzly', {
