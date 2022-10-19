@@ -225,6 +225,8 @@ const assignInitialPieceData = (puzzleId, imgX, imgY, piece, numPiecesFromLeftEd
 		puzzleId,
 		imgX: imgX,
 		imgY: imgY,
+		spriteX: piecePositionOnSprite.x,
+		spriteY: piecePositionOnSprite.y,
 		pageX: piecePositionOnSprite.x,
 		pageY: piecePositionOnSprite.y,
 		imgW: width,
