@@ -23,6 +23,8 @@ class PuzzlyCreator {
 
 		this.boardSize = Math.ceil(window.innerHeight / 100 * 60);
 
+		this.imagePreviewType = "toggle";
+
 		this.puzzleSizeInputField = document.querySelector('#puzzle-size-input-field');
 		this.puzzleSizeInputLabel = document.querySelector('#puzzle-size-input-label');
 		this.ControlsElPreviewButton = document.getElementById('preview');
@@ -42,6 +44,9 @@ class PuzzlyCreator {
 		this.imageCropDragHandleTR = document.querySelector('#image-crop-drag-handle-tr');
 		this.imageCropDragHandleBR = document.querySelector('#image-crop-drag-handle-br');
 		this.imageCropDragHandleBL = document.querySelector('#image-crop-drag-handle-bl');
+		
+		this.imagePreviewTypeToggleRadio = document.querySelector("#image-preview-type-toggle");
+		this.imagePreviewTypeAlwaysOnRadio = document.querySelector("#image-preview-type-always-on");
 
 		this.imageCropDragHandlesInUse = false;
 
@@ -64,6 +69,15 @@ class PuzzlyCreator {
 		this.puzzleSizeInputField.addEventListener('input', function(e) {
 			this.puzzleSizeInputLabel.textContent = this.selectedNumPieces = PuzzleSizes[e.target.value].numPieces;
 		}.bind(this))
+
+		this.imagePreviewTypeToggleRadio.addEventListener('change', () => {
+			this.imagePreviewType = "toggle";
+		});
+
+		this.imagePreviewTypeAlwaysOnRadio.addEventListener('change', () => {
+			console.log(this)
+			this.imagePreviewType = "alwaysOn";
+		});
 		
 		this.chkHighlights.addEventListener("input", function(e) {
 			this.debugOptions.highlightConnectingPieces = e.target.checked;
@@ -390,17 +404,18 @@ class PuzzlyCreator {
 		.then( response => response.json() )
 	}
 
-	createPuzzle(opts = {}){
+	createPuzzle(){
 		const puzzleConfig = {
 			...this.sourceImage,
 			...this.crop,
 			debugOptions: this.debugOptions,
 			selectedNumPieces: this.selectedNumPieces,
+			imagePreviewType: this.imagePreviewType,
 			boardSize: this.boardSize,
 			originalImageSize: this.sourceImage.dimensions,
 			pieceSize: this.sourceImage.dimensions.width / this.piecesPerSide,
 		}
-		
+		console.log("sending to server", puzzleConfig)
 		fetch('/api/puzzle', {
 			body: JSON.stringify(puzzleConfig),
 			method: 'POST',
@@ -414,10 +429,11 @@ class PuzzlyCreator {
 			const puzzleId = response._id;
 			Utils.insertUrlParam('puzzleId', puzzleId);
 			this.newPuzzleForm.style.display = 'none';
-			puzzleConfig.path = response.puzzleImgPath;
+			puzzleConfig.puzzleImgPath = response.puzzleImgPath;
 			puzzleConfig.spritePath = response.spritePath;
 			puzzleConfig.shadowSpritePath = response.shadowSpritePath;
 			puzzleConfig.pieces = response.pieces;
+			puzzleConfig.imagePreviewType = response.imagePreviewType;
 			puzzleConfig.pieceSize = response.pieceSize,
 			puzzleConfig.connectorSize = response.connectorSize,
 			puzzleConfig.connectorDistanceFromCorner = response.connectorDistanceFromCorner

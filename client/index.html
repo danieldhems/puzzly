@@ -48,6 +48,19 @@
                           <input type="range" class="form-range" min="0" max="19" id="puzzle-size-input-field">
                         </div>
                       </div>
+                      <div class="form-label-row">
+                        <div class="form-label-row--heading">
+                          <span>Image preview type</span>
+                        </div>
+                        <div>
+                          <label for="image-preview-type-toggle">Toggle</label>
+                          <input type="radio" name="image-preview-type" id="image-preview-type-toggle" value="toggle" checked="checked" />
+                        </div>
+                        <div>
+                          <label for="image-preview-type-always-on">Always on</label>
+                          <input type="radio" name="image-preview-type" id="image-preview-type-always-on" value="always-on" />
+                        </div>
+                      </div>
                       <div class="js-admin-only">
                         <div id="puzzle-setup--debug-highlights" class="form-label-row align-content-row">
                           <label for="chk-highlights">Highlight pieces?</label>
@@ -76,12 +89,12 @@
     </div>
     <div id="canvas">
       <div id="boardArea"></div>
+      <div id="full-image-viewer"></div>
       <div id="group-container-1111" class="group-container">
         <canvas id="group-canvas-1111"></canvas>
       </div>
     </div>
     <div id="debug-info"></div>
-    <canvas id="full-image-viewer"></canvas>
     <div id="controls">
       <div id="controls-handle">O / X</div>
       <div id="controls-panel" class="is-hidden">

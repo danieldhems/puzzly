@@ -255,6 +255,13 @@ label, input[type=checkbox] {
     display: block;
     margin-bottom: 1em;
 }
+.form-label-row [type=radio] {
+    display: inline;
+}
+
+.form-label-row--heading {
+    margin-bottom: .3em;
+}
 
 .centered {
     display: flex;
@@ -268,8 +275,6 @@ label, input[type=checkbox] {
 
 #full-image-viewer {
     position: absolute;
-    display: none;
-    z-index: 100;
 }
 
 #controls {

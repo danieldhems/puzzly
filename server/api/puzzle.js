@@ -100,6 +100,7 @@ var api = {
 			const dbPayload = {
 				...data,
 				...pieceConfigData,
+				puzzleImgPath,
 				spritePath: spritePathWithExt,
 				shadowSpritePath: shadowSpritePathWithExt,
 			};
@@ -115,12 +116,8 @@ var api = {
 
 				res.status(200).send({
 					...result.ops[0],
-					spritePath: spritePathWithExt,
-					shadowSpritePath: shadowSpritePathWithExt,
-					puzzleImgPath,
-					fullSizePath: './uploads/fullsize_' + data.imageName,
 					pieces,
-					...pieceConfigData
+					...pieceConfigData,
 				})
 			});
 		});

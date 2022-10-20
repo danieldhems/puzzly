@@ -58,12 +58,14 @@ class Puzzly {
 		this.innerPiecesVisible = config.innerPiecesVisible !== undefined ? config.innerPiecesVisible : true;
 		this.movingPieces = [];
 		this.loadedAssets = [];
-		this.SourceImage = new Image();
-		this.SourceImage.src = this.fullSizePath;
+		this.previewImage = new Image();
+		this.previewImage.src = this.puzzleImgPath;
 		this.sprite = new Image();
 		this.sprite.src = this.spritePath;
 		this.shadowSprite = new Image();
 		this.shadowSprite.src = this.shadowSpritePath;
+
+		this.previewImageAlwaysOn = true;
 
 		this.canvas = document.getElementById(canvasId);
 		this.boardAreaEl = document.getElementById("boardArea");
@@ -124,7 +126,12 @@ class Puzzly {
 		this.soundsBtnOnLabel.style.display = 'none';
 		this.isPreviewActive = false;
 
-		this.previewBtn.addEventListener(this.interactionEventDown, this.togglePreviewer.bind(this))
+		if(this.imagePreviewType === "alwaysOn"){
+			this.previewBtn.style.display = "none";
+		} else {
+			this.previewBtn.addEventListener(this.interactionEventDown, this.togglePreviewer.bind(this))
+		}
+
 		this.filterBtn.addEventListener(this.interactionEventDown, this.toggleInnerPieces.bind(this))
 		this.soundsBtn.addEventListener(this.interactionEventDown, this.toggleSounds.bind(this))
 
@@ -133,7 +140,7 @@ class Puzzly {
 		];
 
 		const assets = [
-			this.SourceImage,
+			this.previewImage,
 			this.sprite,
 			this.shadowSprite,
 		];
@@ -2573,20 +2580,15 @@ class Puzzly {
 	initiFullImagePreviewer(){
 		this.fullImageViewerEl.style.left = this.boardLeft + "px";
 		this.fullImageViewerEl.style.top = this.boardTop + "px";
-		this.fullImageViewerEl.setAttribute('width', this.boardWidth);
-		this.fullImageViewerEl.setAttribute('height', this.boardHeight);
-		const previewctx = this.fullImageViewerEl.getContext('2d');
-		previewctx.drawImage(
-			this.SourceImage, 
-			this.selectedOffsetX,
-			this.selectedOffsetY,
-			Math.round(this.selectedWidth),
-			Math.round(this.selectedHeight),
-			0,
-			0, 
-			Math.round(this.boardWidth), 
-			Math.round(this.boardHeight)
-		)
+		this.fullImageViewerEl.style.width = this.boardWidth + "px";
+		this.fullImageViewerEl.style.height = this.boardHeight + "px";
+		this.fullImageViewerEl.style.background = `url(${this.puzzleImgPath}) no-repeat`;
+
+		if(this.imagePreviewType === "alwaysOn"){
+			this.fullImageViewerEl.style.opacity = .2;
+		} else {
+			this.fullImageViewerEl.style.display = "none";
+		}
 	}
 
 	isPuzzleComplete(){
