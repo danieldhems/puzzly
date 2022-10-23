@@ -10,7 +10,6 @@ class Puzzly {
 		Object.assign(this, {
 			...config,
 			debug: true,
-			drawBoundingBox: false,
 			showDebugInfo: false,
 			backgroundImages: [
 				{
@@ -26,9 +25,10 @@ class Puzzly {
 			drawSquares: false,
 		});
 
-		console.log(this)
+		console.log(config)
 
 		this.pieces = config.pieces;
+		this.connectorSize = this.connectorWidth;
 
 		this.localStorageStringReplaceKey = "{}";
 		this.LOCAL_STORAGE_PUZZLY_PROGRESS_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_progress`;
@@ -173,7 +173,14 @@ class Puzzly {
 		}
 
 		this.shadowOffset = this.pieceSize / 100 * 5;
-		this.connectorTolerance = Math.round(this.connectorSize / 100 * 50);
+
+		this.connectorToleranceAmount = 40;
+		this.connectorTolerance = this.connectorSize / 100 * ((100 - this.connectorToleranceAmount) / 2);
+
+		
+		this.floatToleranceAmount = 20;
+		this.floatTolerance = this.pieceSize / 100 * this.floatToleranceAmount;
+		this.collisionBoxWidth = this.pieceSize - this.floatTolerance;
 
 		this.largestPieceSpan = this.pieceSize + (this.connectorSize * 2);
 		
@@ -205,7 +212,6 @@ class Puzzly {
 				}
 			});
 
-			// trout
 			console.log(this.groups)
 			if(Object.keys(this.groups).length){
 				for(let g in this.groups){
@@ -935,7 +941,7 @@ class Puzzly {
 	onMouseUp(e){
 		if(this.isMouseDown || this.isTouching){
 			const element = this.movingPiece;
-			console.log('moving piece', element)
+			// console.log('moving piece', element)
 			// console.log('element position top', element.offsetTop, 'left', element.offsetLeft)
 			const thisPiece = this.getPieceFromElement(element, ['connects-to']);
 
@@ -1742,83 +1748,77 @@ class Puzzly {
 		});
 	}
 
-	getConnectorBoundingBox(element, side){
+	getConnectorBoundingBox(element, side, drawBoundingBox = false){
 		const piece = this.getPieceFromElement(element, ['jigsaw-type']);
 		const hasLeftPlug = Utils.has(piece.type, "plug", "left");
 		const hasTopPlug = Utils.has(piece.type, "plug", "top");
-		const tolerance = this.connectorSize / 100 * this.connectorTolerance;
+
+		const tolerance = this.connectorTolerance;
+		let box;
+
+		// salmon
+		// console.log("connectorsize", this.connectorSize)
+		// console.log("tolerance setting", this.connectorTolerance)
+		// console.log("percentage of", this.connectorSize / 100 * this.connectorTolerance)
+		// console.log("tolerance", tolerance, "tolerance", tolerance)
 		
+		const topBoundary = hasTopPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner;
+		const leftBoundary = hasLeftPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner;
+
 		switch(side){
 			case "left":
-				const topCalc = hasTopPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner;
-				
-				const box = {
-					top: element.offsetTop + topCalc + tolerance,
+				box = {
+					top: element.offsetTop + topBoundary + tolerance,
 					right: element.offsetLeft + this.connectorSize - tolerance,
-					bottom: element.offsetTop + topCalc + this.connectorSize - tolerance,
+					bottom: element.offsetTop + topBoundary + this.connectorSize - tolerance,
 					left: element.offsetLeft + tolerance,
 				}
-				return box;
+				break;
 			case "right":
-				return {
-					top: element.offsetTop + (hasTopPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + tolerance,
+				box = {
+					top: element.offsetTop + topBoundary + tolerance,
 					right: element.offsetLeft + element.offsetWidth - tolerance,
-					bottom: element.offsetTop + (hasTopPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + this.connectorSize - tolerance,
+					bottom: element.offsetTop + topBoundary + this.connectorSize - tolerance,
 					left: element.offsetLeft + element.offsetWidth - this.connectorSize + tolerance,
 				}
+				break;
 			case "bottom":
-				return {
-					top: element.offsetTop + element.offsetHeight - this.connectorSize + tolerance,
-					right: element.offsetLeft + (hasLeftPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + this.connectorSize - tolerance,
-					bottom: element.offsetTop + element.offsetHeight - tolerance,
-					left: element.offsetLeft + (hasLeftPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + tolerance,
+				box = {
+					top: element.offsetTop + element.offsetHeight - this.connectorSize + tolerance - this.shadowOffset,
+					right: element.offsetLeft + leftBoundary + this.connectorSize - tolerance,
+					bottom: element.offsetTop + element.offsetHeight - tolerance - this.shadowOffset,
+					left: element.offsetLeft + leftBoundary + tolerance,
 				}
+				break;
 			case "top":
-				return {
+				box = {
 					top: element.offsetTop + tolerance,
-					right: element.offsetLeft + (hasLeftPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + this.connectorSize - tolerance,
+					right: element.offsetLeft + leftBoundary + this.connectorSize - tolerance,
 					bottom: element.offsetTop + this.connectorSize - tolerance,
-					left: element.offsetLeft + (hasLeftPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + tolerance,
+					left: element.offsetLeft + leftBoundary + tolerance,
 				}
+				break;
 		}
-	}
 
-	getSolvedConnectorBoundingBox(el, side){
-		const piece = this.getPieceFromElement(el, ['jigsaw-type']);
-		const solvedBB = this.getPieceSolvedBoundingBox(el);
-		const hasLeftPlug = Utils.has(piece.type, "plug", "left");
-		const hasTopPlug = Utils.has(piece.type, "plug", "top");
-		const tolerance = this.connectorTolerance;
-		switch(side){
-			case "left":
-				return {
-					top: solvedBB.top + (hasTopPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + tolerance,
-					right: solvedBB.left + this.connectorSize - tolerance,
-					bottom: solvedBB.top + (hasTopPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + this.connectorSize - tolerance,
-					left: solvedBB.left + tolerance,
-				}
-			case "right":
-				return {
-					top: solvedBB.top + (hasTopPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + tolerance,
-					right: solvedBB.right - tolerance,
-					bottom: solvedBB.top + (hasTopPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + this.connectorSize - tolerance,
-					left: solvedBB.right - this.connectorSize + tolerance,
-				}
-			case "bottom":
-				return {
-					top: solvedBB.bottom - this.connectorSize + tolerance,
-					right: solvedBB.left + (hasLeftPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + this.connectorSize - tolerance,
-					bottom: solvedBB.bottom - tolerance,
-					left: solvedBB.left + (hasLeftPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + tolerance,
-				}
-			case "top":
-				return {
-					top: solvedBB.top + tolerance,
-					right: solvedBB.left + (hasLeftPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + this.connectorSize - tolerance,
-					bottom: solvedBB.top + this.connectorSize - tolerance,
-					left: solvedBB.left + (hasLeftPlug ? this.connectorDistanceFromCorner + this.connectorSize : this.connectorDistanceFromCorner) + tolerance,
-				}
+		if(drawBoundingBox){
+			this.drawBoundingBox(box);
 		}
+		
+		return box;
+	}
+	
+	drawBoundingBox(box, className){
+		const div = document.createElement("div");
+		div.style.position = "absolute";
+		div.style.top = box.top + "px";
+		div.style.left = box.left + "px";
+		div.style.width = box.right - box.left + "px";
+		div.style.height = box.bottom - box.top + "px";
+		div.style.backgroundColor = "black";
+		if(className){
+			div.classList.add(className);
+		}
+		document.body.appendChild(div);
 	}
 
 	getTopLeftCornerBoundingBox(){
@@ -1931,12 +1931,12 @@ class Puzzly {
 	}
 
 	getConnectorBoundingBoxInGroup(element, connector, containerBoundingBox){
-		console.log("getting connector bounding box in group", element, connector, containerBoundingBox)
+		// console.log("getting connector bounding box in group", element, connector, containerBoundingBox)
 		const piece = this.getPieceFromElement(element, ['jigsaw-type', 'solvedx', 'solvedy'])
 
 		const hasLeftPlug = Utils.has(piece.type, "plug", "left");
 		const hasTopPlug = Utils.has(piece.type, "plug", "top");
-		const tolerance = this.connectorSize / 100 * this.connectorTolerance;
+		const tolerance = this.connectorTolerance;
 
 		switch(connector){
 			case 'right':
@@ -1994,17 +1994,59 @@ class Puzzly {
 		}
 	}
 
-	getPieceSolvedBoundingBox(el){
-		const piece = this.getPieceFromElement(el, ['num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type', 'solvedx', 'solvedy'])
-		let gridPosX = piece.numPiecesFromLeftEdge === 0 ? this.boardLeft : this.boardLeft + this.pieceSize * piece.numPiecesFromLeftEdge;
-		let gridPosY = piece.numPiecesFromTopEdge === 0 ? this.boardLeft : this.boardLeft + this.pieceSize * piece.numPiecesFromTopEdge;
-		// Would Math.round help each of these values?
-		return {
-			top: (Utils.has(piece.type, 'plug', 'top') ? gridPosY - this.connectorSize : gridPosY),
-			right: (Utils.has(piece.type, 'plug', 'left') ? gridPosX - this.connectorSize : gridPosX) + el.offsetWidth,
-			bottom: (Utils.has(piece.type, 'plug', 'top') ? gridPosY - this.connectorSize : gridPosY) + el.offsetHeight,
-			left: (Utils.has(piece.type, 'plug', 'left') ? gridPosX - this.connectorSize : gridPosX)
+	getElementBoundingBoxForFloatDetection(element, drawBoundingBox = false){
+		const hasGroup = !!element.dataset.group;
+
+		const diffX = (element.offsetWidth / 2) - (this.floatTolerance / 2);
+		const diffY = (element.offsetHeight / 2) - (this.floatTolerance / 2);
+
+		const pos = {
+			top: hasGroup ? element.parentNode.offsetTop + element.offsetTop : element.offsetTop,
+			right: hasGroup ? element.parentNode.offsetLeft + element.offsetLeft + diffX : element.offsetLeft + diffX,
+			bottom: hasGroup ? element.parentNode.offsetTop + element.offsetTop + diffY : element.offsetTop + diffY,
+			left: hasGroup ? element.parentNode.offsetLeft + element.offsetLeft : element.offsetLeft,
 		}
+
+		console.log("getElementBoundingBoxForFloatDetection", pos)
+	
+		const box = {
+			top: pos.top + this.floatTolerance,
+			right: pos.right + this.floatTolerance,
+			bottom: pos.bottom + this.floatTolerance,
+			left: pos.left + this.floatTolerance
+		}
+
+		if(drawBoundingBox){
+			this.drawBoundingBox(box);
+		}
+
+		return box;
+	}
+
+	getPieceSolvedBoundingBox(el, drawBoundingBox = false){
+		const solvedX = parseInt(el.dataset.solvedx);
+		const solvedY = parseInt(el.dataset.solvedy);
+		
+		// const top = this.boardTop + solvedY;
+		// const right = this.boardLeft + solvedX + el.offsetLeft + this.collisionBoxWidth;
+		// const bottom = this.boardTop + solvedY + el.offsetTop + this.collisionBoxWidth;
+		// const left = this.boardLeft + solvedX;
+
+		const diffX = (el.offsetWidth / 2) - (this.floatTolerance / 2);
+		const diffY = (el.offsetHeight / 2) - (this.floatTolerance / 2);
+
+		const box = {
+			top: this.boardTop + solvedY + diffY,
+			right: this.boardLeft + solvedX + diffX + (this.floatTolerance / 2),
+			bottom: this.boardTop + solvedY + diffY + (this.floatTolerance / 2),
+			left: this.boardLeft + solvedX + diffX
+		}
+console.log("box", box)
+		if(drawBoundingBox){
+			this.drawBoundingBox(box, "solved");
+		}
+
+		return box;
 	}
 
 	checkConnections(element){
@@ -2083,7 +2125,7 @@ class Puzzly {
 
 		if(checkRight && !connectionFound){
 			targetElement = this.getElementByPieceId(piece.id + 1)
-			console.log('source element', element, 'target element', targetElement)
+			// console.log('source element', element, 'target eleme÷nt', targetElement)
 			targetPiece = this.getPieceFromElement(targetElement, ['piece-id', 'group', 'is-solved', 'jigsaw-type'])
 
 			if(shouldCompare(targetPiece)){
@@ -2105,11 +2147,9 @@ class Puzzly {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "left");
 				}
 
-				console.log('checking right', thisPieceConnectorBoundingBoxRight, targetPieceConnectorBoundingBox)
+				// console.log('checking right', thisPieceConnectorBoundingBoxRight, targetPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBoxRight, targetPieceConnectorBoundingBox, element, targetElement)){
 					connectionFound = "right";
-				} else {
-					solvedPieceConnectorBoundingBoxRight = this.getSolvedConnectorBoundingBox(element, "right");
 				}
 			}
 		}
@@ -2135,11 +2175,9 @@ class Puzzly {
 				} else {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "top");
 				}
-				console.log('checking bottom', thisPieceConnectorBoundingBoxBottom, targetPieceConnectorBoundingBox)
+				// console.log('checking bottom', thisPieceConnectorBoundingBoxBottom, targetPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBoxBottom, targetPieceConnectorBoundingBox, element, targetElement)){
 					connectionFound = "bottom";
-				} else {
-					solvedPieceConnectorBoundingBoxBottom = this.getSolvedConnectorBoundingBox(element, "bottom");
 				}
 			}
 		}
@@ -2167,11 +2205,9 @@ class Puzzly {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "right");
 				}
 				
-				console.log('checking left', thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox)
+				// console.log('checking left', thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox, element, targetElement)){
 					connectionFound = "left";
-				} else {
-					solvedPieceConnectorBoundingBoxLeft = this.getSolvedConnectorBoundingBox(element, "left");
 				}
 			}
 		}
@@ -2198,31 +2234,18 @@ class Puzzly {
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "bottom");
 				}
 
-				console.log('checking top', thisPieceConnectorBoundingBoxTop, targetPieceConnectorBoundingBox)
+				// console.log('checking top', thisPieceConnectorBoundingBoxTop, targetPieceConnectorBoundingBox)
 				if(this.hasCollision(thisPieceConnectorBoundingBoxTop, targetPieceConnectorBoundingBox)){
 					connectionFound = "top";
-				} else {
-					solvedPieceConnectorBoundingBoxTop = this.getSolvedConnectorBoundingBox(element, "top");
 				}
 			}
 		}
 
-		// TODO: Not sure this works... needs moving / fixing
-		const tolerance = this.pieceSize / 100 * this.connectorTolerance;
-		const hasGroup = Utils.hasGroup(piece);
-		const thisPieceBoundingBox = {
-			top: hasGroup ? element.parentNode.offsetTop + element.offsetTop + tolerance : element.offsetTop + tolerance,
-			right: hasGroup ? element.parentNode.offsetLeft + element.offsetLeft + element.offsetWidth - tolerance : element.offsetLeft + element.offsetWidth - tolerance,
-			bottom: hasGroup ? element.parentNode.offsetTop + element.offsetTop + element.offsetHeight - tolerance : element.offsetTop + element.offsetHeight - tolerance,
-			left: hasGroup ? element.parentNode.offsetLeft + element.offsetLeft + tolerance : element.offsetLeft + tolerance,
-		}
-		const solvedBoundingBox = {
-			top: piece.solvedy + tolerance,
-			right: piece.solvedx + element.offsetTop - tolerance,
-			bottom: piece.solvedy + this.pieceSize - tolerance,
-			left: piece.solvedx + tolerance,
-		}
+		// TODO: herron
+		const thisPieceBoundingBox = this.getElementBoundingBoxForFloatDetection(element);
+		const solvedBoundingBox = this.getPieceSolvedBoundingBox(element, true)
 
+console.log("checking float", thisPieceBoundingBox, solvedBoundingBox)
 		if(this.hasCollision(thisPieceBoundingBox, solvedBoundingBox)){
 			connectionFound = 'float';
 		}

@@ -94,6 +94,7 @@ var api = {
 			const pieceConfigData = {
 				pieceSize: generator.pieceSize,
 				connectorSize: generator.connectorSize,
+				connectorWidth: generator.connectorWidth,
 				connectorDistanceFromCorner: generator.connectorDistanceFromCorner,
 			}
 

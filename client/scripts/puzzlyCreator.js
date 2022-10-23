@@ -436,6 +436,7 @@ class PuzzlyCreator {
 			puzzleConfig.imagePreviewType = response.imagePreviewType;
 			puzzleConfig.pieceSize = response.pieceSize,
 			puzzleConfig.connectorSize = response.connectorSize,
+			puzzleConfig.connectorWidth = response.connectorWidth,
 			puzzleConfig.connectorDistanceFromCorner = response.connectorDistanceFromCorner
 			new Puzzly('canvas', puzzleId, puzzleConfig);
 		}.bind(this)).catch( function(err){
