@@ -5,6 +5,8 @@ import Utils from "./utils.js";
  * 
 */
 
+const ZOOM_INTERVAL = .5;
+const DEFAULT_ZOOM_LEVEL = 1;
 class Puzzly {
 	constructor(canvasId, puzzleId, config){
 		Object.assign(this, {
@@ -246,12 +248,6 @@ class Puzzly {
 			window.location = "/";
 		})
 
-		window.addEventListener('touchcancel', () => {
-			this.movingPiece = null;
-			this.movingElement = null;
-			this.isTouching = false;
-		})
-
 		window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
 		window.addEventListener('keydown', this.onKeyDown.bind(this));
 	}
@@ -413,11 +409,13 @@ class Puzzly {
 
 	makeSolvedCanvas(){
 		const solvedCnvContainer = document.getElementById('group-container-1111');
+		solvedCnvContainer.style.pointerEvents = 'none';
 		solvedCnvContainer.style.top = this.getPxString(this.boardTop);
 		solvedCnvContainer.style.left = this.getPxString(this.boardLeft);
 		solvedCnvContainer.style.width = this.boardWidth + this.shadowOffset;
 		solvedCnvContainer.style.height = this.boardHeight + this.shadowOffset;
 		const solvedCnv = document.getElementById('group-canvas-1111');
+		solvedCnv.style.pointerEvents = 'none';
 		solvedCnv.width = this.boardWidth + this.shadowOffset;
 		solvedCnv.height = this.boardHeight + this.shadowOffset;
 		solvedCnv.style.width = this.getPxString(this.boardWidth + this.shadowOffset);
@@ -432,17 +430,17 @@ class Puzzly {
 			
 			// Plus key
 			if(event.which === 187){
-				this.zoomLevel += 1;
+				this.zoomLevel += ZOOM_INTERVAL;
 			}
 
 			// Minus key
 			if(event.which === 189 && this.zoomLevel > 1){
-				this.zoomLevel -= 1;
+				this.zoomLevel -= ZOOM_INTERVAL;
 			}
 
 			// "0" Number key
 			if(event.which === 48){
-				this.zoomLevel = 1;
+				this.zoomLevel = DEFAULT_ZOOM_LEVEL;
 			}
 			
 			if(this.isPreviewActive){
@@ -521,6 +519,7 @@ class Puzzly {
 		el.style.height = piece.pieceHeight + 'px';
 		el.style.top = (!!piece.group ? piece.solvedY : piece.pageY) + "px";
 		el.style.left = (!!piece.group ? piece.solvedX : piece.pageX) + "px";
+		el.style.pointerEvents = 'auto';
 
 		el.setAttribute('data-jigsaw-type', piece.type.join(","))
 		el.setAttribute('data-piece-id', piece.id)
@@ -578,7 +577,8 @@ class Puzzly {
 		if(!Utils.hasGroup(piece)){
 			this.canvas.appendChild(el);
 		} else {
-			el.style.visibility = "hidden";
+			fgEl.style.visibility = "hidden";
+			bgEl.style.visibility = "hidden";
 
 			if(piece.isSolved === undefined){
 				let groupContainer = document.querySelector(`#group-container-${piece.group}`);
@@ -586,6 +586,7 @@ class Puzzly {
 				if(!groupContainer){
 					groupContainer = document.createElement('div');
 					groupContainer.classList.add('group-container');
+					groupContainer.style.pointerEvents = 'none';
 					groupContainer.setAttribute('id', `group-container-${piece.group}`);
 					groupContainer.style.width = this.getPxString(this.boardSize.width);
 					groupContainer.style.height = this.getPxString(this.boardSize.size);
@@ -601,6 +602,7 @@ class Puzzly {
 				if(!groupCanvas){
 					groupCanvas = document.createElement('canvas');
 					groupCanvas.id = `group-canvas-${piece.group}`;
+					groupCanvas.style.pointerEvents = 'none';
 					groupCanvas.classList.add('group-canvas');
 					groupCanvas.width = this.boardSize.width + this.shadowOffset;
 					groupCanvas.height = this.boardSize.height + this.shadowOffset;
@@ -772,34 +774,6 @@ class Puzzly {
 		}
 	}
 
-	getPieceUnderneath(e){
-			// We've clicked the empty space of a group canvas, so we need to see if there is a piece or group under the cursor/touch location that should be picked up
-			const pX = e.pageX, pY = e.pageY;
-			const box = {top: pY, right: pX, bottom: pY, left: pX};
-			// haddock
-
-			return [...this.allPieces()].filter(el => {
-				let p = this.getPieceFromElement(el, ['solvedx', 'solvedy']);
-				let cont = this.getGroup(el) && this.getGroupContainer(el);
-				let bb = {};
-
-				if(cont){
-					bb.top = p.solvedY + cont.offsetTop;
-					bb.right = p.solvedX + el.offsetWidth + cont.offsetLeft;
-					bb.bottom = p.solvedY + el.offsetHeight + cont.offsetTop;
-					bb.left = p.solvedX + cont.offsetLeft;
-				} else {
-					bb.top = el.offsetTop;
-					bb.right = (el.offsetLeft + el.offsetWidth);
-					bb.bottom = (el.offsetTop + el.offsetHeight);
-					bb.left = el.offsetLeft;
-				}
-				
-				bb = Utils.adjustForZoomLevel(bb, this.zoomLevel);
-				return this.hasCollision(bb, box);
-			})[0];
-	}
-
 	getCentreBetweenTwoTouches(touches){
 		const xTouch1 = touches[0].clientX;
 		const yTouch1 = touches[0].clientY;
@@ -812,37 +786,30 @@ class Puzzly {
 
 	onMouseDown(e){
 		let element, diffX, diffY, thisPiece;
+		console.log("mousedown", e.target)
 
 		if(e.which === 1 || e.touches){
 			const clientPos = this.getClientPos(e);
 
-			if(e.touches?.length === 2){
-				this.initialTouchesDistance = this.getDistanceBetweenTouches(e);
-				const touchCenter = this.getCentreBetweenTwoTouches(e.touches);
-				if(this.zoomLevel === 1){
-					this.canvas.style.transformOrigin = `${this.getPxString(touchCenter.x)} ${this.getPxString(touchCenter.y)}`;
-				} else {
-					this.canvas.style.transformOrigin = `0 0`;
-				}
-			}
-
 			const isPuzzlePiece = e.target.classList.contains("puzzle-piece");
 			const isPuzzlePieceCanvas = e.target.classList.contains("puzzle-piece-canvas");
 			const isPuzzlePieceFg = e.target.classList.contains("puzzle-piece-fg");
-			const isImg = e.target.nodeName.toLowerCase() === "img";
-			const lookForPieceUnderneath = e.target.classList.contains("group-canvas") || e.id === 'group-canvas-solved';
-
-			if(lookForPieceUnderneath){
-				element = this.getPieceUnderneath(e);
-			}
+			const isStage = e.target.id === "canvas";
 			
-			if(isPuzzlePieceCanvas || isImg || isPuzzlePieceFg){
+			if(isPuzzlePieceCanvas || isPuzzlePieceFg){
 				element = e.target.parentNode;
 			}
 
 			if(isPuzzlePiece){
 				element = e.target;
 			}
+
+			if(isStage && this.zoomLevel > DEFAULT_ZOOM_LEVEL){
+				this.isMovingStage = true;
+				element = e.target;
+			}
+
+			console.log("element", element)
 
 			if(!element){
 				this.isMouseDown = false;
@@ -897,11 +864,17 @@ class Puzzly {
 	onMouseMove(diffX, diffY){
 		return function(e){
 			let eventX, eventY, newPosTop, newPosLeft;
+
 			if(this.movingElement){
 				eventX = e.touches ? e.touches[0].clientX : e.clientX;
 				eventY = e.touches ? e.touches[0].clientY : e.clientY;
 				newPosTop = (eventY / this.zoomLevel) - (diffY / this.zoomLevel);
 				newPosLeft = (eventX / this.zoomLevel) - (diffX / this.zoomLevel);
+
+				if(this.isMovingStage){
+
+				}
+
 				this.movingElement.style.top = newPosTop + "px";
 				this.movingElement.style.left = newPosLeft + "px";
 			}
@@ -939,7 +912,7 @@ class Puzzly {
 	}
 
 	onMouseUp(e){
-		if(this.isMouseDown || this.isTouching){
+		if(this.isMouseDown && !this.isMovingStage){
 			const element = this.movingPiece;
 			// console.log('moving piece', element)
 			// console.log('element position top', element.offsetTop, 'left', element.offsetLeft)
@@ -1045,6 +1018,7 @@ class Puzzly {
 
 		this.isMouseDown = false;
 		this.isTouching = false;
+		this.isMovingStage = false;
 
 		// window.removeEventListener(this.interactionEventMove, this.moveCanvas);
 		window.removeEventListener(this.interactionEventMove, this.mouseMoveFunc);
@@ -2259,8 +2233,31 @@ console.log("checking float", thisPieceBoundingBox, solvedBoundingBox)
 
 	hasCollision(source, target, sourceEl, targetEl){
 		if([source.left, source.right, source.bottom, source.top, target.left, target.top, target.right, target.bottom].includes(NaN)) return false;
-		return !(source.left >= target.right || source.top >= target.bottom || 
-		source.right <= target.left || source.bottom <= target.top);
+
+		// console.log("source before", source)
+		// console.log("target before", target)
+
+		// const sourceBB = {
+		// 	top: source.top * this.zoomLevel,
+		// 	right: source.right * this.zoomLevel,
+		// 	bottom: source.bottom * this.zoomLevel,
+		// 	left: source.left * this.zoomLevel,
+		// }
+
+		// const targetBB = {
+		// 	top: target.top * this.zoomLevel,
+		// 	right: target.right * this.zoomLevel,
+		// 	bottom: target.bottom * this.zoomLevel,
+		// 	left: target.left * this.zoomLevel,
+		// }
+		
+		// console.log("has collision?", sourceBB)
+		// console.log("has collision?", targetBB)
+
+		const sourceBB = source;
+		const targetBB = target;
+		return !(sourceBB.left >= targetBB.right || sourceBB.top >= targetBB.bottom || 
+		sourceBB.right <= targetBB.left || sourceBB.bottom <= targetBB.top);
 	}
 
 	getElementByPieceId(id){
@@ -2392,10 +2389,10 @@ console.log("checking float", thisPieceBoundingBox, solvedBoundingBox)
 			ctx.drawImage(this.shadowSprite, data.spritex, data.spritey, data.imgw, data.imgh, parseInt(data.solvedx) + this.shadowOffset, parseInt(data.solvedy) + this.shadowOffset, data.imgw, data.imgh);
 
 			if(p instanceof HTMLDivElement){
-				p.style.visibility = "hidden";
+				p.childNodes.forEach(n => n.style.visibility = "hidden")
 			} else {
 				const el = this.getElementByPieceId(p.id);
-				el.style.visibility = "hidden";
+				el.childNodes.forEach(n => n.style.visibility = "hidden")
 			}
 		});
 		
@@ -2415,6 +2412,7 @@ console.log("checking float", thisPieceBoundingBox, solvedBoundingBox)
 		const container = document.createElement('div');
 		container.id = `group-container-${group}`;
 		container.classList.add('group-container');
+		container.style.pointerEvents = 'none';
 
 		container.style.top = this.getPxString(topPos);
 		container.style.left = this.getPxString(leftPos);
@@ -2434,6 +2432,7 @@ console.log("checking float", thisPieceBoundingBox, solvedBoundingBox)
 		container.prepend(cnv);
 		cnv.classList.add('group-canvas');
 		cnv.setAttribute('id', `group-canvas-${group}`);
+		cnv.style.pointerEvents = 'none';
 		cnv.style.width = this.getPxString(this.boardSize.width) + this.shadowOffset;
 		cnv.width = this.boardSize.width + this.shadowOffset;
 		cnv.style.height = this.getPxString(this.boardSize.height) + this.shadowOffset;

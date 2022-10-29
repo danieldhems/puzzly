@@ -408,6 +408,8 @@ class PuzzlyCreator {
 		const puzzleConfig = {
 			...this.sourceImage,
 			...this.crop,
+			stageWidth: window.innerWidth,
+			stageHeight: window.innerHeight,
 			debugOptions: this.debugOptions,
 			selectedNumPieces: this.selectedNumPieces,
 			imagePreviewType: this.imagePreviewType,

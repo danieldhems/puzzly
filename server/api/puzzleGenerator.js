@@ -28,6 +28,7 @@ const PuzzleGenerator = async function(imagePath, puzzleConfig, spriteName, shad
 
 	const connectorWidthRatio = 30;
 	
+	GeneratorConfig.debugOptions = puzzleConfig.debugOptions;
 	GeneratorConfig.spriteName = spriteName;
 	GeneratorConfig.shadowSpriteName = shadowSpriteName;
 	GeneratorConfig.connectorWidthRatio = connectorWidthRatio;
@@ -37,6 +38,9 @@ const PuzzleGenerator = async function(imagePath, puzzleConfig, spriteName, shad
 	GeneratorConfig.selectedNumberOfPieces = puzzleConfig.selectedNumPieces;
 
 	GeneratorConfig.pieceSize = Math.floor(loadedImage.naturalWidth / GeneratorConfig.piecesPerSideHorizontal);
+
+	GeneratorConfig.stageWidth = puzzleConfig.stageWidth;
+	GeneratorConfig.stageHeight = puzzleConfig.stageHeight;
 
 	GeneratorConfig.connectorDistanceFromCorner = GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorDistanceFromCornerRatio;
 	GeneratorConfig.connectorWidth = GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorWidthRatio;
@@ -63,7 +67,7 @@ const createPuzzlePiece = async (data, ctxForSprite, ctxForShadowSprite, writeTo
 	shdCtx.fill(pathResult, GeneratorConfig.shadowColor);
 
 	const shadowImgData = shdCtx.getImageData(0, 0, data.imgW, data.imgH);
-	ctxForShadowSprite.putImageData(shadowImgData, data.pageX, data.pageY);
+	ctxForShadowSprite.putImageData(shadowImgData, data.spriteX, data.spriteY);
 
 	const tmpCnv = createCanvas(data.imgW, data.imgH);
 	const tmpCtx = tmpCnv.getContext("2d");
@@ -78,7 +82,7 @@ const createPuzzlePiece = async (data, ctxForSprite, ctxForShadowSprite, writeTo
 	tmpCtx.stroke(pathResult);
 
 	const img = await loadImage(tmpCnv.toDataURL());
-	ctxForSprite.drawImage(img, data.pageX, data.pageY);
+	ctxForSprite.drawImage(img, data.spriteX, data.spriteY);
 
 	if(writeToOwnFile){
 		writeToPngFile(tmpCnv, `${data.id}`);
@@ -208,8 +212,22 @@ const getConnectors = (adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalR
 	}
 }
 
+/**
+	* Returns a random integer between min (inclusive) and max (inclusive).
+	* The value is no lower than min (or the next integer greater than min
+	* if min isn't an integer) and no greater than max (or the next integer
+	* lower than max if max isn't an integer).
+	* Using Math.round() will give you a non-uniform distribution!
+	*/
+const getRandomInt = (min, max) => {
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 const assignInitialPieceData = (puzzleId, imgX, imgY, piece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i) => {
 	let { width, height } = getPieceWidthAndHeightWithConnectors(piece);
+
 	width = Math.floor(width);
 	height = Math.floor(height);
 	
@@ -217,6 +235,15 @@ const assignInitialPieceData = (puzzleId, imgX, imgY, piece, numPiecesFromLeftEd
 		x: Math.floor(GeneratorConfig.largestPieceSpan * 1.1 * numPiecesFromLeftEdge),
 		y: Math.floor(GeneratorConfig.largestPieceSpan * 1.1 * numPiecesFromTopEdge)
 	};
+
+	const rightLimit = GeneratorConfig.stageWidth - GeneratorConfig.largestPieceSpan - (GeneratorConfig.stageWidth / 100);
+	const bottomLimit = GeneratorConfig.stageHeight - GeneratorConfig.largestPieceSpan - (GeneratorConfig.stageHeight / 100);
+
+	// fish
+	const randPos = {
+		x: getRandomInt(1, rightLimit),
+		y: getRandomInt(1, bottomLimit),
+	}
 
 	const { strokeWidth } = GeneratorConfig;
 
@@ -227,8 +254,8 @@ const assignInitialPieceData = (puzzleId, imgX, imgY, piece, numPiecesFromLeftEd
 		imgY: imgY,
 		spriteX: piecePositionOnSprite.x,
 		spriteY: piecePositionOnSprite.y,
-		pageX: piecePositionOnSprite.x,
-		pageY: piecePositionOnSprite.y,
+		pageX: GeneratorConfig.debugOptions.noDispersal ? piecePositionOnSprite.x : randPos.x,
+		pageY: GeneratorConfig.debugOptions.noDispersal ? piecePositionOnSprite.y : randPos.y,
 		imgW: width,
 		imgH: height,
 		pieceWidth: width + strokeWidth,
@@ -357,10 +384,6 @@ const generateDataForPuzzlePieces = async(puzzleId) => {
 }
 
 const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = false) => {
-	// console.log('drawJigsawShape', piece)
-
-	const strokeWidth = GeneratorConfig.strokeWidth;
-
 	const hasTopPlug = pieceHelper.has(piece.type, 'plug', 'top')
 	const hasLeftPlug = pieceHelper.has(piece.type, 'plug', 'left')
 	
@@ -368,11 +391,6 @@ const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = 
 	let bottomBoundary = hasTopPlug ? y + GeneratorConfig.pieceSize + GeneratorConfig.connectorSize : y + GeneratorConfig.pieceSize;
 	let leftBoundary = hasLeftPlug ? x + GeneratorConfig.connectorSize : x;
 	let rightBoundary = hasLeftPlug ? x + GeneratorConfig.pieceSize + GeneratorConfig.connectorSize : x + GeneratorConfig.pieceSize;
-
-	// topBoundary += strokeWidth;
-	// rightBoundary += strokeWidth;
-	// bottomBoundary += strokeWidth;
-	// leftBoundary += strokeWidth;
 
 	let topConnector = null, rightConnector = null, bottomConnector = null, leftConnector = null;
 	
