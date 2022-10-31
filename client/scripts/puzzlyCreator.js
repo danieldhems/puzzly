@@ -21,7 +21,7 @@ class PuzzlyCreator {
 			highlightConnectingPieces: false,
 		}
 
-		this.boardSize = Math.ceil(window.innerHeight / 100 * 60);
+		this.boardSize = Math.ceil(window.innerHeight / 100 * 50);
 
 		this.imagePreviewType = "toggle";
 
@@ -431,6 +431,7 @@ class PuzzlyCreator {
 			const puzzleId = response._id;
 			Utils.insertUrlParam('puzzleId', puzzleId);
 			this.newPuzzleForm.style.display = 'none';
+			puzzleConfig.boardSize = this.boardSize;
 			puzzleConfig.puzzleImgPath = response.puzzleImgPath;
 			puzzleConfig.spritePath = response.spritePath;
 			puzzleConfig.shadowSpritePath = response.shadowSpritePath;

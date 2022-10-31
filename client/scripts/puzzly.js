@@ -5,7 +5,7 @@ import Utils from "./utils.js";
  * 
 */
 
-const ZOOM_INTERVAL = .5;
+const ZOOM_INTERVAL = .1;
 const DEFAULT_ZOOM_LEVEL = 1;
 class Puzzly {
 	constructor(canvasId, puzzleId, config){
@@ -13,12 +13,6 @@ class Puzzly {
 			...config,
 			debug: true,
 			showDebugInfo: false,
-			backgroundImages: [
-				{
-					name: 'wood',
-					path: './bg-wood.jpg'
-				}
-			],
 			jigsawSpriteConnectorSize: 42,
 			jigsawSpriteConnectorDistanceFromCorner: 43,
 			piecesPerSideHorizontal: config.selectedShape === 'Rectangle' ? config.piecesPerSideHorizontal : Math.sqrt(config.selectedNumPieces),
@@ -105,9 +99,7 @@ class Puzzly {
 		this.ControlsElHandle.addEventListener(this.interactionEventDown, this.onControlsHandleClick.bind(this))
 
 		this.sendToEdgeShuffleBtn.addEventListener(this.interactionEventDown, e => {
-			const allPieces = this.allPieces();
-			this.shuffleArray(Array.from(allPieces).filter(p => !this.getIsSolved(p) && !Utils.hasGroup(p)));
-			this.randomisePiecePositions(pieces);
+			this.randomisePiecePositions();
 			this.save(allPieces);
 		})
 
@@ -157,7 +149,7 @@ class Puzzly {
 
 		this.zoomLevel = 1;
 
-		this.boardHeight = this.boardWidth = Math.ceil(window.innerHeight / 100 * 60);
+		this.boardHeight = this.boardWidth = this.boardSize;
 		const boardVerticalSpace = window.innerHeight / 100 * 20;
 		const leftPos = window.innerWidth / 2 - this.boardHeight / 2;
 		this.boardBoundingBox = {
@@ -168,11 +160,6 @@ class Puzzly {
 			width: this.boardHeight,
 			height: this.boardHeight,
 		};
-
-		this.boardSize = {
-			width: this.boardHeight,
-			height: this.boardHeight,
-		}
 
 		this.shadowOffset = this.pieceSize / 100 * 5;
 
@@ -200,6 +187,9 @@ class Puzzly {
 
 		this.makeSolvedCanvas();
 		this.initiFullImagePreviewer();
+		this.generatePieceSectorMap();
+
+		console.log("sectors", this.pieceSectors)
 		
 		this.isFullImageViewerActive = false;
 
@@ -214,7 +204,6 @@ class Puzzly {
 				}
 			});
 
-			console.log(this.groups)
 			if(Object.keys(this.groups).length){
 				for(let g in this.groups){
 					const elements = this.getPiecesInGroup(g);
@@ -224,7 +213,6 @@ class Puzzly {
 
 			this.initGroupContainerPositions(storage.pieces)
 		} else {
-			this.generatePieceSectorMap();
 			this.piecePositionMap = this.shuffleArray(this.getRandomCoordsFromSectorMap());
 			this.renderPieces(this.pieces);
 			this.assignPieceConnections();
@@ -403,8 +391,8 @@ class Puzzly {
 		element.style.top = this.boardBoundingBox.top + "px";
 		element.style.left = this.boardBoundingBox.left + "px";
 		element.style.border = "3px groove #222";
-		element.style.width = this.boardSize.width + "px";
-		element.style.height = this.boardSize.height + "px";
+		element.style.width = this.boardSize + "px";
+		element.style.height = this.boardSize + "px";
 	}
 
 	makeSolvedCanvas(){
@@ -415,7 +403,7 @@ class Puzzly {
 		solvedCnvContainer.style.width = this.boardWidth + this.shadowOffset;
 		solvedCnvContainer.style.height = this.boardHeight + this.shadowOffset;
 		const solvedCnv = document.getElementById('group-canvas-1111');
-		solvedCnv.style.pointerEvents = 'none';
+		// solvedCnv.style.pointerEvents = 'none';
 		solvedCnv.width = this.boardWidth + this.shadowOffset;
 		solvedCnv.height = this.boardHeight + this.shadowOffset;
 		solvedCnv.style.width = this.getPxString(this.boardWidth + this.shadowOffset);
@@ -434,7 +422,7 @@ class Puzzly {
 			}
 
 			// Minus key
-			if(event.which === 189 && this.zoomLevel > 1){
+			if(event.which === 189 && this.zoomLevel){
 				this.zoomLevel -= ZOOM_INTERVAL;
 			}
 
@@ -459,9 +447,39 @@ class Puzzly {
 		}))
 	}
 
-	randomisePiecePositions(pieces){
-		pieces.forEach((p, i) => {
-			this.animatePiece(el, randX, randY);
+	getSequentialArray(start, end, shuffle = false){
+		let arr = [];
+		for(let i = start, l = end - start; i < l; i++){
+			arr.push(i);
+		}
+
+		if(shuffle){
+			arr = this.shuffleArray(arr);
+		}
+
+		return arr;
+	}
+
+	randomisePiecePositions(){
+		const sectors = this.getSequentialArray(0, this.selectedNumPieces, true);
+		console.log("sectors", sectors)
+		this.pieces.forEach((p, i) => {
+			const el = this.getElementByPieceId(p.id);
+			const sector = this.pieceSectors[sectors[i]];
+			const a = document.createElement("div");
+			a.style.position = "absolute";
+			a.style.top = sector.y + "px";
+			a.style.left = sector.x + "px";
+			a.style.width = sector.w + "px";
+			a.style.height = sector.h + "px";
+			a.style.border = "2px solid blue";
+			document.body.appendChild(a);
+			const pos = {
+				x: this.getRandomInt(sector.x, sector.x + sector.w - p.imgW),
+				y: this.getRandomInt(sector.y, sector.y + sector.h - p.imgH),
+			}
+			el.style.top = pos.y + "px";
+			el.style.left = pos.x + "px";
 		})
 	}
 
@@ -538,6 +556,7 @@ class Puzzly {
 		el.setAttribute('data-is-inner-piece', piece.isInnerPiece)
 		el.setAttribute('data-num-pieces-from-top-edge', piece.numPiecesFromTopEdge)
 		el.setAttribute('data-num-pieces-from-left-edge', piece.numPiecesFromLeftEdge)
+		el.setAttribute('data-is-solved', piece.isSolved)
 		
 		if(!!piece.group){
 			el.setAttribute('data-group', piece.group)
@@ -588,8 +607,8 @@ class Puzzly {
 					groupContainer.classList.add('group-container');
 					groupContainer.style.pointerEvents = 'none';
 					groupContainer.setAttribute('id', `group-container-${piece.group}`);
-					groupContainer.style.width = this.getPxString(this.boardSize.width);
-					groupContainer.style.height = this.getPxString(this.boardSize.size);
+					groupContainer.style.width = this.getPxString(this.boardSize);
+					groupContainer.style.height = this.getPxString(this.boardSize);
 					groupContainer.style.position = "absolute";
 					groupContainer.style.top = piece.containerY + "px";
 					groupContainer.style.left = piece.containerX + "px";
@@ -604,10 +623,10 @@ class Puzzly {
 					groupCanvas.id = `group-canvas-${piece.group}`;
 					groupCanvas.style.pointerEvents = 'none';
 					groupCanvas.classList.add('group-canvas');
-					groupCanvas.width = this.boardSize.width + this.shadowOffset;
-					groupCanvas.height = this.boardSize.height + this.shadowOffset;
-					groupCanvas.style.width = this.getPxString(this.boardSize.width + this.shadowOffset);
-					groupCanvas.style.height = this.getPxString(this.boardSize.height + this.shadowOffset);
+					groupCanvas.width = this.boardSize + this.shadowOffset;
+					groupCanvas.height = this.boardSize + this.shadowOffset;
+					groupCanvas.style.width = this.getPxString(this.boardSize + this.shadowOffset);
+					groupCanvas.style.height = this.getPxString(this.boardSize + this.shadowOffset);
 					groupContainer.appendChild(groupCanvas);
 				}
 	
@@ -774,19 +793,8 @@ class Puzzly {
 		}
 	}
 
-	getCentreBetweenTwoTouches(touches){
-		const xTouch1 = touches[0].clientX;
-		const yTouch1 = touches[0].clientY;
-		const xTouch2 = touches[1].clientX;
-		const yTouch2 = touches[1].clientY;
-		const x = Math.min(xTouch1, xTouch2);
-		const y = Math.min(yTouch1, yTouch2);
-		return {x: x + this.initialTouchesDistance / 2, y: y + this.initialTouchesDistance / 2}
-	}
-
 	onMouseDown(e){
 		let element, diffX, diffY, thisPiece;
-		console.log("mousedown", e.target)
 
 		if(e.which === 1 || e.touches){
 			const clientPos = this.getClientPos(e);
@@ -794,7 +802,7 @@ class Puzzly {
 			const isPuzzlePiece = e.target.classList.contains("puzzle-piece");
 			const isPuzzlePieceCanvas = e.target.classList.contains("puzzle-piece-canvas");
 			const isPuzzlePieceFg = e.target.classList.contains("puzzle-piece-fg");
-			const isStage = e.target.id === "canvas";
+			const isStage = e.target.id === "canvas" || e.target.id === "boardArea" || e.target.dataset.group === "1111" || e.target.dataset.issolved;
 			
 			if(isPuzzlePieceCanvas || isPuzzlePieceFg){
 				element = e.target.parentNode;
@@ -804,12 +812,10 @@ class Puzzly {
 				element = e.target;
 			}
 
-			if(isStage && this.zoomLevel > DEFAULT_ZOOM_LEVEL){
+			if(isStage){
 				this.isMovingStage = true;
-				element = e.target;
+				element = this.canvas;
 			}
-
-			console.log("element", element)
 
 			if(!element){
 				this.isMouseDown = false;
@@ -861,6 +867,14 @@ class Puzzly {
 		}
 	}
 
+	dragIsWithinHorizontalBounds(x){
+		return x > 10 && x <= window.innerWidth - 10;
+	}
+
+	dragIsAtWithinVerticalBounds(y){
+		return y > 10 && y <= window.innerHeight - 10;
+	}
+
 	onMouseMove(diffX, diffY){
 		return function(e){
 			let eventX, eventY, newPosTop, newPosLeft;
@@ -872,43 +886,19 @@ class Puzzly {
 				newPosLeft = (eventX / this.zoomLevel) - (diffX / this.zoomLevel);
 
 				if(this.isMovingStage){
-
+					if(this.dragIsWithinHorizontalBounds(eventX)){
+						this.movingElement.style.left = newPosLeft + "px";
+					}
+					if(this.dragIsAtWithinVerticalBounds(eventY)){
+						this.movingElement.style.top = newPosTop + "px";
+					}
+				} else {
+					this.movingElement.style.top = newPosTop + "px";
+					this.movingElement.style.left = newPosLeft + "px";
 				}
 
-				this.movingElement.style.top = newPosTop + "px";
-				this.movingElement.style.left = newPosLeft + "px";
 			}
 		}.bind(this)
-	}
-
-	getAdjacentSolvedPieces(arg){
-		if(Array.isArray(arg)){
-			const groups = [];
-			return arg.map(sourceEl => {
-				let els = this.getConnectingElements(sourceEl, true, true);
-				if(els.length){
-					return els.map(targetEl => {
-						if(this.getIsSolved(targetEl)){
-							return {
-								sourceEl,
-								targetEl,
-							}
-						}
-					});
-				}
-			}).flat().filter((el) => {
-				if(el){
-					let target = el.targetEl;
-					let group = this.getGroup(target);
-					if(!groups.includes(group)){
-						groups.push(group)
-						return el;
-					}
-				}
-			});
-		} else {
-			return this.getConnectingElements(el).filter(el => this.getIsSolved(el));
-		}
 	}
 
 	onMouseUp(e){
@@ -1525,43 +1515,20 @@ class Puzzly {
 		const sqr = Math.abs(Math.sqrt(pieceSectorSize));
 		const area = {w: sqr, h: sqr};
 
-		const quadrants = [
-			{x:0,y:0,w:window.innerWidth,h:this.boardTop - this.largestPieceSpan},
-			{x:0,y:this.boardTop - this.largestPieceSpan,w:this.boardLeft - this.largestPieceSpan,h:this.boardAreaEl.offsetHeight + this.largestPieceSpan},
-			{x:this.boardRight,y:this.boardTop - this.largestPieceSpan,w:window.innerWidth - this.boardRight,h:this.boardAreaEl.offsetHeight + this.largestPieceSpan},
-			{x:0,y:this.boardBottom,w:window.innerWidth,h:this.boardTop - this.largestPieceSpan},
-		];
+		let currX = 0, currY = 0;
 
-		let quad = 0;
-		let currentQuadrant = quadrants[quad];
-		let xPos = currentQuadrant.x, yPos = currentQuadrant.y;
-		let thisSector;
-		
-		for(let i=0, n=this.selectedNumPieces; i<n; i++){
-			thisSector = this.pieceSectors[i] = {
-				id: i,
-				x: xPos,
-				y: yPos,
-				...area,
+		for(let i=0, l=this.selectedNumPieces; i < l; i++) {
+			this.pieceSectors[i] = {
+				x: currX,
+				y: currY,
+				...area
 			}
 
-			if(thisSector.x + (thisSector.w*2) < currentQuadrant.x + currentQuadrant.w){
-				xPos += sqr;
+			if(currX + sqr + sqr < window.innerWidth){
+				currX += sqr;
 			} else {
-				if(yPos + (sqr*2) > currentQuadrant.y + currentQuadrant.h){
-					// Finished last quadrant, now pick another at random to continue
-					if(quad === quadrants.length - 1){
-						currentQuadrant = quadrants[this.getRandomInt(0, 3)];
-					} else {
-						quad++;
-						currentQuadrant = quadrants[quad];
-					}
-					xPos = currentQuadrant.x;
-					yPos = currentQuadrant.y;
-				} else {
-					xPos = currentQuadrant.x;
-					yPos += sqr;
-				}
+				currX = 0;
+				currY += sqr;
 			}
 		}
 	}
@@ -1638,7 +1605,7 @@ class Puzzly {
 					
 					edge = el.offsetLeft + el.offsetWidth;
 
-					if(edge >= this.boardLeft + this.boardSize.width){
+					if(edge >= this.boardLeft + this.boardSize){
 						return numPiecesRendered;
 					} else {
 						currentX += step;
@@ -1653,7 +1620,7 @@ class Puzzly {
 
 					edge = el.offsetTop + el.offsetHeight;
 
-					if(edge > this.boardLeft + this.boardSize.height){
+					if(edge > this.boardLeft + this.boardSize){
 						return numPiecesRendered;
 					} else {
 						currentY += step;
@@ -2433,10 +2400,10 @@ console.log("checking float", thisPieceBoundingBox, solvedBoundingBox)
 		cnv.classList.add('group-canvas');
 		cnv.setAttribute('id', `group-canvas-${group}`);
 		cnv.style.pointerEvents = 'none';
-		cnv.style.width = this.getPxString(this.boardSize.width) + this.shadowOffset;
-		cnv.width = this.boardSize.width + this.shadowOffset;
-		cnv.style.height = this.getPxString(this.boardSize.height) + this.shadowOffset;
-		cnv.height = this.boardSize.height + this.shadowOffset;
+		cnv.style.width = this.getPxString(this.boardSize) + this.shadowOffset;
+		cnv.width = this.boardSize + this.shadowOffset;
+		cnv.style.height = this.getPxString(this.boardSize) + this.shadowOffset;
+		cnv.height = this.boardSize + this.shadowOffset;
 
 		const ctx = cnv.getContext("2d");
 		ctx.imageSmoothingEnabled = false;

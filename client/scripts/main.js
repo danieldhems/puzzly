@@ -1,6 +1,6 @@
 import Utils from "./utils.js";
 
-Utils.drawBackground();
+// Utils.drawBackground();
 
 document.body.onload = function(){
 	const puzzleId = Utils.getQueryStringValue('puzzleId');

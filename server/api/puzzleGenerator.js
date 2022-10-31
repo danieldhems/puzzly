@@ -37,7 +37,7 @@ const PuzzleGenerator = async function(imagePath, puzzleConfig, spriteName, shad
 	GeneratorConfig.piecesPerSideVertical = Math.sqrt(puzzleConfig.selectedNumPieces);
 	GeneratorConfig.selectedNumberOfPieces = puzzleConfig.selectedNumPieces;
 
-	GeneratorConfig.pieceSize = Math.floor(loadedImage.naturalWidth / GeneratorConfig.piecesPerSideHorizontal);
+	GeneratorConfig.pieceSize = Math.floor(puzzleConfig.boardSize / GeneratorConfig.piecesPerSideHorizontal);
 
 	GeneratorConfig.stageWidth = puzzleConfig.stageWidth;
 	GeneratorConfig.stageHeight = puzzleConfig.stageHeight;

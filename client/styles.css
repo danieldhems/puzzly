@@ -3,6 +3,19 @@ body {
     background-color: #000;
     height: 100%;
     font-size: 1em;
+    background: url('./bg-wood.jpg') no-repeat;
+    background-attachment: fixed;
+}
+
+#stage {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: #ddd;
+    opacity: .3;
+    pointer-events: none;
 }
 
 .button {
