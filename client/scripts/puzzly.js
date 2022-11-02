@@ -172,6 +172,7 @@ class Puzzly {
 		this.collisionBoxWidth = this.pieceSize - this.floatTolerance;
 
 		this.largestPieceSpan = this.pieceSize + (this.connectorSize * 2);
+		this.pieceSeparationDistance = this.largestPieceSpan + 20;
 		
 		this.canvasWidth = window.innerWidth;
 		this.canvasHeight = window.innerHeight;
@@ -1533,36 +1534,141 @@ class Puzzly {
 		}
 	}
 
-	arrangePieces(pieces){
-		this.arrangedPieces = [];
-		let depth = 0;
-		let start = 0;
-		let totalRendered = 0;
-		let currentIndex = 0;
-		let currentSet;
+	// Determine when arrangePieces() should start placing pieces on next side
+	shouldProceedToNextSide(currentSide, element, firstPieceOnNextSide){
+		// console.log("shouldProceedToNextSide()", currentSide, element, firstPieceOnNextSide)
+		const box = element.getBoundingClientRect();
+		let targetBox;
 
-		const sides = ["top", "right", "bottom", "left"];
-		
-		while(totalRendered < pieces.length - 1){
-			totalRendered += this.renderPiecesAlongEdge(sides[currentIndex], pieces.slice(-totalRendered), depth);
-
-			start += totalRendered;
-			if(currentIndex < sides.length - 1){
-				currentIndex++;
-			} else {
-				currentIndex = 0;
-				depth++;
-			}
+		if(firstPieceOnNextSide){
+			targetBox = firstPieceOnNextSide.getBoundingClientRect();
+		} else {
+			targetBox = {
+				top: this.boardTop,
+				right: this.boardRight,
+				bottom: this.boardBottom,
+				left: this.boardLeft,
+			};
 		}
-		/*
-		console.log(this.arrangedPieces)
-		this.arrangedPieces.forEach(p => {
-			let el = this.getElementByPieceId(p.id);
-			el.style.top = this.getPxString(p.y);
-			el.style.left = this.getPxString(p.x);
-			this.animatePiece(el, p.x, p.y)
-		})
-		*/
+
+		switch(currentSide){
+			case "top":
+				return box.left > targetBox.right || box.left + (box.width / 2) > targetBox.right;
+			case "right":
+				return box.top > targetBox.bottom || box.top + (box.height / 2) > targetBox.bottom;
+			case "bottom":
+				return box.right < targetBox.left || box.right - (box.width / 2) < targetBox.left;
+			case "left":
+				return box.bottom < targetBox.top || box.top - (box.height / 2) < targetBox.top;
+		}
+	}
+
+	// Each time we start the next side, determine where the first piece should go
+	getPositionForFirstPieceOnNextSide(element, currentSide, firstPieceOnNextSideFromPreviousIteration){
+		console.log("getPositionForFirstPieceOnNextSide", currentSide, firstPieceOnNextSideFromPreviousIteration)
+		const box = element.getBoundingClientRect();
+		let targetBox;
+
+		if(firstPieceOnNextSideFromPreviousIteration){
+			targetBox = firstPieceOnNextSideFromPreviousIteration.getBoundingClientRect();
+		} else {
+			targetBox = {
+				top: this.boardTop,
+				right: this.boardRight,
+				bottom: this.boardBottom,
+				left: this.boardLeft,
+			};
+		}
+
+		const spacing = 20;
+
+		switch(currentSide){
+			case "top":
+				return {
+					x: targetBox.right + spacing,
+					y: targetBox.top,
+				}
+				//|| box.left + (box.width / 2) > targetBox.right;
+			case "right":
+				return {
+					x: box.left - element.offsetWidth - spacing,
+					y: box.top,
+				}
+			case "bottom":
+				const y = box.top - element.offsetHeight - spacing;
+				let x;
+				if(box.right > targetBox.left){
+					x = targetBox.left - this.largestPieceSpan - spacing;
+				} else {
+					x = box.left;
+				}
+
+				return { x, y };
+			case "left":
+				return {
+					x: box.left,
+					y: targetBox.top - element.offsetHeight - spacing,
+				}
+		}
+	}
+
+	arrangePieces(){
+		const sides = ["top", "right", "bottom", "left"];
+		let depth = 0;
+		let i = 0;
+		let sideIndex = 0;
+
+		let currentX = this.boardLeft;
+		let currentY = this.boardTop - this.pieceSeparationDistance;
+		let currentSide = sides[sideIndex];
+
+		let lastPieceOnRightEdge,
+				lastPieceOnBottomEdge,
+				lastPieceOnLeftEdge,
+				lastPieceOnTopEdge;
+
+		const firstPiecesOnEachSide = {
+			"top": null,
+			"right": null,
+			"bottom": null,
+			"left": null,
+		};
+
+		const spacing = 20;
+
+		const piecesInPlay = this.shuffleArray(this.getIndividualPiecesInPlay());
+		console.log(piecesInPlay)
+		
+		while(i < piecesInPlay.length - 1){
+			piecesInPlay[i].style.top = currentY + "px";
+			piecesInPlay[i].style.left = currentX + "px";
+
+			const nextSide = sideIndex < 3 ? sideIndex + 1 : 0
+
+			if(this.shouldProceedToNextSide(currentSide, piecesInPlay[i], firstPiecesOnEachSide[sides[nextSide]])){
+				// console.log("proceeding to next side", i)
+				const nextPos = this.getPositionForFirstPieceOnNextSide(piecesInPlay[i], currentSide, firstPiecesOnEachSide[sides[nextSide]])
+				sideIndex++;
+				currentSide = sides[nextSide];
+				firstPiecesOnEachSide[currentSide] = piecesInPlay[nextSide];
+
+				currentX = nextPos.x;
+				currentY = nextPos.y;
+			} else {
+				if(currentSide === "top"){
+					currentX += piecesInPlay[i].offsetWidth + spacing;
+				} else if (currentSide === "right"){
+					currentY += piecesInPlay[i].offsetHeight + spacing;
+				} else if (currentSide === "bottom"){
+					currentX -= this.largestPieceSpan + spacing;
+				} else if(currentSide === "left"){
+					currentY -= this.largestPieceSpan + spacing;
+				}
+			}
+
+			i++;
+		}
+		
 	}
 
 	renderPiecesAlongEdge(side, pieces, depth){
@@ -1589,79 +1695,6 @@ class Puzzly {
 				break;
 			default:;
 		}
-		
-		let i = 0;
-		for(let p of pieces){
-			if(i === pieces.length - 1) return pieces.length;
-
-			el = this.getElementByPieceId(p.id);
-			
-			switch(side){
-				case "top":
-					// this.arrangedPieces.push({id: p.id, x: currentX, y: currentY - p.imgH});
-					el.style.top = this.getPxString(currentY - p.imgH);
-					el.style.left = this.getPxString(currentX);
-					this.animatePiece(el, currentX, currentY - p.imgH)
-					
-					edge = el.offsetLeft + el.offsetWidth;
-
-					if(edge >= this.boardLeft + this.boardSize){
-						return numPiecesRendered;
-					} else {
-						currentX += step;
-						numPiecesRendered++;
-					}
-					break;
-				case "right":
-					// this.arrangedPieces.push({id: p.id, x: currentX, y: currentY})
-					el.style.top = this.getPxString(currentY);
-					el.style.left = this.getPxString(currentX);
-					this.animatePiece(el, currentX, currentY)
-
-					edge = el.offsetTop + el.offsetHeight;
-
-					if(edge > this.boardLeft + this.boardSize){
-						return numPiecesRendered;
-					} else {
-						currentY += step;
-						numPiecesRendered++;
-					}
-					break;
-				case "bottom":
-					// this.arrangedPieces.push({id: p.id, x: currentX - p.imgW, y: currentY})
-					el.style.top = this.getPxString(currentY);
-					el.style.left = this.getPxString(currentX - p.imgW);
-					this.animatePiece(el, currentX - p.imgW, currentY)
-
-					edge = el.offsetLeft;
-
-					if(edge < this.boardLeft - el.offsetWidth){
-						return numPiecesRendered;
-					} else {
-						currentX -= step;
-						numPiecesRendered++;
-					}
-					break;
-				case "left":
-					// this.arrangedPieces.push({id: p.id, x: currentX - p.imgW, y: currentY - p.imgH})
-					el.style.top = this.getPxString(currentY - p.imgH);
-					el.style.left = this.getPxString(currentX - p.imgW);
-					this.animatePiece(el, currentX - p.imgW, currentY - p.imgH)
-
-					edge = el.offsetTop;
-
-					if(edge < this.boardBoundingBox.top){
-						return numPiecesRendered;
-					} else {
-						currentY -= step;
-						numPiecesRendered++;
-					}
-					break;
-				default:;
-			}
-
-			i++;
-		};
 	}
 
 	shuffleArray(array) {
@@ -1825,6 +1858,12 @@ class Puzzly {
 
 	allPieces(){
 		return document.querySelectorAll('.puzzle-piece');
+	}
+
+	getIndividualPiecesInPlay(){
+		return Array.from(this.allPieces()).filter(el => {
+			return !el.dataset.issolved && !el.dataset.group;
+		})
 	}
 
 	filterPiecesByDataAttribute(els, key, value){
