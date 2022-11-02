@@ -1537,42 +1537,56 @@ class Puzzly {
 	// Determine when arrangePieces() should start placing pieces on next side
 	shouldProceedToNextSide(currentSide, element, firstPieceOnNextSide){
 		// console.log("shouldProceedToNextSide()", currentSide, element, firstPieceOnNextSide)
-		const box = element.getBoundingClientRect();
-		let targetBox;
+		const thisRect = element.getBoundingClientRect();
+		let targetRect;
 
 		if(firstPieceOnNextSide){
-			targetBox = firstPieceOnNextSide.getBoundingClientRect();
+			targetRect = firstPieceOnNextSide.getBoundingClientRect();
 		} else {
-			targetBox = {
+			targetRect = {
 				top: this.boardTop,
 				right: this.boardRight,
 				bottom: this.boardBottom,
 				left: this.boardLeft,
 			};
+		}
+
+		const box = {
+			top: thisRect.top * this.zoomLevel,
+			right: thisRect.right * this.zoomLevel,
+			bottom: thisRect.bottom * this.zoomLevel,
+			left: thisRect.left * this.zoomLevel,
+		}
+
+		const targetBox = {
+			top: targetRect.top * this.zoomLevel,
+			right: targetRect.right * this.zoomLevel,
+			bottom: targetRect.bottom * this.zoomLevel,
+			left: targetRect.left * this.zoomLevel,
 		}
 
 		switch(currentSide){
 			case "top":
-				return box.left > targetBox.right || box.left + (box.width / 2) > targetBox.right;
+				return box.left > targetBox.right || box.right - this.connectorSize > targetBox.right;
 			case "right":
-				return box.top > targetBox.bottom || box.top + (box.height / 2) > targetBox.bottom;
+				return box.top > targetBox.bottom || box.bottom - this.connectorSize > targetBox.bottom;
 			case "bottom":
-				return box.right < targetBox.left || box.right - (box.width / 2) < targetBox.left;
+				return box.right < targetBox.left || box.left + this.connectorSize < targetBox.left;
 			case "left":
-				return box.bottom < targetBox.top || box.top - (box.height / 2) < targetBox.top;
+				return box.bottom < targetBox.top - this.largestPieceSpan || box.top + this.connectorSize < targetBox.top;
 		}
 	}
 
 	// Each time we start the next side, determine where the first piece should go
-	getPositionForFirstPieceOnNextSide(element, currentSide, firstPieceOnNextSideFromPreviousIteration){
-		console.log("getPositionForFirstPieceOnNextSide", currentSide, firstPieceOnNextSideFromPreviousIteration)
-		const box = element.getBoundingClientRect();
-		let targetBox;
+	getPositionForFirstPieceOnNextSide(element, nextElement, currentSide, firstPieceOnNextSideFromPreviousIteration){
+		// console.log("getPositionForFirstPieceOnNextSide", element, nextElement, currentSide)
+		const thisRect = element.getBoundingClientRect();
+		let targetRect;
 
 		if(firstPieceOnNextSideFromPreviousIteration){
-			targetBox = firstPieceOnNextSideFromPreviousIteration.getBoundingClientRect();
+			targetRect = firstPieceOnNextSideFromPreviousIteration.getBoundingClientRect();
 		} else {
-			targetBox = {
+			targetRect = {
 				top: this.boardTop,
 				right: this.boardRight,
 				bottom: this.boardBottom,
@@ -1580,93 +1594,113 @@ class Puzzly {
 			};
 		}
 
+		const box = {
+			top: thisRect.top,
+			right: thisRect.right,
+			bottom: thisRect.bottom,
+			left: thisRect.left,
+		}
+
+		const targetBox = {
+			top: targetRect.top,
+			right: targetRect.right,
+			bottom: targetRect.bottom,
+			left: targetRect.left,
+		}
+
 		const spacing = 20;
+
+		let x, y;
 
 		switch(currentSide){
 			case "top":
 				return {
 					x: targetBox.right + spacing,
-					y: targetBox.top,
+					y: box.bottom + spacing,
 				}
-				//|| box.left + (box.width / 2) > targetBox.right;
 			case "right":
 				return {
-					x: box.left - element.offsetWidth - spacing,
-					y: box.top,
+					x: box.left - nextElement?.offsetWidth - spacing,
+					y: targetBox.bottom + spacing,
 				}
 			case "bottom":
-				const y = box.top - element.offsetHeight - spacing;
-				let x;
-				if(box.right > targetBox.left){
-					x = targetBox.left - this.largestPieceSpan - spacing;
-				} else {
-					x = box.left;
+				return {
+					x: targetBox.left - this.largestPieceSpan - spacing,
+					y: box.top - nextElement?.offsetHeight - spacing,
 				}
-
-				return { x, y };
 			case "left":
 				return {
-					x: box.left,
-					y: targetBox.top - element.offsetHeight - spacing,
+					x: box.right,
+					y: targetBox.top - nextElement?.offsetHeight - spacing,
 				}
 		}
 	}
 
 	arrangePieces(){
 		const sides = ["top", "right", "bottom", "left"];
-		let depth = 0;
 		let i = 0;
 		let sideIndex = 0;
 
-		let currentX = this.boardLeft;
-		let currentY = this.boardTop - this.pieceSeparationDistance;
 		let currentSide = sides[sideIndex];
-
-		let lastPieceOnRightEdge,
-				lastPieceOnBottomEdge,
-				lastPieceOnLeftEdge,
-				lastPieceOnTopEdge;
-
+		
 		const firstPiecesOnEachSide = {
 			"top": null,
 			"right": null,
 			"bottom": null,
 			"left": null,
 		};
-
-		const spacing = 20;
-
-		const piecesInPlay = this.shuffleArray(this.getIndividualPiecesInPlay());
-		console.log(piecesInPlay)
 		
-		while(i < piecesInPlay.length - 1){
+		const spacing = 20;
+		
+		const piecesInPlay = this.shuffleArray(this.getIndividualPiecesInPlay());
+		
+		let currentX = this.boardLeft * this.zoomLevel;
+		let currentY = (this.boardTop - this.largestPieceSpan - spacing) * this.zoomLevel;
+		
+		while(i < piecesInPlay.length){
+			console.log("current element", piecesInPlay[i])
 			piecesInPlay[i].style.top = currentY + "px";
 			piecesInPlay[i].style.left = currentX + "px";
 
-			const nextSide = sideIndex < 3 ? sideIndex + 1 : 0
+			if(i === 0){
+				firstPiecesOnEachSide[currentSide] = piecesInPlay[i];
+			}
+
+			const nextSide = sideIndex < 3 ? sideIndex + 1 : 0;
+			const isLastPiece = i === piecesInPlay.length - 1;
 
 			if(this.shouldProceedToNextSide(currentSide, piecesInPlay[i], firstPiecesOnEachSide[sides[nextSide]])){
-				// console.log("proceeding to next side", i)
-				const nextPos = this.getPositionForFirstPieceOnNextSide(piecesInPlay[i], currentSide, firstPiecesOnEachSide[sides[nextSide]])
-				sideIndex++;
+				console.log("proceeding to next side", i)
+
+				const nextPos = this.getPositionForFirstPieceOnNextSide(piecesInPlay[i], !isLastPiece ? piecesInPlay[i+1] : null, currentSide, firstPiecesOnEachSide[sides[nextSide]]);
+
+				sideIndex = nextSide;
 				currentSide = sides[nextSide];
+
 				firstPiecesOnEachSide[currentSide] = piecesInPlay[nextSide];
 
 				currentX = nextPos.x;
 				currentY = nextPos.y;
 			} else {
 				if(currentSide === "top"){
-					currentX += piecesInPlay[i].offsetWidth + spacing;
+					currentX += (piecesInPlay[i].offsetWidth + spacing * this.zoomLevel);
 				} else if (currentSide === "right"){
-					currentY += piecesInPlay[i].offsetHeight + spacing;
+					currentY += (piecesInPlay[i].offsetHeight + spacing * this.zoomLevel);
 				} else if (currentSide === "bottom"){
-					currentX -= this.largestPieceSpan + spacing;
+					if(!isLastPiece){
+						currentX -= (piecesInPlay[i+1].offsetWidth + spacing) * this.zoomLevel;
+					}
 				} else if(currentSide === "left"){
-					currentY -= this.largestPieceSpan + spacing;
+					if(!isLastPiece){
+						currentY -= (piecesInPlay[i+1].offsetHeight + spacing) * this.zoomLevel;
+					}
 				}
 			}
 
 			i++;
+
+		console.log(piecesInPlay)
+
 		}
 		
 	}
