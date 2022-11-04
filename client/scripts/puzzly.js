@@ -463,18 +463,18 @@ class Puzzly {
 
 	randomisePiecePositions(){
 		const sectors = this.getSequentialArray(0, this.selectedNumPieces, true);
-		console.log("sectors", sectors)
+		// console.log("sectors", sectors)
 		this.pieces.forEach((p, i) => {
 			const el = this.getElementByPieceId(p.id);
 			const sector = this.pieceSectors[sectors[i]];
-			const a = document.createElement("div");
-			a.style.position = "absolute";
-			a.style.top = sector.y + "px";
-			a.style.left = sector.x + "px";
-			a.style.width = sector.w + "px";
-			a.style.height = sector.h + "px";
-			a.style.border = "2px solid blue";
-			document.body.appendChild(a);
+			// const a = document.createElement("div");
+			// a.style.position = "absolute";
+			// a.style.top = sector.y + "px";
+			// a.style.left = sector.x + "px";
+			// a.style.width = sector.w + "px";
+			// a.style.height = sector.h + "px";
+			// a.style.border = "2px solid blue";
+			// document.body.appendChild(a);
 			const pos = {
 				x: this.getRandomInt(sector.x, sector.x + sector.w - p.imgW),
 				y: this.getRandomInt(sector.y, sector.y + sector.h - p.imgH),
@@ -1537,32 +1537,30 @@ class Puzzly {
 	// Determine when arrangePieces() should start placing pieces on next side
 	shouldProceedToNextSide(currentSide, element, firstPieceOnNextSide){
 		// console.log("shouldProceedToNextSide()", currentSide, element, firstPieceOnNextSide)
-		const thisRect = element.getBoundingClientRect();
-		let targetRect;
+		// const thisRect = element.getBoundingClientRect();
+		let targetBox;
 
 		if(firstPieceOnNextSide){
-			targetRect = firstPieceOnNextSide.getBoundingClientRect();
+			targetBox = {
+				top: parseInt(firstPieceOnNextSide.style.top) * this.zoomLevel,
+				right: parseInt(firstPieceOnNextSide.style.left) + firstPieceOnNextSide.offsetWidth * this.zoomLevel,
+				bottom: parseInt(firstPieceOnNextSide.style.top) + firstPieceOnNextSide.offsetHeight * this.zoomLevel,
+				left: parseInt(firstPieceOnNextSide.style.left) * this.zoomLevel,
+			}
 		} else {
-			targetRect = {
-				top: this.boardTop,
-				right: this.boardRight,
-				bottom: this.boardBottom,
-				left: this.boardLeft,
+			targetBox = {
+				top: this.boardAreaEl.offsetTop,
+				right: this.boardAreaEl.offsetLeft + this.boardAreaEl.offsetWidth,
+				bottom: this.boardAreaEl.offsetTop + this.boardAreaEl.offsetHeight,
+				left: this.boardAreaEl.offsetLeft,
 			};
 		}
 
 		const box = {
-			top: thisRect.top * this.zoomLevel,
-			right: thisRect.right * this.zoomLevel,
-			bottom: thisRect.bottom * this.zoomLevel,
-			left: thisRect.left * this.zoomLevel,
-		}
-
-		const targetBox = {
-			top: targetRect.top * this.zoomLevel,
-			right: targetRect.right * this.zoomLevel,
-			bottom: targetRect.bottom * this.zoomLevel,
-			left: targetRect.left * this.zoomLevel,
+			top: parseInt(element.style.top) * this.zoomLevel,
+			right: parseInt(element.style.left) + element.offsetWidth * this.zoomLevel,
+			bottom: parseInt(element.style.top) + element.offsetHeight * this.zoomLevel,
+			left: parseInt(element.style.left) * this.zoomLevel,
 		}
 
 		switch(currentSide){
@@ -1580,13 +1578,17 @@ class Puzzly {
 	// Each time we start the next side, determine where the first piece should go
 	getPositionForFirstPieceOnNextSide(element, nextElement, currentSide, firstPieceOnNextSideFromPreviousIteration){
 		// console.log("getPositionForFirstPieceOnNextSide", element, nextElement, currentSide)
-		const thisRect = element.getBoundingClientRect();
-		let targetRect;
+		let targetBox;
 
 		if(firstPieceOnNextSideFromPreviousIteration){
-			targetRect = firstPieceOnNextSideFromPreviousIteration.getBoundingClientRect();
+			targetBox = {
+				top: parseInt(firstPieceOnNextSideFromPreviousIteration.style.top) * this.zoomLevel,
+				right: parseInt(firstPieceOnNextSideFromPreviousIteration.style.left) + firstPieceOnNextSideFromPreviousIteration.offsetWidth * this.zoomLevel,
+				bottom: parseInt(firstPieceOnNextSideFromPreviousIteration.style.top) + firstPieceOnNextSideFromPreviousIteration.offsetHeight * this.zoomLevel,
+				left: parseInt(firstPieceOnNextSideFromPreviousIteration.style.left) * this.zoomLevel,
+			}
 		} else {
-			targetRect = {
+			targetBox = {
 				top: this.boardTop,
 				right: this.boardRight,
 				bottom: this.boardBottom,
@@ -1595,17 +1597,10 @@ class Puzzly {
 		}
 
 		const box = {
-			top: thisRect.top,
-			right: thisRect.right,
-			bottom: thisRect.bottom,
-			left: thisRect.left,
-		}
-
-		const targetBox = {
-			top: targetRect.top,
-			right: targetRect.right,
-			bottom: targetRect.bottom,
-			left: targetRect.left,
+			top: parseInt(element.style.top) * this.zoomLevel,
+			right: parseInt(element.style.left) + element.offsetWidth * this.zoomLevel,
+			bottom: parseInt(element.style.top) + element.offsetHeight * this.zoomLevel,
+			left: parseInt(element.style.left) * this.zoomLevel,
 		}
 
 		const spacing = 20;
@@ -1630,8 +1625,8 @@ class Puzzly {
 				}
 			case "left":
 				return {
-					x: box.right,
-					y: targetBox.top - nextElement?.offsetHeight - spacing,
+					x: box.right + spacing,
+					y: targetBox.top - this.largestPieceSpan - spacing,
 				}
 		}
 	}
@@ -1654,11 +1649,14 @@ class Puzzly {
 		
 		const piecesInPlay = this.shuffleArray(this.getIndividualPiecesInPlay());
 		
-		let currentX = this.boardLeft * this.zoomLevel;
-		let currentY = (this.boardTop - this.largestPieceSpan - spacing) * this.zoomLevel;
+		const stageCurrX = this.canvas.offsetLeft;
+		const stageCurrY = this.canvas.offsetTop;
+
+		let currentX = this.boardAreaEl.offsetLeft * this.zoomLevel;
+		let currentY = (this.boardAreaEl.offsetTop - this.largestPieceSpan - spacing) * this.zoomLevel;
 		
 		while(i < piecesInPlay.length){
-			console.log("current element", piecesInPlay[i])
+			// console.log("current element", piecesInPlay[i])
 			piecesInPlay[i].style.top = currentY + "px";
 			piecesInPlay[i].style.left = currentX + "px";
 
@@ -1670,14 +1668,14 @@ class Puzzly {
 			const isLastPiece = i === piecesInPlay.length - 1;
 
 			if(this.shouldProceedToNextSide(currentSide, piecesInPlay[i], firstPiecesOnEachSide[sides[nextSide]])){
-				console.log("proceeding to next side", i)
+				// console.log("proceeding to next side", i)
 
 				const nextPos = this.getPositionForFirstPieceOnNextSide(piecesInPlay[i], !isLastPiece ? piecesInPlay[i+1] : null, currentSide, firstPiecesOnEachSide[sides[nextSide]]);
 
 				sideIndex = nextSide;
 				currentSide = sides[nextSide];
 
-				firstPiecesOnEachSide[currentSide] = piecesInPlay[nextSide];
+				firstPiecesOnEachSide[currentSide] = piecesInPlay[i+1];
 
 				currentX = nextPos.x;
 				currentY = nextPos.y;
