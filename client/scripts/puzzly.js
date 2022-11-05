@@ -1,3 +1,4 @@
+import GroupDraws from "./GroupDraws.js";
 import Utils from "./utils.js";
 
 /** 
@@ -104,8 +105,7 @@ class Puzzly {
 		})
 
 		this.sendToEdgeNeatenBtn.addEventListener(this.interactionEventDown, e => {
-			let pieces = this.shuffleArray(Array.from(this.allPieces()).filter(p => !this.getIsSolved(p) && !Utils.hasGroup(p)));
-			this.arrangePieces(pieces);
+			this.arrangePieces();
 		})
 
 		if(this.innerPiecesVisible){
@@ -239,6 +239,8 @@ class Puzzly {
 
 		window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
 		window.addEventListener('keydown', this.onKeyDown.bind(this));
+
+		this.GroupDraws = new GroupDraws();
 	}
 
 	onControlsHandleClick(e){
@@ -655,93 +657,6 @@ class Puzzly {
 		}
 	}
 	
-	drawPieceDeprecated(piece) {
-		const canvasEl = document.createElement("canvas");
-		this.canvas.appendChild(canvasEl);
-
-		canvasEl.id = "canvas-" + piece.shapeId;
-		canvasEl.className = "puzzle-piece";
-
-		if(piece.isInnerPiece){
-			canvasEl.className += " inner-piece";
-			if(!this.innerPiecesVisible){
-				canvasEl.style.display = 'none';
-			}
-		}
-		canvasEl.setAttribute('data-jigsaw-type', piece.type.join(","))
-		canvasEl.setAttribute('data-piece-id', piece.id)
-		canvasEl.setAttribute('data-imgX', piece.imgX)
-		canvasEl.setAttribute('data-imgy', piece.imgY)
-		canvasEl.style.zIndex = 3;
-		canvasEl.setAttribute('width', piece.imgW);
-		canvasEl.setAttribute('height', piece.imgH);
-		canvasEl.style.position = "absolute";
-
-		canvasEl.style.left = piece.pageX + "px";
-		canvasEl.style.top = piece.pageY + "px";
-
-		canvasEl.addEventListener('mouseenter', e => {
-			const allPieces = document.querySelectorAll('.puzzle-piece');
-			// allPieces.forEach(p => p.style.zIndex = 10);
-		})
-
-		const cvctx = canvasEl.getContext("2d");
-		cvctx.imageSmoothingEnabled = false;
-
-		const sprite = SpriteMap.find(s => s._shape_id === piece.shapeId);
-
-		cvctx.drawImage(
-			this.SourceImage,
-			piece.imgX,
-			piece.imgY,
-			piece.imgW,
-			piece.imgH,
-			0,
-			0,
-			piece.imgW,
-			piece.imgH,
-		);
-
-		cvctx.globalCompositeOperation = 'destination-atop';
-
-		cvctx.drawImage(
-			this.JigsawSprite,
-			sprite.x,
-			sprite.y,
-			sprite._w,
-			sprite._h,
-			0, 
-			0, 
-			piece.imgW,
-			piece.imgH,
-		);
-
-		if(this.drawOutlines){
-			/**
-			 * Borrowed from: https://stackoverflow.com/questions/37115530/how-do-i-create-a-puzzle-piece-with-bevel-effect-in-edged-in-canvas-html5
-			 */
-	
-			cvctx.fill();
-	
-			// 4) Add rect to make stencil
-			cvctx.rect(0, 0, piece.imgW, piece.imgH);
-	
-			// 5) Build dark shadow
-			cvctx.shadowBlur = 1;
-			cvctx.shadowOffsetX = -1;
-			cvctx.shadowOffsetY = -1;
-			cvctx.shadowColor = "rgba(0,0,0,0.8)";
-	
-			// 6) Draw stencil with shadow but only on non-transparent pixels
-			cvctx.globalCompositeOperation = "destination-atop";
-			cvctx.fill();
-	
-			/**
-			 * End borrowed code
-			*/
-		}
-	}
-
 	getGroup(el){
 		const attrValue = this.getDataAttributeValue(el, 'group');
 		return attrValue ? parseInt(attrValue) : undefined;
@@ -854,6 +769,7 @@ class Puzzly {
 			diffX = clientPos.x - this.movingElement.offsetLeft * this.zoomLevel;
 			diffY = clientPos.y - this.movingElement.offsetTop * this.zoomLevel;					
 
+			if(this.isCanvasMoving)
 			this.keepOnTop(this.movingElement)
 
 			this.mouseMoveFunc = this.onMouseMove(diffX, diffY);
@@ -1027,6 +943,7 @@ class Puzzly {
 	}
 
 	keepOnTop(el){
+		console.log("keeping on top", el)
 		el.style.zIndex = this.currentZIndex++;
 	}
 
@@ -1537,7 +1454,6 @@ class Puzzly {
 	// Determine when arrangePieces() should start placing pieces on next side
 	shouldProceedToNextSide(currentSide, element, firstPieceOnNextSide){
 		// console.log("shouldProceedToNextSide()", currentSide, element, firstPieceOnNextSide)
-		// const thisRect = element.getBoundingClientRect();
 		let targetBox;
 
 		if(firstPieceOnNextSide){
@@ -1631,10 +1547,11 @@ class Puzzly {
 		}
 	}
 
-	arrangePieces(){
+	arrangePieces(dryRun = false){
 		const sides = ["top", "right", "bottom", "left"];
 		let i = 0;
 		let sideIndex = 0;
+		let verticalSpace = 0;
 
 		let currentSide = sides[sideIndex];
 		
@@ -1648,17 +1565,16 @@ class Puzzly {
 		const spacing = 20;
 		
 		const piecesInPlay = this.shuffleArray(this.getIndividualPiecesInPlay());
-		
-		const stageCurrX = this.canvas.offsetLeft;
-		const stageCurrY = this.canvas.offsetTop;
 
 		let currentX = this.boardAreaEl.offsetLeft * this.zoomLevel;
 		let currentY = (this.boardAreaEl.offsetTop - this.largestPieceSpan - spacing) * this.zoomLevel;
 		
 		while(i < piecesInPlay.length){
 			// console.log("current element", piecesInPlay[i])
-			piecesInPlay[i].style.top = currentY + "px";
-			piecesInPlay[i].style.left = currentX + "px";
+			if(!dryRun){
+				piecesInPlay[i].style.top = currentY + "px";
+				piecesInPlay[i].style.left = currentX + "px";
+			}
 
 			if(i === 0){
 				firstPiecesOnEachSide[currentSide] = piecesInPlay[i];
@@ -1669,6 +1585,9 @@ class Puzzly {
 
 			if(this.shouldProceedToNextSide(currentSide, piecesInPlay[i], firstPiecesOnEachSide[sides[nextSide]])){
 				// console.log("proceeding to next side", i)
+				if(currentSide === "bottom"){
+					verticalSpace += this.largestPieceSpan + spacing;
+				}
 
 				const nextPos = this.getPositionForFirstPieceOnNextSide(piecesInPlay[i], !isLastPiece ? piecesInPlay[i+1] : null, currentSide, firstPiecesOnEachSide[sides[nextSide]]);
 
@@ -1697,9 +1616,11 @@ class Puzzly {
 
 			i++;
 
-		console.log(piecesInPlay)
+			console.log(piecesInPlay)
 
 		}
+
+		return verticalSpace;
 		
 	}
 
