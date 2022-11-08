@@ -67,15 +67,14 @@ class GroupDraws {
         }
 
         if(this.elementClone){
-          this.elementClone.style.top = this.movingElement.offsetTop + "px";
-          this.elementClone.style.left = this.movingElement.offsetLeft + "px";
+          this.setClonePosition();
         }
       }
     }
   }
 
   onMouseUp(e){
-    // console.log("on mouse up", e.target)
+    console.log("on mouse up", e)
     if(this.elementClone){
       this.removeClone();
     }
@@ -84,12 +83,20 @@ class GroupDraws {
       this.isMouseDown = false;
       this.movingElement = null;
     }
+
+
   }
 
   makeClone(element){
     this.elementClone = element.cloneNode(true);
     this.elementClone.style.pointerEvents = "none";
     this.cloneContainer.appendChild(this.elementClone);
+    this.setClonePosition();
+  }
+
+  setClonePosition(){
+    this.elementClone.style.top = this.mainCanvas.offsetTop + this.movingElement.offsetTop + "px";
+    this.elementClone.style.left = this.mainCanvas.offsetLeft + this.movingElement.offsetLeft + "px";
   }
 
   removeClone(){
