@@ -240,7 +240,7 @@ class Puzzly {
 		window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
 		window.addEventListener('keydown', this.onKeyDown.bind(this));
 
-		this.GroupDraws = new GroupDraws();
+		this.GroupDraws = new GroupDraws(this);
 	}
 
 	onControlsHandleClick(e){
@@ -578,6 +578,7 @@ class Puzzly {
 		fgEl.style.top = 0;
 		fgEl.style.left = 0;
 		fgEl.style.zIndex = 2;
+		fgEl.style.pointerEvents = "none";
 
 		bgEl = document.createElement("div");
 		bgEl.classList.add('puzzle-piece-bg');
@@ -592,6 +593,7 @@ class Puzzly {
 		bgEl.style.backgroundPositionX = piece.spriteX === 0 ? 0 : '-' + piece.spriteX + 'px';
 		bgEl.style.backgroundPositionY = piece.spriteY === 0 ? 0 : '-' + piece.spriteY + 'px';
 		bgEl.style.zIndex = 1;
+		bgEl.style.pointerEvents = "none";
 
 		el.appendChild(fgEl);
 		el.appendChild(bgEl);
@@ -796,6 +798,7 @@ class Puzzly {
 		return function(e){
 			let eventX, eventY, newPosTop, newPosLeft;
 
+			
 			if(this.movingElement){
 				eventX = e.touches ? e.touches[0].clientX : e.clientX;
 				eventY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -813,7 +816,6 @@ class Puzzly {
 					this.movingElement.style.top = newPosTop + "px";
 					this.movingElement.style.left = newPosLeft + "px";
 				}
-
 			}
 		}.bind(this)
 	}
@@ -1940,7 +1942,7 @@ class Puzzly {
 			left: hasGroup ? element.parentNode.offsetLeft + element.offsetLeft : element.offsetLeft,
 		}
 
-		console.log("getElementBoundingBoxForFloatDetection", pos)
+		// console.log("getElementBoundingBoxForFloatDetection", pos)
 	
 		const box = {
 			top: pos.top + this.floatTolerance,
@@ -1974,7 +1976,7 @@ class Puzzly {
 			bottom: this.boardTop + solvedY + diffY + (this.floatTolerance / 2),
 			left: this.boardLeft + solvedX + diffX
 		}
-console.log("box", box)
+// console.log("box", box)
 		if(drawBoundingBox){
 			this.drawBoundingBox(box, "solved");
 		}
@@ -2024,28 +2026,28 @@ console.log("box", box)
 			if(Utils.isTopLeftCorner(piece)){
 				elBBWithinTolerance.right = elBoundingBox.left + this.connectorTolerance;
 				elBBWithinTolerance.bottom = elBoundingBox.top + this.connectorTolerance;
-				if(this.hasCollision(elBBWithinTolerance, this.getTopLeftCornerBoundingBox())){
+				if(Utils.hasCollision(elBBWithinTolerance, this.getTopLeftCornerBoundingBox())){
 					connectionFound = "top-left";
 				}
 			}
 			if(Utils.isTopRightCorner(piece)){
 				elBBWithinTolerance.left = elBoundingBox.right - this.connectorTolerance;
 				elBBWithinTolerance.bottom = elBoundingBox.top + this.connectorTolerance;
-				if(this.hasCollision(elBoundingBox, this.getTopRightCornerBoundingBox())){
+				if(Utils.hasCollision(elBoundingBox, this.getTopRightCornerBoundingBox())){
 					connectionFound = "top-right";
 				}
 			}
 			if(Utils.isBottomRightCorner(piece)){
 				elBBWithinTolerance.left = elBoundingBox.right - this.connectorTolerance;
 				elBBWithinTolerance.top = elBoundingBox.bottom - this.connectorTolerance;
-				if(this.hasCollision(elBoundingBox, this.getBottomRightCornerBoundingBox())){
+				if(Utils.hasCollision(elBoundingBox, this.getBottomRightCornerBoundingBox())){
 					connectionFound = "bottom-right";
 				}
 			}
 			if(Utils.isBottomLeftCorner(piece)){
 				elBBWithinTolerance.right = elBoundingBox.left + this.connectorTolerance;
 				elBBWithinTolerance.top = elBoundingBox.bottom - this.connectorTolerance;
-				if(this.hasCollision(elBoundingBox, this.getBottomLeftCornerBoundingBox())){
+				if(Utils.hasCollision(elBoundingBox, this.getBottomLeftCornerBoundingBox())){
 					connectionFound = "bottom-left";
 				}
 			}
@@ -2081,7 +2083,7 @@ console.log("box", box)
 				}
 
 				// console.log('checking right', thisPieceConnectorBoundingBoxRight, targetPieceConnectorBoundingBox)
-				if(this.hasCollision(thisPieceConnectorBoundingBoxRight, targetPieceConnectorBoundingBox, element, targetElement)){
+				if(Utils.hasCollision(thisPieceConnectorBoundingBoxRight, targetPieceConnectorBoundingBox, element, targetElement)){
 					connectionFound = "right";
 				}
 			}
@@ -2109,7 +2111,7 @@ console.log("box", box)
 					targetPieceConnectorBoundingBox = this.getConnectorBoundingBox(targetElement, "top");
 				}
 				// console.log('checking bottom', thisPieceConnectorBoundingBoxBottom, targetPieceConnectorBoundingBox)
-				if(this.hasCollision(thisPieceConnectorBoundingBoxBottom, targetPieceConnectorBoundingBox, element, targetElement)){
+				if(Utils.hasCollision(thisPieceConnectorBoundingBoxBottom, targetPieceConnectorBoundingBox, element, targetElement)){
 					connectionFound = "bottom";
 				}
 			}
@@ -2139,7 +2141,7 @@ console.log("box", box)
 				}
 				
 				// console.log('checking left', thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox)
-				if(this.hasCollision(thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox, element, targetElement)){
+				if(Utils.hasCollision(thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox, element, targetElement)){
 					connectionFound = "left";
 				}
 			}
@@ -2168,18 +2170,17 @@ console.log("box", box)
 				}
 
 				// console.log('checking top', thisPieceConnectorBoundingBoxTop, targetPieceConnectorBoundingBox)
-				if(this.hasCollision(thisPieceConnectorBoundingBoxTop, targetPieceConnectorBoundingBox)){
+				if(Utils.hasCollision(thisPieceConnectorBoundingBoxTop, targetPieceConnectorBoundingBox)){
 					connectionFound = "top";
 				}
 			}
 		}
 
-		// TODO: herron
 		const thisPieceBoundingBox = this.getElementBoundingBoxForFloatDetection(element);
-		const solvedBoundingBox = this.getPieceSolvedBoundingBox(element, true)
+		const solvedBoundingBox = this.getPieceSolvedBoundingBox(element)
 
-console.log("checking float", thisPieceBoundingBox, solvedBoundingBox)
-		if(this.hasCollision(thisPieceBoundingBox, solvedBoundingBox)){
+// console.log("checking float", thisPieceBoundingBox, solvedBoundingBox)
+		if(Utils.hasCollision(thisPieceBoundingBox, solvedBoundingBox)){
 			connectionFound = 'float';
 		}
 		
@@ -2190,34 +2191,7 @@ console.log("checking float", thisPieceBoundingBox, solvedBoundingBox)
 		}
 	}
 
-	hasCollision(source, target, sourceEl, targetEl){
-		if([source.left, source.right, source.bottom, source.top, target.left, target.top, target.right, target.bottom].includes(NaN)) return false;
-
-		// console.log("source before", source)
-		// console.log("target before", target)
-
-		// const sourceBB = {
-		// 	top: source.top * this.zoomLevel,
-		// 	right: source.right * this.zoomLevel,
-		// 	bottom: source.bottom * this.zoomLevel,
-		// 	left: source.left * this.zoomLevel,
-		// }
-
-		// const targetBB = {
-		// 	top: target.top * this.zoomLevel,
-		// 	right: target.right * this.zoomLevel,
-		// 	bottom: target.bottom * this.zoomLevel,
-		// 	left: target.left * this.zoomLevel,
-		// }
-		
-		// console.log("has collision?", sourceBB)
-		// console.log("has collision?", targetBB)
-
-		const sourceBB = source;
-		const targetBB = target;
-		return !(sourceBB.left >= targetBB.right || sourceBB.top >= targetBB.bottom || 
-		sourceBB.right <= targetBB.left || sourceBB.bottom <= targetBB.top);
-	}
+	
 
 	getElementByPieceId(id){
 		return document.querySelectorAll(`[data-piece-id='${id}']`)[0];

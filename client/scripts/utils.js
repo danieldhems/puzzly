@@ -1,4 +1,33 @@
 const Utils = {
+	hasCollision(source, target, sourceEl, targetEl){
+		if([source.left, source.right, source.bottom, source.top, target.left, target.top, target.right, target.bottom].includes(NaN)) return false;
+
+		// console.log("source before", source)
+		// console.log("target before", target)
+
+		// const sourceBB = {
+		// 	top: source.top * this.zoomLevel,
+		// 	right: source.right * this.zoomLevel,
+		// 	bottom: source.bottom * this.zoomLevel,
+		// 	left: source.left * this.zoomLevel,
+		// }
+
+		// const targetBB = {
+		// 	top: target.top * this.zoomLevel,
+		// 	right: target.right * this.zoomLevel,
+		// 	bottom: target.bottom * this.zoomLevel,
+		// 	left: target.left * this.zoomLevel,
+		// }
+		
+		// console.log("has collision?", sourceBB)
+		// console.log("has collision?", targetBB)
+
+		const sourceBB = source;
+		const targetBB = target;
+		return !(sourceBB.left >= targetBB.right || sourceBB.top >= targetBB.bottom || 
+		sourceBB.right <= targetBB.left || sourceBB.bottom <= targetBB.top);
+	},
+
 	getQueryStringValue (key) { 
 		return decodeURIComponent(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + encodeURIComponent(key).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));  
 	},
