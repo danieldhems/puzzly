@@ -1,4 +1,4 @@
-import GroupDraws from "./GroupDraws.js";
+import Pockets from "./pockets.js";
 import Utils from "./utils.js";
 
 /** 
@@ -240,7 +240,7 @@ class Puzzly {
 		window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
 		window.addEventListener('keydown', this.onKeyDown.bind(this));
 
-		this.GroupDraws = new GroupDraws(this);
+		this.Pockets = new Pockets(this);
 	}
 
 	onControlsHandleClick(e){
@@ -440,13 +440,15 @@ class Puzzly {
 	
 			this.canvas.style.transform = `scale(${this.zoomLevel})`;
 			this.canvas.style.transformOrigin = "50% 50%";
+
+			this.Pockets.setScale(this.zoomLevel);
 		}
 	}
 
 	getRandomCoordsFromSectorMap(){
 		return this.pieceSectors.map(s => ({
-			x: this.getRandomInt(s.x, s.x + s.w),
-			y: this.getRandomInt(s.y, s.y + s.h)
+			x: Utils.getRandomInt(s.x, s.x + s.w),
+			y: Utils.getRandomInt(s.y, s.y + s.h)
 		}))
 	}
 
@@ -478,8 +480,8 @@ class Puzzly {
 			// a.style.border = "2px solid blue";
 			// document.body.appendChild(a);
 			const pos = {
-				x: this.getRandomInt(sector.x, sector.x + sector.w - p.imgW),
-				y: this.getRandomInt(sector.y, sector.y + sector.h - p.imgH),
+				x: Utils.getRandomInt(sector.x, sector.x + sector.w - p.imgW),
+				y: Utils.getRandomInt(sector.y, sector.y + sector.h - p.imgH),
 			}
 			el.style.top = pos.y + "px";
 			el.style.left = pos.x + "px";
@@ -1310,19 +1312,6 @@ class Puzzly {
 		}
 	}
 
-	/**
-	* Returns a random integer between min (inclusive) and max (inclusive).
-	* The value is no lower than min (or the next integer greater than min
-	* if min isn't an integer) and no greater than max (or the next integer
-	* lower than max if max isn't an integer).
-	* Using Math.round() will give you a non-uniform distribution!
-	*/
-	getRandomInt(min, max) {
-		min = Math.ceil(min);
-		max = Math.floor(max);
-		return Math.floor(Math.random() * (max - min + 1)) + min;
-	}
-
 	getSectorBoundingBox(sector){
 		const sectors = [
 			"top-first-half",
@@ -1666,8 +1655,8 @@ class Puzzly {
 		const randSectorBoundingBox = this.getSectorBoundingBox(sector);
 		
 		return {
-			left: this.getRandomInt(randSectorBoundingBox.left, randSectorBoundingBox.right - this.largestPieceSpan),
-			top: this.getRandomInt(randSectorBoundingBox.top, randSectorBoundingBox.bottom - this.largestPieceSpan),
+			left: Utils.getRandomInt(randSectorBoundingBox.left, randSectorBoundingBox.right - this.largestPieceSpan),
+			top: Utils.getRandomInt(randSectorBoundingBox.top, randSectorBoundingBox.bottom - this.largestPieceSpan),
 		}
 	}
 
