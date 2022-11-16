@@ -18,8 +18,7 @@ const GeneratorConfig = {
 	connectorLateralControlPointDistance: null,
 	largestPieceSpan: null,
 	strokeWidth: 1,
-	shadowOffsetRatio: 5,
-	shadowColor: "black",
+	shadowColor: "grey",
 	strokeStyle: "#000"
 }
 

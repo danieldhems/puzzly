@@ -138,7 +138,7 @@ var api = {
 		  const puzzle = await puzzles.findOne(puzzleQuery);
 		  const piecesResult = await pieces.find(piecesQuery).toArray();
 			console.log('puzzle found', puzzle)
-		  // console.log('pieces found for puzzle', puzzleId, piecesResult)
+		  console.log('pieces found for puzzle', puzzleId, piecesResult)
 
 		  const result = {
 			  ...puzzle,

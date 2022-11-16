@@ -161,7 +161,7 @@ class Puzzly {
 			height: this.boardHeight,
 		};
 
-		this.shadowOffset = this.pieceSize / 100 * 5;
+		this.shadowOffset = this.pieceSize / 100 * 2;
 
 		this.connectorToleranceAmount = 40;
 		this.connectorTolerance = this.connectorSize / 100 * ((100 - this.connectorToleranceAmount) / 2);
@@ -189,13 +189,10 @@ class Puzzly {
 		this.makeSolvedCanvas();
 		this.initiFullImagePreviewer();
 		this.generatePieceSectorMap();
-
-		console.log("sectors", this.pieceSectors)
 		
 		this.isFullImageViewerActive = false;
 
 		const storage = this.getApplicablePersistence(this.pieces, this.lastSaveDate);
-		console.log("storage", storage)
 
 		if(storage?.pieces?.length > 0){
 			storage.pieces.forEach(p => {
@@ -543,6 +540,7 @@ class Puzzly {
 		el.style.top = (!!piece.group ? piece.solvedY : piece.pageY) + "px";
 		el.style.left = (!!piece.group ? piece.solvedX : piece.pageX) + "px";
 		el.style.pointerEvents = 'auto';
+		el.style.zIndex = 1;
 
 		el.setAttribute('data-jigsaw-type', piece.type.join(","))
 		el.setAttribute('data-piece-id', piece.id)

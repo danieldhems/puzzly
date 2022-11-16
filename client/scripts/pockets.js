@@ -8,6 +8,8 @@ class Pockets {
     this.hasCapture = false;
     this.elementClone = null;
 
+    this.isMainCanvasMoving = false;
+
     this.pocketWidth = window.innerWidth / 4;
     this.pocketHeight = 250;
     this.uiWidth = "100%";
@@ -20,14 +22,14 @@ class Pockets {
     this.setScale(config.zoomLevel);
 
     window.addEventListener("mousedown", e => this.onMouseDown(e));
-    window.addEventListener("mousemove", e => this.onMouseMove(e));
     window.addEventListener("mouseup", e => this.onMouseUp(e));
 
     return this;
   }
 
   setScale(num){
-    this.scale = num;
+    this.zoomLevel = num;
+    this.cloneContainer.style.transform = `scale(${num})`;
   }
 
   makePocket(id, lastPocket = false){
@@ -52,42 +54,51 @@ class Pockets {
 
   onMouseDown(e){
     const el = e.target;
+
     const isPuzzlePiece = el.classList.contains("puzzle-piece");
+    const isMainCanvas = el.id === "canvas" || el.id === "boardArea" || el.dataset?.isSolved === "true";
 
     if(isPuzzlePiece && !Utils.hasGroup(el)){
       this.isMovingSinglePiece = true;
-      this.isMouseDown = true;
       this.movingElement = el;
 
       if(this.isOverPockets(el) && this.elementClone === null){
         this.makeClone(this.movingElement);
       }
+    }
+
+    if(isMainCanvas) {
+      this.isMainCanvasMoving = true;
+    }
+
+    this.mouseFn = e => this.onMouseMove();
+
+    if(isPuzzlePiece || isMainCanvas){
+      window.addEventListener("mousemove", this.mouseFn);
     } else {
       this.isMouseDown = false;
       this.isMovingSinglePiece = false;
     }
   }
 
-  onMouseMove(e){
-    if(this.isMouseDown && this.isMovingSinglePiece){
-      if(this.isMovingSinglePiece){
-        if(this.isOverPockets(this.movingElement) && this.elementClone === null){
-          this.makeClone(this.movingElement);
-        }
+  onMouseMove(){
+    if(this.isMovingSinglePiece){
+      if(this.isOverPockets(this.movingElement) && this.elementClone === null){
+        this.makeClone(this.movingElement);
+      }
 
-        if(!this.isOverPockets(this.movingElement) && this.elementClone){
-          this.removeClone(this.movingElement);
-        }
+      if(!this.isOverPockets(this.movingElement) && this.elementClone){
+        this.removeClone(this.movingElement);
+      }
 
-        if(this.elementClone){
-          this.setClonePosition();
-        }
+      if(this.elementClone){
+        this.setClonePosition();
       }
     }
   }
 
   onMouseUp(e){
-    console.log("on mouse up", e.target)
+    // console.log("on mouse up", e.target)
     if(this.eventTargetIsPocket(e)){
       const pocketId = e.target.id.split("-")[2];
       this.addToPocket(this.movingElement, pocketId);
@@ -97,10 +108,17 @@ class Pockets {
       this.removeClone();
     }
 
-    if(this.isMouseDown){
-      this.isMouseDown = false;
+    if(this.isMainCanvasMoving){
+      this.setCloneContainerPosition();
+      this.isMainCanvasMoving = false;
+    }
+
+    if(this.isMovingSinglePiece){
+      this.isMovingSinglePiece = false;
       this.movingElement = null;
     }
+
+    window.removeEventListener("mousemove", this.mouseFn);
   }
 
   eventTargetIsPocket(e){
@@ -108,6 +126,8 @@ class Pockets {
   }
 
   addToPocket(element, pocketId){
+    if(!element) return;
+
     let dropX, dropY;
     const pocket = this.pockets[pocketId];
 
@@ -160,15 +180,20 @@ class Pockets {
 
   makeClone(element){
     this.elementClone = element.cloneNode(true);
-    this.elementClone.style.transform = `scale(${this.scale})`;
     this.elementClone.style.pointerEvents = "none";
     this.cloneContainer.appendChild(this.elementClone);
     this.setClonePosition();
   }
 
   setClonePosition(){
-    this.elementClone.style.top = (this.mainCanvas.offsetTop + this.movingElement.offsetTop) + "px";
-    this.elementClone.style.left = (this.mainCanvas.offsetLeft + this.movingElement.offsetLeft) + "px";
+    this.elementClone.style.top = this.movingElement.offsetTop + "px";
+    this.elementClone.style.left = this.movingElement.offsetLeft + "px";
+  }
+
+  setCloneContainerPosition(){
+    console.log("setting clone container position")
+    this.cloneContainer.style.top = parseInt(this.mainCanvas.style.top) + "px";
+    this.cloneContainer.style.left = parseInt(this.mainCanvas.style.left) + "px";
   }
 
   removeClone(){
@@ -216,8 +241,8 @@ class Pockets {
     drawContainer.appendChild(this.makePocket(4, true));
 
     const cloneContainer = document.createElement("div");
-    cloneContainer.style.width = window.innerWidth + "px";
-    cloneContainer.style.height = window.innerHeight + "px";
+    cloneContainer.style.width = this.mainCanvas.offsetWidth + "px";
+    cloneContainer.style.height = this.mainCanvas.offsetHeight + "px";
     cloneContainer.style.position = "fixed";
     cloneContainer.style.bottom = 0;
     cloneContainer.style.left = 0;
