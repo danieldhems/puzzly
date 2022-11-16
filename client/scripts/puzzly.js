@@ -768,11 +768,14 @@ class Puzzly {
 				this.movingElement = this.movingPiece = element;
 			}
 
-			diffX = clientPos.x - this.movingElement.offsetLeft * this.zoomLevel;
-			diffY = clientPos.y - this.movingElement.offsetTop * this.zoomLevel;					
-
-			if(this.isCanvasMoving)
-			this.keepOnTop(this.movingElement)
+			console.log("isStage", isStage)
+			if(isStage){
+				diffX = clientPos.x - this.movingElement.offsetLeft;
+				diffY = clientPos.y - this.movingElement.offsetTop;					
+			} else {
+				diffX = clientPos.x - this.movingElement.offsetLeft * this.zoomLevel;
+				diffY = clientPos.y - this.movingElement.offsetTop * this.zoomLevel;					
+			}
 
 			this.mouseMoveFunc = this.onMouseMove(diffX, diffY);
 
@@ -798,21 +801,20 @@ class Puzzly {
 		return function(e){
 			let eventX, eventY, newPosTop, newPosLeft;
 
-			
 			if(this.movingElement){
 				eventX = e.touches ? e.touches[0].clientX : e.clientX;
 				eventY = e.touches ? e.touches[0].clientY : e.clientY;
-				newPosTop = (eventY / this.zoomLevel) - (diffY / this.zoomLevel);
-				newPosLeft = (eventX / this.zoomLevel) - (diffX / this.zoomLevel);
-
+				
 				if(this.isMovingStage){
 					if(this.dragIsWithinHorizontalBounds(eventX)){
-						this.movingElement.style.left = newPosLeft + "px";
+						this.movingElement.style.left = eventX - diffX + "px";
 					}
 					if(this.dragIsAtWithinVerticalBounds(eventY)){
-						this.movingElement.style.top = newPosTop + "px";
+						this.movingElement.style.top = eventY - diffY + "px";
 					}
 				} else {
+					const newPosTop = (eventY / this.zoomLevel) - (diffY / this.zoomLevel);
+					const newPosLeft = (eventX / this.zoomLevel) - (diffX / this.zoomLevel);
 					this.movingElement.style.top = newPosTop + "px";
 					this.movingElement.style.left = newPosLeft + "px";
 				}
