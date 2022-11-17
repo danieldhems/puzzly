@@ -52,19 +52,36 @@ class Pockets {
     return pocket;
   }
 
+  isPieceInPocket(el){
+    return el.classList.contains("puzzle-piece") && el.parentNode.classList.contains("pocket");
+  }
+
+  getPocketIdFromPiece(el){
+    return el.parentNode.id.split("-")[2];
+  }
+
   onMouseDown(e){
     const el = e.target;
 
     const isPuzzlePiece = el.classList.contains("puzzle-piece");
+    const hasGroup = isPuzzlePiece && Utils.hasGroup(el);
+    const shouldTrackPiece = isPuzzlePiece && !hasGroup;
+
     const isMainCanvas = el.id === "canvas" || el.id === "boardArea" || el.dataset?.isSolved === "true";
 
-    if(isPuzzlePiece && !Utils.hasGroup(el)){
+    if(shouldTrackPiece && !this.isPieceInPocket(el)){
       this.isMovingSinglePiece = true;
       this.movingElement = el;
 
       if(this.isOverPockets(el) && this.elementClone === null){
         this.makeClone(this.movingElement);
       }
+    }
+
+    if(this.isPieceInPocket(el)){
+      this.movingElement = el;
+      console.log(this.movingElement.getBoundingClientRect())
+      this.activePocket = this.pockets[this.getPocketIdFromPiece(el)];
     }
 
     if(isMainCanvas) {
@@ -85,9 +102,7 @@ class Pockets {
     if(this.isMovingSinglePiece){
       if(this.isOverPockets(this.movingElement) && this.elementClone === null){
         this.makeClone(this.movingElement);
-      }
-
-      if(!this.isOverPockets(this.movingElement) && this.elementClone){
+      } else if(!this.isOverPockets(this.movingElement) && this.elementClone){
         this.removeClone(this.movingElement);
       }
 
@@ -102,10 +117,13 @@ class Pockets {
     if(this.eventTargetIsPocket(e)){
       const pocketId = e.target.id.split("-")[2];
       this.addToPocket(this.movingElement, pocketId);
-    }
-
-    if(this.elementClone){
-      this.removeClone();
+      
+      if(this.elementClone){
+        this.removeClone();
+      }
+    } else if(this.activePocket){
+      this.returnToCanvas(this.getPiecesInActivePocket());
+      this.resetActivePocket();
     }
 
     if(this.isMainCanvasMoving){
@@ -115,14 +133,23 @@ class Pockets {
 
     if(this.isMovingSinglePiece){
       this.isMovingSinglePiece = false;
-      this.movingElement = null;
     }
+    
+    this.movingElement = null;
 
     window.removeEventListener("mousemove", this.mouseFn);
   }
 
   eventTargetIsPocket(e){
     return e.target.classList.contains("pocket");
+  }
+
+  getPiecesInActivePocket(){
+    return this.activePocket.childNodes;
+  }
+
+  resetActivePocket(){
+    this.activePocket = null;
   }
 
   addToPocket(element, pocketId){
@@ -146,6 +173,15 @@ class Pockets {
     element.style.left = dropX + "px";
 
     pocket.appendChild(element)
+  }
+
+  returnToCanvas(els){
+    Array.from(els).forEach(el => {
+      const rect = el.getBoundingClientRect();
+      el.style.top = rect.top - this.mainCanvas.offsetTop + "px";
+      el.style.left = rect.left - this.mainCanvas.offsetLeft + "px";
+      this.mainCanvas.appendChild(el);
+    })
   }
 
   getTargetBoxForPlacementInsidePocket(pieceSize){

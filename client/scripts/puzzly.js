@@ -768,7 +768,6 @@ class Puzzly {
 				this.movingElement = this.movingPiece = element;
 			}
 
-			console.log("isStage", isStage)
 			if(isStage){
 				diffX = clientPos.x - this.movingElement.offsetLeft;
 				diffY = clientPos.y - this.movingElement.offsetTop;					
