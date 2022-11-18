@@ -13,6 +13,7 @@ class Pockets {
     this.pocketWidth = window.innerWidth / 4;
     this.pocketHeight = 250;
     this.uiWidth = "100%";
+    this.pieceScaleWhileInPocket = .8;
     
     this.pocketDropBoundingBox = this.getTargetBoxForPlacementInsidePocket(config.pieceSize);
 
@@ -60,6 +61,27 @@ class Pockets {
     return el.parentNode.id.split("-")[2];
   }
 
+  setPieceSize(el, scale){
+    el.style.transform = `scale(${scale})`;
+  }
+
+  setSizeForPiecesInPocket(){
+    this.getPiecesInActivePocket().forEach(el => this.setPieceSize(el, this.pieceScaleWhileInPocket));
+  }
+
+  resetPieceScale(el){
+    el.style.transform = "scale(1)";
+  }
+
+  setActivePiecesToPocketSize(){
+    const activePieces = this.getPiecesInActivePocket();
+    if(activePieces){
+      Array.from(activePieces).forEach(el => {
+        this.setPieceSize(el, this.pieceScaleWhileInPocket)
+      });
+    }
+  }
+
   onMouseDown(e){
     const el = e.target;
 
@@ -74,14 +96,15 @@ class Pockets {
       this.movingElement = el;
 
       if(this.isOverPockets(el) && this.elementClone === null){
-        this.makeClone(this.movingElement);
+        this.makeClone(el);
       }
     }
 
     if(this.isPieceInPocket(el)){
       this.movingElement = el;
-      console.log(this.movingElement.getBoundingClientRect())
+      // console.log(this.movingElement.getBoundingClientRect())
       this.activePocket = this.pockets[this.getPocketIdFromPiece(el)];
+      this.setPieceSize(el, this.zoomLevel);
     }
 
     if(isMainCanvas) {
@@ -113,17 +136,33 @@ class Pockets {
   }
 
   onMouseUp(e){
-    // console.log("on mouse up", e.target)
+    console.log("on mouse up", e.target)
+    const el = e.target;
+
     if(this.eventTargetIsPocket(e)){
-      const pocketId = e.target.id.split("-")[2];
-      this.addToPocket(this.movingElement, pocketId);
-      
+      const pocketId = el.id.split("-")[2];
+
+      if(!this.activePocket){
+        this.addToPocket(this.movingElement, pocketId);
+      }
+
       if(this.elementClone){
         this.removeClone();
       }
-    } else if(this.activePocket){
-      this.returnToCanvas(this.getPiecesInActivePocket());
-      this.resetActivePocket();
+
+      this.setPieceSize(this.movingElement, this.pieceScaleWhileInPocket);
+
+      this.setActivePiecesToPocketSize();
+    }
+    
+    if(this.activePocket){
+      console.log("active pocket", e)
+      if(!this.isOverPockets(el)){
+        this.returnToCanvas(this.getPiecesInActivePocket());
+        this.resetActivePocket();
+      } else {
+        this.setActivePiecesToPocketSize();
+      }
     }
 
     if(this.isMainCanvasMoving){
@@ -144,8 +183,12 @@ class Pockets {
     return e.target.classList.contains("pocket");
   }
 
+  eventTargetIsCanvas(e){
+    return e.target.id === "canvas";
+  }
+
   getPiecesInActivePocket(){
-    return this.activePocket.childNodes;
+    return this.activePocket?.childNodes;
   }
 
   resetActivePocket(){
@@ -227,7 +270,6 @@ class Pockets {
   }
 
   setCloneContainerPosition(){
-    console.log("setting clone container position")
     this.cloneContainer.style.top = parseInt(this.mainCanvas.style.top) + "px";
     this.cloneContainer.style.left = parseInt(this.mainCanvas.style.left) + "px";
   }
