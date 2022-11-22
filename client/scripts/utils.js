@@ -183,6 +183,10 @@ const Utils = {
         let newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?' + searchParams.toString();
         window.history.pushState({path: newurl}, '', newurl);
     }
+	},
+
+	getElementByPieceId(id){
+		return document.querySelectorAll(`[data-piece-id='${id}']`)[0];
 	}
 }
 

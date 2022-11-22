@@ -466,7 +466,7 @@ class Puzzly {
 		const sectors = this.getSequentialArray(0, this.selectedNumPieces, true);
 		// console.log("sectors", sectors)
 		this.pieces.forEach((p, i) => {
-			const el = this.getElementByPieceId(p.id);
+			const el = Utils.getElementByPieceId(p.id);
 			const sector = this.pieceSectors[sectors[i]];
 			// const a = document.createElement("div");
 			// a.style.position = "absolute";
@@ -531,6 +531,7 @@ class Puzzly {
 
 		el = document.createElement('div');
 		el.classList.add('puzzle-piece')
+		// el.addEventListener("dragstart", () => false);
 		
 		el.style.position = "absolute";
 		el.width = piece.pieceWidth;
@@ -685,14 +686,14 @@ class Puzzly {
 
 	applyHighlightToConnectingPieces(connections){
 		for(let id in connections){
-			let el = this.getElementByPieceId(connections[id]);
+			let el = Utils.getElementByPieceId(connections[id]);
 			el.classList.add('js-highlight');
 		}
 	}
 
 	removeHighlightFromConnectingPieces(connections){
 		for(let id in connections){
-			let el = this.getElementByPieceId(connections[id]);
+			let el = Utils.getElementByPieceId(connections[id]);
 			el.classList.remove('js-highlight');
 		}
 	}
@@ -954,13 +955,13 @@ class Puzzly {
 		const p = this.getPieceFromElement(el, ['piece-id']);
 		switch(connection){
 			case 'right':
-				return this.getElementByPieceId(p.id + 1);
+				return Utils.getElementByPieceId(p.id + 1);
 			case 'bottom':
-				return this.getElementByPieceId(p.id + this.piecesPerSideHorizontal);
+				return Utils.getElementByPieceId(p.id + this.piecesPerSideHorizontal);
 			case 'left':
-				return this.getElementByPieceId(p.id - 1);
+				return Utils.getElementByPieceId(p.id - 1);
 			case 'top':
-				return this.getElementByPieceId(p.id - this.piecesPerSideHorizontal);
+				return Utils.getElementByPieceId(p.id - this.piecesPerSideHorizontal);
 		}
 	}
 
@@ -975,28 +976,28 @@ class Puzzly {
 		const leftPiece = p.id - 1;
 		const topPiece = p.id - this.piecesPerSideHorizontal;
 		
-		const right = this.getElementByPieceId(rightPiece);
+		const right = Utils.getElementByPieceId(rightPiece);
 		if(right){
 			if(unconnectedOnly && !p.connections.includes('right') || !unconnectedOnly){
 				arr.push(right);
 				obj['right'] = right;
 			}
 		}
-		const bottom = this.getElementByPieceId(bottomPiece);
+		const bottom = Utils.getElementByPieceId(bottomPiece);
 		if(bottom){
 			if(unconnectedOnly && !p.connections.includes('bottom') || !unconnectedOnly){
 				arr.push(bottom);
 				obj['bottom'] = bottom;
 			}
 		}
-		const left = this.getElementByPieceId(leftPiece);
+		const left = Utils.getElementByPieceId(leftPiece);
 		if(left){
 			if(unconnectedOnly && !p.connections.includes('left') || !unconnectedOnly){
 				arr.push(left);
 				obj['left'] = left;
 			}
 		}
-		const top = this.getElementByPieceId(topPiece);
+		const top = Utils.getElementByPieceId(topPiece);
 		if(top){
 			if(unconnectedOnly && !p.connections.includes('top') || !unconnectedOnly){
 				arr.push(top);
@@ -1040,7 +1041,7 @@ class Puzzly {
 				const diffLeftOperand = diff.left.charAt(0);
 				const diffLeftValue = diffLeftOperand === "+" ? Math.ceil(parseFloat(diff.left.substr(1))) : Math.floor(parseFloat(diff.left.substr(1)));
 				
-				const element = this.getElementByPieceId(p.id);
+				const element = Utils.getElementByPieceId(p.id);
 	
 				const newPosTop = diffTopOperand === "+" ? parseInt(element.style.top) + diffTopValue : parseInt(element.style.top) - diffTopValue;
 				const newPosLeft = diffLeftOperand === "+" ? parseInt(element.style.left) + diffLeftValue : parseInt(element.style.left) - diffLeftValue;
@@ -2047,7 +2048,7 @@ class Puzzly {
 		const checkTop = hasTopConnector && !piece.connections.includes('top');
 
 		if(checkRight && !connectionFound){
-			targetElement = this.getElementByPieceId(piece.id + 1)
+			targetElement = Utils.getElementByPieceId(piece.id + 1)
 			// console.log('source element', element, 'target eleme÷nt', targetElement)
 			targetPiece = this.getPieceFromElement(targetElement, ['piece-id', 'group', 'is-solved', 'jigsaw-type'])
 
@@ -2078,7 +2079,7 @@ class Puzzly {
 		}
 
 		if(checkBottom && !connectionFound){
-			targetElement = this.getElementByPieceId(piece.id + this.piecesPerSideHorizontal)
+			targetElement = Utils.getElementByPieceId(piece.id + this.piecesPerSideHorizontal)
 			targetPiece = this.getPieceFromElement(targetElement, ['piece-id', 'group', 'jigsaw-type', 'is-solved']);
 
 			if(shouldCompare(targetPiece)){
@@ -2106,7 +2107,7 @@ class Puzzly {
 		}
 
 		if(checkLeft && !connectionFound){
-			targetElement = this.getElementByPieceId(piece.id - 1);
+			targetElement = Utils.getElementByPieceId(piece.id - 1);
 			targetPiece = this.getPieceFromElement(targetElement, ['piece-id', 'group', 'is-solved', 'jigsaw-type'])
 
 			if(shouldCompare(targetPiece)){
@@ -2136,7 +2137,7 @@ class Puzzly {
 		}
 
 		if(checkTop && !connectionFound){
-			targetElement = this.getElementByPieceId(piece.id - this.piecesPerSideHorizontal)
+			targetElement = Utils.getElementByPieceId(piece.id - this.piecesPerSideHorizontal)
 			targetPiece = this.getPieceFromElement(targetElement, ['piece-id', 'group', 'jigsaw-type', 'is-solved']);
 
 			if(shouldCompare(targetPiece)){ 
@@ -2181,9 +2182,7 @@ class Puzzly {
 
 	
 
-	getElementByPieceId(id){
-		return document.querySelectorAll(`[data-piece-id='${id}']`)[0];
-	}
+	
 
 	// deprecated
 	getPieceByElement(element){
@@ -2218,7 +2217,7 @@ class Puzzly {
 		const { id } = this.getPieceFromElement(el, ['piece-id']);
 		switch(connection){
 			case "top":
-				targetElement = this.getElementByPieceId(id - this.piecesPerSideHorizontal);
+				targetElement = Utils.getElementByPieceId(id - this.piecesPerSideHorizontal);
 				if(this.getGroup(targetElement)){
 					targetElOffset = parseInt(this.getDataAttributeValue(targetElement, 'position-within-container-top'));
 					expectedValue = targetElOffset + targetElement.offsetHeight - this.connectorSize;
@@ -2230,21 +2229,21 @@ class Puzzly {
 				}
 				break;
 			case "right":
-				targetElement = this.getElementByPieceId(id + 1);
+				targetElement = Utils.getElementByPieceId(id + 1);
 				expectedValue = targetElement.offsetLeft - el.offsetWidth + this.connectorSize;
 				if(parseInt(el.style.left) !== expectedValue){
 					el.style.left = this.getPxString(expectedValue);
 				}
 				break;
 			case "bottom":
-				targetElement = this.getElementByPieceId(id + this.piecesPerSideHorizontal);
+				targetElement = Utils.getElementByPieceId(id + this.piecesPerSideHorizontal);
 				expectedValue = targetElement.offsetTop - el.offsetHeight + this.connectorSize;
 				if(parseInt(el.style.top) !== expectedValue){
 					el.style.top = this.getPxString(expectedValue);
 				}
 				break;
 			case "left":
-				targetElement = this.getElementByPieceId(id - 1);
+				targetElement = Utils.getElementByPieceId(id - 1);
 				expectedValue = targetElement.offsetLeft + targetElement.offsetWidth - this.connectorSize;
 				if(parseInt(el.style.left) !== expectedValue){
 					el.style.left = this.getPxString(expectedValue);
@@ -2257,10 +2256,10 @@ class Puzzly {
 		const connections = [];
 		const p = this.getPieceFromElement(piece, ['piece-id', 'jigsaw-type', 'group']);
 
-		const pieceTop = !Utils.isTopEdgePiece(p) && this.getElementByPieceId(p.id - this.piecesPerSideHorizontal);
-		const pieceRight = !Utils.isRightEdgePiece(p) && this.getElementByPieceId(p.id + 1);
-		const pieceBottom = !Utils.isBottomEdgePiece(p) && this.getElementByPieceId(p.id + this.piecesPerSideHorizontal);
-		const pieceLeft = !Utils.isLeftEdgePiece(p) && this.getElementByPieceId(p.id - 1);
+		const pieceTop = !Utils.isTopEdgePiece(p) && Utils.getElementByPieceId(p.id - this.piecesPerSideHorizontal);
+		const pieceRight = !Utils.isRightEdgePiece(p) && Utils.getElementByPieceId(p.id + 1);
+		const pieceBottom = !Utils.isBottomEdgePiece(p) && Utils.getElementByPieceId(p.id + this.piecesPerSideHorizontal);
+		const pieceLeft = !Utils.isLeftEdgePiece(p) && Utils.getElementByPieceId(p.id - 1);
 
 		const pieceTopGroup = pieceTop ? this.getGroup(pieceTop) : null;
 		const pieceRightGroup = pieceRight ? this.getGroup(pieceRight) : null;
@@ -2312,7 +2311,7 @@ class Puzzly {
 			if(p instanceof HTMLDivElement){
 				p.childNodes.forEach(n => n.style.visibility = "hidden")
 			} else {
-				const el = this.getElementByPieceId(p.id);
+				const el = Utils.getElementByPieceId(p.id);
 				el.childNodes.forEach(n => n.style.visibility = "hidden")
 			}
 		});

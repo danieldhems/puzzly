@@ -2,6 +2,7 @@ import Utils from "./utils.js";
 
 class Pockets {
   constructor(config){
+    console.log(config)
     this.mainCanvas = config.canvas;
     this.shadowOffset = config.shadowOffset;
     this.borderColor = "#cecece";
@@ -48,13 +49,11 @@ class Pockets {
       pocket.style.borderRight = `2px solid ${this.borderColor}`;
     }
 
-    this.pockets[id] = pocket;
+    this.pockets[id] = {
+      el: pocket,
+    };
 
     return pocket;
-  }
-
-  isPieceInPocket(el){
-    return el.classList.contains("puzzle-piece") && el.parentNode.classList.contains("pocket");
   }
 
   getPocketIdFromPiece(el){
@@ -82,8 +81,42 @@ class Pockets {
     }
   }
 
+  getPocketByCollision(box){
+    if(this.isOverPockets(box)){
+      let i = 1;
+      while(i <= Object.keys(this.pockets).length){
+        const pocket = this.pockets[i].el;
+        if(Utils.hasCollision(box, pocket.getBoundingClientRect())){
+          return pocket;
+        }
+        i++;
+      };
+    }
+  }
+
+  isFromPocket(el){
+    return el.parentNode.classList?.contains("pocket");
+  }
+
+  isFromCanvas(el){
+    return el.parentNode.id === "canvas";
+  }
+
+  getPocketIdFromElement(el){
+    return el.classList?.contains("pocket") && el.id.split("-")[2];
+  }
+
+  getEventBoundingBox(e){
+    return {top: e.clientY, right: e.clientX, bottom: e.clientY, left: e.clientX};
+  }
+
   onMouseDown(e){
     const el = e.target;
+
+    // If the empty space inside a pocket is clicked, do nothing
+    if(el.classList?.contains("pocket")){
+      return;
+    }
 
     const isPuzzlePiece = el.classList.contains("puzzle-piece");
     const hasGroup = isPuzzlePiece && Utils.hasGroup(el);
@@ -91,19 +124,20 @@ class Pockets {
 
     const isMainCanvas = el.id === "canvas" || el.id === "boardArea" || el.dataset?.isSolved === "true";
 
-    if(shouldTrackPiece && !this.isPieceInPocket(el)){
+    // Picking up a single piece from the canvas
+    if(shouldTrackPiece && this.isFromCanvas(el)){
       this.isMovingSinglePiece = true;
       this.movingElement = el;
 
-      if(this.isOverPockets(el) && this.elementClone === null){
+      if(this.isOverPockets(el.getBoundingClientRect()) && this.elementClone === null){
         this.makeClone(el);
       }
     }
 
-    if(this.isPieceInPocket(el)){
+    // Piece is being picked up from a pocket
+    if(this.isFromPocket(el)){
       this.movingElement = el;
-      // console.log(this.movingElement.getBoundingClientRect())
-      this.activePocket = this.pockets[this.getPocketIdFromPiece(el)];
+      this.activePocket = this.pockets[this.getPocketIdFromPiece(el)].el;
       this.setPieceSize(el, this.zoomLevel);
     }
 
@@ -111,7 +145,7 @@ class Pockets {
       this.isMainCanvasMoving = true;
     }
 
-    this.mouseFn = e => this.onMouseMove();
+    this.mouseFn = e => this.onMouseMove(e);
 
     if(isPuzzlePiece || isMainCanvas){
       window.addEventListener("mousemove", this.mouseFn);
@@ -121,11 +155,11 @@ class Pockets {
     }
   }
 
-  onMouseMove(){
+  onMouseMove(e){
     if(this.isMovingSinglePiece){
-      if(this.isOverPockets(this.movingElement) && this.elementClone === null){
+      if(this.isOverPockets(this.movingElement.getBoundingClientRect()) && this.elementClone === null){
         this.makeClone(this.movingElement);
-      } else if(!this.isOverPockets(this.movingElement) && this.elementClone){
+      } else if(!this.isOverPockets(this.movingElement.getBoundingClientRect()) && this.elementClone){
         this.removeClone(this.movingElement);
       }
 
@@ -135,29 +169,23 @@ class Pockets {
     }
   }
 
+  
+
   onMouseUp(e){
-    console.log("on mouse up", e.target)
-    const el = e.target;
+    console.log("on mouse up", e)
+    const eventBox = this.getEventBoundingBox(e);
+    const pocketByCollision = this.getPocketByCollision(eventBox);
 
-    if(this.eventTargetIsPocket(e)){
-      const pocketId = el.id.split("-")[2];
-
-      if(!this.activePocket){
-        this.addToPocket(this.movingElement, pocketId);
-      }
-
+    if(pocketByCollision){
+      this.addToPocket(this.movingElement, pocketByCollision);
+    } else {
       if(this.elementClone){
         this.removeClone();
       }
-
-      this.setPieceSize(this.movingElement, this.pieceScaleWhileInPocket);
-
-      this.setActivePiecesToPocketSize();
     }
     
     if(this.activePocket){
-      console.log("active pocket", e)
-      if(!this.isOverPockets(el)){
+      if(!pocketByCollision){
         this.returnToCanvas(this.getPiecesInActivePocket());
         this.resetActivePocket();
       } else {
@@ -167,7 +195,6 @@ class Pockets {
 
     if(this.isMainCanvasMoving){
       this.setCloneContainerPosition();
-      this.isMainCanvasMoving = false;
     }
 
     if(this.isMovingSinglePiece){
@@ -175,6 +202,7 @@ class Pockets {
     }
     
     this.movingElement = null;
+    this.isMainCanvasMoving = false;
 
     window.removeEventListener("mousemove", this.mouseFn);
   }
@@ -195,27 +223,34 @@ class Pockets {
     this.activePocket = null;
   }
 
-  addToPocket(element, pocketId){
+  addToPocket(element, pocket){
     if(!element) return;
 
     let dropX, dropY;
-    const pocket = this.pockets[pocketId];
 
-    console.log('bb', this.pocketDropBoundingBox)
-    if(pocket.childNodes.length === 0){
+    // console.log('bb', this.pocketDropBoundingBox)
+    if(pocket?.childNodes?.length === 0){
       dropX = pocket.offsetWidth / 2 - element.offsetWidth / 2;
       dropY = pocket.offsetHeight / 2 - element.offsetHeight / 2;
     } else {
-      console.log("placing randomly around center")
+      // console.log("placing randomly around center")
       dropX = Utils.getRandomInt(this.pocketDropBoundingBox.left, this.pocketDropBoundingBox.right);
       dropY = Utils.getRandomInt(this.pocketDropBoundingBox.top, this.pocketDropBoundingBox.bottom);
     }
-    console.log("x", dropX)
-    console.log("y", dropY)
+    // console.log("x", dropX)
+    // console.log("y", dropY)
     element.style.top = dropY + "px";
     element.style.left = dropX + "px";
 
-    pocket.appendChild(element)
+    pocket?.appendChild(element);
+
+    if(this.elementClone){
+      this.removeClone();
+    }
+
+    this.setPieceSize(element, this.pieceScaleWhileInPocket);
+
+    this.setActivePiecesToPocketSize();
   }
 
   returnToCanvas(els){
@@ -279,11 +314,11 @@ class Pockets {
     this.elementClone = null;
   }
 
-  isOverPockets(element){
-    const bb = element.getBoundingClientRect();
-    bb.width += this.shadowOffset;
-    bb.height += this.shadowOffset;
-    return Utils.hasCollision(bb, this.boundingBox);
+  isOverPockets(box){
+    if(!box) return;
+    box.width += this.shadowOffset;
+    box.height += this.shadowOffset;
+    return Utils.hasCollision(box, this.boundingBox);
   }
 
   render(){
