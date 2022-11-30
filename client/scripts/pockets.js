@@ -297,6 +297,7 @@ class Pockets {
     this.elementClone.style.pointerEvents = "none";
     this.cloneContainer.appendChild(this.elementClone);
     this.setClonePosition();
+    this.cloneContainer.style.zIndex = 2;
   }
 
   setClonePosition(){
@@ -312,6 +313,7 @@ class Pockets {
   removeClone(){
     this.elementClone.remove();
     this.elementClone = null;
+    this.cloneContainer.style.zIndex = 1;
   }
 
   isOverPockets(box){
@@ -354,6 +356,7 @@ class Pockets {
     drawContainer.appendChild(this.makePocket(4, true));
 
     const cloneContainer = document.createElement("div");
+    cloneContainer.id = "clone-container";
     cloneContainer.style.width = this.mainCanvas.offsetWidth + "px";
     cloneContainer.style.height = this.mainCanvas.offsetHeight + "px";
     cloneContainer.style.position = "fixed";
@@ -365,6 +368,7 @@ class Pockets {
     document.body.appendChild(container);
 
     this.ui = container;
+    this.cloneContainer = cloneContainer;
 
     this.boundingBox = {
       top: window.innerHeight - container.offsetHeight,
