@@ -1555,7 +1555,7 @@ class Puzzly {
 		
 		const spacing = 20;
 		
-		const piecesInPlay = this.shuffleArray(this.getIndividualPiecesInPlay());
+		const piecesInPlay = this.shuffleArray(this.getIndividualPiecesOnCanvas());
 
 		let currentX = this.boardAreaEl.offsetLeft * this.zoomLevel;
 		let currentY = (this.boardAreaEl.offsetTop - this.largestPieceSpan - spacing) * this.zoomLevel;
@@ -1804,9 +1804,9 @@ class Puzzly {
 		return document.querySelectorAll('.puzzle-piece');
 	}
 
-	getIndividualPiecesInPlay(){
+	getIndividualPiecesOnCanvas(){
 		return Array.from(this.allPieces()).filter(el => {
-			return !el.dataset.issolved && !el.dataset.group;
+			return !el.dataset.issolved && !el.dataset.group && !el.classList.contains("in-pocket");
 		})
 	}
 

@@ -19,6 +19,7 @@ class Pockets {
     this.pocketDropBoundingBox = this.getTargetBoxForPlacementInsidePocket(config.pieceSize);
 
     this.pockets = {};
+    this.activePiecesInTransit = null;
 
     this.render();
     this.setScale(config.zoomLevel);
@@ -31,7 +32,7 @@ class Pockets {
 
   setScale(num){
     this.zoomLevel = num;
-    this.cloneContainer.style.transform = `scale(${num})`;
+    this.pocketBridge.style.transform = `scale(${num})`;
   }
 
   makePocket(id, lastPocket = false){
@@ -77,6 +78,15 @@ class Pockets {
     if(activePieces){
       Array.from(activePieces).forEach(el => {
         this.setPieceSize(el, this.pieceScaleWhileInPocket)
+      });
+    }
+  }
+
+  setActivePiecesToCurrentScale(){
+    const activePieces = this.getPiecesInActivePocket();
+    if(activePieces){
+      Array.from(activePieces).forEach(el => {
+        this.setPieceSize(el, this.zoomLevel)
       });
     }
   }
@@ -136,9 +146,12 @@ class Pockets {
 
     // Piece is being picked up from a pocket
     if(this.isFromPocket(el)){
-      this.movingElement = el;
       this.activePocket = this.pockets[this.getPocketIdFromPiece(el)].el;
-      this.setPieceSize(el, this.zoomLevel);
+      this.activePiecesInTransit = this.activePocket.childNodes;
+      this.setActivePiecesToCurrentScale();
+      this.movingElement = this.makePopupContainerForActivePieces();
+      console.log(this.activePiecesInTransit)
+      this.pocketBridge.appendChild(this.movingElement);
     }
 
     if(isMainCanvas) {
@@ -169,27 +182,28 @@ class Pockets {
     }
   }
 
-  
-
   onMouseUp(e){
-    console.log("on mouse up", e)
+    // console.log("on mouse up", e)
     const eventBox = this.getEventBoundingBox(e);
     const pocketByCollision = this.getPocketByCollision(eventBox);
 
     if(pocketByCollision){
-      this.addToPocket(this.movingElement, pocketByCollision);
-    } else {
-      if(this.elementClone){
-        this.removeClone();
+      if(this.activePocket){
+        console.log(this.activePiecesInTransit)
+        this.addPiecesToPocket(this.activePocket, this.activePiecesInTransit)
+        this.setActivePiecesToPocketSize();
+        // this.activePiecesContainer.remove();
+      } else {
+        this.addToPocket(this.movingElement, pocketByCollision);
       }
-    }
-    
-    if(this.activePocket){
-      if(!pocketByCollision){
+    } else {
+      if(this.activePocket){
         this.returnToCanvas(this.getPiecesInActivePocket());
         this.resetActivePocket();
-      } else {
-        this.setActivePiecesToPocketSize();
+      }
+
+      if(this.elementClone){
+        this.removeClone();
       }
     }
 
@@ -200,7 +214,7 @@ class Pockets {
     if(this.isMovingSinglePiece){
       this.isMovingSinglePiece = false;
     }
-    
+
     this.movingElement = null;
     this.isMainCanvasMoving = false;
 
@@ -217,6 +231,48 @@ class Pockets {
 
   getPiecesInActivePocket(){
     return this.activePocket?.childNodes;
+  }
+
+  // Create a container for all the pieces in a given pocket with the pieces arranged in a grid.
+  // This container will be set as the movingElement.
+  makePopupContainerForActivePieces(){
+    // Need this to keep track of active pieces when they're not inside a pocket, as we're about to take them out in this method.
+    // This will be useful for putting them back in a pocket.
+    const activePieces = this.getPiecesInActivePocket();
+
+    const container = document.createElement("div");
+    container.classList.add("active-pieces-container");
+
+    const pocketBox = this.activePocket.getBoundingClientRect();
+    container.style.position = "absolute";
+    container.style.top = pocketBox.top + "px";
+    container.style.left = pocketBox.left + "px";
+    this.activePiecesContainer = container;
+    
+    const pieceMargin = 5 / activePieces[0].offsetWidth * 100;
+    const rowLength = activePieces.length > 2 ? Math.round(Math.sqrt(activePieces)) : 2;
+
+    let currX = 0, currY = 0;
+    let colNumber = 1;
+
+    Array.from(activePieces).forEach((p, i) => {
+      p.style.top = currY + "px";
+      p.style.left = currX + "px";
+
+      currX += this.largestPieceSpan + pieceMargin;
+
+      if(colNumber === rowLength){
+        currY += this.largestPieceSpan + pieceMargin;
+        currX = 0;
+        colNumber = 0;
+      } else {
+        colNumber++;
+      }
+
+      container.appendChild(p);
+    });
+
+    return container;
   }
 
   resetActivePocket(){
@@ -248,9 +304,14 @@ class Pockets {
       this.removeClone();
     }
 
-    this.setPieceSize(element, this.pieceScaleWhileInPocket);
+    element.classList.add("in-pocket");
 
-    this.setActivePiecesToPocketSize();
+    this.setPieceSize(element, this.pieceScaleWhileInPocket);
+    // this.setActivePiecesToPocketSize();
+  }
+
+  addPiecesToPocket(pocket, pieces){
+    Array.from(pieces).forEach(p => pocket.appendChild(p));
   }
 
   returnToCanvas(els){
@@ -259,6 +320,7 @@ class Pockets {
       el.style.top = rect.top - this.mainCanvas.offsetTop + "px";
       el.style.left = rect.left - this.mainCanvas.offsetLeft + "px";
       this.mainCanvas.appendChild(el);
+      el.classList.remove("in-pocket");
     })
   }
 
@@ -295,9 +357,9 @@ class Pockets {
   makeClone(element){
     this.elementClone = element.cloneNode(true);
     this.elementClone.style.pointerEvents = "none";
-    this.cloneContainer.appendChild(this.elementClone);
+    this.pocketBridge.appendChild(this.elementClone);
     this.setClonePosition();
-    this.cloneContainer.style.zIndex = 2;
+    this.pocketBridge.style.zIndex = 2;
   }
 
   setClonePosition(){
@@ -306,14 +368,14 @@ class Pockets {
   }
 
   setCloneContainerPosition(){
-    this.cloneContainer.style.top = parseInt(this.mainCanvas.style.top) + "px";
-    this.cloneContainer.style.left = parseInt(this.mainCanvas.style.left) + "px";
+    this.pocketBridge.style.top = parseInt(this.mainCanvas.style.top) + "px";
+    this.pocketBridge.style.left = parseInt(this.mainCanvas.style.left) + "px";
   }
 
   removeClone(){
     this.elementClone.remove();
     this.elementClone = null;
-    this.cloneContainer.style.zIndex = 1;
+    this.pocketBridge.style.zIndex = 1;
   }
 
   isOverPockets(box){
@@ -356,19 +418,19 @@ class Pockets {
     drawContainer.appendChild(this.makePocket(4, true));
 
     const cloneContainer = document.createElement("div");
-    cloneContainer.id = "clone-container";
+    cloneContainer.id = "pocket-bridge";
     cloneContainer.style.width = this.mainCanvas.offsetWidth + "px";
     cloneContainer.style.height = this.mainCanvas.offsetHeight + "px";
     cloneContainer.style.position = "fixed";
     cloneContainer.style.bottom = 0;
     cloneContainer.style.left = 0;
     cloneContainer.style.pointerEvents = "none";
-    this.cloneContainer = cloneContainer;
+    this.pocketBridge = cloneContainer;
     container.appendChild(cloneContainer);
     document.body.appendChild(container);
 
     this.ui = container;
-    this.cloneContainer = cloneContainer;
+    this.pocketBridge = cloneContainer;
 
     this.boundingBox = {
       top: window.innerHeight - container.offsetHeight,
