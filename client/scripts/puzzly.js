@@ -718,7 +718,8 @@ class Puzzly {
 		if(e.which === 1 || e.touches){
 			const clientPos = this.getClientPos(e);
 
-			const isPuzzlePiece = e.target.classList.contains("puzzle-piece");
+			const classes = e.target.classList
+			const isPuzzlePiece = classes.contains("puzzle-piece") && !classes.contains("in-pocket");
 			const isPuzzlePieceCanvas = e.target.classList.contains("puzzle-piece-canvas");
 			const isPuzzlePieceFg = e.target.classList.contains("puzzle-piece-fg");
 			const isStage = e.target.id === "canvas" || e.target.id === "boardArea" || e.target.dataset.group === "1111" || e.target.dataset.issolved;
@@ -1606,13 +1607,10 @@ class Puzzly {
 			}
 
 			i++;
-
-			console.log(piecesInPlay)
-
 		}
 
+		this.save(Array.from(this.allPieces()));
 		return verticalSpace;
-		
 	}
 
 	renderPiecesAlongEdge(side, pieces, depth){
