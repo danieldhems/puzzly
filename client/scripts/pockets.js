@@ -2,7 +2,6 @@ import Utils from "./utils.js";
 
 class Pockets {
   constructor(config){
-    console.log(config)
     this.mainCanvas = config.canvas;
     this.shadowOffset = config.shadowOffset;
     this.largestPieceSpan = config.largestPieceSpan;
@@ -123,6 +122,7 @@ class Pockets {
   }
 
   onMouseDown(e){
+    e.stopPropagation();
     const el = e.target;
 
     let diffX, diffY;
@@ -156,12 +156,12 @@ class Pockets {
       if(this.getPiecesInActivePocket().length > 1){
         this.movingElement = this.getMovingElementForActivePocket(e);
         this.activePocket.appendChild(this.movingElement);
-        
-        diffX = e.clientX - this.movingElement.offsetLeft;
-        diffY = e.clientY - this.movingElement.offsetTop;
       } else {
         this.movingElement = el;
       }
+
+      diffX = e.clientX - this.movingElement.offsetLeft;
+      diffY = e.clientY - this.movingElement.offsetTop;
     }
 
     if(isMainCanvas) {
@@ -179,6 +179,7 @@ class Pockets {
   }
 
   onMouseMove(e, diffX, diffY){
+    e.preventDefault();
     if(this.isMovingSinglePiece){
       if(this.isOverPockets(this.movingElement.getBoundingClientRect()) && this.elementClone === null){
         this.makeClone(this.movingElement);
@@ -200,22 +201,23 @@ class Pockets {
   onMouseUp(e){
     // console.log("on mouse up", e)
     const eventBox = this.getEventBoundingBox(e);
-    const pocketByCollision = this.getPocketByCollision(eventBox);
+    const targetPocket = this.getPocketByCollision(eventBox);
 
-    if(pocketByCollision){
+    if(targetPocket){
       if(this.activePocket){
-        if(this.activePocketHasMultiplePieces){
-          this.addPiecesToPocket(this.activePocket, this.getPiecesInActivePocket());
+        if(this.getPiecesInTransit().length > 1){
+          this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
+          this.movingElement.remove();
         } else {
-          this.addToPocket(this.activePocket, this.movingElement);
+          this.addToPocket(targetPocket, this.movingElement);
         }
         this.setActivePiecesToPocketSize();
       } else {
-        this.addToPocket(this.movingElement, pocketByCollision);
+        this.addToPocket(targetPocket, this.movingElement);
       }
     } else {
       if(this.activePocket){
-        this.returnToCanvas(this.getPiecesInActivePocket());
+        this.returnToCanvas(this.getPiecesInTransit());
         this.resetActivePocket();
       }
 
@@ -230,6 +232,11 @@ class Pockets {
 
     if(this.isMovingSinglePiece){
       this.isMovingSinglePiece = false;
+    }
+
+    if(this.activePiecesContainer){
+      this.activePiecesContainer.remove();
+      this.activePiecesContainer = null;
     }
 
     this.clearPocketBridge();
@@ -253,11 +260,38 @@ class Pockets {
     return Array.from(this.activePocket.childNodes).filter(el => el.classList.contains("puzzle-piece"));
   }
 
+  getPiecesInTransit(){
+    if(this.movingElement.classList.contains("active-pieces-container")){
+      return Array.from(this.movingElement.childNodes);
+    } else {
+      return [this.movingElement];
+    }
+  }
+
+  getPiecePosByConnectors(x, y, el){
+    const pos = {
+      x, y
+    };
+    const connectors = el.dataset.jigsawType.split(",");
+
+    if(connectors[3] === "0" || connectors[3] === "-1"){
+      pos.x = x + this.connectorSize;
+    } else {
+      pos.x = x;
+    }
+
+    if(connectors[0] === "0" || connectors[0] === "-1"){
+      pos.y = y + this.connectorSize;
+    } else {
+      pos.y = y;
+    }
+
+    return pos;
+  }
+
   // Create a container for all the pieces in a given pocket with the pieces arranged in a grid.
   // This container will be set as the movingElement.
   getMovingElementForActivePocket(e){
-    // Need this to keep track of active pieces when they're not inside a pocket, as we're about to take them out in this method.
-    // This will be useful for putting them back in a pocket.
     const activePieces = Array.from(this.getPiecesInActivePocket());
 
     if(activePieces.length === 1) return activePieces[0];
@@ -285,8 +319,10 @@ class Pockets {
     for(let i = 0, l = activePieces.length; i < l; i++){
       const el = activePieces[i];
 
-      el.style.top = currY + "px";
-      el.style.left = currX + "px";
+      const pos = this.getPiecePosByConnectors(currX, currY, el)
+
+      el.style.top = pos.y + "px";
+      el.style.left = pos.x + "px";
 
       if(currX + el.offsetWidth > maxX){
         maxX = currX + el.offsetWidth;
@@ -296,15 +332,15 @@ class Pockets {
         maxY = currY + el.offsetHeight;
       }
 
-      currX += el.offsetWidth + pieceMargin;
+      currX += this.largestPieceSpan + pieceMargin;
 
       if(colNumber === rowLength){
-        currY += parseInt(firstPieceOnRow.style.height) + pieceMargin;
+        currY += this.largestPieceSpan + pieceMargin;
         currX = 0;
         colNumber = 1;
         numRows++;
 
-        firstPieceOnRow = el;
+        firstPieceOnRow = el; 
       } else {
         colNumber++;
       }
@@ -334,7 +370,7 @@ class Pockets {
     Array.from(this.pocketBridge?.childNodes).forEach(el => el.remove());
   }
 
-  addToPocket(element, pocket){
+  addToPocket(pocket, element){
     if(!element) return;
 
     let dropX, dropY;
@@ -366,7 +402,7 @@ class Pockets {
   }
 
   addPiecesToPocket(pocket, pieces){
-    Array.from(pieces).forEach(p => pocket.appendChild(p));
+    Array.from(pieces).forEach(p => this.addToPocket(pocket, p));
   }
 
   returnToCanvas(els){
@@ -379,10 +415,6 @@ class Pockets {
       this.mainCanvas.appendChild(el);
       el.classList.remove("in-pocket");
     };
-
-    if(this.activePiecesContainer){
-      this.activePiecesContainer.remove();
-    }
   }
 
   getTargetBoxForPlacementInsidePocket(pieceSize){

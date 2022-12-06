@@ -108,6 +108,8 @@ class Puzzly {
 			this.arrangePieces();
 		})
 
+		window.addEventListener("dragmove", e => console.log("Puzzly: dragmove", e))
+
 		if(this.innerPiecesVisible){
 			this.filterBtnOnLabel.style.display = 'block';
 			this.filterBtnOffLabel.style.display = 'none';
