@@ -133,7 +133,7 @@ class Puzzly {
 		this.soundsBtn.addEventListener(this.interactionEventDown, this.toggleSounds.bind(this))
 
 		this.DATA_ATTR_KEYS = [
-			'piece-id', 'piece-id-in-persistence', 'puzzle-id', 'imgx', 'imgy', 'imgw', 'imgh', 'num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type', 'connections', 'connects-to', 'is-inner-piece', 'is-solved', 'group', 'solvedx', 'solvedy'
+			'piece-id', 'piece-id-in-persistence', 'puzzle-id', 'imgx', 'imgy', 'imgw', 'imgh', 'num-pieces-from-top-edge', 'num-pieces-from-left-edge', 'jigsaw-type', 'connections', 'connects-to', 'is-inner-piece', 'is-solved', 'group', 'solvedx', 'solvedy', 'pocket-id'
 		];
 
 		const assets = [
@@ -189,6 +189,8 @@ class Puzzly {
 		this.boardWidth = this.boardAreaEl.offsetWidth;
 		this.boardHeight = this.boardAreaEl.offsetHeight;
 
+		this.Pockets = new Pockets(this);
+
 		this.makeSolvedCanvas();
 		this.initiFullImagePreviewer();
 		this.generatePieceSectorMap();
@@ -242,8 +244,6 @@ class Puzzly {
 		window.addEventListener("puzzly_save", e => {
 			this.save(e.detail.pieces)
 		})
-
-		this.Pockets = new Pockets(this);
 	}
 
 	onControlsHandleClick(e){
@@ -544,8 +544,12 @@ class Puzzly {
 		el.height = piece.pieceHeight;
 		el.style.width = piece.pieceWidth + "px";
 		el.style.height = piece.pieceHeight + 'px';
-		el.style.top = (!!piece.group ? piece.solvedY : piece.pageY) + "px";
-		el.style.left = (!!piece.group ? piece.solvedX : piece.pageX) + "px";
+
+		console.log(piece.pocketId)
+		if(piece.pocketId === undefined || piece.pocketId === null){
+			el.style.top = (!!piece.group ? piece.solvedY : piece.pageY) + "px";
+			el.style.left = (!!piece.group ? piece.solvedX : piece.pageX) + "px";
+		}
 		el.style.pointerEvents = 'auto';
 		el.style.zIndex = 1;
 
@@ -570,6 +574,10 @@ class Puzzly {
 		
 		if(!!piece.group){
 			el.setAttribute('data-group', piece.group)
+		}
+
+		if(piece.pocketId){
+			el.setAttribute('data-pocket-id', piece.pocketId)
 		}
 
 		fgEl = document.createElement('div');
@@ -605,7 +613,10 @@ class Puzzly {
 		el.appendChild(fgEl);
 		el.appendChild(bgEl);
 
-		if(!Utils.hasGroup(piece)){
+		if(Number.isInteger(piece.pocketId)) {
+			// fish
+			this.Pockets.addToPocket(piece.pocketId, el);
+		} else if(!Utils.hasGroup(piece)){
 			this.canvas.appendChild(el);
 		} else {
 			fgEl.style.visibility = "hidden";
@@ -2306,7 +2317,6 @@ class Puzzly {
 		const ctx = cnv.getContext("2d");
 		ctx.imageSmoothingEnabled = false;
 
-// herron
 		pieces.forEach(p => {
 			const data = p.dataset;
 
@@ -2615,6 +2625,10 @@ class Puzzly {
 				data.imageUri = this.getDataAttributeValue(el, "image-uri");
 			}
 
+			if(k == 'pocket-id'){
+				data.pocketId = parseInt(this.getDataAttributeValue(el, "pocket-id"));
+			}
+
 			data.pageX = el.offsetLeft;
 			data.pageY = el.offsetTop;
 		})
@@ -2658,8 +2672,9 @@ class Puzzly {
 
 	async save(pieces){
 		const payload = [];
+		const pieceArray = Array.isArray(pieces) ? pieces : Array.from(pieces);
 	
-		pieces.forEach( p => {
+		pieceArray.forEach( p => {
 			payload.push(this.getPieceFromElement(p, this.DATA_ATTR_KEYS));
 		});
 		

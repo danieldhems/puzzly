@@ -62,6 +62,10 @@ class Pockets {
     return el.parentNode.id.split("-")[2];
   }
 
+  getIdForPocket(pocket){
+    return pocket.id.split("-")[2];
+  }
+
   setPieceSize(el, scale = null){
     // When returning pieces to the canvas we need to remove the scale transform from them in order for them to be correctly scaled by the canvas itself, else they'll end up smaller or large than intended
     el.style.transform = scale ? `scale(${scale})` : 'none';
@@ -378,12 +382,23 @@ class Pockets {
   addToPocket(pocket, element){
     if(!element) return;
 
+    let pocketId, pocketEl;
+
+    if(Number.isInteger(pocket)){
+      pocketEl = this.pockets[pocket].el;
+      pocketId = pocket;
+    } else {
+      pocketEl = pocket;
+      pocketId = this.getIdForPocket(pocket);
+    }
+    console.log("adding element", element, "to pocket", pocket)
+
     let dropX, dropY;
 
     // console.log('bb', this.pocketDropBoundingBox)
-    if(pocket?.childNodes?.length === 0){
-      dropX = pocket.offsetWidth / 2 - element.offsetWidth / 2;
-      dropY = pocket.offsetHeight / 2 - element.offsetHeight / 2;
+    if(pocketEl?.childNodes?.length === 0){
+      dropX = pocketEl.offsetWidth / 2 - element.offsetWidth / 2;
+      dropY = pocketEl.offsetHeight / 2 - element.offsetHeight / 2;
     } else {
       // console.log("placing randomly around center")
       dropX = Utils.getRandomInt(this.pocketDropBoundingBox.left, this.pocketDropBoundingBox.right);
@@ -394,19 +409,22 @@ class Pockets {
     element.style.top = dropY + "px";
     element.style.left = dropX + "px";
 
-    pocket?.appendChild(element);
+    element.setAttribute("data-pocket-id", pocketId);
+    element.classList.add("in-pocket");
+
+    pocketEl?.appendChild(element);
 
     if(this.elementClone){
       this.removeClone();
     }
 
-    element.classList.add("in-pocket");
-
     this.setPieceSize(element, this.pieceScaleWhileInPocket);
+    this.requestSave([element])
   }
 
   addPiecesToPocket(pocket, pieces){
-    Array.from(pieces).forEach(p => this.addToPocket(pocket, p));
+    const pieceArray = Array.from(pieces);
+    pieceArray.forEach(p => this.addToPocket(pocket, p));
   }
 
   returnToCanvas(els){
@@ -451,6 +469,7 @@ class Pockets {
       this.setPieceSize(el);
       this.mainCanvas.appendChild(el);
       el.classList.remove("in-pocket");
+      el.setAttribute("data-pocket-id", null);
     };
 
     this.requestSave(els)
