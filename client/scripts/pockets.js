@@ -452,6 +452,13 @@ class Pockets {
       this.mainCanvas.appendChild(el);
       el.classList.remove("in-pocket");
     };
+
+    this.requestSave(els)
+  }
+
+  requestSave(pieces){
+    const event = new CustomEvent("puzzly_save", { detail: { pieces }});
+    window.dispatchEvent(event)
   }
 
   getTargetBoxForPlacementInsidePocket(pieceSize){

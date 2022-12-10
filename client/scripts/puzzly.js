@@ -106,6 +106,7 @@ class Puzzly {
 
 		this.sendToEdgeNeatenBtn.addEventListener(this.interactionEventDown, e => {
 			this.arrangePieces();
+			this.onControlsHandleClick();
 		})
 
 		window.addEventListener("dragmove", e => console.log("Puzzly: dragmove", e))
@@ -238,6 +239,9 @@ class Puzzly {
 
 		window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
 		window.addEventListener('keydown', this.onKeyDown.bind(this));
+		window.addEventListener("puzzly_save", e => {
+			this.save(e.detail.pieces)
+		})
 
 		this.Pockets = new Pockets(this);
 	}
