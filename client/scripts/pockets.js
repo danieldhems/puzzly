@@ -62,8 +62,9 @@ class Pockets {
     return el.parentNode.id.split("-")[2];
   }
 
-  setPieceSize(el, scale){
-    el.style.transform = `scale(${scale})`;
+  setPieceSize(el, scale = null){
+    // When returning pieces to the canvas we need to remove the scale transform from them in order for them to be correctly scaled by the canvas itself, else they'll end up smaller or large than intended
+    el.style.transform = scale ? `scale(${scale})` : 'none';
   }
 
   setSizeForPiecesInPocket(){
@@ -195,6 +196,8 @@ class Pockets {
       const y = diffY ? e.clientY - diffY : e.clientY;
       this.movingElement.style.top = y + "px";
       this.movingElement.style.left = x + "px";
+
+      const box = this.movingElement.getBoundingClientRect();
     }
   }
 
@@ -286,6 +289,9 @@ class Pockets {
       pos.y = y;
     }
 
+    pos.x *= this.zoomLevel;
+    pos.y *= this.zoomLevel;
+
     return pos;
   }
 
@@ -301,7 +307,6 @@ class Pockets {
     const container = document.createElement("div");
     container.classList.add("active-pieces-container");
     container.style.border = "1px solid white";
-
     container.style.position = "absolute";
 
     this.activePiecesContainer = container;
@@ -325,17 +330,17 @@ class Pockets {
       el.style.left = pos.x + "px";
 
       if(currX + el.offsetWidth > maxX){
-        maxX = currX + el.offsetWidth;
+        maxX = currX + el.offsetWidth * this.zoomLevel;
       }
 
       if(currY + el.offsetHeight > maxY){
-        maxY = currY + el.offsetHeight;
+        maxY = currY + el.offsetHeight * this.zoomLevel;
       }
 
-      currX += this.largestPieceSpan + pieceMargin;
+      currX += this.largestPieceSpan + pieceMargin * this.zoomLevel;
 
       if(colNumber === rowLength){
-        currY += this.largestPieceSpan + pieceMargin;
+        currY += this.largestPieceSpan + pieceMargin * this.zoomLevel;
         currX = 0;
         colNumber = 1;
         numRows++;
@@ -398,7 +403,6 @@ class Pockets {
     element.classList.add("in-pocket");
 
     this.setPieceSize(element, this.pieceScaleWhileInPocket);
-    // this.setActivePiecesToPocketSize();
   }
 
   addPiecesToPocket(pocket, pieces){
@@ -408,10 +412,43 @@ class Pockets {
   returnToCanvas(els){
     for(let i = 0, l = els.length; i < l; i++){
       const el = els[i];
-      const rect = el.getBoundingClientRect();
-      el.classList.remove("in-pocket");
-      el.style.top = rect.top - this.mainCanvas.offsetTop + "px";
-      el.style.left = rect.left - this.mainCanvas.offsetLeft + "px";
+
+      const cnv = this.mainCanvas;
+
+      const elBox = el.getBoundingClientRect();
+      const cnvRect = cnv.getBoundingClientRect();
+      
+      // console.log("elBox", elBox)
+      // console.log("cnvRect", cnvRect)
+
+      // const div = document.createElement("div");
+      // div.style.position = "absolute";
+      // div.style.top = cnvRect.top + "px";
+      // div.style.left = cnvRect.left + "px";
+      // div.style.width = cnvRect.width + "px";
+      // div.style.height = cnvRect.height + "px";
+      // div.style.border = "2px solid red";
+      // div.style.pointerEvents = "none";
+      // document.body.appendChild(div);
+
+      const pieceOffsetWithCanvasX = elBox.left - cnvRect.left;
+      const pieceOffsetWithCanvasY = elBox.top - cnvRect.top;
+
+      const piecePercX = pieceOffsetWithCanvasX / cnvRect.width * 100;
+      const piecePercY = pieceOffsetWithCanvasY / cnvRect.height * 100;
+
+      // console.log("distX", pieceOffsetWithCanvasX)
+      // console.log("distY", pieceOffsetWithCanvasY)
+      // console.log("piecePercX", piecePercX)
+      // console.log("piecePercY", piecePercY)
+
+      const x = cnvRect.left === 0 ? elBox.left - cnvRect.left : cnvRect.width / 100 * piecePercX;
+      const y = cnvRect.top === 0 ? elBox.top - cnvRect.top : cnvRect.height / 100 * piecePercY;
+
+      el.style.top = y / this.zoomLevel + "px";
+      el.style.left = x / this.zoomLevel + "px";
+
+      this.setPieceSize(el);
       this.mainCanvas.appendChild(el);
       el.classList.remove("in-pocket");
     };
@@ -463,9 +500,6 @@ class Pockets {
       left: parseInt(this.pocketBridge.style.left),
     };
     const elementBox = element.getBoundingClientRect();
-
-    console.log("bridge box", bridgeBox)
-    console.log("element box", elementBox)
 
     element.style.top = bridgeBox.top + elementBox.top + "px";
     element.style.left = bridgeBox.left + elementBox.left + "px";

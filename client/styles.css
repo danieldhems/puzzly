@@ -305,7 +305,7 @@ label, input[type=checkbox] {
     left: -70px;
     position: absolute;
     color: #000;
-    background-color: cadetblue;
+    background-color: rgb(255, 255, 255);
     padding: 15px;
     opacity: .8;
     width: 66px;
