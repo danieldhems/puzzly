@@ -244,6 +244,9 @@ class Puzzly {
 		window.addEventListener("puzzly_save", e => {
 			this.save(e.detail.pieces)
 		})
+		window.addEventListener("puzzly_piece_drop", e => {
+			this.handleDrop(e.detail.piece)
+		})
 	}
 
 	onControlsHandleClick(e){
@@ -840,7 +843,47 @@ class Puzzly {
 		}.bind(this)
 	}
 
+	handleDrop(element){
+		console.log("handleDrop", element)
+
+		const connection = this.checkConnections(element);
+		console.log(connection)
+
+		if(connection){
+			const { targetEl } = connection;
+			if(this.soundsEnabled){
+				this.clickSound.play();
+			}
+
+			let connectionType = typeof connection == "string" ? connection : connection.type;
+			const isSolvedConnection = Utils.isCornerConnection(connectionType) || connectionType === 'float';
+
+			if(isSolvedConnection){
+				this.addToGroup(element, 1111)
+			} else {
+				this.group(element, targetEl);
+			}
+
+			this.updateConnections(element);
+
+			if(this.shouldMarkAsSolved(element, connectionType)){
+				this.markAsSolved([element]);
+				if(this.isPuzzleComplete()){
+					this.updateElapsedTime(true);
+				}
+			}
+
+			if(this.getGroup(element)){
+				this.save(this.getPiecesInGroup(this.getGroup(element)))
+			}
+		}
+
+		this.save([element])
+	}
+
 	onMouseUp(e){
+		// console.log("onmouseup", e)
+
 		if(this.isMouseDown && !this.isMovingStage){
 			const element = this.movingPiece;
 			// console.log('moving piece', element)
@@ -851,15 +894,15 @@ class Puzzly {
 				this.removeHighlightFromConnectingPieces(JSON.parse(thisPiece.connectsTo));
 			}
 
-			let hasConnection = false, connection;
+			let hasConnection = false;
 
 			if(!this.isMovingSinglePiece){
 				let group = this.getGroup(element);
 				const piecesToCheck = this.getCollisionCandidatesInGroup(group);
-				console.log('pieces to check', piecesToCheck)
+				// console.log('pieces to check', piecesToCheck)
 
 				const connection = piecesToCheck.map(p => this.checkConnections(p)).filter(e => e)[0];
-				console.log('connection', connection)
+				// console.log('connection', connection)
 
 				if(connection){
 					let connectionType = connection.type || connection;
@@ -869,7 +912,7 @@ class Puzzly {
 					}
 
 					const isCornerConnection = Utils.isCornerConnection(connectionType);
-					console.log('is corner connection', isCornerConnection)
+					// console.log('is corner connection', isCornerConnection)
 
 					if(isCornerConnection || connectionType === "float"){
 						this.addToGroup(connection.sourceEl, 1111);
@@ -903,41 +946,7 @@ class Puzzly {
 					this.save(piecesInCurrentGroup);
 				}
 			} else {
-				connection = this.checkConnections(element);
-				console.log(connection)
-
-				if(connection){
-					const { targetEl } = connection;
-					if(this.soundsEnabled){
-						this.clickSound.play();
-					}
-
-					let connectionType = typeof connection == "string" ? connection : connection.type;
-					const isSolvedConnection = Utils.isCornerConnection(connectionType) || connectionType === 'float';
-
-					if(isSolvedConnection){
-						this.addToGroup(element, 1111)
-					} else {
-						this.group(element, targetEl);
-					}
-
-					this.updateConnections(element);
-
-					if(this.shouldMarkAsSolved(element, connectionType)){
-						this.markAsSolved([element]);
-						if(this.isPuzzleComplete()){
-							this.updateElapsedTime(true)
-						}
-					}
-
-					if(this.getGroup(element)){
-						this.save(this.getPiecesInGroup(this.getGroup(element)))
-					} else {
-						this.save([element])
-					}
-				} else {
-					this.save([element])
-				}
+				this.handleDrop(element);
 			}
 
 			this.movingElement = null;
@@ -949,7 +958,6 @@ class Puzzly {
 		this.isTouching = false;
 		this.isMovingStage = false;
 
-		// window.removeEventListener(this.interactionEventMove, this.moveCanvas);
 		window.removeEventListener(this.interactionEventMove, this.mouseMoveFunc);
 		window.removeEventListener(this.interactionEventUp, this.onMouseUp);
 	}
@@ -1990,6 +1998,7 @@ class Puzzly {
 
 	checkConnections(element){
 		let connectionFound;
+		console.log("checking connec")
 
 		// checker
 		let containerBoundingBox, targetElement, targetPiece, thisPieceConnectorBoundingBoxTop, thisPieceConnectorBoundingBoxRight, thisPieceConnectorBoundingBoxBottom, thisPieceConnectorBoundingBoxLeft, solvedPieceConnectorBoundingBoxTop, solvedPieceConnectorBoundingBoxRight, solvedPieceConnectorBoundingBoxBottom, solvedPieceConnectorBoundingBoxLeft;

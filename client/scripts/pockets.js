@@ -391,7 +391,6 @@ class Pockets {
       pocketEl = pocket;
       pocketId = this.getIdForPocket(pocket);
     }
-    console.log("adding element", element, "to pocket", pocket)
 
     let dropX, dropY;
 
@@ -470,6 +469,8 @@ class Pockets {
       this.mainCanvas.appendChild(el);
       el.classList.remove("in-pocket");
       el.setAttribute("data-pocket-id", null);
+
+      this.notifyDrop(el);
     };
 
     this.requestSave(els)
@@ -477,6 +478,11 @@ class Pockets {
 
   requestSave(pieces){
     const event = new CustomEvent("puzzly_save", { detail: { pieces }});
+    window.dispatchEvent(event)
+  }
+
+  notifyDrop(piece){
+    const event = new CustomEvent("puzzly_piece_drop", { detail: { piece }});
     window.dispatchEvent(event)
   }
 
