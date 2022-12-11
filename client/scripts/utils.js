@@ -187,6 +187,57 @@ const Utils = {
 
 	getElementByPieceId(id){
 		return document.querySelectorAll(`[data-piece-id='${id}']`)[0];
+	},
+
+	isOutOfBounds(sourceBox){
+		const cnvBox = document.querySelector("#canvas").getBoundingClientRect();
+		const pocketsBox = document.querySelector("#side-groups").getBoundingClientRect();
+
+		// const div1 = document.createElement("div");
+		// div1.style.position = "absolute";
+		// div1.style.top = cnvBox.top + "px";
+		// div1.style.left = cnvBox.left + "px";
+		// div1.style.width = cnvBox.width + "px";
+		// div1.style.height = cnvBox.height + "px";
+		// div1.style.border = "2px solid red";
+		// div1.style.pointerEvents = "none";
+		// document.body.appendChild(div1);
+
+		// const div2 = document.createElement("div");
+		// div2.style.position = "absolute";
+		// div2.style.top = pocketsBox.top + "px";
+		// div2.style.left = pocketsBox.left + "px";
+		// div2.style.width = pocketsBox.width + "px";
+		// div2.style.height = pocketsBox.height + "px";
+		// div2.style.border = "2px solid green";
+		// div2.style.pointerEvents = "none";
+		// document.body.appendChild(div2);
+
+		// console.log("isOutOfBounds source", sourceBox)
+		// console.log("isOutOfBounds canvas", !Utils.hasCollision(sourceBox, cnvBox))
+		// console.log("isOutOfBounds pockets", !Utils.hasCollision(sourceBox, pocketsBox))
+
+		return !Utils.hasCollision(sourceBox, cnvBox) && !Utils.hasCollision(sourceBox, pocketsBox);
+	},
+
+	getPositionRelativeToCanvas(element, zoomLevel){
+		const cnv = document.querySelector("#canvas");
+		const cnvRect = cnv.getBoundingClientRect();
+		const elBox = element.getBoundingClientRect();
+
+		const pieceOffsetWithCanvasX = elBox.left - cnvRect.left;
+		const pieceOffsetWithCanvasY = elBox.top - cnvRect.top;
+
+		const piecePercX = pieceOffsetWithCanvasX / cnvRect.width * 100;
+		const piecePercY = pieceOffsetWithCanvasY / cnvRect.height * 100;
+
+		const x = cnvRect.left === 0 ? elBox.left - cnvRect.left : cnvRect.width / 100 * piecePercX;
+		const y = cnvRect.top === 0 ? elBox.top - cnvRect.top : cnvRect.height / 100 * piecePercY;
+
+		return {
+			y: y / zoomLevel,
+			x: x / zoomLevel,
+		};
 	}
 }
 

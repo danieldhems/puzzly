@@ -752,6 +752,10 @@ class Puzzly {
 				element = e.target;
 			}
 
+			if(element?.classList?.contains("puzzle-piece")){
+				this.lastPosition = Utils.getPositionRelativeToCanvas(element, this.zoomLevel)
+			}
+
 			if(isStage){
 				this.isMovingStage = true;
 				element = this.canvas;
@@ -881,11 +885,32 @@ class Puzzly {
 		this.save([element])
 	}
 
+	resetPieceToLastPosition(element){
+		element.style.top = this.lastPosition.y + "px";
+		element.style.left = this.lastPosition.x + "px";
+	}
+
 	onMouseUp(e){
 		// console.log("onmouseup", e)
 
+		const eventBox = {
+			top: e.clientY,
+			right: e.clientX,
+			bottom: e.clientY,
+			left: e.clientX,
+		};
+
 		if(this.isMouseDown && !this.isMovingStage){
 			const element = this.movingPiece;
+
+			if(Utils.isOutOfBounds(eventBox)){
+				console.log("is out of bounds")
+				this.resetPieceToLastPosition(element);
+				this.isMouseDown = false;
+				this.movingElement = null;
+				return;
+			}
+
 			// console.log('moving piece', element)
 			// console.log('element position top', element.offsetTop, 'left', element.offsetLeft)
 			const thisPiece = this.getPieceFromElement(element, ['connects-to']);
@@ -948,14 +973,12 @@ class Puzzly {
 			} else {
 				this.handleDrop(element);
 			}
-
-			this.movingElement = null;
-			this.movingPiece = null;
-			this.movingPieces = [];
 		}
 
 		this.isMouseDown = false;
-		this.isTouching = false;
+		this.movingElement = null;
+		this.movingPiece = null;
+		this.movingPieces = [];
 		this.isMovingStage = false;
 
 		window.removeEventListener(this.interactionEventMove, this.mouseMoveFunc);

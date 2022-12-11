@@ -158,6 +158,8 @@ class Pockets {
       this.activePocket = this.pockets[this.getPocketIdFromPiece(el)].el;
       this.setActivePiecesToCurrentScale();
 
+      this.lastPosition = el.getBoundingClientRect();
+
       if(this.getPiecesInActivePocket().length > 1){
         this.movingElement = this.getMovingElementForActivePocket(e);
         this.activePocket.appendChild(this.movingElement);
@@ -224,6 +226,9 @@ class Pockets {
       }
     } else {
       if(this.activePocket){
+        if(Utils.isOutOfBounds(this.movingElement.getBoundingClientRect())){
+
+        }
         this.returnToCanvas(this.getPiecesInTransit());
         this.resetActivePocket();
       }
@@ -448,22 +453,10 @@ class Pockets {
       // div.style.pointerEvents = "none";
       // document.body.appendChild(div);
 
-      const pieceOffsetWithCanvasX = elBox.left - cnvRect.left;
-      const pieceOffsetWithCanvasY = elBox.top - cnvRect.top;
+      const pos = Utils.getPositionRelativeToCanvas(el, this.zoomLevel)
 
-      const piecePercX = pieceOffsetWithCanvasX / cnvRect.width * 100;
-      const piecePercY = pieceOffsetWithCanvasY / cnvRect.height * 100;
-
-      // console.log("distX", pieceOffsetWithCanvasX)
-      // console.log("distY", pieceOffsetWithCanvasY)
-      // console.log("piecePercX", piecePercX)
-      // console.log("piecePercY", piecePercY)
-
-      const x = cnvRect.left === 0 ? elBox.left - cnvRect.left : cnvRect.width / 100 * piecePercX;
-      const y = cnvRect.top === 0 ? elBox.top - cnvRect.top : cnvRect.height / 100 * piecePercY;
-
-      el.style.top = y / this.zoomLevel + "px";
-      el.style.left = x / this.zoomLevel + "px";
+      el.style.top = pos.y + "px";
+      el.style.left = pos.x + "px";
 
       this.setPieceSize(el);
       this.mainCanvas.appendChild(el);
