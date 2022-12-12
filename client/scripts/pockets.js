@@ -227,10 +227,16 @@ class Pockets {
     } else {
       if(this.activePocket){
         if(Utils.isOutOfBounds(this.movingElement.getBoundingClientRect())){
-
+          if(this.getPiecesInTransit().length > 1){
+            this.addPiecesToPocket(this.activePocket, this.movingElement.childNodes);
+            this.movingElement.remove();
+          } else {
+            this.addToPocket(this.activePocket, this.movingElement);
+          }
+        } else {
+          this.returnToCanvas(this.getPiecesInTransit());
+          this.resetActivePocket();
         }
-        this.returnToCanvas(this.getPiecesInTransit());
-        this.resetActivePocket();
       }
 
       if(this.elementClone){
@@ -385,6 +391,7 @@ class Pockets {
   }
 
   addToPocket(pocket, element){
+    console.log("adding to pocket", pocket, element)
     if(!element) return;
 
     let pocketId, pocketEl;
