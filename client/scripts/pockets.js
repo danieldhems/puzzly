@@ -188,9 +188,13 @@ class Pockets {
   onMouseMove(e, diffX, diffY){
     e.preventDefault();
     if(this.isMovingSinglePiece){
-      if(this.isOverPockets(this.movingElement.getBoundingClientRect()) && this.elementClone === null){
+      const movingElementBox = this.movingElement.getBoundingClientRect();
+
+      const isOverPockets = this.isOverPockets(movingElementBox);
+
+      if(isOverPockets && this.elementClone === null){
         this.makeClone(this.movingElement);
-      } else if(!this.isOverPockets(this.movingElement.getBoundingClientRect()) && this.elementClone){
+      } else if(!isOverPockets && this.elementClone){
         this.removeClone(this.movingElement);
       }
 
@@ -202,8 +206,6 @@ class Pockets {
       const y = diffY ? e.clientY - diffY : e.clientY;
       this.movingElement.style.top = y + "px";
       this.movingElement.style.left = x + "px";
-
-      const box = this.movingElement.getBoundingClientRect();
     }
   }
 
@@ -321,7 +323,7 @@ class Pockets {
 
     const container = document.createElement("div");
     container.classList.add("active-pieces-container");
-    container.style.border = "1px solid white";
+    // container.style.border = "1px solid white";
     container.style.position = "absolute";
 
     this.activePiecesContainer = container;
@@ -540,8 +542,8 @@ class Pockets {
   }
 
   setClonePosition(){
-    this.elementClone.style.top = this.movingElement.offsetTop + "px";
-    this.elementClone.style.left = this.movingElement.offsetLeft + "px";
+    this.elementClone.style.top = parseInt(this.movingElement.style.top) + "px";
+    this.elementClone.style.left = parseInt(this.movingElement.style.left) + "px";
   }
 
   setCloneContainerPosition(){
@@ -559,7 +561,7 @@ class Pockets {
     if(!box) return;
     box.width += this.shadowOffset;
     box.height += this.shadowOffset;
-    return Utils.hasCollision(box, this.boundingBox);
+    return Utils.hasCollision(box, this.ui.getBoundingClientRect());
   }
 
   render(){
@@ -608,13 +610,6 @@ class Pockets {
 
     this.ui = container;
     this.pocketBridge = cloneContainer;
-
-    this.boundingBox = {
-      top: window.innerHeight - container.offsetHeight,
-      right: window.innerWidth,
-      bottom: window.innerHeight,
-      left: 0,
-    };
   }
 }
 

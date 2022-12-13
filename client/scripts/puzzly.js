@@ -904,75 +904,74 @@ class Puzzly {
 			const element = this.movingPiece;
 
 			if(Utils.isOutOfBounds(eventBox)){
-				console.log("is out of bounds")
 				this.resetPieceToLastPosition(element);
 				this.isMouseDown = false;
 				this.movingElement = null;
-				return;
-			}
-
-			// console.log('moving piece', element)
-			// console.log('element position top', element.offsetTop, 'left', element.offsetLeft)
-			const thisPiece = this.getPieceFromElement(element, ['connects-to']);
-
-			if(this.highlightConnectingPieces){
-				this.removeHighlightFromConnectingPieces(JSON.parse(thisPiece.connectsTo));
-			}
-
-			let hasConnection = false;
-
-			if(!this.isMovingSinglePiece){
-				let group = this.getGroup(element);
-				const piecesToCheck = this.getCollisionCandidatesInGroup(group);
-				// console.log('pieces to check', piecesToCheck)
-
-				const connection = piecesToCheck.map(p => this.checkConnections(p)).filter(e => e)[0];
-				// console.log('connection', connection)
-
-				if(connection){
-					let connectionType = connection.type || connection;
-
-					if(this.soundsEnabled){
-						this.clickSound.play();
-					}
-
-					const isCornerConnection = Utils.isCornerConnection(connectionType);
-					// console.log('is corner connection', isCornerConnection)
-
-					if(isCornerConnection || connectionType === "float"){
-						this.addToGroup(connection.sourceEl, 1111);
-					} else {
-						this.group(connection.sourceEl, connection.targetEl);
-					}
-
-					const updatedGroup = this.getGroup(element);
-
-					if(!isCornerConnection){
-						this.updateConnections(updatedGroup);
-					}
-
-					if(this.shouldMarkAsSolved(element, connectionType)){
-						const piecesInGroup = this.getPiecesInGroup(updatedGroup)
-						this.markAsSolved(piecesInGroup);
-						if(this.isPuzzleComplete()){
-							this.updateElapsedTime(true)
-						}
-					}
-
-					hasConnection = true;
-				}
-
-				const piecesInCurrentGroup = this.getPiecesInGroup(group);
-				const piecesInNewGroup = this.getPiecesInGroup(this.getGroup(element));
-
-				if(hasConnection){
-					this.save(piecesInNewGroup);
-				} else {
-					this.save(piecesInCurrentGroup);
-				}
 			} else {
-				this.handleDrop(element);
+				// console.log('moving piece', element)
+				// console.log('element position top', element.offsetTop, 'left', element.offsetLeft)
+				const thisPiece = this.getPieceFromElement(element, ['connects-to']);
+	
+				if(this.highlightConnectingPieces){
+					this.removeHighlightFromConnectingPieces(JSON.parse(thisPiece.connectsTo));
+				}
+	
+				let hasConnection = false;
+	
+				if(!this.isMovingSinglePiece){
+					let group = this.getGroup(element);
+					const piecesToCheck = this.getCollisionCandidatesInGroup(group);
+					// console.log('pieces to check', piecesToCheck)
+	
+					const connection = piecesToCheck.map(p => this.checkConnections(p)).filter(e => e)[0];
+					// console.log('connection', connection)
+	
+					if(connection){
+						let connectionType = connection.type || connection;
+	
+						if(this.soundsEnabled){
+							this.clickSound.play();
+						}
+	
+						const isCornerConnection = Utils.isCornerConnection(connectionType);
+						// console.log('is corner connection', isCornerConnection)
+	
+						if(isCornerConnection || connectionType === "float"){
+							this.addToGroup(connection.sourceEl, 1111);
+						} else {
+							this.group(connection.sourceEl, connection.targetEl);
+						}
+	
+						const updatedGroup = this.getGroup(element);
+	
+						if(!isCornerConnection){
+							this.updateConnections(updatedGroup);
+						}
+	
+						if(this.shouldMarkAsSolved(element, connectionType)){
+							const piecesInGroup = this.getPiecesInGroup(updatedGroup)
+							this.markAsSolved(piecesInGroup);
+							if(this.isPuzzleComplete()){
+								this.updateElapsedTime(true)
+							}
+						}
+	
+						hasConnection = true;
+					}
+	
+					const piecesInCurrentGroup = this.getPiecesInGroup(group);
+					const piecesInNewGroup = this.getPiecesInGroup(this.getGroup(element));
+	
+					if(hasConnection){
+						this.save(piecesInNewGroup);
+					} else {
+						this.save(piecesInCurrentGroup);
+					}
+				} else {
+					this.handleDrop(element);
+				}
 			}
+
 		}
 
 		this.isMouseDown = false;
