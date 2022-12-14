@@ -193,31 +193,19 @@ const Utils = {
 		const cnvBox = document.querySelector("#canvas").getBoundingClientRect();
 		const pocketsBox = document.querySelector("#side-groups").getBoundingClientRect();
 
-		// const div1 = document.createElement("div");
-		// div1.style.position = "absolute";
-		// div1.style.top = cnvBox.top + "px";
-		// div1.style.left = cnvBox.left + "px";
-		// div1.style.width = cnvBox.width + "px";
-		// div1.style.height = cnvBox.height + "px";
-		// div1.style.border = "2px solid red";
-		// div1.style.pointerEvents = "none";
-		// document.body.appendChild(div1);
-
-		// const div2 = document.createElement("div");
-		// div2.style.position = "absolute";
-		// div2.style.top = pocketsBox.top + "px";
-		// div2.style.left = pocketsBox.left + "px";
-		// div2.style.width = pocketsBox.width + "px";
-		// div2.style.height = pocketsBox.height + "px";
-		// div2.style.border = "2px solid green";
-		// div2.style.pointerEvents = "none";
-		// document.body.appendChild(div2);
-
-		// console.log("isOutOfBounds source", sourceBox)
-		// console.log("isOutOfBounds canvas", !Utils.hasCollision(sourceBox, cnvBox))
-		// console.log("isOutOfBounds pockets", !Utils.hasCollision(sourceBox, pocketsBox))
-
 		return !Utils.hasCollision(sourceBox, cnvBox) && !Utils.hasCollision(sourceBox, pocketsBox);
+	},
+
+	drawBox(box, borderColor = null){
+		const div = document.createElement("div");
+		div.style.position = "absolute";
+		div.style.top = (box.top || box.y) + "px";
+		div.style.left = (box.left || box.x) + "px";
+		div.style.width = box.width + "px";
+		div.style.height = box.height + "px";
+		div.style.border = `2px solid ${borderColor || 'green'}`;
+		div.style.pointerEvents = "none";
+		document.body.appendChild(div);
 	},
 
 	getPositionRelativeToCanvas(element, zoomLevel){

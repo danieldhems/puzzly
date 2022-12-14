@@ -548,7 +548,6 @@ class Puzzly {
 		el.style.width = piece.pieceWidth + "px";
 		el.style.height = piece.pieceHeight + 'px';
 
-		console.log(piece.pocketId)
 		if(piece.pocketId === undefined || piece.pocketId === null){
 			el.style.top = (!!piece.group ? piece.solvedY : piece.pageY) + "px";
 			el.style.left = (!!piece.group ? piece.solvedX : piece.pageX) + "px";
@@ -848,8 +847,6 @@ class Puzzly {
 	}
 
 	handleDrop(element){
-		console.log("handleDrop", element)
-
 		const connection = this.checkConnections(element);
 		console.log(connection)
 
@@ -2020,7 +2017,7 @@ class Puzzly {
 
 	checkConnections(element){
 		let connectionFound;
-		console.log("checking connec")
+		// console.log("checking connec")
 
 		// checker
 		let containerBoundingBox, targetElement, targetPiece, thisPieceConnectorBoundingBoxTop, thisPieceConnectorBoundingBoxRight, thisPieceConnectorBoundingBoxBottom, thisPieceConnectorBoundingBoxLeft, solvedPieceConnectorBoundingBoxTop, solvedPieceConnectorBoundingBoxRight, solvedPieceConnectorBoundingBoxBottom, solvedPieceConnectorBoundingBoxLeft;

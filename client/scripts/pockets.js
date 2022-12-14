@@ -288,30 +288,6 @@ class Pockets {
     }
   }
 
-  getPiecePosByConnectors(x, y, el){
-    const pos = {
-      x, y
-    };
-    const connectors = el.dataset.jigsawType.split(",");
-
-    if(connectors[3] === "0" || connectors[3] === "-1"){
-      pos.x = x + this.connectorSize;
-    } else {
-      pos.x = x;
-    }
-
-    if(connectors[0] === "0" || connectors[0] === "-1"){
-      pos.y = y + this.connectorSize;
-    } else {
-      pos.y = y;
-    }
-
-    pos.x *= this.zoomLevel;
-    pos.y *= this.zoomLevel;
-
-    return pos;
-  }
-
   // Create a container for all the pieces in a given pocket with the pieces arranged in a grid.
   // This container will be set as the movingElement.
   getMovingElementForActivePocket(e){
@@ -323,41 +299,62 @@ class Pockets {
 
     const container = document.createElement("div");
     container.classList.add("active-pieces-container");
-    // container.style.border = "1px solid white";
+    container.style.border = "1px solid white";
     container.style.position = "absolute";
 
     this.activePiecesContainer = container;
     
-    const pieceMargin = this.connectorSize;
     const rowLength = activePieces.length > 2 ? Math.ceil(Math.sqrt(activePieces.length)) : 2;
+
+    const margin = this.connectorSize / this.largestPieceSpan * 100 * this.zoomLevel;
 
     let currX = 0, currY = 0;
     let colNumber = 1;
     let numRows = 0;
-    let maxX = 0, maxY = 0;
+    let maxX = 0, maxY = 0, nextRowY = 0;
 
     let firstPieceOnRow = activePieces[0];
 
     for(let i = 0, l = activePieces.length; i < l; i++){
       const el = activePieces[i];
 
-      const pos = this.getPiecePosByConnectors(currX, currY, el)
+      el.style.top = currY + "px";
+      el.style.left = currX + "px";
 
-      el.style.top = pos.y + "px";
-      el.style.left = pos.x + "px";
+      const top = parseInt(el.style.top);
+      const left = parseInt(el.style.left);
 
-      if(currX + el.offsetWidth > maxX){
-        maxX = currX + el.offsetWidth * this.zoomLevel;
+      // const box = el.getBoundingClientRect();
+      const box = {
+        top: this.ui.offsetTop + top,
+        right: el.offsetLeft + el.offsetWidth,
+        bottom: el.offsetTop + el.offsetHeight,
+        left: this.activePocket.offsetLeft + left,
+        width: el.offsetWidth * this.zoomLevel,
+        height: el.offsetHeight * this.zoomLevel,
+      }
+      // Utils.drawBox(box)
+
+      if(currX + box.width > maxX){
+        maxX = currX + box.width;
       }
 
-      if(currY + el.offsetHeight > maxY){
-        maxY = currY + el.offsetHeight * this.zoomLevel;
+      if(maxY === 0){
+        maxY = box.height;
       }
 
-      currX += this.largestPieceSpan + pieceMargin * this.zoomLevel;
+      if(currY + box.height > maxY){
+        maxY = currY + box.height;
+      }
+
+      currX += box.width + margin;
+
+      if(currY + box.height > nextRowY){
+        nextRowY = currY + box.height + margin;
+      }
 
       if(colNumber === rowLength){
-        currY += this.largestPieceSpan + pieceMargin * this.zoomLevel;
+        currY = nextRowY;
         currX = 0;
         colNumber = 1;
         numRows++;
@@ -393,7 +390,7 @@ class Pockets {
   }
 
   addToPocket(pocket, element){
-    console.log("adding to pocket", pocket, element)
+    // console.log("adding to pocket", pocket, element)
     if(!element) return;
 
     let pocketId, pocketEl;
