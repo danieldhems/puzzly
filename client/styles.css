@@ -405,7 +405,7 @@ label, input[type=checkbox] {
 .puzzle-piece {
     background-color: transparent;
     background-repeat: no-repeat;
-    /* transform-origin: 0 0; */
+    transform-origin: 0 0;
 }
 
 .js-highlight {

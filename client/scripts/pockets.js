@@ -16,6 +16,7 @@ class Pockets {
     this.pocketHeight = 250;
     this.uiWidth = "100%";
     this.pieceScaleWhileInPocket = .8;
+    this.zoomLevel = 1; // If this hasn't been set externally yet, assume it's the default value
     
     this.pocketDropBoundingBox = this.getTargetBoxForPlacementInsidePocket(config.pieceSize);
 
@@ -164,31 +165,14 @@ class Pockets {
       this.activePocket = this.pockets[this.getPocketIdFromPiece(el)].el;
       this.lastPosition = el.getBoundingClientRect();
 
-      const multiplePieces = this.getPiecesInActivePocket().length > 1;
-      if(multiplePieces){
-        this.setActivePiecesToCurrentScale();
-        this.movingElement = this.getMovingElementForActivePocket(e);
-        this.activePocket.appendChild(this.movingElement);
-      } else {
-        this.movingElement = el;
-        const pos = Utils.getPositionRelativeTo(
-          Utils.getEventBox(e),
-          this.movingElement.getBoundingClientRect(),
-          this.zoomLevel
-        );
-        console.log("pos", pos)
-        // Utils.drawBox(pos, "white", this.movingElement)
-        this.setActivePiecesToCurrentScale();
-      }
+      this.setActivePiecesToCurrentScale();
+      this.movingElement = this.getMovingElementForActivePocket(e);
+      this.activePocket.appendChild(this.movingElement);
+      
+      this.setActivePiecesToCurrentScale();
 
       diffX = e.clientX - this.movingElement.offsetLeft;
       diffY = e.clientY - this.movingElement.offsetTop;
-
-      if(!multiplePieces){
-        const rect = this.movingElement.getBoundingClientRect();
-        // this.movingElement.style.top = e.clientY + "px";
-        // this.movingElement.style.left = e.clientX + "px";
-      }
     }
 
     if(isMainCanvas) {
@@ -236,25 +220,17 @@ class Pockets {
 
     if(targetPocket){
       if(this.activePocket){
-        if(this.getPiecesInTransit().length > 1){
-          this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
-          this.movingElement.remove();
-        } else {
-          this.addToPocket(targetPocket, this.movingElement);
-        }
+        this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
         this.setActivePiecesToPocketSize();
+        this.movingElement.remove();
       } else {
         this.addToPocket(targetPocket, this.movingElement);
       }
     } else {
       if(this.activePocket){
         if(Utils.isOutOfBounds(this.movingElement.getBoundingClientRect())){
-          if(this.getPiecesInTransit().length > 1){
-            this.addPiecesToPocket(this.activePocket, this.movingElement.childNodes);
-            this.movingElement.remove();
-          } else {
-            this.addToPocket(this.activePocket, this.movingElement);
-          }
+          this.addPiecesToPocket(this.activePocket, this.movingElement.childNodes);
+          this.movingElement.remove();
         } else {
           this.returnToCanvas(this.getPiecesInTransit());
           this.resetActivePocket();
@@ -313,13 +289,11 @@ class Pockets {
   getMovingElementForActivePocket(e){
     const activePieces = Array.from(this.getPiecesInActivePocket());
 
-    if(activePieces.length === 1) return activePieces[0];
-
     this.activePocketHasMultiplePieces = true;
 
     const container = document.createElement("div");
     container.classList.add("active-pieces-container");
-    container.style.border = "1px solid white";
+    // container.style.border = "1px solid white";
     container.style.position = "absolute";
 
     this.activePiecesContainer = container;
@@ -335,7 +309,7 @@ class Pockets {
 
     for(let i = 0, l = activePieces.length; i < l; i++){
       const el = activePieces[i];
-// horse
+
       el.style.top = currY * this.zoomLevel + "px";
       el.style.left = currX * this.zoomLevel + "px";
 
@@ -348,7 +322,6 @@ class Pockets {
         width: el.offsetWidth,
         height: el.offsetHeight,
       }
-      Utils.drawBox(box)
 
       if(currX + box.width > maxX){
         maxX = currX + box.width;
@@ -420,20 +393,14 @@ class Pockets {
 
     let dropX, dropY;
 
-    // console.log('bb', this.pocketDropBoundingBox)
     if(pocketEl?.childNodes?.length === 0){
       dropX = pocketEl.offsetWidth / 2 - element.offsetWidth / 2;
       dropY = pocketEl.offsetHeight / 2 - element.offsetHeight / 2;
     } else {
-      // console.log("placing randomly around center")
       dropX = Utils.getRandomInt(this.pocketDropBoundingBox.left, this.pocketDropBoundingBox.right);
       dropY = Utils.getRandomInt(this.pocketDropBoundingBox.top, this.pocketDropBoundingBox.bottom);
     }
 
-    console.log(this.pocketDropBoundingBox)
-    Utils.drawBox(this.pocketDropBoundingBox, null, pocketEl)
-    // console.log("x", dropX)
-    // console.log("y", dropY)
     element.style.top = dropY * this.pieceScaleWhileInPocket + "px";
     element.style.left = dropX * this.pieceScaleWhileInPocket + "px";
 
@@ -518,7 +485,7 @@ class Pockets {
       left: pocketCenterX - pieceSizeHalf,
     };
 
-    const expandeCenterBoundingBox = {
+    const expandedCenterBoundingBox = {
       top: centerBoundingBox.top - expansionRange,
       right: centerBoundingBox.right + expansionRange,
       bottom: centerBoundingBox.bottom + expansionRange,
@@ -526,10 +493,10 @@ class Pockets {
     };
 
     return {
-      top: expandeCenterBoundingBox.top,
-      right: expandeCenterBoundingBox.right - pieceSize,
-      bottom: expandeCenterBoundingBox.bottom - pieceSize,
-      left: expandeCenterBoundingBox.left,
+      top: expandedCenterBoundingBox.top * this.zoomLevel,
+      right: expandedCenterBoundingBox.right - pieceSize,
+      bottom: expandedCenterBoundingBox.bottom - pieceSize,
+      left: expandedCenterBoundingBox.left * this.zoomLevel,
     }
   }
 
