@@ -335,10 +335,10 @@ class Pockets {
         maxY = currY + box.height;
       }
 
-      currX += box.width + box.width / 100 ;
+      currX += box.width + box.width / 100 * 2;
 
       if(currY + box.height > nextRowY){
-        nextRowY = currY + box.height + box.height / 100;
+        nextRowY = currY + box.height + box.height / 100 * 2;
       }
 
       if(colNumber === rowLength){
