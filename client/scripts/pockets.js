@@ -66,9 +66,12 @@ class Pockets {
     return pocket.id.split("-")[2];
   }
 
-  setPieceSize(el, scale = null){
+  setPieceSize(el, scale = null, origin = null){
     // When returning pieces to the canvas we need to remove the scale transform from them in order for them to be correctly scaled by the canvas itself, else they'll end up smaller or large than intended
     el.style.transform = scale ? `scale(${scale})` : 'none';
+    if(scale && origin){
+      el.style.transformOrigin = origin;
+    }
   }
 
   setSizeForPiecesInPocket(){
@@ -91,8 +94,11 @@ class Pockets {
   setActivePiecesToCurrentScale(){
     const activePieces = this.getPiecesInActivePocket();
     if(activePieces){
-      Array.from(activePieces).forEach(el => {
-        this.setPieceSize(el, this.zoomLevel)
+      const pArr = Array.from(activePieces);
+      // beef
+      // const origin = pArr.length === 1 ? "50% 50%" : null;
+      pArr.forEach(el => {
+        this.setPieceSize(el, this.zoomLevel, origin);
       });
     }
   }
@@ -156,19 +162,33 @@ class Pockets {
     // Piece is being picked up from a pocket
     if(this.isFromPocket(el)){
       this.activePocket = this.pockets[this.getPocketIdFromPiece(el)].el;
-      this.setActivePiecesToCurrentScale();
-
       this.lastPosition = el.getBoundingClientRect();
 
-      if(this.getPiecesInActivePocket().length > 1){
+      const multiplePieces = this.getPiecesInActivePocket().length > 1;
+      if(multiplePieces){
+        this.setActivePiecesToCurrentScale();
         this.movingElement = this.getMovingElementForActivePocket(e);
         this.activePocket.appendChild(this.movingElement);
       } else {
         this.movingElement = el;
+        const pos = Utils.getPositionRelativeTo(
+          Utils.getEventBox(e),
+          this.movingElement.getBoundingClientRect(),
+          this.zoomLevel
+        );
+        console.log("pos", pos)
+        // Utils.drawBox(pos, "white", this.movingElement)
+        this.setActivePiecesToCurrentScale();
       }
 
       diffX = e.clientX - this.movingElement.offsetLeft;
       diffY = e.clientY - this.movingElement.offsetTop;
+
+      if(!multiplePieces){
+        const rect = this.movingElement.getBoundingClientRect();
+        // this.movingElement.style.top = e.clientY + "px";
+        // this.movingElement.style.left = e.clientX + "px";
+      }
     }
 
     if(isMainCanvas) {
@@ -306,8 +326,6 @@ class Pockets {
     
     const rowLength = activePieces.length > 2 ? Math.ceil(Math.sqrt(activePieces.length)) : 2;
 
-    const margin = this.connectorSize / this.largestPieceSpan * 100 * this.zoomLevel;
-
     let currX = 0, currY = 0;
     let colNumber = 1;
     let numRows = 0;
@@ -317,23 +335,20 @@ class Pockets {
 
     for(let i = 0, l = activePieces.length; i < l; i++){
       const el = activePieces[i];
+// horse
+      el.style.top = currY * this.zoomLevel + "px";
+      el.style.left = currX * this.zoomLevel + "px";
 
-      el.style.top = currY + "px";
-      el.style.left = currX + "px";
-
-      const top = parseInt(el.style.top);
-      const left = parseInt(el.style.left);
-
-      // const box = el.getBoundingClientRect();
+      const elBox = el.getBoundingClientRect();
       const box = {
         top: this.ui.offsetTop + top,
         right: el.offsetLeft + el.offsetWidth,
         bottom: el.offsetTop + el.offsetHeight,
-        left: this.activePocket.offsetLeft + left,
-        width: el.offsetWidth * this.zoomLevel,
-        height: el.offsetHeight * this.zoomLevel,
+        left: this.activePocket.offsetLeft + el.offsetLeft,
+        width: el.offsetWidth,
+        height: el.offsetHeight,
       }
-      // Utils.drawBox(box)
+      Utils.drawBox(box)
 
       if(currX + box.width > maxX){
         maxX = currX + box.width;
@@ -347,10 +362,10 @@ class Pockets {
         maxY = currY + box.height;
       }
 
-      currX += box.width + margin;
+      currX += box.width + box.width / 100 ;
 
       if(currY + box.height > nextRowY){
-        nextRowY = currY + box.height + margin;
+        nextRowY = currY + box.height + box.height / 100;
       }
 
       if(colNumber === rowLength){
@@ -367,13 +382,13 @@ class Pockets {
       container.appendChild(el);
     };
 
-    container.style.width = maxX + "px";
-    container.style.height = maxY + "px";
+    container.style.width = maxX * this.zoomLevel + "px";
+    container.style.height = maxY * this.zoomLevel + "px";
 
     const pocketBox = this.activePocket.getBoundingClientRect();
 
-    const x = e.clientX - pocketBox.left - (parseInt(container.style.width) / 2);
-    const y = e.clientY - pocketBox.top - (parseInt(container.style.height) / 2);
+    const x = e.clientX - pocketBox.left - (maxX / 2  * this.zoomLevel);
+    const y = e.clientY - pocketBox.top - (maxY / 2  * this.zoomLevel);
     
     container.style.top = y + "px";
     container.style.left = x + "px";
@@ -414,10 +429,13 @@ class Pockets {
       dropX = Utils.getRandomInt(this.pocketDropBoundingBox.left, this.pocketDropBoundingBox.right);
       dropY = Utils.getRandomInt(this.pocketDropBoundingBox.top, this.pocketDropBoundingBox.bottom);
     }
+
+    console.log(this.pocketDropBoundingBox)
+    Utils.drawBox(this.pocketDropBoundingBox, null, pocketEl)
     // console.log("x", dropX)
     // console.log("y", dropY)
-    element.style.top = dropY + "px";
-    element.style.left = dropX + "px";
+    element.style.top = dropY * this.pieceScaleWhileInPocket + "px";
+    element.style.left = dropX * this.pieceScaleWhileInPocket + "px";
 
     element.setAttribute("data-pocket-id", pocketId);
     element.classList.add("in-pocket");
@@ -486,7 +504,7 @@ class Pockets {
   }
 
   getTargetBoxForPlacementInsidePocket(pieceSize){
-    const expansionRange = 50;
+    const expansionRange = 10;
     const pocketWidth = this.pocketWidth;
     const pocketHeight = this.pocketHeight;
     const pocketCenterX = pocketWidth / 2;

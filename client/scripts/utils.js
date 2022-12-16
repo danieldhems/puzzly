@@ -196,16 +196,21 @@ const Utils = {
 		return !Utils.hasCollision(sourceBox, cnvBox) && !Utils.hasCollision(sourceBox, pocketsBox);
 	},
 
-	drawBox(box, borderColor = null){
+	drawBox(box, borderColor = null, container = null){
 		const div = document.createElement("div");
 		div.style.position = "absolute";
+		div.style.zIndex = 100;
 		div.style.top = (box.top || box.y) + "px";
 		div.style.left = (box.left || box.x) + "px";
-		div.style.width = box.width + "px";
-		div.style.height = box.height + "px";
-		div.style.border = `2px solid ${borderColor || 'green'}`;
+		div.style.width = (box.width || box.right - box.left || 1) + "px";
+		div.style.height = (box.height || box.bottom - box.top || 1) + "px";
+		div.style.border = `5px solid ${borderColor || 'green'}`;
 		div.style.pointerEvents = "none";
-		document.body.appendChild(div);
+		if(container){
+			container.appendChild(div);
+		} else {
+			document.body.appendChild(div);
+		}
 	},
 
 	getPositionRelativeToCanvas(element, zoomLevel){
@@ -226,6 +231,31 @@ const Utils = {
 			y: y / zoomLevel,
 			x: x / zoomLevel,
 		};
+	},
+
+	getPositionRelativeTo(sourceBox, targetBox, zoomLevel){
+		const sourceOffsetLeft = sourceBox.left - targetBox.left;
+		const sourceOffsetTop = sourceBox.top - targetBox.top;
+
+		const percX = sourceOffsetLeft / targetBox.width * 100;
+		const percY = sourceOffsetTop / targetBox.height * 100;
+
+		const x = targetBox.width / 100 * percX;
+		const y = targetBox.height / 100 * percY;
+
+		return {
+			y,
+			x,
+		};
+	},
+
+	getEventBox(e){
+		return {
+			top: e.clientY,
+			right: e.clientX,
+			bottom: e.clientY,
+			left: e.clientX,
+		}
 	}
 }
 

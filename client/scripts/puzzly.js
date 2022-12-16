@@ -576,6 +576,7 @@ class Puzzly {
 		
 		if(!!piece.group){
 			el.setAttribute('data-group', piece.group)
+			el.classList.add("grouped");
 		}
 
 		if(piece.pocketId){
@@ -1835,6 +1836,10 @@ class Puzzly {
 	}
 
 	getGroupTopContainer(el){
+		if(!el.classList.contains("grouped")){
+			// If this element isn't in a group just return itself.
+			return el;
+		}
 		if(el.classList.contains('group-container') && !el.classList.contains('subgroup')){
 			return el;
 		} else {
@@ -2427,6 +2432,9 @@ class Puzzly {
 		this.setElementAttribute(elementA, "data-group", groupId)
 		this.setElementAttribute(elementB, "data-group", groupId)
 
+		elementA.classList.add("grouped");
+		elementB.classList.add("grouped");
+
 		this.updateConnections(groupId);
 
 		// TODO: Refactor Util methods to expect type array only, not piece object containing it.
@@ -2508,6 +2516,7 @@ class Puzzly {
 			container.remove();
 		} else {
 			element.setAttribute('data-group', group);
+			element.classList.add("grouped");
 
 			if(!this.isMovingSinglePiece){
 				targetGroupContainer.style.top = this.getPxString(element.offsetTop - solvedY);
@@ -2699,6 +2708,11 @@ class Puzzly {
 	}
 
 	async save(pieces){
+		console.log("Saving", pieces)
+		if(pieces.length === 0){
+			console.warn("Nothing to save");
+			return;
+		}
 		const payload = [];
 		const pieceArray = Array.isArray(pieces) ? pieces : Array.from(pieces);
 	
