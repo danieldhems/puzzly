@@ -256,6 +256,13 @@ const Utils = {
 			bottom: e.clientY,
 			left: e.clientX,
 		}
+	},
+
+	getIndividualPiecesOnCanvas(){
+		const pieces = document.querySelectorAll(".puzzle-piece");
+		return Array.from(pieces).filter(el => {
+			return !el.dataset.issolved && !el.dataset.group && !el.classList.contains("in-pocket");
+		})
 	}
 }
 

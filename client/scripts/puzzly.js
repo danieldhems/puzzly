@@ -1,4 +1,5 @@
 import Pockets from "./pockets.js";
+import DragAndSelect from "./dragAndSelect.js";
 import Utils from "./utils.js";
 
 /** 
@@ -35,6 +36,8 @@ class Puzzly {
 		this.movingPiece = null;
 
 		this.groups = {};
+
+		this.dragAndSelect = false;
 
 		this.highlightConnectingPieces = config.debugOptions.highlightConnectingPieces;
 		this.noDispersal = config.debugOptions.noDispersal;
@@ -108,8 +111,6 @@ class Puzzly {
 			this.arrangePieces();
 			this.onControlsHandleClick();
 		})
-
-		window.addEventListener("dragmove", e => console.log("Puzzly: dragmove", e))
 
 		if(this.innerPiecesVisible){
 			this.filterBtnOnLabel.style.display = 'block';
@@ -190,6 +191,7 @@ class Puzzly {
 		this.boardHeight = this.boardAreaEl.offsetHeight;
 
 		this.Pockets = new Pockets(this);
+		this.DragAndSelect = new DragAndSelect(this);
 
 		this.makeSolvedCanvas();
 		this.initiFullImagePreviewer();
@@ -246,6 +248,11 @@ class Puzzly {
 		})
 		window.addEventListener("puzzly_piece_drop", e => {
 			this.handleDrop(e.detail.piece)
+		})
+
+		window.addEventListener("puzzly_drag_and_select", e => {
+			console.log("received puzzly_drag_and_select", e)
+			this.dragAndSelect = e.detail;
 		})
 	}
 
@@ -738,7 +745,7 @@ class Puzzly {
 		if(e.which === 1 || e.touches){
 			const clientPos = this.getClientPos(e);
 
-			const classes = e.target.classList
+			const classes = e.target.classList;	
 			const isPuzzlePiece = classes.contains("puzzle-piece") && !classes.contains("in-pocket");
 			const isPuzzlePieceCanvas = e.target.classList.contains("puzzle-piece-canvas");
 			const isPuzzlePieceFg = e.target.classList.contains("puzzle-piece-fg");
@@ -824,24 +831,26 @@ class Puzzly {
 
 	onMouseMove(diffX, diffY){
 		return function(e){
-			let eventX, eventY, newPosTop, newPosLeft;
+			let eventX, eventY;
 
 			if(this.movingElement){
 				eventX = e.touches ? e.touches[0].clientX : e.clientX;
 				eventY = e.touches ? e.touches[0].clientY : e.clientY;
 				
-				if(this.isMovingStage){
-					if(this.dragIsWithinHorizontalBounds(eventX)){
-						this.movingElement.style.left = eventX - diffX + "px";
+				if(!this.dragAndSelect){
+					if(this.isMovingStage){
+						if(this.dragIsWithinHorizontalBounds(eventX)){
+							this.movingElement.style.left = eventX - diffX + "px";
+						}
+						if(this.dragIsAtWithinVerticalBounds(eventY)){
+							this.movingElement.style.top = eventY - diffY + "px";
+						}
+					} else {
+						const newPosTop = (eventY / this.zoomLevel) - (diffY / this.zoomLevel);
+						const newPosLeft = (eventX / this.zoomLevel) - (diffX / this.zoomLevel);
+						this.movingElement.style.top = newPosTop + "px";
+						this.movingElement.style.left = newPosLeft + "px";
 					}
-					if(this.dragIsAtWithinVerticalBounds(eventY)){
-						this.movingElement.style.top = eventY - diffY + "px";
-					}
-				} else {
-					const newPosTop = (eventY / this.zoomLevel) - (diffY / this.zoomLevel);
-					const newPosLeft = (eventX / this.zoomLevel) - (diffX / this.zoomLevel);
-					this.movingElement.style.top = newPosTop + "px";
-					this.movingElement.style.left = newPosLeft + "px";
 				}
 			}
 		}.bind(this)
@@ -1601,7 +1610,7 @@ class Puzzly {
 		
 		const spacing = 20;
 		
-		const piecesInPlay = this.shuffleArray(this.getIndividualPiecesOnCanvas());
+		const piecesInPlay = this.shuffleArray(Utils.getIndividualPiecesOnCanvas());
 
 		let currentX = this.boardAreaEl.offsetLeft * this.zoomLevel;
 		let currentY = (this.boardAreaEl.offsetTop - this.largestPieceSpan - spacing) * this.zoomLevel;
@@ -1849,12 +1858,6 @@ class Puzzly {
 
 	allPieces(){
 		return document.querySelectorAll('.puzzle-piece');
-	}
-
-	getIndividualPiecesOnCanvas(){
-		return Array.from(this.allPieces()).filter(el => {
-			return !el.dataset.issolved && !el.dataset.group && !el.classList.contains("in-pocket");
-		})
 	}
 
 	filterPiecesByDataAttribute(els, key, value){
