@@ -263,7 +263,12 @@ const Utils = {
 		return Array.from(pieces).filter(el => {
 			return !el.dataset.issolved && !el.dataset.group && !el.classList.contains("in-pocket");
 		})
-	}
+	},
+
+	requestSave(pieces){
+    const event = new CustomEvent("puzzly_save", { detail: { pieces }});
+    window.dispatchEvent(event)
+  }
 }
 
 export default Utils;

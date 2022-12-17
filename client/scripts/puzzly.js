@@ -37,7 +37,8 @@ class Puzzly {
 
 		this.groups = {};
 
-		this.dragAndSelect = false;
+		this.dragAndSelectDrawing = false;
+		this.dragAndSelectMoving = false;
 
 		this.highlightConnectingPieces = config.debugOptions.highlightConnectingPieces;
 		this.noDispersal = config.debugOptions.noDispersal;
@@ -250,10 +251,15 @@ class Puzzly {
 			this.handleDrop(e.detail.piece)
 		})
 
-		window.addEventListener("puzzly_drag_and_select", e => {
-			console.log("received puzzly_drag_and_select", e)
-			this.dragAndSelect = e.detail;
-		})
+		window.addEventListener("puzzly_dragandselect_drawing_box", e => {
+			// console.log("received puzzly_dragandselect_drawing_box", e)
+			this.dragAndSelectDrawing = e.detail;
+		});
+
+		window.addEventListener("puzzly_dragandselect_moving_box", e => {
+			// console.log("received puzzly_dragandselect_moving_box", e)
+			this.dragAndSelectMoving = e.detail;
+		});
 	}
 
 	onControlsHandleClick(e){
@@ -455,6 +461,7 @@ class Puzzly {
 			this.canvas.style.transformOrigin = "50% 50%";
 
 			this.Pockets.setScale(this.zoomLevel);
+			this.DragAndSelect.setScale(this.zoomLevel);
 		}
 	}
 
@@ -837,7 +844,8 @@ class Puzzly {
 				eventX = e.touches ? e.touches[0].clientX : e.clientX;
 				eventY = e.touches ? e.touches[0].clientY : e.clientY;
 				
-				if(!this.dragAndSelect){
+				if(!this.dragAndSelectDrawing && !this.dragAndSelectMoving){
+					console.log("puzzly moving pieces")
 					if(this.isMovingStage){
 						if(this.dragIsWithinHorizontalBounds(eventX)){
 							this.movingElement.style.left = eventX - diffX + "px";
@@ -2711,7 +2719,8 @@ class Puzzly {
 	}
 
 	async save(pieces){
-		console.log("Saving", pieces)
+		// console.log("Saving", pieces)
+
 		if(pieces.length === 0){
 			console.warn("Nothing to save");
 			return;

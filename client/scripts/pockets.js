@@ -414,7 +414,7 @@ class Pockets {
     }
 
     this.setPieceSize(element, this.pieceScaleWhileInPocket);
-    this.requestSave([element])
+    Utils.requestSave([element]);
   }
 
   addPiecesToPocket(pocket, pieces){
@@ -457,12 +457,7 @@ class Pockets {
       this.notifyDrop(el);
     };
 
-    this.requestSave(els)
-  }
-
-  requestSave(pieces){
-    const event = new CustomEvent("puzzly_save", { detail: { pieces }});
-    window.dispatchEvent(event)
+    Utils.requestSave(els)
   }
 
   notifyDrop(piece){
