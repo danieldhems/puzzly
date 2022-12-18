@@ -39,6 +39,7 @@ class Puzzly {
 
 		this.dragAndSelectDrawing = false;
 		this.dragAndSelectMoving = false;
+		this.dragAndSelectActive = false;
 
 		this.highlightConnectingPieces = config.debugOptions.highlightConnectingPieces;
 		this.noDispersal = config.debugOptions.noDispersal;
@@ -245,6 +246,7 @@ class Puzzly {
 		window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
 		window.addEventListener('keydown', this.onKeyDown.bind(this));
 		window.addEventListener("puzzly_save", e => {
+			console.log("save requested", e.detail.pieces)
 			this.save(e.detail.pieces)
 		})
 		window.addEventListener("puzzly_piece_drop", e => {
@@ -256,8 +258,13 @@ class Puzzly {
 			this.dragAndSelectDrawing = e.detail;
 		});
 
+		window.addEventListener("puzzly_dragandselect_active", e => {
+			console.log("received puzzly_dragandselect_active", e)
+			this.dragAndSelectActive = e.detail;
+		});
+
 		window.addEventListener("puzzly_dragandselect_moving_box", e => {
-			// console.log("received puzzly_dragandselect_moving_box", e)
+			console.log("received puzzly_dragandselect_moving_box", e)
 			this.dragAndSelectMoving = e.detail;
 		});
 	}
@@ -897,7 +904,9 @@ class Puzzly {
 			}
 		}
 
-		this.save([element])
+		if(!this.dragAndSelectActive){
+			this.save([element])
+		}
 	}
 
 	resetPieceToLastPosition(element){

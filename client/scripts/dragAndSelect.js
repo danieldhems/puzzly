@@ -114,6 +114,10 @@ class DragAndSelect {
     return new CustomEvent("puzzly_dragandselect_drawing_box", { detail: isActive });
   }
 
+  getDragActiveEventMessage(isActive){
+    return new CustomEvent("puzzly_dragandselect_active", { detail: isActive });
+  }
+
   getMoveBoxEventMessage(isActive){
     return new CustomEvent("puzzly_dragandselect_moving_box", { detail: isActive });
   }
@@ -205,13 +209,17 @@ class DragAndSelect {
         if(this.selectedPieces.length > 0){
           this.dropPieces(this.selectedPieces);
           this.toggleHighlightPieces(this.selectedPieces);
+          this.toggleDrawCursor();
+
           this.selectedPieces = [];
           this.drawBoxActive = false;
-          this.toggleDrawCursor();
           this.movingContainer.remove();
           this.movingContainer = null;
         }
+
         window.dispatchEvent(this.getDrawBoxEventMessage(false));
+        window.dispatchEvent(this.getMoveBoxEventMessage(false));
+        window.dispatchEvent(this.getDragActiveEventMessage(false));
       })
 
     if(this.selectedPieces.length > 0){
@@ -267,6 +275,7 @@ class DragAndSelect {
       this.toggleHighlightPieces(this.selectedPieces);
 
       this.dropPieces(this.selectedPieces);
+      Utils.requestSave(this.selectedPieces);
 
       this.movingContainer?.remove();
       this.movingContainer = null;
@@ -290,24 +299,11 @@ class DragAndSelect {
       this.toggleHighlightPieces(this.selectedPieces);
       this.toggleDrawCursor();
       this.deactivateDrawBox();
+
+      window.dispatchEvent(this.getDragActiveEventMessage(true));
     }
 
     window.dispatchEvent(this.getDrawBoxEventMessage(false));
-    window.dispatchEvent(this.getMoveBoxEventMessage(false));
-  }
-
-  onMouseClick(e){
-    e.preventDefault();
-    console.log(e)
-
-    if(this.isEmptySpace && this.timer){
-      clearTimeout(this.timer);
-      this.selectedPiecesAreMoving = false;
-      this.movingContainer?.remove();
-      this.movingContainer = null;
-      this.isMouseDown = false;
-      this.isMouseDownHeld = false;
-    }
   }
 }
 

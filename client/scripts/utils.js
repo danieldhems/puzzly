@@ -266,6 +266,7 @@ const Utils = {
 	},
 
 	requestSave(pieces){
+		console.log("Requesting save", pieces)
     const event = new CustomEvent("puzzly_save", { detail: { pieces }});
     window.dispatchEvent(event)
   }
