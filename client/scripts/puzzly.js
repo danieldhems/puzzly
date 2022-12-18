@@ -246,7 +246,7 @@ class Puzzly {
 		window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
 		window.addEventListener('keydown', this.onKeyDown.bind(this));
 		window.addEventListener("puzzly_save", e => {
-			console.log("save requested", e.detail.pieces)
+			// console.log("save requested", e.detail.pieces)
 			this.save(e.detail.pieces)
 		})
 		window.addEventListener("puzzly_piece_drop", e => {
@@ -259,12 +259,12 @@ class Puzzly {
 		});
 
 		window.addEventListener("puzzly_dragandselect_active", e => {
-			console.log("received puzzly_dragandselect_active", e)
+			// console.log("received puzzly_dragandselect_active", e)
 			this.dragAndSelectActive = e.detail;
 		});
 
 		window.addEventListener("puzzly_dragandselect_moving_box", e => {
-			console.log("received puzzly_dragandselect_moving_box", e)
+			// console.log("received puzzly_dragandselect_moving_box", e)
 			this.dragAndSelectMoving = e.detail;
 		});
 	}
@@ -756,7 +756,7 @@ class Puzzly {
 	onMouseDown(e){
 		let element, diffX, diffY, thisPiece;
 
-		if(e.which === 1 || e.touches){
+		if(e.which === 1){
 			const clientPos = this.getClientPos(e);
 
 			const classes = e.target.classList;	
@@ -825,11 +825,7 @@ class Puzzly {
 
 			this.mouseMoveFunc = this.onMouseMove(diffX, diffY);
 
-			if(e.touches){
-				this.isTouching = true;
-			} else {
-				this.isMouseDown = true;
-			}
+			this.isMouseDown = true;
 
 			window.addEventListener(this.interactionEventMove, this.mouseMoveFunc);
 		}
@@ -850,7 +846,7 @@ class Puzzly {
 			if(this.movingElement){
 				eventX = e.touches ? e.touches[0].clientX : e.clientX;
 				eventY = e.touches ? e.touches[0].clientY : e.clientY;
-				
+
 				if(!this.dragAndSelectDrawing && !this.dragAndSelectMoving){
 					console.log("puzzly moving pieces")
 					if(this.isMovingStage){
@@ -904,6 +900,7 @@ class Puzzly {
 			}
 		}
 
+		console.log("is active?", this.dragAndSelectActive)
 		if(!this.dragAndSelectActive){
 			this.save([element])
 		}

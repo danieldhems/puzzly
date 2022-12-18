@@ -27,7 +27,12 @@ class DragAndSelect {
     window.addEventListener("mousedown", e => this.onMouseDown(e))
     window.addEventListener("mousemove", e => this.onMouseMove(e))
     window.addEventListener("mouseup", e => this.onMouseUp(e))
-    window.addEventListener("mouseclick", e => this.onMouseClick(e))
+    window.addEventListener("puzzly_pockets_pieces_added", e => {
+      this.toggleDrawCursor();
+      this.toggleHighlightPieces(this.selectedPieces);
+      window.dispatchEvent(this.getMoveBoxEventMessage(false));
+      window.dispatchEvent(this.getDragActiveEventMessage(false));
+    });
   }
 
   setScale(scale){
@@ -179,12 +184,7 @@ class DragAndSelect {
 
   onMouseDown(e){
     e.preventDefault();
-
-    const el = e.target;
     
-    const classes = e.target.classList;
-    const isEmptySpace = !classes.contains("puzzle-piece") && !classes.contains("in-pocket");
-
     this.hasMouseReleased = false;
     this.isMouseDown = true;
 
@@ -192,6 +192,13 @@ class DragAndSelect {
     this.mouseHoldStartY = e.clientY;
 
     this.touchStartTime = Date.now();
+
+    const el = e.target;
+
+    console.log(el, this.isMouseDown)
+    
+    const classes = e.target.classList;
+    const isEmptySpace = !classes.contains("puzzle-piece") && !classes.contains("in-pocket");
 
     isEmptySpace && this.selectedPieces.length === 0 && this.isMouseHoldInitiated()
       .then(() => {
@@ -201,6 +208,7 @@ class DragAndSelect {
         this.toggleDrawCursor();
 
         window.dispatchEvent(this.getDrawBoxEventMessage(true));
+        window.dispatchEvent(this.getDragActiveEventMessage(true));
       })
       .catch(e => {
         console.log(e)
@@ -208,11 +216,11 @@ class DragAndSelect {
 
         if(this.selectedPieces.length > 0){
           this.dropPieces(this.selectedPieces);
-          this.toggleHighlightPieces(this.selectedPieces);
           this.toggleDrawCursor();
-
+          
           this.selectedPieces = [];
           this.drawBoxActive = false;
+          this.toggleHighlightPieces(this.selectedPieces);
           this.movingContainer.remove();
           this.movingContainer = null;
         }
@@ -275,6 +283,7 @@ class DragAndSelect {
       this.toggleHighlightPieces(this.selectedPieces);
 
       this.dropPieces(this.selectedPieces);
+      window.dispatchEvent(this.getDragActiveEventMessage(false));
       Utils.requestSave(this.selectedPieces);
 
       this.movingContainer?.remove();
@@ -301,6 +310,10 @@ class DragAndSelect {
       this.deactivateDrawBox();
 
       window.dispatchEvent(this.getDragActiveEventMessage(true));
+    } else {
+      this.selectedPieces = [];
+      this.movingContainer?.remove();
+      this.movingContainer = null;
     }
 
     window.dispatchEvent(this.getDrawBoxEventMessage(false));

@@ -11,6 +11,7 @@ class Pockets {
     this.elementClone = null;
 
     this.isMainCanvasMoving = false;
+    this.isDragActive = false;
 
     this.pocketWidth = window.innerWidth / 4;
     this.pocketHeight = 250;
@@ -122,7 +123,7 @@ class Pockets {
   }
 
   isFromCanvas(el){
-    return el.parentNode.id === "canvas";
+    return el.parentNode.id === "canvas" || el.parentNode.parentNode.id === "canvas";
   }
 
   getPocketIdFromElement(el){
@@ -131,6 +132,10 @@ class Pockets {
 
   getEventBoundingBox(e){
     return {top: e.clientY, right: e.clientX, bottom: e.clientY, left: e.clientX};
+  }
+
+  getPocketDropEventMessage(){
+    return new CustomEvent("puzzly_pockets_pieces_added");
   }
 
   onMouseDown(e){
@@ -148,15 +153,19 @@ class Pockets {
     const hasGroup = isPuzzlePiece && Utils.hasGroup(el);
     const shouldTrackPiece = isPuzzlePiece && !hasGroup;
 
+    this.isDragActive = el.classList.contains("selected");
+
     const isMainCanvas = el.id === "canvas" || el.id === "boardArea" || el.dataset?.isSolved === "true";
 
     // Picking up a single piece from the canvas
     if(shouldTrackPiece && this.isFromCanvas(el)){
       this.isMovingSinglePiece = true;
-      this.movingElement = el;
+      this.movingElement = this.isDragActive ? el.parentNode : el;
 
-      if(this.isOverPockets(el.getBoundingClientRect()) && this.elementClone === null){
-        this.makeClone(el);
+      const trackingBox = this.isDragActive ? Utils.getEventBox(e) : this.movingElement.getBoundingClientRect();
+
+      if(this.isOverPockets(trackingBox) && this.elementClone === null){
+        this.makeClone(this.movingElement);
       }
     }
 
@@ -224,7 +233,12 @@ class Pockets {
         this.setActivePiecesToPocketSize();
         this.movingElement.remove();
       } else {
-        this.addToPocket(targetPocket, this.movingElement);
+        if(this.isDragActive){
+          this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
+          window.dispatchEvent(this.getPocketDropEventMessage());
+        } else {
+          this.addToPocket(targetPocket, this.movingElement);
+        }
       }
     } else {
       if(this.activePocket){
@@ -430,19 +444,6 @@ class Pockets {
 
       const elBox = el.getBoundingClientRect();
       const cnvRect = cnv.getBoundingClientRect();
-      
-      // console.log("elBox", elBox)
-      // console.log("cnvRect", cnvRect)
-
-      // const div = document.createElement("div");
-      // div.style.position = "absolute";
-      // div.style.top = cnvRect.top + "px";
-      // div.style.left = cnvRect.left + "px";
-      // div.style.width = cnvRect.width + "px";
-      // div.style.height = cnvRect.height + "px";
-      // div.style.border = "2px solid red";
-      // div.style.pointerEvents = "none";
-      // document.body.appendChild(div);
 
       const pos = Utils.getPositionRelativeToCanvas(el, this.zoomLevel)
 
