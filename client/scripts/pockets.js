@@ -162,9 +162,9 @@ class Pockets {
       this.isMovingSinglePiece = true;
       this.movingElement = this.isDragActive ? el.parentNode : el;
 
-      const trackingBox = this.isDragActive ? Utils.getEventBox(e) : this.movingElement.getBoundingClientRect();
+      const movingElementBoundingBox = this.movingElement.getBoundingClientRect();
 
-      if(this.isOverPockets(trackingBox) && this.elementClone === null){
+      if(this.isOverPockets(movingElementBoundingBox) && this.elementClone === null){
         this.makeClone(this.movingElement);
       }
     }
@@ -224,10 +224,11 @@ class Pockets {
 
   onMouseUp(e){
     // console.log("on mouse up", e)
-    const eventBox = this.getEventBoundingBox(e);
-    const targetPocket = this.getPocketByCollision(eventBox);
+    const trackingBox = Utils.getEventBox(e);
+    const targetPocket = this.getPocketByCollision(trackingBox);
+    console.log("tracking box", trackingBox)
 
-    if(targetPocket){
+    if(trackingBox && targetPocket){
       if(this.activePocket){
         this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
         this.setActivePiecesToPocketSize();

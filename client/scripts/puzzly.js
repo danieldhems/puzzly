@@ -37,8 +37,6 @@ class Puzzly {
 
 		this.groups = {};
 
-		this.dragAndSelectDrawing = false;
-		this.dragAndSelectMoving = false;
 		this.dragAndSelectActive = false;
 
 		this.highlightConnectingPieces = config.debugOptions.highlightConnectingPieces;
@@ -253,19 +251,9 @@ class Puzzly {
 			this.handleDrop(e.detail.piece)
 		})
 
-		window.addEventListener("puzzly_dragandselect_drawing_box", e => {
-			// console.log("received puzzly_dragandselect_drawing_box", e)
-			this.dragAndSelectDrawing = e.detail;
-		});
-
 		window.addEventListener("puzzly_dragandselect_active", e => {
 			// console.log("received puzzly_dragandselect_active", e)
 			this.dragAndSelectActive = e.detail;
-		});
-
-		window.addEventListener("puzzly_dragandselect_moving_box", e => {
-			// console.log("received puzzly_dragandselect_moving_box", e)
-			this.dragAndSelectMoving = e.detail;
 		});
 	}
 
@@ -636,13 +624,16 @@ class Puzzly {
 
 		el.appendChild(fgEl);
 		el.appendChild(bgEl);
-
+console.log("piece", piece)
 		if(Number.isInteger(piece.pocketId)) {
 			// fish
+			console.log("here")
 			this.Pockets.addToPocket(piece.pocketId, el);
-		} else if(!Utils.hasGroup(piece)){
+		} else if(!Utils.hasGroup(piece) && !piece.isSolved){
+			console.log("here")
 			this.canvas.appendChild(el);
 		} else {
+			console.log("here")
 			fgEl.style.visibility = "hidden";
 			bgEl.style.visibility = "hidden";
 
@@ -681,6 +672,7 @@ class Puzzly {
 					this.setElementAttribute(groupContainer, 'data-is-solved', true);
 				}
 			} else {
+				console.log("adding piece", piece, " to solved canvas")
 				solvedCnvContainer.append(el);
 			}
 		}
@@ -847,7 +839,7 @@ class Puzzly {
 				eventX = e.touches ? e.touches[0].clientX : e.clientX;
 				eventY = e.touches ? e.touches[0].clientY : e.clientY;
 
-				if(!this.dragAndSelectDrawing && !this.dragAndSelectMoving){
+				if(!this.dragAndSelectActive){
 					console.log("puzzly moving pieces")
 					if(this.isMovingStage){
 						if(this.dragIsWithinHorizontalBounds(eventX)){
@@ -868,40 +860,41 @@ class Puzzly {
 	}
 
 	handleDrop(element){
-		const connection = this.checkConnections(element);
-		console.log(connection)
+		if(!this.dragAndSelectActive){
+			const connection = this.checkConnections(element);
+			console.log(connection)
 
-		if(connection){
-			const { targetEl } = connection;
-			if(this.soundsEnabled){
-				this.clickSound.play();
-			}
+			if(connection){
+				const { targetEl } = connection;
+				if(this.soundsEnabled){
+					this.clickSound.play();
+				}
 
-			let connectionType = typeof connection == "string" ? connection : connection.type;
-			const isSolvedConnection = Utils.isCornerConnection(connectionType) || connectionType === 'float';
+				let connectionType = typeof connection == "string" ? connection : connection.type;
+				const isSolvedConnection = Utils.isCornerConnection(connectionType) || connectionType === 'float';
 
-			if(isSolvedConnection){
-				this.addToGroup(element, 1111)
-			} else {
-				this.group(element, targetEl);
-			}
+				if(isSolvedConnection){
+					this.addToGroup(element, 1111)
+				} else {
+					this.group(element, targetEl);
+				}
 
-			this.updateConnections(element);
+				this.updateConnections(element);
 
-			if(this.shouldMarkAsSolved(element, connectionType)){
-				this.markAsSolved([element]);
-				if(this.isPuzzleComplete()){
-					this.updateElapsedTime(true);
+				if(this.shouldMarkAsSolved(element, connectionType)){
+					this.markAsSolved([element]);
+					if(this.isPuzzleComplete()){
+						this.updateElapsedTime(true);
+					}
+				}
+
+				if(this.getGroup(element)){
+					this.save(this.getPiecesInGroup(this.getGroup(element)))
 				}
 			}
 
-			if(this.getGroup(element)){
-				this.save(this.getPiecesInGroup(this.getGroup(element)))
-			}
-		}
+			console.log("is active?", this.dragAndSelectActive)
 
-		console.log("is active?", this.dragAndSelectActive)
-		if(!this.dragAndSelectActive){
 			this.save([element])
 		}
 	}

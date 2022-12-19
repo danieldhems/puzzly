@@ -30,7 +30,7 @@ class DragAndSelect {
     window.addEventListener("puzzly_pockets_pieces_added", e => {
       this.toggleDrawCursor();
       this.toggleHighlightPieces(this.selectedPieces);
-      window.dispatchEvent(this.getMoveBoxEventMessage(false));
+      this.selectedPieces = [];
       window.dispatchEvent(this.getDragActiveEventMessage(false));
     });
   }
@@ -115,16 +115,8 @@ class DragAndSelect {
     document.body.style.cursor = this.drawBoxActive ? "crosshair" : "default";
   }
 
-  getDrawBoxEventMessage(isActive){
-    return new CustomEvent("puzzly_dragandselect_drawing_box", { detail: isActive });
-  }
-
   getDragActiveEventMessage(isActive){
     return new CustomEvent("puzzly_dragandselect_active", { detail: isActive });
-  }
-
-  getMoveBoxEventMessage(isActive){
-    return new CustomEvent("puzzly_dragandselect_moving_box", { detail: isActive });
   }
 
   getCollidingPieces(){
@@ -195,7 +187,7 @@ class DragAndSelect {
 
     const el = e.target;
 
-    console.log(el, this.isMouseDown)
+    console.log(el, this.selectedPieces)
     
     const classes = e.target.classList;
     const isEmptySpace = !classes.contains("puzzle-piece") && !classes.contains("in-pocket");
@@ -207,7 +199,6 @@ class DragAndSelect {
         this.activateDrawBox(e);
         this.toggleDrawCursor();
 
-        window.dispatchEvent(this.getDrawBoxEventMessage(true));
         window.dispatchEvent(this.getDragActiveEventMessage(true));
       })
       .catch(e => {
@@ -216,24 +207,18 @@ class DragAndSelect {
 
         if(this.selectedPieces.length > 0){
           this.dropPieces(this.selectedPieces);
-          this.toggleDrawCursor();
           
           this.selectedPieces = [];
           this.drawBoxActive = false;
-          this.toggleHighlightPieces(this.selectedPieces);
           this.movingContainer.remove();
           this.movingContainer = null;
         }
 
-        window.dispatchEvent(this.getDrawBoxEventMessage(false));
-        window.dispatchEvent(this.getMoveBoxEventMessage(false));
         window.dispatchEvent(this.getDragActiveEventMessage(false));
-      })
+      });
 
     if(this.selectedPieces.length > 0){
       if(el.classList.contains("puzzle-piece") && el.classList.contains("selected")){
-        window.dispatchEvent(this.getMoveBoxEventMessage(true));
-
         this.diffX = e.clientX - this.movingContainer.offsetLeft;
         this.diffY = e.clientY - this.movingContainer.offsetTop;
 
@@ -283,6 +268,7 @@ class DragAndSelect {
       this.toggleHighlightPieces(this.selectedPieces);
 
       this.dropPieces(this.selectedPieces);
+
       window.dispatchEvent(this.getDragActiveEventMessage(false));
       Utils.requestSave(this.selectedPieces);
 
@@ -311,12 +297,10 @@ class DragAndSelect {
 
       window.dispatchEvent(this.getDragActiveEventMessage(true));
     } else {
-      this.selectedPieces = [];
-      this.movingContainer?.remove();
-      this.movingContainer = null;
+      // this.selectedPieces = [];
+      // this.movingContainer?.remove();
+      // this.movingContainer = null;
     }
-
-    window.dispatchEvent(this.getDrawBoxEventMessage(false));
   }
 }
 

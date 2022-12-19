@@ -133,7 +133,7 @@ const Utils = {
 	},
 
 	hasGroup(piece){
-		return piece.group !== undefined && piece.group !== null && !Number.isNaN(piece.group) && piece.group !== 1111;
+		return piece.group !== undefined && piece.group !== null && !Number.isNaN(piece.group);
 	},
 
 	querySelectorFrom(selector, elements) {
