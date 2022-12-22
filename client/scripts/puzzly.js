@@ -624,16 +624,12 @@ class Puzzly {
 
 		el.appendChild(fgEl);
 		el.appendChild(bgEl);
-console.log("piece", piece)
 		if(Number.isInteger(piece.pocketId)) {
 			// fish
-			console.log("here")
 			this.Pockets.addToPocket(piece.pocketId, el);
 		} else if(!Utils.hasGroup(piece) && !piece.isSolved){
-			console.log("here")
 			this.canvas.appendChild(el);
 		} else {
-			console.log("here")
 			fgEl.style.visibility = "hidden";
 			bgEl.style.visibility = "hidden";
 

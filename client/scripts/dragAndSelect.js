@@ -137,21 +137,63 @@ class DragAndSelect {
     });
   }
 
+  getBoundingBoxForDragContainer(pieces){
+    let minX, minY, maxX, maxY;
+
+    for(let i = 0, l = pieces.length; i < l; i++){
+      const piece = pieces[i];
+
+      const left = piece.offsetLeft;
+      const top = piece.offsetTop;
+      const right = piece.offsetLeft + piece.offsetWidth;
+      const bottom = piece.offsetTop + piece.offsetHeight;
+
+      if(i === 0){
+        minX = left;
+        minY = top;
+        maxX = right;
+        maxY = bottom;
+      } else {
+        if(left < minX){
+          minX = left;
+        }
+        if(top < minY){
+          minY = top;
+        }
+        if(right > maxX){
+          maxX = right;
+        }
+        if(bottom > maxY){
+          maxY = bottom;
+        }
+      }
+    }
+
+    return {
+      top: minY,
+      right: maxX,
+      bottom: maxY,
+      left: minX,
+      width: maxX - minX,
+      height: maxY - minY,
+    }
+  }
+
   getContainerForMove(pieces){
-    const canvasBox = this.canvas.getBoundingClientRect();
+    const box = this.getBoundingBoxForDragContainer(pieces);
 
     const b = document.createElement("div");
     b.id = "drag-container";
     b.style.position = "absolute";
     // b.style.border = "2px solid";
-    b.style.top = "0px";
-    b.style.left = "0px";
-    b.style.width = canvasBox.width + "px";
-    b.style.height = canvasBox.height + "px";
+    b.style.top = box.top + "px";
+    b.style.left = box.left + "px";
+    b.style.width = box.width + "px";
+    b.style.height = box.height + "px";
 
     pieces.forEach(p => {
-      p.style.left = p.offsetLeft + "px";
-      p.style.top = p.offsetTop + "px";
+      p.style.left = p.offsetLeft - box.left + "px";
+      p.style.top = p.offsetTop - box.top + "px";
       b.appendChild(p);
     });
 
@@ -219,8 +261,8 @@ class DragAndSelect {
 
     if(this.selectedPieces.length > 0){
       if(el.classList.contains("puzzle-piece") && el.classList.contains("selected")){
-        this.diffX = e.clientX - this.movingContainer.offsetLeft;
-        this.diffY = e.clientY - this.movingContainer.offsetTop;
+        this.diffX = e.clientX - this.movingContainer.offsetLeft * this.zoomLevel;
+        this.diffY = e.clientY - this.movingContainer.offsetTop * this.zoomLevel;
 
         this.selectedPiecesAreMoving = true;
       }

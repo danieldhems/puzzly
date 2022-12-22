@@ -226,7 +226,6 @@ class Pockets {
     // console.log("on mouse up", e)
     const trackingBox = Utils.getEventBox(e);
     const targetPocket = this.getPocketByCollision(trackingBox);
-    console.log("tracking box", trackingBox)
 
     if(trackingBox && targetPocket){
       if(this.activePocket){
@@ -440,17 +439,11 @@ class Pockets {
   returnToCanvas(els){
     for(let i = 0, l = els.length; i < l; i++){
       const el = els[i];
-
-      const cnv = this.mainCanvas;
-
-      const elBox = el.getBoundingClientRect();
-      const cnvRect = cnv.getBoundingClientRect();
-
-      const pos = Utils.getPositionRelativeToCanvas(el, this.zoomLevel)
+      const pos = Utils.getPositionRelativeToCanvas(el.getBoundingClientRect(), this.zoomLevel)
 
       el.style.top = pos.y + "px";
       el.style.left = pos.x + "px";
-
+      
       this.setPieceSize(el);
       this.mainCanvas.appendChild(el);
       el.classList.remove("in-pocket");

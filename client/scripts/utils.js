@@ -213,19 +213,18 @@ const Utils = {
 		}
 	},
 
-	getPositionRelativeToCanvas(element, zoomLevel){
+	getPositionRelativeToCanvas(elementRect, zoomLevel){
 		const cnv = document.querySelector("#canvas");
 		const cnvRect = cnv.getBoundingClientRect();
-		const elBox = element.getBoundingClientRect();
 
-		const pieceOffsetWithCanvasX = elBox.left - cnvRect.left;
-		const pieceOffsetWithCanvasY = elBox.top - cnvRect.top;
+		const pieceOffsetWithCanvasX = elementRect.left - cnvRect.left;
+		const pieceOffsetWithCanvasY = elementRect.top - cnvRect.top;
 
 		const piecePercX = pieceOffsetWithCanvasX / cnvRect.width * 100;
 		const piecePercY = pieceOffsetWithCanvasY / cnvRect.height * 100;
 
-		const x = cnvRect.left === 0 ? elBox.left - cnvRect.left : cnvRect.width / 100 * piecePercX;
-		const y = cnvRect.top === 0 ? elBox.top - cnvRect.top : cnvRect.height / 100 * piecePercY;
+		const x = cnvRect.left === 0 ? elementRect.left - cnvRect.left : cnvRect.width / 100 * piecePercX;
+		const y = cnvRect.top === 0 ? elementRect.top - cnvRect.top : cnvRect.height / 100 * piecePercY;
 
 		return {
 			y: y / zoomLevel,
