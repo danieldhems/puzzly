@@ -13,7 +13,7 @@ class DragAndSelect {
     this.selectedPiecesAreMoving = false;
 
     this.mouseHoldDetectionTime = 1000;
-    this.mouseHoldDetectionMovementTolerance = 20;
+    this.mouseHoldDetectionMovementTolerance = 5;
 
     this.drawBox;
 
@@ -229,7 +229,7 @@ class DragAndSelect {
 
     const el = e.target;
 
-    console.log(el, this.selectedPieces)
+    console.log(this.selectedPieces)
     
     const classes = e.target.classList;
     const isEmptySpace = !classes.contains("puzzle-piece") && !classes.contains("in-pocket");

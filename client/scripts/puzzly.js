@@ -834,9 +834,8 @@ class Puzzly {
 			if(this.movingElement){
 				eventX = e.touches ? e.touches[0].clientX : e.clientX;
 				eventY = e.touches ? e.touches[0].clientY : e.clientY;
-
+console.log("this.dragAndSelectActive", this.dragAndSelectActive)
 				if(!this.dragAndSelectActive){
-					console.log("puzzly moving pieces")
 					if(this.isMovingStage){
 						if(this.dragIsWithinHorizontalBounds(eventX)){
 							this.movingElement.style.left = eventX - diffX + "px";
