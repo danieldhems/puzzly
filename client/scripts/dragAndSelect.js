@@ -10,6 +10,7 @@ class DragAndSelect {
     this.isMouseDownHeld = false;
     this.hasMouseReleased = false;
     this.isInterrogatingMouse = false;
+    this.piecesSelected = false;
     this.selectedPiecesAreMoving = false;
 
     this.mouseHoldDetectionTime = 1000;
@@ -183,7 +184,7 @@ class DragAndSelect {
     const box = this.getBoundingBoxForDragContainer(pieces);
 
     const b = document.createElement("div");
-    b.id = "drag-container";
+    b.id = "selected-pieces-container";
     b.style.position = "absolute";
     // b.style.border = "2px solid";
     b.style.top = box.top + "px";
@@ -206,14 +207,18 @@ class DragAndSelect {
     pieces.forEach(p => {
       p.style.left =
         p.offsetLeft +
-        parseInt(this.movingContainer.style.left) +
+        parseInt(this.selectedPiecesContainer.style.left) +
         "px";
       p.style.top =
         p.offsetTop +
-        parseInt(this.movingContainer.style.top) +
+        parseInt(this.selectedPiecesContainer.style.top) +
         "px";
       this.canvas.appendChild(p);
     });
+  }
+
+  resetSelectedPiecesContainer(){
+    this.selectedPiecesContainer.display = "none";
   }
 
   onMouseDown(e){
@@ -252,8 +257,8 @@ class DragAndSelect {
           
           this.selectedPieces = [];
           this.drawBoxActive = false;
-          this.movingContainer.remove();
-          this.movingContainer = null;
+          this.selectedPiecesContainer.remove();
+          this.selectedPiecesContainer = null;
         }
 
         window.dispatchEvent(this.getDragActiveEventMessage(false));
@@ -261,8 +266,8 @@ class DragAndSelect {
 
     if(this.selectedPieces.length > 0){
       if(el.classList.contains("puzzle-piece") && el.classList.contains("selected")){
-        this.diffX = e.clientX - this.movingContainer.offsetLeft * this.zoomLevel;
-        this.diffY = e.clientY - this.movingContainer.offsetTop * this.zoomLevel;
+        this.diffX = e.clientX - this.selectedPiecesContainer.offsetLeft * this.zoomLevel;
+        this.diffY = e.clientY - this.selectedPiecesContainer.offsetTop * this.zoomLevel;
 
         this.selectedPiecesAreMoving = true;
       }
@@ -285,13 +290,15 @@ class DragAndSelect {
       const newPosTop = (e.clientY / this.zoomLevel) - (this.diffY / this.zoomLevel);
       const newPosLeft = (e.clientX / this.zoomLevel) - (this.diffX / this.zoomLevel);
 
-      this.movingContainer.style.top = newPosTop + "px";
-      this.movingContainer.style.left = newPosLeft + "px";
+      this.selectedPiecesContainer.style.top = newPosTop + "px";
+      this.selectedPiecesContainer.style.left = newPosLeft + "px";
     }
   }
 
   onMouseUp(e){
     e.preventDefault();
+
+    console.log(e.target)
 
     this.touchEndTime = Date.now();
 
@@ -314,11 +321,10 @@ class DragAndSelect {
       window.dispatchEvent(this.getDragActiveEventMessage(false));
       Utils.requestSave(this.selectedPieces);
 
-      this.movingContainer?.remove();
-      this.movingContainer = null;
+      this.selectedPiecesContainer?.remove();
+      this.selectedPiecesContainer = null;
       
       this.selectedPieces = [];
-      this.selectedPiecesAreMoving = false;
       this.drawBoxActive = false;
 
       this.touchStartTime = null;
@@ -331,17 +337,26 @@ class DragAndSelect {
 
     if(this.drawBoxActive){
       this.selectedPieces = this.getCollidingPieces();
-      this.movingContainer = this.getContainerForMove(this.selectedPieces);
+      this.selectedPiecesContainer = this.getContainerForMove(this.selectedPieces);
+      this.selectedPiecesContainerRectLeft = this.selectedPiecesContainer.offsetLeft;
+      this.selectedPiecesContainerRectTop = this.selectedPiecesContainer.offsetTop;
+
+      this.piecesSelected = true;
 
       this.toggleHighlightPieces(this.selectedPieces);
       this.toggleDrawCursor();
       this.deactivateDrawBox();
 
       window.dispatchEvent(this.getDragActiveEventMessage(true));
-    } else {
-      // this.selectedPieces = [];
-      // this.movingContainer?.remove();
-      // this.movingContainer = null;
+    } else if(this.selectedPiecesContainer){
+      console.log("checking out of bounds", this.selectedPiecesContainerRect)
+      if(Utils.isOutOfBounds(Utils.getEventBox(e))){
+        this.selectedPiecesContainer.style.left = this.selectedPiecesContainerRectLeft + "px";
+        this.selectedPiecesContainer.style.top = this.selectedPiecesContainerRectTop + "px";
+      } else {
+        this.selectedPiecesContainerRectLeft = this.selectedPiecesContainer.offsetLeft;
+        this.selectedPiecesContainerRectTop = this.selectedPiecesContainer.offsetTop;
+      }
     }
   }
 }

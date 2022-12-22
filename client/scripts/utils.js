@@ -193,6 +193,10 @@ const Utils = {
 		const cnvBox = document.querySelector("#canvas").getBoundingClientRect();
 		const pocketsBox = document.querySelector("#side-groups").getBoundingClientRect();
 
+		// Utils.drawBox(sourceBox)
+		// Utils.drawBox(cnvBox)
+		// Utils.drawBox(pocketsBox)
+
 		return !Utils.hasCollision(sourceBox, cnvBox) && !Utils.hasCollision(sourceBox, pocketsBox);
 	},
 
