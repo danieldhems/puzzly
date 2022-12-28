@@ -762,7 +762,7 @@ class Puzzly {
 			}
 
 			if(element?.classList?.contains("puzzle-piece")){
-				this.lastPosition = Utils.getPositionRelativeToCanvas(element, this.zoomLevel)
+				this.lastPosition = Utils.getPositionRelativeToCanvas(element.getBoundingClientRect(), this.zoomLevel)
 			}
 
 			if(isStage){
@@ -895,6 +895,7 @@ console.log("this.dragAndSelectActive", this.dragAndSelectActive)
 	}
 
 	resetPieceToLastPosition(element){
+		console.log("resetPieceToLastPosition", element, this.lastPosition)
 		element.style.top = this.lastPosition.y + "px";
 		element.style.left = this.lastPosition.x + "px";
 	}
@@ -909,10 +910,11 @@ console.log("this.dragAndSelectActive", this.dragAndSelectActive)
 			left: e.clientX,
 		};
 
-		if(this.isMouseDown && !this.isMovingStage){
+		if(this.isMouseDown && !this.isMovingStage && !this.dragAndSelectActive){
 			const element = this.movingPiece;
-
-			if(Utils.isOutOfBounds(eventBox)){
+console.log("checking pieces")
+			if(Utils.isOutOfBounds(element.getBoundingClientRect())){
+				console.log("resetting piece")
 				this.resetPieceToLastPosition(element);
 				this.isMouseDown = false;
 				this.movingElement = null;

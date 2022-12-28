@@ -336,6 +336,7 @@ class DragAndSelect {
     }
 
     if(this.drawBoxActive){
+      // Selection box has been drawn
       this.selectedPieces = this.getCollidingPieces();
       this.selectedPiecesContainer = this.getContainerForMove(this.selectedPieces);
       this.selectedPiecesContainerRectLeft = this.selectedPiecesContainer.offsetLeft;
@@ -349,8 +350,9 @@ class DragAndSelect {
 
       window.dispatchEvent(this.getDragActiveEventMessage(true));
     } else if(this.selectedPiecesContainer){
-      console.log("checking out of bounds", this.selectedPiecesContainerRect)
-      if(Utils.isOutOfBounds(Utils.getEventBox(e))){
+      // A group of selected pieces has been moved
+      console.log("checking out of bounds", this.selectedPiecesContainer)
+      if(Utils.isOutOfBounds(this.selectedPiecesContainer.getBoundingClientRect())){
         this.selectedPiecesContainer.style.left = this.selectedPiecesContainerRectLeft + "px";
         this.selectedPiecesContainer.style.top = this.selectedPiecesContainerRectTop + "px";
       } else {

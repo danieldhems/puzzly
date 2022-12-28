@@ -2,30 +2,35 @@ const Utils = {
 	hasCollision(source, target, sourceEl, targetEl){
 		if([source.left, source.right, source.bottom, source.top, target.left, target.top, target.right, target.bottom].includes(NaN)) return false;
 
-		// console.log("source before", source)
-		// console.log("target before", target)
-
-		// const sourceBB = {
-		// 	top: source.top * this.zoomLevel,
-		// 	right: source.right * this.zoomLevel,
-		// 	bottom: source.bottom * this.zoomLevel,
-		// 	left: source.left * this.zoomLevel,
-		// }
-
-		// const targetBB = {
-		// 	top: target.top * this.zoomLevel,
-		// 	right: target.right * this.zoomLevel,
-		// 	bottom: target.bottom * this.zoomLevel,
-		// 	left: target.left * this.zoomLevel,
-		// }
-		
-		// console.log("has collision?", sourceBB)
-		// console.log("has collision?", targetBB)
-
 		const sourceBB = source;
 		const targetBB = target;
 		return !(sourceBB.left >= targetBB.right || sourceBB.top >= targetBB.bottom || 
 		sourceBB.right <= targetBB.left || sourceBB.bottom <= targetBB.top);
+	},
+
+	isInside(source, target){
+		// const sTop = source.offsetTop;
+		// const sLeft = source.offsetLeft;
+		// const sRight = source.offsetLeft + source.offsetWidth;
+		// const sBottom = source.offsetTop + source.offsetHeight;
+
+		// const tTop = target.offsetTop;
+		// const tLeft = target.offsetLeft;
+		// const tRight = target.offsetLeft + target.offsetWidth;
+		// const tBottom = target.offsetTop + target.offsetHeight;
+		console.log("source", source)
+		console.log(source.top);
+		console.log(source.left);
+		console.log(source.right);
+		console.log(source.bottom);
+
+		console.log("target", target)
+		console.log(target.top)
+		console.log(target.left)
+		console.log(target.right)
+		console.log(target.bottom)
+
+		return source.top >= target.top && source.right <= target.right && source.bottom <= target.bottom && source.left >= target.left;
 	},
 
 	/**
@@ -189,15 +194,12 @@ const Utils = {
 		return document.querySelectorAll(`[data-piece-id='${id}']`)[0];
 	},
 
-	isOutOfBounds(sourceBox){
+	isOutOfBounds(sourceEl){
 		const cnvBox = document.querySelector("#canvas").getBoundingClientRect();
 		const pocketsBox = document.querySelector("#side-groups").getBoundingClientRect();
-
-		// Utils.drawBox(sourceBox)
-		// Utils.drawBox(cnvBox)
-		// Utils.drawBox(pocketsBox)
-
-		return !Utils.hasCollision(sourceBox, cnvBox) && !Utils.hasCollision(sourceBox, pocketsBox);
+		console.log("is inside canvas", Utils.isInside(sourceEl, cnvBox))
+		console.log("is inside pockets", Utils.isInside(sourceEl, pocketsBox))
+		return !Utils.isInside(sourceEl, cnvBox) && !Utils.isInside(sourceEl, pocketsBox);
 	},
 
 	drawBox(box, borderColor = null, container = null){
