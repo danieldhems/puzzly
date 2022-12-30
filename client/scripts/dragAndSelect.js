@@ -203,7 +203,6 @@ class DragAndSelect {
   }
 
   dropPieces(pieces){
-    console.log("dropping pieces", pieces)
     pieces.forEach(p => {
       p.style.left =
         p.offsetLeft +
@@ -234,8 +233,6 @@ class DragAndSelect {
 
     const el = e.target;
 
-    console.log(this.selectedPieces)
-    
     const classes = e.target.classList;
     const isEmptySpace = !classes.contains("puzzle-piece") && !classes.contains("in-pocket");
 
@@ -249,7 +246,6 @@ class DragAndSelect {
         window.dispatchEvent(this.getDragActiveEventMessage(true));
       })
       .catch(e => {
-        console.log(e)
         this.isMouseDownHeld = false;
 
         if(this.selectedPieces.length > 0){
@@ -298,7 +294,7 @@ class DragAndSelect {
   onMouseUp(e){
     e.preventDefault();
 
-    console.log(e.target)
+    const droppedElementIsInSelectedGroup = e.target.classList?.contains("selected");
 
     this.touchEndTime = Date.now();
 
@@ -349,10 +345,11 @@ class DragAndSelect {
       this.deactivateDrawBox();
 
       window.dispatchEvent(this.getDragActiveEventMessage(true));
-    } else if(this.selectedPiecesContainer){
+    } else if(this.selectedPiecesContainer && droppedElementIsInSelectedGroup){
       // A group of selected pieces has been moved
       console.log("checking out of bounds", this.selectedPiecesContainer)
-      if(Utils.isOutOfBounds(this.selectedPiecesContainer.getBoundingClientRect())){
+
+      if(this.isDragOutOfBounds(e)){
         this.selectedPiecesContainer.style.left = this.selectedPiecesContainerRectLeft + "px";
         this.selectedPiecesContainer.style.top = this.selectedPiecesContainerRectTop + "px";
       } else {
@@ -360,6 +357,13 @@ class DragAndSelect {
         this.selectedPiecesContainerRectTop = this.selectedPiecesContainer.offsetTop;
       }
     }
+  }
+
+  isDragOutOfBounds(e){
+    const selectedPiecesRect = this.selectedPiecesContainer.getBoundingClientRect();
+    const canvasRect = this.canvas.getBoundingClientRect();
+
+    return !Utils.isInside(selectedPiecesRect, canvasRect);
   }
 }
 

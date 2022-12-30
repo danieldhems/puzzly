@@ -9,27 +9,6 @@ const Utils = {
 	},
 
 	isInside(source, target){
-		// const sTop = source.offsetTop;
-		// const sLeft = source.offsetLeft;
-		// const sRight = source.offsetLeft + source.offsetWidth;
-		// const sBottom = source.offsetTop + source.offsetHeight;
-
-		// const tTop = target.offsetTop;
-		// const tLeft = target.offsetLeft;
-		// const tRight = target.offsetLeft + target.offsetWidth;
-		// const tBottom = target.offsetTop + target.offsetHeight;
-		console.log("source", source)
-		console.log(source.top);
-		console.log(source.left);
-		console.log(source.right);
-		console.log(source.bottom);
-
-		console.log("target", target)
-		console.log(target.top)
-		console.log(target.left)
-		console.log(target.right)
-		console.log(target.bottom)
-
 		return source.top >= target.top && source.right <= target.right && source.bottom <= target.bottom && source.left >= target.left;
 	},
 
@@ -197,8 +176,6 @@ const Utils = {
 	isOutOfBounds(sourceEl){
 		const cnvBox = document.querySelector("#canvas").getBoundingClientRect();
 		const pocketsBox = document.querySelector("#side-groups").getBoundingClientRect();
-		console.log("is inside canvas", Utils.isInside(sourceEl, cnvBox))
-		console.log("is inside pockets", Utils.isInside(sourceEl, pocketsBox))
 		return !Utils.isInside(sourceEl, cnvBox) && !Utils.isInside(sourceEl, pocketsBox);
 	},
 
@@ -271,7 +248,6 @@ const Utils = {
 	},
 
 	requestSave(pieces){
-		console.log("Requesting save", pieces)
     const event = new CustomEvent("puzzly_save", { detail: { pieces }});
     window.dispatchEvent(event)
   }

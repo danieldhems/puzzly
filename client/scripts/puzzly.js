@@ -23,8 +23,6 @@ class Puzzly {
 			drawSquares: false,
 		});
 
-		console.log(config)
-
 		this.pieces = config.pieces;
 		this.connectorSize = this.connectorWidth;
 
@@ -759,9 +757,6 @@ class Puzzly {
 
 			if(isPuzzlePiece){
 				element = e.target;
-			}
-
-			if(element?.classList?.contains("puzzle-piece")){
 				this.lastPosition = Utils.getPositionRelativeToCanvas(element.getBoundingClientRect(), this.zoomLevel)
 			}
 
@@ -834,7 +829,7 @@ class Puzzly {
 			if(this.movingElement){
 				eventX = e.touches ? e.touches[0].clientX : e.clientX;
 				eventY = e.touches ? e.touches[0].clientY : e.clientY;
-console.log("this.dragAndSelectActive", this.dragAndSelectActive)
+
 				if(!this.dragAndSelectActive){
 					if(this.isMovingStage){
 						if(this.dragIsWithinHorizontalBounds(eventX)){
@@ -1153,7 +1148,6 @@ console.log("checking pieces")
 	}
 
 	loadAssets(assets){
-		console.log("assets to load", assets)
 		let promises = [];
 		for(let i=0,l=assets.length;i<l;i++){
 			promises.push(this.loadAsset(assets[i]).then(assetData => this.loadedAssets.push(assetData)));
