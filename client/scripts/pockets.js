@@ -10,6 +10,8 @@ class Pockets {
     this.hasCapture = false;
     this.elementClone = null;
 
+    this.animationDuration = 2000;
+
     this.isMainCanvasMoving = false;
     this.isDragActive = false;
 
@@ -415,19 +417,28 @@ class Pockets {
       dropY = Utils.getRandomInt(this.pocketDropBoundingBox.top, this.pocketDropBoundingBox.bottom);
     }
 
-    element.style.top = dropY * this.pieceScaleWhileInPocket + "px";
-    element.style.left = dropX * this.pieceScaleWhileInPocket + "px";
+    const newY = dropY * this.pieceScaleWhileInPocket;
+    const newX = dropX * this.pieceScaleWhileInPocket;
 
+    
+    // element.style.top = newY + "px";
+    // element.style.left = newX + "px";
+    
     element.setAttribute("data-pocket-id", pocketId);
     element.classList.add("in-pocket");
-
+    
     pocketEl?.appendChild(element);
-
+    
     if(this.elementClone){
       this.removeClone();
     }
-
+    
     this.setPieceSize(element, this.pieceScaleWhileInPocket);
+    move(element)
+        .x(newX)
+        .y(newY)
+        .duration(this.animationDuration)
+        .end()
     Utils.requestSave([element]);
   }
 

@@ -26,6 +26,8 @@ class Puzzly {
 		this.pieces = config.pieces;
 		this.connectorSize = this.connectorWidth;
 
+		this.animationDuration = 200;
+
 		this.localStorageStringReplaceKey = "{}";
 		this.LOCAL_STORAGE_PUZZLY_PROGRESS_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_progress`;
 		this.LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_lastSave`;
@@ -547,6 +549,7 @@ class Puzzly {
 
 		el = document.createElement('div');
 		el.classList.add('puzzle-piece')
+		el.id = "piece-" + piece.id;
 		// el.addEventListener("dragstart", () => false);
 		
 		el.style.position = "absolute";
@@ -1536,7 +1539,7 @@ console.log("checking pieces")
 	}
 
 	// Each time we start the next side, determine where the first piece should go
-	getPositionForFirstPieceOnNextSide(element, nextElement, currentSide, firstPieceOnNextSideFromPreviousIteration){
+	getPositionForFirstPieceOnNextSide(element, nextElement, currentSide, firstPieceOnNextSideFromPreviousIteration, spacing){
 		// console.log("getPositionForFirstPieceOnNextSide", element, nextElement, currentSide)
 		let targetBox;
 
@@ -1563,10 +1566,6 @@ console.log("checking pieces")
 			left: parseInt(element.style.left) * this.zoomLevel,
 		}
 
-		const spacing = 20;
-
-		let x, y;
-
 		switch(currentSide){
 			case "top":
 				return {
@@ -1591,7 +1590,7 @@ console.log("checking pieces")
 		}
 	}
 
-	arrangePieces(dryRun = false){
+	arrangePieces(){
 		const sides = ["top", "right", "bottom", "left"];
 		let i = 0;
 		let sideIndex = 0;
@@ -1606,20 +1605,24 @@ console.log("checking pieces")
 			"left": null,
 		};
 		
-		const spacing = 20;
+		const spacing = this.largestPieceSpan / 100 * 5;
 		
 		const piecesInPlay = this.shuffleArray(Utils.getIndividualPiecesOnCanvas());
 
 		let currentX = this.boardAreaEl.offsetLeft * this.zoomLevel;
 		let currentY = (this.boardAreaEl.offsetTop - this.largestPieceSpan - spacing) * this.zoomLevel;
+
+		const animMap = [];
 		
 		while(i < piecesInPlay.length){
-			// console.log("current element", piecesInPlay[i])
-			if(!dryRun){
-				piecesInPlay[i].style.top = currentY + "px";
-				piecesInPlay[i].style.left = currentX + "px";
-			}
-
+			const p = piecesInPlay[i];
+				
+			move(p)
+				.x(currentX)
+				.y(currentY)
+				.duration(this.animationDuration)
+				.end()
+				
 			if(i === 0){
 				firstPiecesOnEachSide[currentSide] = piecesInPlay[i];
 			}
@@ -1633,7 +1636,7 @@ console.log("checking pieces")
 					verticalSpace += this.largestPieceSpan + spacing;
 				}
 
-				const nextPos = this.getPositionForFirstPieceOnNextSide(piecesInPlay[i], !isLastPiece ? piecesInPlay[i+1] : null, currentSide, firstPiecesOnEachSide[sides[nextSide]]);
+				const nextPos = this.getPositionForFirstPieceOnNextSide(piecesInPlay[i], !isLastPiece ? piecesInPlay[i+1] : null, currentSide, firstPiecesOnEachSide[sides[nextSide]], spacing);
 
 				sideIndex = nextSide;
 				currentSide = sides[nextSide];
@@ -1662,7 +1665,6 @@ console.log("checking pieces")
 		}
 
 		this.save(Array.from(this.allPieces()));
-		return verticalSpace;
 	}
 
 	renderPiecesAlongEdge(side, pieces, depth){

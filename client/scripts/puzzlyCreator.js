@@ -21,7 +21,7 @@ class PuzzlyCreator {
 			highlightConnectingPieces: false,
 		}
 
-		this.boardSize = Math.ceil(window.innerHeight / 100 * 50);
+		this.boardSize = Math.ceil(window.innerHeight / 100 * 30);
 
 		this.imagePreviewType = "toggle";
 
