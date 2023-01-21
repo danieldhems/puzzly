@@ -47,7 +47,7 @@ const PuzzleGenerator = async function(imagePath, puzzleConfig, spriteName, shad
 	GeneratorConfig.connectorLateralControlPointDistance = GeneratorConfig.connectorSize * 1.2;
 	GeneratorConfig.largestPieceSpan = GeneratorConfig.pieceSize + (GeneratorConfig.connectorSize * 2);
 
-	console.log("GeneratorConfig", GeneratorConfig)
+	// console.log("GeneratorConfig", GeneratorConfig)
 	
 	return {
 		...GeneratorConfig,

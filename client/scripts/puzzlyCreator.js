@@ -3,10 +3,9 @@ import Utils from "./utils.js";
 
 class PuzzlyCreator {
 	constructor(){
-
 		this.sourceImage = {
 			path: null,
-			dimensions: null,
+			dimensions: {},
 		};
 
 		this.crop = {
@@ -124,23 +123,17 @@ class PuzzlyCreator {
 			this.sourceImage.previewPath = this.imageUploadPreviewEl.src = response.data.previewPath;
 			this.sourceImage.fullSizePath = this.fullSizeImageHidden.src = response.data.fullSizePath;
 			this.sourceImage.imageName = response.data.filename;
+
+			this.sourceImage.dimensions.width = width = response.data.width;
+			this.sourceImage.dimensions.height = height = response.data.height;
+			this.cropNotNeeded = width === height;
 		}
 	}
 
 	onImagePreviewLoad(e) {
 		// console.log('image info', e)
 
-		const imgObj = e.path[0];
-		const dimensions = {
-			width: imgObj.naturalWidth,
-			height: imgObj.naturalHeight,
-		};
-
-		console.log(dimensions)
-
-		const cropNotNeeded = dimensions.width === dimensions.height;
-		
-		if(cropNotNeeded){
+		if(this.cropNotNeeded){
 			this.setPuzzleImageOffsetAndWidth(true);
 			if(this.imageCropVisible){
 				this.destroyImageCrop();
@@ -153,14 +146,7 @@ class PuzzlyCreator {
 	}
 	
 	onFullSizeImageLoad(e){
-		const imgObj = e.path[0];
-		const dimensions = {
-			width: imgObj.naturalWidth,
-			height: imgObj.naturalHeight,
-		};
-		console.log("full size dimensions", dimensions)
-		
-		this.sourceImage.dimensions = dimensions;
+		console.log(e)
 	}
 
 	onUploadFailure(response){
@@ -404,10 +390,31 @@ class PuzzlyCreator {
 		.then( response => response.json() )
 	}
 
+	getCropData(imageEl){
+		let widthPercentage, heightPercentage, leftOffsetPercentage, topOffsetPercentage;
+		const imageWidth = imageEl.offsetWidth;
+		const imageHeight = imageEl.offsetHeight;
+
+		if(imageWidth > imageHeight){
+			widthPercentage = this.imageCropElement.offsetWidth / imageWidth * 100;
+			leftOffsetPercentage = parseInt(this.imageCropElement.style.left) / imageWidth * 100;
+			topOffsetPercentage = 0;
+			heightPercentage = 100;
+		}
+
+		return {
+			widthPercentage,
+			heightPercentage,
+			topOffsetPercentage,
+			leftOffsetPercentage,
+		}
+	}
+
 	createPuzzle(){
 		const puzzleConfig = {
 			...this.sourceImage,
 			...this.crop,
+			...this.getCropData(this.imageUploadPreviewEl),
 			stageWidth: window.innerWidth,
 			stageHeight: window.innerHeight,
 			debugOptions: this.debugOptions,
@@ -415,7 +422,6 @@ class PuzzlyCreator {
 			imagePreviewType: this.imagePreviewType,
 			boardSize: this.boardSize,
 			originalImageSize: this.sourceImage.dimensions,
-			pieceSize: this.sourceImage.dimensions.width / this.piecesPerSide,
 		}
 		console.log("sending to server", puzzleConfig)
 		fetch('/api/puzzle', {

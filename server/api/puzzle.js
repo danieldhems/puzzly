@@ -53,31 +53,20 @@ var api = {
 			const imgMetadata = await img.metadata();
 			const { width: origW, height: origH } = imgMetadata;
 
-			const { width, height } = data.dimensions;
+			try {
+				const opts = {
+					left: Math.floor(origW / 100 * data.leftOffsetPercentage),
+					top: Math.floor(origH / 100 * data.topOffsetPercentage),
+					width: Math.floor(origW / 100 * data.widthPercentage),
+					height: Math.floor(origH / 100 * data.heightPercentage)
+				};
 
-			let ratio, cropTop, cropLeft, cropP, cropSize;
+				await img.extract(opts)
+			} catch(e){
+				console.log(e)
+			}
 
 			await img.resize(data.boardSize, data.boardSize);
-
-			if(data.hasCrop){
-				if(origW > origH){
-					ratio = origW / origH;
-				} else {
-					ratio = origH / origW;
-				}
-
-				if(width > height){
-					cropP = data.selectedOffsetX / width * 100;
-					cropLeft = Math.floor(origW / 100 * cropP);
-					cropSize = origH;
-				} else {
-					cropP = data.selectedOffsetY / height * 100;
-					cropTop = Math.floor(origH / 100 * cropP);
-					cropSize = origW;
-				}
-
-				await img.extract({ left: cropLeft || 0, top: cropTop || 0, width: cropSize, height: cropSize })
-			}
 
 			const puzzleImgPath = `./uploads/puzzle_${data.imageName}`;
 			await img.toFile(puzzleImgPath);
@@ -108,7 +97,7 @@ var api = {
 
 			puzzleCollection.insertOne(dbPayload)
 			.then(async (result) => {
-				console.log("puzzle added to DB", result.ops)
+				// console.log("puzzle added to DB", result.ops)
 				const puzzleId = result.ops[0]._id;
 				const pieces = await generator.generateDataForPuzzlePieces(puzzleId);
 				

@@ -10,14 +10,13 @@ class Pockets {
     this.hasCapture = false;
     this.elementClone = null;
 
-    this.animationDuration = 2000;
+    this.animationDuration = 300;
 
     this.isMainCanvasMoving = false;
     this.isDragActive = false;
 
     this.pocketWidth = window.innerWidth / 4;
-    this.pocketHeight = 250;
-    this.uiWidth = "100%";
+    this.pocketHeight = 150;
     this.pieceScaleWhileInPocket = .8;
     this.zoomLevel = 1; // If this hasn't been set externally yet, assume it's the default value
     
@@ -26,9 +25,12 @@ class Pockets {
     this.pockets = {};
     this.activePocketHasMultiplePieces = false;
 
+    this.useFullWidth = window.innerWidth <= 600;
+    this.fixedWidthPixelAmount = 600;
+
     this.render();
     this.setScale(config.zoomLevel);
-
+    
     window.addEventListener("mousedown", e => this.onMouseDown(e));
     window.addEventListener("mouseup", e => this.onMouseUp(e));
 
@@ -40,7 +42,7 @@ class Pockets {
     this.pocketBridge.style.transform = `scale(${num})`;
   }
 
-  makePocket(id, lastPocket = false){
+  makePocket(id, useFullWidth, lastPocket = false, ){
     const pocket = document.createElement("div");
     pocket.id = `group-draw-${id}`;
     pocket.classList.add("pocket");
@@ -50,6 +52,15 @@ class Pockets {
     pocket.style.position = "relative";
     pocket.style.boxSizing = "border-box";
     pocket.style.borderTop = `2px solid ${this.borderColor}`;
+    
+    if(!useFullWidth){
+      if(id === 1){
+        pocket.style.borderLeft = `2px solid ${this.borderColor}`;
+      }
+      if(id === 4){
+        pocket.style.borderRight = `2px solid ${this.borderColor}`;
+      }
+    }
 
     if(!lastPocket){
       pocket.style.borderRight = `2px solid ${this.borderColor}`;
@@ -179,7 +190,7 @@ class Pockets {
       this.setActivePiecesToCurrentScale();
       this.movingElement = this.getMovingElementForActivePocket(e);
       this.activePocket.appendChild(this.movingElement);
-      
+
       this.setActivePiecesToCurrentScale();
 
       diffX = e.clientX - this.movingElement.offsetLeft;
@@ -326,6 +337,7 @@ class Pockets {
     for(let i = 0, l = activePieces.length; i < l; i++){
       const el = activePieces[i];
 
+      // move(el).x(currX * this.zoomLevel).y(currY * this.zoomLevel).duration(this.animationDuration).end();
       el.style.top = currY * this.zoomLevel + "px";
       el.style.left = currX * this.zoomLevel + "px";
 
@@ -417,12 +429,8 @@ class Pockets {
       dropY = Utils.getRandomInt(this.pocketDropBoundingBox.top, this.pocketDropBoundingBox.bottom);
     }
 
-    const newY = dropY * this.pieceScaleWhileInPocket;
-    const newX = dropX * this.pieceScaleWhileInPocket;
-
-    
-    // element.style.top = newY + "px";
-    // element.style.left = newX + "px";
+    element.style.top = dropY * this.pieceScaleWhileInPocket + "px";
+    element.style.left = dropX * this.pieceScaleWhileInPocket + "px";
     
     element.setAttribute("data-pocket-id", pocketId);
     element.classList.add("in-pocket");
@@ -434,11 +442,11 @@ class Pockets {
     }
     
     this.setPieceSize(element, this.pieceScaleWhileInPocket);
-    move(element)
-        .x(newX)
-        .y(newY)
-        .duration(this.animationDuration)
-        .end()
+    // move(element)
+    //     .x(newX)
+    //     .y(newY)
+    //     .duration(this.animationDuration)
+    //     .end()
     Utils.requestSave([element]);
   }
 
@@ -550,11 +558,11 @@ class Pockets {
   render(){
     const container = document.createElement("div");
     container.id = "side-groups";
-    container.style.width = this.uiWidth;
+    container.style.width = this.useFullWidth ? "100%" : this.fixedWidthPixelAmount + "px";
     container.style.height = this.pocketHeight + "px";
     container.style.position = "fixed";
     container.style.bottom = 0;
-    container.style.left = 0;
+    container.style.left = this.useFullWidth ? 0 : window.innerWidth / 2 - this.fixedWidthPixelAmount / 2 + "px";
 
     const shade = document.createElement("div");
     shade.style.width = "100%";
@@ -574,10 +582,10 @@ class Pockets {
     drawContainer.style.left = 0;
     container.appendChild(drawContainer);
 
-    drawContainer.appendChild(this.makePocket(1));
-    drawContainer.appendChild(this.makePocket(2));
-    drawContainer.appendChild(this.makePocket(3));
-    drawContainer.appendChild(this.makePocket(4, true));
+    drawContainer.appendChild(this.makePocket(1, this.useFullWidth));
+    drawContainer.appendChild(this.makePocket(2, this.useFullWidth));
+    drawContainer.appendChild(this.makePocket(3, this.useFullWidth));
+    drawContainer.appendChild(this.makePocket(4, this.useFullWidth, true));
 
     const cloneContainer = document.createElement("div");
     cloneContainer.id = "pocket-bridge";

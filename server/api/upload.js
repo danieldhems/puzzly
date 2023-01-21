@@ -57,6 +57,8 @@ async function upload(req, res){
                 fullSizePath: fullSizePath,
                 filename: image.name,
                 mimetype: image.mimetype,
+                width: actualW,
+                height: actualH
             }
         });
     }
