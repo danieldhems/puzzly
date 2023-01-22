@@ -400,6 +400,11 @@ class PuzzlyCreator {
 			leftOffsetPercentage = parseInt(this.imageCropElement.style.left) / imageWidth * 100;
 			topOffsetPercentage = 0;
 			heightPercentage = 100;
+		} else {
+			heightPercentage = this.imageCropElement.offsetHeight/ imageHeight * 100;
+			topOffsetPercentage = parseInt(this.imageCropElement.style.top) / imageHeight * 100;
+			leftOffsetPercentage = 0;
+			widthPercentage = 100;
 		}
 
 		return {
@@ -410,11 +415,20 @@ class PuzzlyCreator {
 		}
 	}
 
+	getImageDimensions(imageEl){
+		return imageEl.offsetWidth !== imageEl.offsetHeight ? this.getCropData(imageEl) : {
+			topOffsetPercentage: 0,
+			leftOffsetPercentage: 0,
+			heightPercentage: 100,
+			widthPercentage: 100,
+		}
+	}
+
 	createPuzzle(){
 		const puzzleConfig = {
 			...this.sourceImage,
 			...this.crop,
-			...this.getCropData(this.imageUploadPreviewEl),
+			...this.getImageDimensions(this.imageUploadPreviewEl),
 			stageWidth: window.innerWidth,
 			stageHeight: window.innerHeight,
 			debugOptions: this.debugOptions,

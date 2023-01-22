@@ -154,8 +154,9 @@ class Puzzly {
 		this.zoomLevel = 1;
 
 		this.boardHeight = this.boardWidth = this.boardSize;
-		const boardVerticalSpace = window.innerHeight / 100 * 20;
-		const leftPos = window.innerWidth / 2 - this.boardHeight / 2;
+		const boardVerticalSpace = window.innerHeight / 2 - this.boardHeight / 2;
+		const leftPos = window.innerWidth / 2 - this.boardWidth / 2;
+
 		this.boardBoundingBox = {
 			top: boardVerticalSpace,
 			right: leftPos + this.boardHeight,
@@ -169,7 +170,6 @@ class Puzzly {
 
 		this.connectorToleranceAmount = 40;
 		this.connectorTolerance = this.connectorSize / 100 * ((100 - this.connectorToleranceAmount) / 2);
-
 		
 		this.floatToleranceAmount = 20;
 		this.floatTolerance = this.pieceSize / 100 * this.floatToleranceAmount;
@@ -1474,6 +1474,7 @@ console.log("checking pieces")
 	
 	// Generate map of sectors that can be used for even dispersal of pieces around outside of puzzle board
 	generatePieceSectorMap(){
+		console.log("canvas width", this.canvasWidth)
 		const totalArea = (this.canvasWidth * this.canvasHeight);
 		const pieceSectorSize = totalArea / this.selectedNumPieces;
 
