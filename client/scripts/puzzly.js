@@ -100,6 +100,9 @@ class Puzzly {
 		this.ControlsElPanel = document.getElementById('controls-panel');
 		this.ControlsElPanelIsOpen = false;
 
+		this.diffX = null;
+		this.diffY = null;
+
 		this.ControlsElHandle.addEventListener(this.interactionEventDown, this.onControlsHandleClick.bind(this))
 
 		this.sendToEdgeShuffleBtn.addEventListener(this.interactionEventDown, e => {
@@ -433,13 +436,16 @@ class Puzzly {
 		if ((event.ctrlKey || event.metaKey) && (event.which === 61 || event.which === 107 || event.which === 173 || event.which === 109  || event.which === 187  || event.which === 189 || event.which === 48) ) {
 			event.preventDefault();
 			
+			const prevZoomLevel = this.zoomLevel;
+			const canZoomOut = this.zoomLevel > DEFAULT_ZOOM_LEVEL;
+
 			// Plus key
 			if(event.which === 187){
 				this.zoomLevel += ZOOM_INTERVAL;
 			}
 
 			// Minus key
-			if(event.which === 189 && this.zoomLevel){
+			if(event.which === 189 && canZoomOut){
 				this.zoomLevel -= ZOOM_INTERVAL;
 			}
 
@@ -447,16 +453,18 @@ class Puzzly {
 			if(event.which === 48){
 				this.zoomLevel = DEFAULT_ZOOM_LEVEL;
 			}
-			
+
 			if(this.isPreviewActive){
 				this.updatePreviewerSizeAndPosition();
 			}
 	
-			this.canvas.style.transform = `scale(${this.zoomLevel})`;
-			this.canvas.style.transformOrigin = "50% 50%";
-
-			this.Pockets.setScale(this.zoomLevel);
-			this.DragAndSelect.setScale(this.zoomLevel);
+			if(this.zoomLevel !== prevZoomLevel){
+				this.canvas.style.transform = `scale(${this.zoomLevel})`;
+				this.canvas.style.transformOrigin = "50% 50%";
+	
+				this.Pockets.setScale(this.zoomLevel);
+				this.DragAndSelect.setScale(this.zoomLevel);
+			}
 		}
 	}
 
@@ -550,7 +558,6 @@ class Puzzly {
 		el = document.createElement('div');
 		el.classList.add('puzzle-piece')
 		el.id = "piece-" + piece.id;
-		// el.addEventListener("dragstart", () => false);
 		
 		el.style.position = "absolute";
 		el.width = piece.pieceWidth;
@@ -606,7 +613,7 @@ class Puzzly {
 		fgEl.style.top = 0;
 		fgEl.style.left = 0;
 		fgEl.style.zIndex = 2;
-		fgEl.style.pointerEvents = "none";
+		// fgEl.style.pointerEvents = "none";
 
 		bgEl = document.createElement("div");
 		bgEl.classList.add('puzzle-piece-bg');
@@ -621,10 +628,11 @@ class Puzzly {
 		bgEl.style.backgroundPositionX = piece.spriteX === 0 ? 0 : '-' + piece.spriteX + 'px';
 		bgEl.style.backgroundPositionY = piece.spriteY === 0 ? 0 : '-' + piece.spriteY + 'px';
 		bgEl.style.zIndex = 1;
-		bgEl.style.pointerEvents = "none";
+		// bgEl.style.pointerEvents = "none";
 
 		el.appendChild(fgEl);
 		el.appendChild(bgEl);
+
 		if(Number.isInteger(piece.pocketId)) {
 			// fish
 			this.Pockets.addToPocket(piece.pocketId, el);
@@ -743,7 +751,9 @@ class Puzzly {
 	}
 
 	onMouseDown(e){
+		// alert(`onMouseDown: ${e.target}`)
 		let element, diffX, diffY, thisPiece;
+		e.preventDefault();
 
 		if(e.which === 1){
 			const clientPos = this.getClientPos(e);
@@ -786,6 +796,7 @@ class Puzzly {
 				return;
 			}
 
+
 			if(Utils.hasGroup(thisPiece)){
 				const container = this.getGroupTopContainer(element);
 				const isGroupSolved = this.getDataAttributeValue(container, 'is-solved');
@@ -802,18 +813,16 @@ class Puzzly {
 			}
 
 			if(isStage){
-				diffX = clientPos.x - this.movingElement.offsetLeft;
-				diffY = clientPos.y - this.movingElement.offsetTop;					
+				this.diffX = clientPos.x - this.movingElement.offsetLeft;
+				this.diffY = clientPos.y - this.movingElement.offsetTop;					
 			} else {
-				diffX = clientPos.x - this.movingElement.offsetLeft * this.zoomLevel;
-				diffY = clientPos.y - this.movingElement.offsetTop * this.zoomLevel;					
+				this.diffX = clientPos.x - this.movingElement.offsetLeft * this.zoomLevel;
+				this.diffY = clientPos.y - this.movingElement.offsetTop * this.zoomLevel;					
 			}
-
-			this.mouseMoveFunc = this.onMouseMove(diffX, diffY);
 
 			this.isMouseDown = true;
 
-			window.addEventListener(this.interactionEventMove, this.mouseMoveFunc);
+			this.canvas.addEventListener(this.interactionEventMove, this.onMouseMove.bind(this));
 		}
 	}
 
@@ -825,31 +834,30 @@ class Puzzly {
 		return y > 10 && y <= window.innerHeight - 10;
 	}
 
-	onMouseMove(diffX, diffY){
-		return function(e){
-			let eventX, eventY;
+	onMouseMove(e){
+		e.preventDefault();
+		let eventX, eventY;
 
-			if(this.movingElement){
-				eventX = e.touches ? e.touches[0].clientX : e.clientX;
-				eventY = e.touches ? e.touches[0].clientY : e.clientY;
+		if(this.movingElement){
+			eventX = e.touches ? e.touches[0].clientX : e.clientX;
+			eventY = e.touches ? e.touches[0].clientY : e.clientY;
 
-				if(!this.dragAndSelectActive){
-					if(this.isMovingStage){
-						if(this.dragIsWithinHorizontalBounds(eventX)){
-							this.movingElement.style.left = eventX - diffX + "px";
-						}
-						if(this.dragIsAtWithinVerticalBounds(eventY)){
-							this.movingElement.style.top = eventY - diffY + "px";
-						}
-					} else {
-						const newPosTop = (eventY / this.zoomLevel) - (diffY / this.zoomLevel);
-						const newPosLeft = (eventX / this.zoomLevel) - (diffX / this.zoomLevel);
-						this.movingElement.style.top = newPosTop + "px";
-						this.movingElement.style.left = newPosLeft + "px";
+			if(!this.dragAndSelectActive){
+				if(this.isMovingStage){
+					if(this.dragIsWithinHorizontalBounds(eventX)){
+						this.movingElement.style.left = eventX - this.diffX + "px";
 					}
+					if(this.dragIsAtWithinVerticalBounds(eventY)){
+						this.movingElement.style.top = eventY - this.diffY + "px";
+					}
+				} else {
+					const newPosTop = (eventY / this.zoomLevel) - (this.diffY / this.zoomLevel);
+					const newPosLeft = (eventX / this.zoomLevel) - (this.diffX / this.zoomLevel);
+					this.movingElement.style.top = newPosTop + "px";
+					this.movingElement.style.left = newPosLeft + "px";
 				}
 			}
-		}.bind(this)
+		}
 	}
 
 	handleDrop(element){
@@ -886,8 +894,6 @@ class Puzzly {
 				}
 			}
 
-			console.log("is active?", this.dragAndSelectActive)
-
 			this.save([element])
 		}
 	}
@@ -910,7 +916,7 @@ class Puzzly {
 
 		if(this.isMouseDown && !this.isMovingStage && !this.dragAndSelectActive){
 			const element = this.movingPiece;
-console.log("checking pieces")
+
 			if(Utils.isOutOfBounds(element.getBoundingClientRect())){
 				console.log("resetting piece")
 				this.resetPieceToLastPosition(element);

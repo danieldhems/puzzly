@@ -27,6 +27,12 @@ class Pockets {
 
     this.useFullWidth = window.innerWidth <= 600;
     this.fixedWidthPixelAmount = 600;
+    this.borderRadius = 15;
+
+    this.diffX;
+    this.diffY;
+
+    this.isCollapsed = false;
 
     this.render();
     this.setScale(config.zoomLevel);
@@ -52,13 +58,16 @@ class Pockets {
     pocket.style.position = "relative";
     pocket.style.boxSizing = "border-box";
     pocket.style.borderTop = `2px solid ${this.borderColor}`;
+    pocket.style.backgroundColor = "#000";
     
     if(!useFullWidth){
       if(id === 1){
         pocket.style.borderLeft = `2px solid ${this.borderColor}`;
+        pocket.style.borderTopLeftRadius = this.borderRadius + "px";
       }
       if(id === 4){
         pocket.style.borderRight = `2px solid ${this.borderColor}`;
+        pocket.style.borderTopRightRadius = this.borderRadius + "px";
       }
     }
 
@@ -119,7 +128,7 @@ class Pockets {
   }
 
   getPocketByCollision(box){
-    if(this.isOverPockets(box)){
+    if(Utils.isOverPockets(box)){
       let i = 1;
       while(i <= Object.keys(this.pockets).length){
         const pocket = this.pockets[i].el;
@@ -153,16 +162,16 @@ class Pockets {
 
   onMouseDown(e){
     e.stopPropagation();
-    const el = e.target;
-
-    let diffX, diffY;
+    let el = e.target;
 
     // If the empty space inside a pocket is clicked, do nothing
     if(el.classList?.contains("pocket")){
       return;
     }
 
-    const isPuzzlePiece = el.classList.contains("puzzle-piece");
+    const isPuzzlePiece = el.parentNode.classList.contains("puzzle-piece");
+    el = el.parentNode;
+
     const hasGroup = isPuzzlePiece && Utils.hasGroup(el);
     const shouldTrackPiece = isPuzzlePiece && !hasGroup;
 
@@ -177,7 +186,7 @@ class Pockets {
 
       const movingElementBoundingBox = this.movingElement.getBoundingClientRect();
 
-      if(this.isOverPockets(movingElementBoundingBox) && this.elementClone === null){
+      if(Utils.isOverPockets(movingElementBoundingBox) && this.elementClone === null){
         this.makeClone(this.movingElement);
       }
     }
@@ -193,30 +202,35 @@ class Pockets {
 
       this.setActivePiecesToCurrentScale();
 
-      diffX = e.clientX - this.movingElement.offsetLeft;
-      diffY = e.clientY - this.movingElement.offsetTop;
+      this.diffX = e.clientX - this.movingElement.offsetLeft;
+      this.diffY = e.clientY - this.movingElement.offsetTop;
     }
 
     if(isMainCanvas) {
       this.isMainCanvasMoving = true;
     }
 
-    this.mouseFn = e => this.onMouseMove(e, diffX, diffY);
-
     if(isPuzzlePiece || isMainCanvas){
-      window.addEventListener("mousemove", this.mouseFn);
+      window.addEventListener("mousemove", this.onMouseMove.bind(this));
     } else {
       this.isMouseDown = false;
       this.isMovingSinglePiece = false;
     }
   }
 
-  onMouseMove(e, diffX, diffY){
+  setPointerEvents(on = true){
+    this.ui.style.pointerEvents = on ? "auto" : "none";
+  }
+
+  onMouseMove(e){
+    // moving
     e.preventDefault();
+    
     if(this.isMovingSinglePiece){
       const movingElementBox = this.movingElement.getBoundingClientRect();
+      const isOverPockets = Utils.isOverPockets.call(this, movingElementBox);
 
-      const isOverPockets = this.isOverPockets(movingElementBox);
+      this.setPointerEvents(false)
 
       if(isOverPockets && this.elementClone === null){
         this.makeClone(this.movingElement);
@@ -228,8 +242,8 @@ class Pockets {
         this.setClonePosition();
       }
     } else if(this.activePocket) {
-      const x = diffX ? e.clientX - diffX : e.clientX;
-      const y = diffY ? e.clientY - diffY : e.clientY;
+      const x = this.diffX ? e.clientX - this.diffX : e.clientX;
+      const y = this.diffY ? e.clientY - this.diffY : e.clientY;
       this.movingElement.style.top = y + "px";
       this.movingElement.style.left = x + "px";
     }
@@ -239,6 +253,8 @@ class Pockets {
     // console.log("on mouse up", e)
     const trackingBox = Utils.getEventBox(e);
     const targetPocket = this.getPocketByCollision(trackingBox);
+
+    this.setPointerEvents()
 
     if(trackingBox && targetPocket){
       if(this.activePocket){
@@ -548,30 +564,49 @@ class Pockets {
     this.pocketBridge.style.zIndex = 1;
   }
 
-  isOverPockets(box){
-    if(!box) return;
-    box.width += this.shadowOffset;
-    box.height += this.shadowOffset;
-    return Utils.hasCollision(box, this.ui.getBoundingClientRect());
+  makeHandle(){
+    const width = 30;
+    const height = 30;
+
+    this.pocketsHandle = document.createElement("div");
+    this.pocketsHandle.id = "pockets-handle";
+    this.pocketsHandle.style.position = "absolute";
+    this.pocketsHandle.style.cursor = "pointer";
+    this.pocketsHandle.style.width = `${width}px`;
+    this.pocketsHandle.style.height = `${height}px`;
+    this.pocketsHandle.style.border = "2px solid";
+    this.pocketsHandle.style.borderRadius = "15px";
+    this.pocketsHandle.style.backgroundColor = "blue";
+    this.pocketsHandle.style.top = `-${height / 2 - 1}px`;
+    this.pocketsHandle.style.left = this.ui.offsetWidth / 2 - 15 + "px";
+    this.ui.appendChild(this.pocketsHandle);
+
+    this.pocketsHandle.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      if(this.isCollapsed){
+        move(this.ui)
+          .y(window.innerHeight - this.pocketHeight)
+          .duration(this.animationDuration)
+          .end();
+        this.isCollapsed = false;
+      } else {
+        move(this.ui)
+          .y(window.innerHeight - height / 2)
+          .duration(this.animationDuration)
+          .end();
+        this.isCollapsed = true;
+      }
+    })
   }
 
   render(){
     const container = document.createElement("div");
-    container.id = "side-groups";
+    container.id = "pockets";
     container.style.width = this.useFullWidth ? "100%" : this.fixedWidthPixelAmount + "px";
     container.style.height = this.pocketHeight + "px";
     container.style.position = "fixed";
-    container.style.bottom = 0;
+    container.style.top = `${window.innerHeight - this.pocketHeight}px`;
     container.style.left = this.useFullWidth ? 0 : window.innerWidth / 2 - this.fixedWidthPixelAmount / 2 + "px";
-
-    const shade = document.createElement("div");
-    shade.style.width = "100%";
-    shade.style.height = "100%";
-    shade.style.backgroundColor = "#000";
-    shade.style.position = "absolute";
-    shade.style.top = 0;
-    shade.style.left = 0;
-    container.appendChild(shade);
 
     const drawContainer = document.createElement("div");
     drawContainer.style.display = "flex";
@@ -601,6 +636,8 @@ class Pockets {
 
     this.ui = container;
     this.pocketBridge = cloneContainer;
+
+    this.makeHandle();
   }
 }
 

@@ -175,7 +175,7 @@ const Utils = {
 
 	isOutOfBounds(sourceEl){
 		const cnvBox = document.querySelector("#canvas").getBoundingClientRect();
-		const pocketsBox = document.querySelector("#side-groups").getBoundingClientRect();
+		const pocketsBox = document.querySelector("#pockets").getBoundingClientRect();
 		return !Utils.isInside(sourceEl, cnvBox) && !Utils.isInside(sourceEl, pocketsBox);
 	},
 
@@ -250,6 +250,14 @@ const Utils = {
 	requestSave(pieces){
     const event = new CustomEvent("puzzly_save", { detail: { pieces }});
     window.dispatchEvent(event)
+  },
+
+	isOverPockets(box){
+    if(!box) return;
+		const pocketsBox = document.querySelector("#pockets").getBoundingClientRect();
+    box.width += this.shadowOffset;
+    box.height += this.shadowOffset;
+    return Utils.hasCollision(box, pocketsBox);
   }
 }
 

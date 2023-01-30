@@ -9,6 +9,7 @@ class DragAndSelect {
     this.isMouseDown = false;
     this.isMouseDownHeld = false;
     this.hasMouseReleased = false;
+    this.isRightClick = false;
     this.isInterrogatingMouse = false;
     this.piecesSelected = false;
     this.selectedPiecesAreMoving = false;
@@ -222,9 +223,10 @@ class DragAndSelect {
 
   onMouseDown(e){
     e.preventDefault();
-    
+
     this.hasMouseReleased = false;
     this.isMouseDown = true;
+    this.isRightClick = e.which === 3;
 
     this.mouseHoldStartX = e.clientX;
     this.mouseHoldStartY = e.clientY;
@@ -234,9 +236,10 @@ class DragAndSelect {
     const el = e.target;
 
     const classes = e.target.classList;
-    const isEmptySpace = !classes.contains("puzzle-piece") && !classes.contains("in-pocket");
 
-    isEmptySpace && this.selectedPieces.length === 0 && this.isMouseHoldInitiated()
+    const isEmptySpace = !classes.contains("puzzle-piece") && !classes.contains("puzzle-piece-fg") && !classes.contains("in-pocket");
+
+    isEmptySpace && !this.isRightClick && this.selectedPieces.length === 0 && this.isMouseHoldInitiated()
       .then(() => {
         this.isMouseDownHeld = true;
 
@@ -261,7 +264,8 @@ class DragAndSelect {
       });
 
     if(this.selectedPieces.length > 0){
-      if(el.classList.contains("puzzle-piece") && el.classList.contains("selected")){
+      const pieceEl = el.parentNode;
+      if(pieceEl.classList.contains("puzzle-piece") && pieceEl.classList.contains("selected")){
         this.diffX = e.clientX - this.selectedPiecesContainer.offsetLeft * this.zoomLevel;
         this.diffY = e.clientY - this.selectedPiecesContainer.offsetTop * this.zoomLevel;
 

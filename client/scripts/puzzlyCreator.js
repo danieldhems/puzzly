@@ -66,6 +66,7 @@ class PuzzlyCreator {
 
 	addEventListeners(){
 		this.puzzleSizeInputField.addEventListener('input', function(e) {
+			e.preventDefault();
 			this.puzzleSizeInputLabel.textContent = this.selectedNumPieces = PuzzleSizes[e.target.value].numPieces;
 		}.bind(this))
 
@@ -74,7 +75,6 @@ class PuzzlyCreator {
 		});
 
 		this.imagePreviewTypeAlwaysOnRadio.addEventListener('change', () => {
-			console.log(this)
 			this.imagePreviewType = "alwaysOn";
 		});
 		
@@ -218,6 +218,7 @@ class PuzzlyCreator {
 	*/
 
 	onImageCropMouseDown(e){
+		e.preventDefault();
 		const el = e.target;
 		const diffX = e.clientX - el.offsetLeft;
 		const diffY = e.clientY - el.offsetTop;
@@ -241,6 +242,7 @@ class PuzzlyCreator {
 		}.bind(this));
 
 		window.addEventListener('mouseup', function(e){
+			e.preventDefault();
 			this.setPuzzleImageOffsetAndWidth();
 			this.imageCropElement.removeEventListener('mousemove', moveListener);
 			this.imageCropData.inUse = false;
@@ -248,6 +250,7 @@ class PuzzlyCreator {
 	};
 
 	onImageCropMove(e, axis = null){
+		e.preventDefault();
 		const newX = e.clientX - this.imageCropData.diffX;
 		const newY = e.clientY - this.imageCropData.diffY;
 	
@@ -283,6 +286,7 @@ class PuzzlyCreator {
 	}
 
 	onImageCropMouseUp(e){
+		e.preventDefault();
 		if(this.imageCropData.inUse){
 			this.imageCropData.inUse = false;
 			this.imageCropDragHandles.forEach( el => {
@@ -292,6 +296,7 @@ class PuzzlyCreator {
 	}
 
 	onImageCropDragHandleMove = (e, handleId) => {
+		e.preventDefault();
 		if(this.imageCropData.inUse){
 			const newX = e.clientX - this.imageCropData.diffX;
 			const newY = e.clientY - this.imageCropData.diffY;
