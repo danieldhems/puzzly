@@ -13,12 +13,12 @@ const url = 'mongodb://localhost:27017';
 const dbName = 'puzzly';
 
 const puzzlesCollection = 'puzzles';
-const piecesCollectionName = 'pieces';	
+const piecesCollection = 'pieces';	
 
 // Create a new MongoClient
 const client = new MongoClient(url);
 
-let db, collection, piecesCollection;
+let db, collection;
 
 module.exports.clean = function(){
 	client.connect().then((client, err) => {
@@ -38,8 +38,8 @@ var api = {
 		client.connect().then(async (client, err) => {
 			assert.strictEqual(err, undefined);
 			db = client.db(dbName);
-			puzzleCollection = db.collection(puzzlesCollection);
-			piecesCollection = db.collection(piecesCollectionName);
+			const puzzleColl = db.collection(puzzlesCollection);
+			const piecesColl = db.collection(piecesCollection);
 
 			const data = req.body;
 			console.log('create', data);
@@ -95,13 +95,13 @@ var api = {
 				shadowSpritePath: shadowSpritePathWithExt,
 			};
 
-			puzzleCollection.insertOne(dbPayload)
+			puzzleColl.insertOne(dbPayload)
 			.then(async (result) => {
 				// console.log("puzzle added to DB", result.ops)
 				const puzzleId = result.ops[0]._id;
 				const pieces = await generator.generateDataForPuzzlePieces(puzzleId);
 				
-				const presult = await piecesCollection.insertMany(pieces);
+				const presult = await piecesColl.insertMany(pieces);
 				// console.log("piece insertion result", presult)
 
 				res.status(200).send({
@@ -119,13 +119,16 @@ var api = {
 			assert.strictEqual(err, undefined);
 			db = client.db(dbName);
 			const puzzles = db.collection(puzzlesCollection);
-			const pieces = db.collection(piecesCollectionName);
+			const pieces = db.collection(piecesCollection);
 
 			const puzzleQuery = { _id: new ObjectID(puzzleId) }
 			const piecesQuery = { puzzleId: new ObjectID(puzzleId) }
 
-		  const puzzle = await puzzles.findOne(puzzleQuery);
-		  const piecesResult = await pieces.find(piecesQuery).toArray();
+			console.log('puzzle query', puzzleQuery)
+			console.log('pieces query', piecesQuery)
+
+		  const puzzle = await puzzles.findOne(puzzleQuery)
+		  const piecesResult = await pieces.find(piecesQuery).toArray()
 			console.log('puzzle found', puzzle)
 		  console.log('pieces found for puzzle', puzzleId, piecesResult)
 
@@ -158,26 +161,25 @@ api.fetchAll = function(req, res) {
 		let piecesDB = db.collection(piecesCollection);
 
 		let puzzleList = await puzzles.find().toArray();
-		let puzzleIds = puzzleList.map(p => p._id);
+		console.log('puzzles', puzzleList)
 
-		let pieces = await puzzleIds.map(id => {
-			return piecesDB.find({puzzleId: id.toString()}, (err, d) => d)
-		});
+		const puzzlesToReturn = [];
 
-		let result = puzzleList.map(p => ({
-			...p,
-			percentSolved: pieces.filter(piece => piece.isSolved).length / p.selectedNumPieces * 100
-		}))
-
-		const d = await puzzles.find().map(async p => {
-			const pieces = await piecesDB.find({puzzleId: p._id.toString()}).toArray();
-			return {
+		const query = puzzleList.map(async p => {
+			const pieces = await piecesDB.find({puzzleId: new ObjectID(p._id)}).toArray();
+			console.log(`number of pieces found for puzzle ${p._id}: ${pieces.length}`)
+			const puzzle = {
 				...p,
+				pieces,
 				percentSolved: pieces.filter(piece => piece.isSolved).length / p.selectedNumPieces * 100
 			}
+			puzzlesToReturn.push(puzzle)
 		})
 		
-		res.send(result)
+		Promise.all(query).then(() => {
+			console.log("collated", puzzlesToReturn)
+			res.send(puzzlesToReturn)
+		})
 
 	}).catch(err => {
 		throw new Error(err)

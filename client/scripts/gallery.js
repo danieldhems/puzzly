@@ -30,7 +30,7 @@ function Gallery (){
         const tpl = `
             <div data-puzzle-id="${puzzle._id}" class="puzzle-list-item">
                 <a href="/?puzzleId=${puzzle._id}" title="">
-                    <img src="${puzzle.sourceImage.path}" class="puzzle-list-item__image" />
+                    <img src="${puzzle.previewPath}" class="puzzle-list-item__image" />
                 </a>
                 <p>
                 ${Math.round(puzzle.percentSolved)}% solved.<br />

@@ -107,7 +107,6 @@ class Puzzly {
 
 		this.sendToEdgeShuffleBtn.addEventListener(this.interactionEventDown, e => {
 			this.randomisePiecePositions();
-			this.save(allPieces);
 		})
 
 		this.sendToEdgeNeatenBtn.addEventListener(this.interactionEventDown, e => {
@@ -490,25 +489,23 @@ class Puzzly {
 
 	randomisePiecePositions(){
 		const sectors = this.getSequentialArray(0, this.selectedNumPieces, true);
-		// console.log("sectors", sectors)
 		this.pieces.forEach((p, i) => {
 			const el = Utils.getElementByPieceId(p.id);
 			const sector = this.pieceSectors[sectors[i]];
-			// const a = document.createElement("div");
-			// a.style.position = "absolute";
-			// a.style.top = sector.y + "px";
-			// a.style.left = sector.x + "px";
-			// a.style.width = sector.w + "px";
-			// a.style.height = sector.h + "px";
-			// a.style.border = "2px solid blue";
-			// document.body.appendChild(a);
 			const pos = {
 				x: Utils.getRandomInt(sector.x, sector.x + sector.w - p.imgW),
 				y: Utils.getRandomInt(sector.y, sector.y + sector.h - p.imgH),
 			}
-			el.style.top = pos.y + "px";
-			el.style.left = pos.x + "px";
-		})
+			// el.style.top = pos.y + "px";
+			// el.style.left = pos.x + "px";
+
+			move(el)
+				.x(pos.x)
+				.y(pos.y)
+				.duration(this.animationDuration)
+				.end()
+		});
+		this.save(this.allPieces())
 	}
 
 	animatePiece(el, x, y){
@@ -1619,8 +1616,6 @@ class Puzzly {
 		let currentX = this.boardAreaEl.offsetLeft * this.zoomLevel;
 		let currentY = (this.boardAreaEl.offsetTop - this.largestPieceSpan - spacing) * this.zoomLevel;
 
-		const animMap = [];
-		
 		while(i < piecesInPlay.length){
 			const p = piecesInPlay[i];
 				
@@ -1671,7 +1666,7 @@ class Puzzly {
 			i++;
 		}
 
-		this.save(Array.from(this.allPieces()));
+		this.save(piecesInPlay);
 	}
 
 	renderPiecesAlongEdge(side, pieces, depth){
@@ -2676,8 +2671,8 @@ class Puzzly {
 				data.pocketId = parseInt(this.getDataAttributeValue(el, "pocket-id"));
 			}
 
-			data.pageX = el.offsetLeft;
-			data.pageY = el.offsetTop;
+			data.pageX = parseInt(el.style.left);
+			data.pageY = parseInt(el.style.top);
 		})
 
 		if(Utils.hasGroup({group: this.getGroup(el)})){
@@ -2718,7 +2713,7 @@ class Puzzly {
 	}
 
 	async save(pieces){
-		// console.log("Saving", pieces)
+		console.log("Saving", pieces)
 
 		if(pieces.length === 0){
 			console.warn("Nothing to save");

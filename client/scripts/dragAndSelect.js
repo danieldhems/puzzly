@@ -319,7 +319,10 @@ class DragAndSelect {
       this.dropPieces(this.selectedPieces);
 
       window.dispatchEvent(this.getDragActiveEventMessage(false));
-      Utils.requestSave(this.selectedPieces);
+
+      if(this.selectedPieces.length){
+        Utils.requestSave(this.selectedPieces);
+      }
 
       this.selectedPiecesContainer?.remove();
       this.selectedPiecesContainer = null;
