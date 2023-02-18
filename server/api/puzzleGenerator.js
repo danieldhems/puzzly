@@ -62,8 +62,8 @@ const createPuzzlePiece = async (data, ctxForSprite, ctxForShadowSprite, writeTo
 	shadowCnv.height = data.imgH;
 
 	let shdPath = new Path2D();
-	const pathResult = drawJigsawShape(shdCtx, shdPath, data, { x: 0, y: 0 });
-	shdCtx.fill(pathResult, GeneratorConfig.shadowColor);
+	const { path } = drawJigsawShape(shdCtx, shdPath, data);
+	shdCtx.fill(path, GeneratorConfig.shadowColor);
 
 	const shadowImgData = shdCtx.getImageData(0, 0, data.imgW, data.imgH);
 	ctxForShadowSprite.putImageData(shadowImgData, data.spriteX, data.spriteY);
@@ -76,9 +76,9 @@ const createPuzzlePiece = async (data, ctxForSprite, ctxForShadowSprite, writeTo
 	tmpCnv.width = data.imgW;
 	tmpCnv.height = data.imgH;
 	
-	tmpCtx.clip(pathResult);
+	tmpCtx.clip(path);
 	tmpCtx.drawImage(loadedImage, data.imgX, data.imgY, data.imgW, data.imgH, 0, 0, data.imgW, data.imgH);
-	tmpCtx.stroke(pathResult);
+	tmpCtx.stroke(path);
 
 	const img = await loadImage(tmpCnv.toDataURL());
 	ctxForSprite.drawImage(img, data.spriteX, data.spriteY);
@@ -332,6 +332,8 @@ const generateDataForPuzzlePieces = async(puzzleId) => {
 		}
 
 		currentPiece.type = getConnectors(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
+		const { svgString } = drawJigsawShape(null, null, currentPiece);
+		currentPiece.svgPathString = svgString;
 		currentPiece = assignInitialPieceData(puzzleId, curImgX, curImgY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
 		// console.log("generated piece", currentPiece)
 
@@ -384,7 +386,12 @@ const generateDataForPuzzlePieces = async(puzzleId) => {
 	return pieces;
 }
 
-const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = false) => {
+const drawJigsawShape = (ctx, path, piece, showGuides = false, stroke = false) => {
+	let svgString = "";
+
+	let x = 0;
+	let y = 0;
+
 	const hasTopPlug = pieceHelper.has(piece.type, 'plug', 'top')
 	const hasLeftPlug = pieceHelper.has(piece.type, 'plug', 'left')
 	
@@ -397,7 +404,8 @@ const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = 
 	
 	const jigsawShapes = new jigsawPath(GeneratorConfig.pieceSize, GeneratorConfig.connectorSize, GeneratorConfig.connectorWidth);
 	
-	path.moveTo(leftBoundary, topBoundary);
+	path && path.moveTo(leftBoundary, topBoundary);
+	svgString += `M${leftBoundary} ${topBoundary} `;
 
 	let pos = {
 		x: leftBoundary + GeneratorConfig.connectorDistanceFromCorner,
@@ -410,10 +418,14 @@ const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = 
 	}
 
 	if(topConnector){
-		path.lineTo(leftBoundary + GeneratorConfig.connectorDistanceFromCorner, topBoundary);
-		path.bezierCurveTo(topConnector.cp1.x, topConnector.cp1.y, topConnector.cp2.x, topConnector.cp2.y, topConnector.destX, topConnector.destY)
+		path && path.lineTo(leftBoundary + GeneratorConfig.connectorDistanceFromCorner, topBoundary);
+		svgString += `H ${leftBoundary + GeneratorConfig.connectorDistanceFromCorner} `;
+
+		path && path.bezierCurveTo(topConnector.cp1.x, topConnector.cp1.y, topConnector.cp2.x, topConnector.cp2.y, topConnector.destX, topConnector.destY);
+		svgString += `C ${topConnector.cp1.x} ${topConnector.cp1.y}, ${topConnector.cp2.x} ${topConnector.cp2.y}, ${topConnector.destX} ${topConnector.destY} `;
 	}
-	path.lineTo(rightBoundary, topBoundary);
+	path && path.lineTo(rightBoundary, topBoundary);
+	svgString += `H ${rightBoundary} `;
 
 	pos = {
 		x: rightBoundary,
@@ -426,10 +438,14 @@ const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = 
 	}
 
 	if(rightConnector !== null){
-		path.lineTo(rightBoundary, topBoundary + GeneratorConfig.connectorDistanceFromCorner);
-		path.bezierCurveTo(rightConnector.cp1.x, rightConnector.cp1.y, rightConnector.cp2.x, rightConnector.cp2.y, rightConnector.destX, rightConnector.destY)
+		path && path.lineTo(rightBoundary, topBoundary + GeneratorConfig.connectorDistanceFromCorner);
+		svgString += `V ${topBoundary + GeneratorConfig.connectorDistanceFromCorner} `;
+
+		path && path.bezierCurveTo(rightConnector.cp1.x, rightConnector.cp1.y, rightConnector.cp2.x, rightConnector.cp2.y, rightConnector.destX, rightConnector.destY);
+		svgString += `C ${rightConnector.cp1.x} ${rightConnector.cp1.y}, ${rightConnector.cp2.x} ${rightConnector.cp2.y}, ${rightConnector.destX} ${rightConnector.destY} `;
 	}
-	path.lineTo(rightBoundary, bottomBoundary)
+	path && path.lineTo(rightBoundary, bottomBoundary);
+	svgString += `V ${bottomBoundary} `;
 
 	pos = {
 		x: rightBoundary - GeneratorConfig.connectorDistanceFromCorner,
@@ -442,10 +458,14 @@ const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = 
 	}
 
 	if(bottomConnector){
-		path.lineTo(rightBoundary - GeneratorConfig.connectorDistanceFromCorner, bottomBoundary);
-		path.bezierCurveTo(bottomConnector.cp1.x, bottomConnector.cp1.y, bottomConnector.cp2.x, bottomConnector.cp2.y, bottomConnector.destX, bottomConnector.destY)
+		path && path.lineTo(rightBoundary - GeneratorConfig.connectorDistanceFromCorner, bottomBoundary);
+		svgString += `H ${rightBoundary - GeneratorConfig.connectorDistanceFromCorner} `;
+
+		path && path.bezierCurveTo(bottomConnector.cp1.x, bottomConnector.cp1.y, bottomConnector.cp2.x, bottomConnector.cp2.y, bottomConnector.destX, bottomConnector.destY);
+		svgString += `C ${bottomConnector.cp1.x} ${bottomConnector.cp1.y}, ${bottomConnector.cp2.x} ${bottomConnector.cp2.y}, ${bottomConnector.destX} ${bottomConnector.destY} `;
 	}
-	path.lineTo(leftBoundary, bottomBoundary)
+	path && path.lineTo(leftBoundary, bottomBoundary)
+	svgString += `H ${leftBoundary} `;
 
 	pos = {
 		x: leftBoundary,
@@ -457,10 +477,14 @@ const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = 
 		leftConnector = jigsawShapes.getSocket("left", pos);
 	}
 	if(leftConnector !== null){
-		path.lineTo(leftBoundary, bottomBoundary - GeneratorConfig.connectorDistanceFromCorner);
-		path.bezierCurveTo(leftConnector.cp1.x, leftConnector.cp1.y, leftConnector.cp2.x, leftConnector.cp2.y, leftConnector.destX, leftConnector.destY)
+		path && path.lineTo(leftBoundary, bottomBoundary - GeneratorConfig.connectorDistanceFromCorner);
+		svgString += `V ${bottomBoundary - GeneratorConfig.connectorDistanceFromCorner} `;
+
+		path && path.bezierCurveTo(leftConnector.cp1.x, leftConnector.cp1.y, leftConnector.cp2.x, leftConnector.cp2.y, leftConnector.destX, leftConnector.destY);
+		svgString += `C ${leftConnector.cp1.x} ${leftConnector.cp1.y}, ${leftConnector.cp2.x} ${leftConnector.cp2.y}, ${leftConnector.destX} ${leftConnector.destY} `;
 	}
-	path.lineTo(leftBoundary, topBoundary);
+	path && path.lineTo(leftBoundary, topBoundary);
+	svgString += `V ${topBoundary} `;
 
 	if(showGuides){
 		if(topConnector) jigsawShapes.drawPlugGuides(ctx, topConnector)
@@ -474,7 +498,7 @@ const drawJigsawShape = (ctx, path, piece, {x, y}, showGuides = false, stroke = 
 		ctx.stroke(path)
 	}
 
-	return path;
+	return { path, svgString };
 }
 
 exports.default = PuzzleGenerator;

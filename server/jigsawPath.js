@@ -1,4 +1,4 @@
-class jigsawPaths {
+class JigsawPath {
   constructor(pieceSize, connectorSize, connectorWidth){
     this.pieceSize = pieceSize;
     this.connectorSize = connectorSize;
@@ -455,4 +455,4 @@ class jigsawPaths {
 	}
 }
 
-exports.default = jigsawPaths;
+exports.default = JigsawPath;

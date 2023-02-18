@@ -124,9 +124,9 @@ class PuzzlyCreator {
 			this.sourceImage.fullSizePath = this.fullSizeImageHidden.src = response.data.fullSizePath;
 			this.sourceImage.imageName = response.data.filename;
 
-			this.sourceImage.dimensions.width = width = response.data.width;
-			this.sourceImage.dimensions.height = height = response.data.height;
-			this.cropNotNeeded = width === height;
+			this.sourceImage.dimensions.width = response.data.width;
+			this.sourceImage.dimensions.height = response.data.height;
+			this.cropNotNeeded = response.data.width === response.data.height;
 		}
 	}
 

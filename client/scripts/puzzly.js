@@ -62,6 +62,8 @@ class Puzzly {
 		this.previewImage.src = this.puzzleImgPath;
 		this.sprite = new Image();
 		this.sprite.src = this.spritePath;
+		this.puzzleImage = new Image();
+		this.puzzleImage.src = this.puzzleImgPath;
 		this.shadowSprite = new Image();
 		this.shadowSprite.src = this.shadowSpritePath;
 
@@ -547,6 +549,47 @@ class Puzzly {
 		return value / (shouldApply ? this.pieceScale : 1);
 	}
 
+	getSvg(piece){
+		const clipId = `svg-${piece.id}`;
+
+		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		svg.setAttribute("id", `piece-svg-${piece.id}`);
+		svg.setAttribute("width", piece.imgW);
+		svg.setAttribute("height", piece.imgH);
+		svg.setAttribute("viewBox", `0 0 ${piece.imgW} ${piece.imgH}`);
+
+		const clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+		clipPath.setAttribute("id", clipId);
+
+		const clipPathPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+		clipPathPath.setAttribute("d", piece.svgPathString);
+		clipPath.appendChild(clipPathPath);
+
+		const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+		g.setAttribute("clip-path", `url(#${clipId})`);
+		
+		const gImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
+		gImage.setAttribute("href", this.puzzleImgPath);
+		gImage.classList.add("svg-image")
+		gImage.setAttribute("id", `svg-image-${piece.id}`);
+		gImage.setAttribute("x", 0);
+		gImage.setAttribute("y", 0);
+		gImage.setAttribute("transform", `translate(-${piece.imgX} -${piece.imgY})`);
+		g.appendChild(gImage);
+
+		const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+		path.setAttribute("d", piece.svgPathString);
+		path.setAttribute("stroke", "#000");
+		path.setAttribute("stroke-width", .1);
+		path.setAttribute("stroke-line-join", "miter");
+
+		svg.appendChild(path);
+		svg.appendChild(g);
+		svg.appendChild(clipPath);
+
+		return svg;
+	}
+
 	renderJigsawPiece(piece){
 		let el, fgEl, bgEl;
 
@@ -597,38 +640,7 @@ class Puzzly {
 			el.setAttribute('data-pocket-id', piece.pocketId)
 		}
 
-		fgEl = document.createElement('div');
-		fgEl.classList.add('puzzle-piece-fg');
-		fgEl.style.backgroundImage = `url(${this.spritePath}`;
-		fgEl.style.backgroundPositionX = piece.spriteX === 0 ? 0 : '-' + piece.spriteX + 'px';
-		fgEl.style.backgroundPositionY = piece.spriteY === 0 ? 0 : '-' + piece.spriteY + 'px';
-		fgEl.style.position = "absolute";
-		fgEl.width = piece.pieceWidth;
-		fgEl.height = piece.pieceHeight;
-		fgEl.style.width = piece.pieceWidth + "px";
-		fgEl.style.height = piece.pieceHeight + 'px';
-		fgEl.style.top = 0;
-		fgEl.style.left = 0;
-		fgEl.style.zIndex = 2;
-		// fgEl.style.pointerEvents = "none";
-
-		bgEl = document.createElement("div");
-		bgEl.classList.add('puzzle-piece-bg');
-		bgEl.style.position = "absolute";
-		bgEl.width = piece.pieceWidth;
-		bgEl.height = piece.pieceHeight;
-		bgEl.style.width = piece.pieceWidth + "px";
-		bgEl.style.height = piece.pieceHeight + 'px';
-		bgEl.style.top = this.shadowOffset + "px";
-		bgEl.style.left = this.shadowOffset + "px";
-		bgEl.style.backgroundImage = `url(${this.shadowSpritePath}`;
-		bgEl.style.backgroundPositionX = piece.spriteX === 0 ? 0 : '-' + piece.spriteX + 'px';
-		bgEl.style.backgroundPositionY = piece.spriteY === 0 ? 0 : '-' + piece.spriteY + 'px';
-		bgEl.style.zIndex = 1;
-		// bgEl.style.pointerEvents = "none";
-
-		el.appendChild(fgEl);
-		el.appendChild(bgEl);
+		el.appendChild(this.getSvg(piece));
 
 		if(Number.isInteger(piece.pocketId)) {
 			// fish
@@ -636,9 +648,6 @@ class Puzzly {
 		} else if(!Utils.hasGroup(piece) && !piece.isSolved){
 			this.canvas.appendChild(el);
 		} else {
-			fgEl.style.visibility = "hidden";
-			bgEl.style.visibility = "hidden";
-
 			if(piece.isSolved === undefined){
 				let groupContainer = document.querySelector(`#group-container-${piece.group}`);
 	
@@ -757,17 +766,16 @@ class Puzzly {
 
 			const classes = e.target.classList;	
 			const isPuzzlePiece = classes.contains("puzzle-piece") && !classes.contains("in-pocket");
-			const isPuzzlePieceCanvas = e.target.classList.contains("puzzle-piece-canvas");
-			const isPuzzlePieceFg = e.target.classList.contains("puzzle-piece-fg");
+			const isPuzzlePieceSvgImage = classes.contains("svg-image");
 			const isStage = e.target.id === "canvas" || e.target.id === "boardArea" || e.target.dataset.group === "1111" || e.target.dataset.issolved;
-			
-			if(isPuzzlePieceCanvas || isPuzzlePieceFg){
-				element = e.target.parentNode;
-			}
 
 			if(isPuzzlePiece){
 				element = e.target;
 				this.lastPosition = Utils.getPositionRelativeToCanvas(element.getBoundingClientRect(), this.zoomLevel)
+			}
+
+			if(isPuzzlePieceSvgImage){
+				element = e.target.parentNode.parentNode.parentNode;
 			}
 
 			if(isStage){
@@ -1728,7 +1736,6 @@ class Puzzly {
 		const tolerance = this.connectorTolerance;
 		let box;
 
-		// salmon
 		// console.log("connectorsize", this.connectorSize)
 		// console.log("tolerance setting", this.connectorTolerance)
 		// console.log("percentage of", this.connectorSize / 100 * this.connectorTolerance)
@@ -2358,7 +2365,7 @@ class Puzzly {
 		pieces.forEach(p => {
 			const data = p.dataset;
 
-			ctx.drawImage(this.shadowSprite, data.spritex, data.spritey, data.imgw, data.imgh, parseInt(data.solvedx) + this.shadowOffset, parseInt(data.solvedy) + this.shadowOffset, data.imgw, data.imgh);
+			// ctx.drawImage(this.shadowSprite, data.spritex, data.spritey, data.imgw, data.imgh, parseInt(data.solvedx) + this.shadowOffset, parseInt(data.solvedy) + this.shadowOffset, data.imgw, data.imgh);
 
 			if(p instanceof HTMLDivElement){
 				p.childNodes.forEach(n => n.style.visibility = "hidden")
@@ -2370,7 +2377,9 @@ class Puzzly {
 		
 		pieces.forEach(p => {
 			const data = p.dataset;
-			ctx.drawImage(this.sprite, data.spritex, data.spritey, data.imgw, data.imgh, parseInt(data.solvedx), parseInt(data.solvedy), data.imgw, data.imgh);
+			console.log("drawing to group canvas", data)
+			// salmon
+			ctx.drawImage(this.puzzleImage, data.spritex, data.spritey, data.imgw, data.imgh, parseInt(data.solvedx), parseInt(data.solvedy), data.imgw, data.imgh);
 		});
 	}
 

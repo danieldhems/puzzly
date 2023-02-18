@@ -9,6 +9,7 @@ var app = express();
 
 app.use('/', express.static('./client'));
 app.use('/uploads', express.static('./uploads'));
+app.use('/common', express.static('./common'));
 
 app.use(bodyParser.urlencoded({ uploadDir: path.join(__dirname, 'uploads'), keepExtensions: true, extended: true, limit: '50mb' }));
 app.use(bodyParser.json({limit: '50mb'}));
@@ -28,12 +29,20 @@ app.get('/gallery', function(req, res){
 	res.sendFile(path.join(__dirname, '../client/puzzleGallery.html'));
 });
 
+app.get('/exp', function(req, res){
+	res.sendFile(path.join(__dirname, '../client/experiment.html'));
+});
+
 app.get('/removeAll', function(req, res){
 	res.sendFile(path.join(__dirname, '../client/removeAll.html'));
 });
 
 app.get('/unsolvePiece', function(req, res){
 	res.sendFile(path.join(__dirname, '../client/unsolvePiece.html'));
+});
+
+app.get('/new', function(req, res){
+	res.sendFile(path.join(__dirname, '../client/new.html'));
 });
 
 // puzzleApi.clean();
