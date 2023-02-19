@@ -1,6 +1,21 @@
 import Utils from "./utils.js";
 
+const LAYOUTS = {
+  Landscape: {
+    name: "landscape",
+    viewportSideToUse: "right",
+    windowPropToMeasure: "innerHeight",
+    windowPropForDepth: "innerWidth",
+  },
+  Portrait: {
+    name: "portrait",
+    viewportSideToUse: "bottom",
+    windowPropToMeasure: "innerWidth",
+    windowPropForDepth: "innerHeight",
+  },
+}
 class Pockets {
+
   constructor(config){
     this.mainCanvas = config.canvas;
     this.shadowOffset = config.shadowOffset;
@@ -16,7 +31,7 @@ class Pockets {
     this.isDragActive = false;
 
     this.pocketWidth = window.innerWidth / 4;
-    this.pocketHeight = 150;
+    this.pocketDepth = 150;
     this.pieceScaleWhileInPocket = .8;
     this.zoomLevel = 1; // If this hasn't been set externally yet, assume it's the default value
     
@@ -25,8 +40,16 @@ class Pockets {
     this.pockets = {};
     this.activePocketHasMultiplePieces = false;
 
-    this.useFullWidth = window.innerWidth <= 600;
     this.fixedWidthPixelAmount = 600;
+
+    this.orientation = window.innerWidth > window.innerHeight ? LAYOUTS.Landscape : LAYOUTS.Portrait;
+    this.viewportLength = window[this.orientation.windowPropToMeasure];
+    this.useFullViewportLength = this.viewportLength <= this.fixedWidthPixelAmount;
+
+    console.log("pocket orient", this.orientation)
+    console.log("viewport lenght", this.viewportLength)
+    console.log("use full viewport lenght", this.useFullViewportLength)
+
     this.borderRadius = 15;
 
     this.diffX;
@@ -48,31 +71,57 @@ class Pockets {
     this.pocketBridge.style.transform = `scale(${num})`;
   }
 
-  makePocket(id, useFullWidth, lastPocket = false, ){
+  makePocket(id, useFullLength, lastPocket = false, ){
     const pocket = document.createElement("div");
     pocket.id = `group-draw-${id}`;
     pocket.classList.add("pocket");
-    pocket.style.width = "25%";
-    pocket.style.height = "100%";
+
+    if(this.orientation.name === LAYOUTS.Landscape.name){
+      pocket.style.width = "100%";
+      pocket.style.height = "25%";
+    } else {
+      pocket.style.width = "25%";
+      pocket.style.height = "100%";
+    }
+
     pocket.style.display = "flex";
     pocket.style.position = "relative";
     pocket.style.boxSizing = "border-box";
-    pocket.style.borderTop = `2px solid ${this.borderColor}`;
+
+    if(this.orientation.name === LAYOUTS.Landscape.name){
+      pocket.style.borderLeft = `2px solid ${this.borderColor}`;
+    } else {
+      pocket.style.borderTop = `2px solid ${this.borderColor}`;
+    }
     pocket.style.backgroundColor = "#000";
     
-    if(!useFullWidth){
+    if(!useFullLength){
       if(id === 1){
-        pocket.style.borderLeft = `2px solid ${this.borderColor}`;
-        pocket.style.borderTopLeftRadius = this.borderRadius + "px";
+        if(this.orientation.name === LAYOUTS.Landscape.name){
+          pocket.style.borderTop = `2px solid ${this.borderColor}`;
+          pocket.style.borderTopLeftRadius = this.borderRadius + "px";
+        } else {
+          pocket.style.borderLeft = `2px solid ${this.borderColor}`;
+          pocket.style.borderTopLeftRadius = this.borderRadius + "px";
+        }
       }
       if(id === 4){
-        pocket.style.borderRight = `2px solid ${this.borderColor}`;
-        pocket.style.borderTopRightRadius = this.borderRadius + "px";
+        if(this.orientation.name === LAYOUTS.Landscape.name){        
+          pocket.style.borderBottom = `2px solid ${this.borderColor}`;
+          pocket.style.borderBottomLeftRadius = this.borderRadius + "px";
+        } else {
+          pocket.style.borderRight = `2px solid ${this.borderColor}`;
+          pocket.style.borderTopRightRadius = this.borderRadius + "px";
+        }
       }
     }
 
     if(!lastPocket){
-      pocket.style.borderRight = `2px solid ${this.borderColor}`;
+      if(this.orientation.name === LAYOUTS.Landscape.name){
+        pocket.style.borderBottom = `2px solid ${this.borderColor}`;
+      } else {
+        pocket.style.borderRight = `2px solid ${this.borderColor}`;
+      }
     }
 
     this.pockets[id] = {
@@ -499,9 +548,9 @@ class Pockets {
   getTargetBoxForPlacementInsidePocket(pieceSize){
     const expansionRange = 10;
     const pocketWidth = this.pocketWidth;
-    const pocketHeight = this.pocketHeight;
+    const pocketDepth = this.pocketDepth;
     const pocketCenterX = pocketWidth / 2;
-    const pocketCenterY = pocketHeight / 2;
+    const pocketCenterY = pocketDepth / 2;
     const pieceSizeHalf = pieceSize / 2;
 
     const centerBoundingBox = {
@@ -578,21 +627,31 @@ class Pockets {
     this.pocketsHandle.style.border = "2px solid";
     this.pocketsHandle.style.borderRadius = "15px";
     this.pocketsHandle.style.backgroundColor = "blue";
-    this.pocketsHandle.style.top = `-${height / 2 - 1}px`;
-    this.pocketsHandle.style.left = this.ui.offsetWidth / 2 - 15 + "px";
+
+    if(this.orientation.name === LAYOUTS.Landscape.name){
+      this.pocketsHandle.style.left = `-${height / 2 - 1}px`;
+      this.pocketsHandle.style.top = this.ui.offsetHeight / 2 - 15 + "px";
+    } else {
+      this.pocketsHandle.style.top = `-${height / 2 - 1}px`;
+      this.pocketsHandle.style.left = this.ui.offsetWidth / 2 - 15 + "px";
+    }
+
     this.ui.appendChild(this.pocketsHandle);
+
+    const lengthForCollapse = this.orientation.name === LAYOUTS.Landscape.name ? width : height;
+    const axisToAnimate = this.orientation.name === LAYOUTS.Landscape.name ? "x" : "y";
 
     this.pocketsHandle.addEventListener("mousedown", (e) => {
       e.preventDefault();
       if(this.isCollapsed){
         move(this.ui)
-          .y(window.innerHeight - this.pocketHeight)
+          [axisToAnimate](window[this.orientation.windowPropForDepth] - this.pocketDepth)
           .duration(this.animationDuration)
           .end();
         this.isCollapsed = false;
       } else {
         move(this.ui)
-          .y(window.innerHeight - height / 2)
+          [axisToAnimate](window[this.orientation.windowPropForDepth] - lengthForCollapse / 2)
           .duration(this.animationDuration)
           .end();
         this.isCollapsed = true;
@@ -603,16 +662,35 @@ class Pockets {
   render(){
     const container = document.createElement("div");
     container.id = "pockets";
-    container.style.width = this.useFullWidth ? "100%" : this.fixedWidthPixelAmount + "px";
-    container.style.height = this.pocketHeight + "px";
+
+    if(this.orientation.name === LAYOUTS.Landscape.name){
+      container.style.width = this.pocketDepth + "px";
+      container.style.height = this.useFullViewportLength ? "100%" : this.fixedWidthPixelAmount + "px";
+    } else {
+      container.style.width = this.useFullViewportLength ? "100%" : this.fixedWidthPixelAmount + "px";
+      container.style.height = this.pocketDepth + "px";
+    }
+
+    if(this.orientation.name === LAYOUTS.Landscape.name){
+      container.style.left = `${window[this.orientation.windowPropForDepth] - this.pocketDepth}px`;
+      container.style.top = this.useFullViewportLength ? 0 : this.viewportLength / 2 - this.fixedWidthPixelAmount / 2 + "px";
+    } else {
+      container.style.top = `${window[this.orientation.windowPropForDepth] - this.pocketDepth}px`;
+      container.style.left = this.useFullViewportLength ? 0 : this.viewportLength / 2 - this.fixedWidthPixelAmount / 2 + "px";
+    }
+
     container.style.position = "fixed";
-    container.style.top = `${window.innerHeight - this.pocketHeight}px`;
-    container.style.left = this.useFullWidth ? 0 : window.innerWidth / 2 - this.fixedWidthPixelAmount / 2 + "px";
 
     const drawContainer = document.createElement("div");
     drawContainer.style.display = "flex";
     drawContainer.style.height = "100%";
-    drawContainer.style.flexDirection = "columns";
+
+    if(this.orientation.name === LAYOUTS.Landscape.name){
+      drawContainer.style.flexDirection = "column";
+    } else {
+      drawContainer.style.flexDirection = "row";
+    }
+
     drawContainer.style.position = "relative";
     drawContainer.style.top = 0;
     drawContainer.style.left = 0;
