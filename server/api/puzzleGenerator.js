@@ -332,10 +332,11 @@ const generateDataForPuzzlePieces = async(puzzleId) => {
 		}
 
 		currentPiece.type = getConnectors(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
-		const { svgString } = drawJigsawShape(null, null, currentPiece);
-		currentPiece.svgPathString = svgString;
 		currentPiece = assignInitialPieceData(puzzleId, curImgX, curImgY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
-		// console.log("generated piece", currentPiece)
+		const { svgString, svgTopConnector3dString } = drawJigsawShape(null, null, currentPiece);
+		currentPiece.svgPathString = svgString;
+		currentPiece.svgTopConnector3dString = svgTopConnector3dString;
+		console.log("generated piece", currentPiece)
 
 		pieces.push(currentPiece);
 
@@ -388,6 +389,9 @@ const generateDataForPuzzlePieces = async(puzzleId) => {
 
 const drawJigsawShape = (ctx, path, piece, showGuides = false, stroke = false) => {
 	let svgString = "";
+	let svgTopConnector3dString = "";
+
+	const offsetFor3DEffect = 2;
 
 	let x = 0;
 	let y = 0;
@@ -420,9 +424,17 @@ const drawJigsawShape = (ctx, path, piece, showGuides = false, stroke = false) =
 	if(topConnector){
 		path && path.lineTo(leftBoundary + GeneratorConfig.connectorDistanceFromCorner, topBoundary);
 		svgString += `H ${leftBoundary + GeneratorConfig.connectorDistanceFromCorner} `;
-
+		
 		path && path.bezierCurveTo(topConnector.cp1.x, topConnector.cp1.y, topConnector.cp2.x, topConnector.cp2.y, topConnector.destX, topConnector.destY);
 		svgString += `C ${topConnector.cp1.x} ${topConnector.cp1.y}, ${topConnector.cp2.x} ${topConnector.cp2.y}, ${topConnector.destX} ${topConnector.destY} `;
+
+		svgTopConnector3dString = `
+			M${piece.imgW / 2} ${y}
+			L${x + offsetFor3DEffect} ${y + offsetFor3DEffect}
+			C${topConnector.cp1.x + offsetFor3DEffect} ${topConnector.cp1.y + offsetFor3DEffect}, ${topConnector.cp2.x + offsetFor3DEffect} ${topConnector.cp2.y + offsetFor3DEffect}, ${topConnector.destX + offsetFor3DEffect} ${topConnector.destY + offsetFor3DEffect}
+			L${topConnector.destX} ${topConnector.destY}
+			L${piece.imgW / 2} ${y}
+		`;
 	}
 	path && path.lineTo(rightBoundary, topBoundary);
 	svgString += `H ${rightBoundary} `;
@@ -498,7 +510,7 @@ const drawJigsawShape = (ctx, path, piece, showGuides = false, stroke = false) =
 		ctx.stroke(path)
 	}
 
-	return { path, svgString };
+	return { path, svgString, svgTopConnector3dString };
 }
 
 exports.default = PuzzleGenerator;

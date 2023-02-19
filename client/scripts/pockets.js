@@ -141,7 +141,7 @@ class Pockets {
   }
 
   isFromPocket(el){
-    return el.parentNode.classList?.contains("pocket");
+    return el?.parentNode?.classList?.contains("pocket");
   }
 
   isFromCanvas(el){
@@ -169,13 +169,14 @@ class Pockets {
       return;
     }
 
-    const isPuzzlePiece = el.parentNode.classList.contains("puzzle-piece");
-    el = el.parentNode;
+    // const isPuzzlePiece = el.parentNode.classList.contains("puzzle-piece");
+    const isPuzzlePiece = e.target.classList.contains("svg-image");
+    el = el.parentNode.parentNode.parentNode;
 
     const hasGroup = isPuzzlePiece && Utils.hasGroup(el);
     const shouldTrackPiece = isPuzzlePiece && !hasGroup;
 
-    this.isDragActive = el.classList.contains("selected");
+    this.isDragActive = el.classList ? el.classList.contains("selected") : false;
 
     const isMainCanvas = el.id === "canvas" || el.id === "boardArea" || el.dataset?.isSolved === "true";
 

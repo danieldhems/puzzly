@@ -215,8 +215,8 @@ class Puzzly {
 
 			if(Object.keys(this.groups).length){
 				for(let g in this.groups){
-					const elements = this.getPiecesInGroup(g);
-					this.drawPiecesIntoGroup(g, elements);
+					// const elements = this.getPiecesInGroup(g);
+					// this.drawPiecesIntoGroup(g, elements);
 				}
 			}
 
@@ -545,15 +545,12 @@ class Puzzly {
 		})
 	}
 
-	scaleValue(value, shouldApply = false){
-		return value / (shouldApply ? this.pieceScale : 1);
-	}
-
 	getSvg(piece){
 		const clipId = `svg-${piece.id}`;
 
 		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 		svg.setAttribute("id", `piece-svg-${piece.id}`);
+		svg.classList.add("svg-container");
 		svg.setAttribute("width", piece.imgW);
 		svg.setAttribute("height", piece.imgH);
 		svg.setAttribute("viewBox", `0 0 ${piece.imgW} ${piece.imgH}`);
@@ -580,7 +577,8 @@ class Puzzly {
 		const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 		path.setAttribute("d", piece.svgPathString);
 		path.setAttribute("stroke", "#000");
-		path.setAttribute("stroke-width", .1);
+		path.setAttribute("vector-effect", "non-scaling-stroke");
+		path.setAttribute("stroke-width", 1);
 		path.setAttribute("stroke-line-join", "miter");
 
 		svg.appendChild(path);
@@ -758,20 +756,26 @@ class Puzzly {
 
 	onMouseDown(e){
 		// alert(`onMouseDown: ${e.target}`)
-		let element, diffX, diffY, thisPiece;
+		let element, thisPiece;
 		e.preventDefault();
 
 		if(e.which === 1){
 			const clientPos = this.getClientPos(e);
 
 			const classes = e.target.classList;	
-			const isPuzzlePiece = classes.contains("puzzle-piece") && !classes.contains("in-pocket");
+			const isPuzzlePiece = (classes.contains("puzzle-piece") || classes.contains("svg-image") || classes.contains("svg-container")) && !classes.contains("in-pocket");
+			const isPuzzlePieceSvgContainer = classes.contains("svg-container");
 			const isPuzzlePieceSvgImage = classes.contains("svg-image");
 			const isStage = e.target.id === "canvas" || e.target.id === "boardArea" || e.target.dataset.group === "1111" || e.target.dataset.issolved;
 
 			if(isPuzzlePiece){
 				element = e.target;
 				this.lastPosition = Utils.getPositionRelativeToCanvas(element.getBoundingClientRect(), this.zoomLevel)
+				console.log("last position", this.lastPosition)
+			}
+
+			if(isPuzzlePieceSvgContainer){
+				element = e.target.parentNode;
 			}
 
 			if(isPuzzlePieceSvgImage){
@@ -866,6 +870,10 @@ class Puzzly {
 	}
 
 	handleDrop(element){
+		console.log("handleDrop", element, element.nodeName)
+
+		element = element.nodeName === "svg" ? element.parentNode : element;
+
 		if(!this.dragAndSelectActive){
 			const connection = this.checkConnections(element);
 			console.log(connection)
@@ -2409,20 +2417,6 @@ class Puzzly {
 
 		this.canvas.appendChild(container);
 		
-		const cnv = document.createElement('canvas');
-		container.prepend(cnv);
-		cnv.classList.add('group-canvas');
-		cnv.setAttribute('id', `group-canvas-${group}`);
-		cnv.style.pointerEvents = 'none';
-		cnv.style.width = this.getPxString(this.boardSize) + this.shadowOffset;
-		cnv.width = this.boardSize + this.shadowOffset;
-		cnv.style.height = this.getPxString(this.boardSize) + this.shadowOffset;
-		cnv.height = this.boardSize + this.shadowOffset;
-
-		const ctx = cnv.getContext("2d");
-		ctx.imageSmoothingEnabled = false;
-		ctx.save();
-		
 		return container;
 	}
 
@@ -2441,7 +2435,7 @@ class Puzzly {
 
 	createGroup(elementA, elementB){
 		const groupId = new Date().getTime();
-
+//salmon
 		const container = this.createGroupContainer(elementA, elementB, groupId)
 		this.setElementAttribute(elementA, "data-group", groupId)
 		this.setElementAttribute(elementB, "data-group", groupId)
@@ -2462,8 +2456,9 @@ class Puzzly {
 			this.setElementAttribute(container, "data-is-solved", true)
 		}
 
-		this.drawPiecesIntoGroup(groupId, [elementA, elementB]);
+		container.append
 
+		// this.drawPiecesIntoGroup(groupId, [elementA, elementB]);
 		// this.save([elementA, elementB]);
 
 		return {
@@ -2553,7 +2548,7 @@ class Puzzly {
 		// Re-draw group with new piece
 		const elementsInTargetGroup = this.getPiecesInGroup(group);
 		const allPieces = [...elementsInTargetGroup, ...followingEls];
-		this.drawPiecesIntoGroup(group, allPieces);
+		// this.drawPiecesIntoGroup(group, allPieces);
 
 		// Update all connections
 		this.updateConnections(group);

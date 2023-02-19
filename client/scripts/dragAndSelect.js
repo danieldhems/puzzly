@@ -234,10 +234,9 @@ class DragAndSelect {
     this.touchStartTime = Date.now();
 
     const el = e.target;
-
     const classes = e.target.classList;
 
-    const isEmptySpace = !classes.contains("puzzle-piece") && !classes.contains("puzzle-piece-fg") && !classes.contains("in-pocket");
+    const isEmptySpace = !classes.contains("puzzle-piece") && !classes.contains("svg-image") && !classes.contains("svg-container") && !classes.contains("in-pocket");
 
     isEmptySpace && !this.isRightClick && this.selectedPieces.length === 0 && this.isMouseHoldInitiated()
       .then(() => {
