@@ -117,7 +117,8 @@ const Utils = {
 	},
 
 	hasGroup(piece){
-		return piece.group !== undefined && piece.group !== null && !Number.isNaN(piece.group);
+		const obj = piece.dataset || piece;
+		return obj.group !== undefined && obj.group !== null && !Number.isNaN(obj.group);
 	},
 
 	querySelectorFrom(selector, elements) {
@@ -176,7 +177,7 @@ const Utils = {
 	isOutOfBounds(sourceEl){
 		const cnvBox = document.querySelector("#canvas").getBoundingClientRect();
 		const pocketsBox = document.querySelector("#pockets").getBoundingClientRect();
-		return !Utils.isInside(sourceEl, cnvBox) && !Utils.isInside(sourceEl, pocketsBox);
+		return !Utils.isInside(sourceEl, cnvBox) && !Utils.isOverPockets(sourceEl, pocketsBox);
 	},
 
 	drawBox(box, borderColor = null, container = null){
@@ -255,10 +256,32 @@ const Utils = {
 	isOverPockets(box){
     if(!box) return;
 		const pocketsBox = document.querySelector("#pockets").getBoundingClientRect();
-    box.width += this.shadowOffset;
-    box.height += this.shadowOffset;
     return Utils.hasCollision(box, pocketsBox);
-  }
+  },
+
+	isPuzzlePiece(target){
+		const classes = target.classList;	
+		return (classes.contains("puzzle-piece") || classes.contains("svg-image") || classes.contains("svg-container")) && !classes.contains("in-pocket")
+	},
+
+	getPuzzlePieceElementFromEvent(e){
+		const classes = e.target.classList;
+		const isPuzzlePiece = classes.contains("puzzle-piece");
+		const isPuzzlePieceSvgContainer = classes.contains("svg-container");
+		const isPuzzlePieceSvgImage = classes.contains("svg-image");
+
+		if(isPuzzlePiece){
+			return e.target;
+		}
+
+		if(isPuzzlePieceSvgContainer){
+			return e.target.parentNode;
+		}
+
+		if(isPuzzlePieceSvgImage){
+			return e.target.parentNode.parentNode.parentNode;
+		}
+	}
 }
 
 export default Utils;

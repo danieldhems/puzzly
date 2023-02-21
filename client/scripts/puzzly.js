@@ -762,25 +762,14 @@ class Puzzly {
 		if(e.which === 1){
 			const clientPos = this.getClientPos(e);
 
-			const classes = e.target.classList;	
-			const isPuzzlePiece = (classes.contains("puzzle-piece") || classes.contains("svg-image") || classes.contains("svg-container")) && !classes.contains("in-pocket");
-			const isPuzzlePieceSvgContainer = classes.contains("svg-container");
-			const isPuzzlePieceSvgImage = classes.contains("svg-image");
+			const isPuzzlePiece = Utils.isPuzzlePiece(e.target);
 			const isStage = e.target.id === "canvas" || e.target.id === "boardArea" || e.target.dataset.group === "1111" || e.target.dataset.issolved;
 
 			if(isPuzzlePiece){
-				element = e.target;
+				element = Utils.getPuzzlePieceElementFromEvent(e);
 				this.lastPosition = Utils.getPositionRelativeToCanvas(element.getBoundingClientRect(), this.zoomLevel)
-				console.log("last position", this.lastPosition)
 			}
 
-			if(isPuzzlePieceSvgContainer){
-				element = e.target.parentNode;
-			}
-
-			if(isPuzzlePieceSvgImage){
-				element = e.target.parentNode.parentNode.parentNode;
-			}
 
 			if(isStage){
 				this.isMovingStage = true;
@@ -870,8 +859,6 @@ class Puzzly {
 	}
 
 	handleDrop(element){
-		console.log("handleDrop", element, element.nodeName)
-
 		element = element.nodeName === "svg" ? element.parentNode : element;
 
 		if(!this.dragAndSelectActive){
@@ -929,6 +916,7 @@ class Puzzly {
 
 		if(this.isMouseDown && !this.isMovingStage && !this.dragAndSelectActive){
 			const element = this.movingPiece;
+			console.log(element)
 
 			if(Utils.isOutOfBounds(element.getBoundingClientRect())){
 				console.log("resetting piece")

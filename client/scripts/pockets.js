@@ -1,21 +1,6 @@
 import Utils from "./utils.js";
 
-const LAYOUTS = {
-  Landscape: {
-    name: "landscape",
-    viewportSideToUse: "right",
-    windowPropToMeasure: "innerHeight",
-    windowPropForDepth: "innerWidth",
-  },
-  Portrait: {
-    name: "portrait",
-    viewportSideToUse: "bottom",
-    windowPropToMeasure: "innerWidth",
-    windowPropForDepth: "innerHeight",
-  },
-}
 class Pockets {
-
   constructor(config){
     this.mainCanvas = config.canvas;
     this.shadowOffset = config.shadowOffset;
@@ -40,30 +25,61 @@ class Pockets {
     this.pockets = {};
     this.activePocketHasMultiplePieces = false;
 
-    this.fixedWidthPixelAmount = 600;
-
-    this.orientation = window.innerWidth > window.innerHeight ? LAYOUTS.Landscape : LAYOUTS.Portrait;
-    this.viewportLength = window[this.orientation.windowPropToMeasure];
-    this.useFullViewportLength = this.viewportLength <= this.fixedWidthPixelAmount;
-
-    console.log("pocket orient", this.orientation)
-    console.log("viewport lenght", this.viewportLength)
-    console.log("use full viewport lenght", this.useFullViewportLength)
-
-    this.borderRadius = 15;
-
     this.diffX;
     this.diffY;
 
     this.isCollapsed = false;
 
-    this.render();
-    this.setScale(config.zoomLevel);
+    this.currentOrientation = this.getOrientation();
+
+    this.init(config)
+
+    window.addEventListener("DOMContentLoaded", this.init);
     
     window.addEventListener("mousedown", e => this.onMouseDown(e));
     window.addEventListener("mouseup", e => this.onMouseUp(e));
+    window.addEventListener("resize", e => this.onResize(e));
 
     return this;
+  }
+
+  init(config){
+    this.ui = document.querySelector("#pockets");
+    this.pocketBridge = document.querySelector("#pockets-bridge");
+    this.pocketHandle = document.querySelector("#pockets-handle");
+
+    this.pockets = {
+      1: {
+        el: document.querySelector("#pocket-1")
+      },
+      2: {
+        el: document.querySelector("#pocket-2")
+      },
+      3: {
+        el: document.querySelector("#pocket-3")
+      },
+      4: {
+        el: document.querySelector("#pocket-4")
+      },
+    }
+
+    this.setScale(config.zoomLevel);
+  }
+
+  getOrientation(){
+    return window.innerWidth > window.innerHeight ? "landscape" : window.innerHeight > window.innerWidth ? "portrait" : null;
+  }
+
+  shouldTriggerResize(){
+    return window.innerWidth > window.innerHeight && this.currentOrientation === "portrait" ||
+    window.innerHeight > window.innerWidth && this.currentOrientation === "landscape";
+  }
+
+  onResize(){
+    if(this.shouldTriggerResize()){
+      this.resetElementPositionsInPockets();
+      this.currentOrientation = this.getOrientation();
+    }
   }
 
   setScale(num){
@@ -71,72 +87,14 @@ class Pockets {
     this.pocketBridge.style.transform = `scale(${num})`;
   }
 
-  makePocket(id, useFullLength, lastPocket = false, ){
-    const pocket = document.createElement("div");
-    pocket.id = `group-draw-${id}`;
-    pocket.classList.add("pocket");
-
-    if(this.orientation.name === LAYOUTS.Landscape.name){
-      pocket.style.width = "100%";
-      pocket.style.height = "25%";
-    } else {
-      pocket.style.width = "25%";
-      pocket.style.height = "100%";
-    }
-
-    pocket.style.display = "flex";
-    pocket.style.position = "relative";
-    pocket.style.boxSizing = "border-box";
-
-    if(this.orientation.name === LAYOUTS.Landscape.name){
-      pocket.style.borderLeft = `2px solid ${this.borderColor}`;
-    } else {
-      pocket.style.borderTop = `2px solid ${this.borderColor}`;
-    }
-    pocket.style.backgroundColor = "#000";
-    
-    if(!useFullLength){
-      if(id === 1){
-        if(this.orientation.name === LAYOUTS.Landscape.name){
-          pocket.style.borderTop = `2px solid ${this.borderColor}`;
-          pocket.style.borderTopLeftRadius = this.borderRadius + "px";
-        } else {
-          pocket.style.borderLeft = `2px solid ${this.borderColor}`;
-          pocket.style.borderTopLeftRadius = this.borderRadius + "px";
-        }
-      }
-      if(id === 4){
-        if(this.orientation.name === LAYOUTS.Landscape.name){        
-          pocket.style.borderBottom = `2px solid ${this.borderColor}`;
-          pocket.style.borderBottomLeftRadius = this.borderRadius + "px";
-        } else {
-          pocket.style.borderRight = `2px solid ${this.borderColor}`;
-          pocket.style.borderTopRightRadius = this.borderRadius + "px";
-        }
-      }
-    }
-
-    if(!lastPocket){
-      if(this.orientation.name === LAYOUTS.Landscape.name){
-        pocket.style.borderBottom = `2px solid ${this.borderColor}`;
-      } else {
-        pocket.style.borderRight = `2px solid ${this.borderColor}`;
-      }
-    }
-
-    this.pockets[id] = {
-      el: pocket,
-    };
-
-    return pocket;
-  }
-
   getPocketIdFromPiece(el){
-    return el.parentNode.id.split("-")[2];
+    if(el.classList.contains("puzzle-piece")){
+      return parseInt(el.dataset.pocketId);
+    }
   }
 
   getIdForPocket(pocket){
-    return pocket.id.split("-")[2];
+    return pocket.id.split("-")[1];
   }
 
   setPieceSize(el, scale = null, origin = null){
@@ -212,18 +170,17 @@ class Pockets {
   onMouseDown(e){
     e.stopPropagation();
     let el = e.target;
+    let shouldTrackPiece;
 
     // If the empty space inside a pocket is clicked, do nothing
     if(el.classList?.contains("pocket")){
       return;
     }
 
-    // const isPuzzlePiece = el.parentNode.classList.contains("puzzle-piece");
-    const isPuzzlePiece = e.target.classList.contains("svg-image");
-    el = el.parentNode.parentNode.parentNode;
-
-    const hasGroup = isPuzzlePiece && Utils.hasGroup(el);
-    const shouldTrackPiece = isPuzzlePiece && !hasGroup;
+    if(Utils.isPuzzlePiece(el)){
+      el = Utils.getPuzzlePieceElementFromEvent(e);
+      shouldTrackPiece = !Utils.hasGroup(el);
+    }
 
     this.isDragActive = el.classList ? el.classList.contains("selected") : false;
 
@@ -233,7 +190,7 @@ class Pockets {
     if(shouldTrackPiece && this.isFromCanvas(el)){
       this.isMovingSinglePiece = true;
       this.movingElement = this.isDragActive ? el.parentNode : el;
-
+      
       const movingElementBoundingBox = this.movingElement.getBoundingClientRect();
 
       if(Utils.isOverPockets(movingElementBoundingBox) && this.elementClone === null){
@@ -243,6 +200,7 @@ class Pockets {
 
     // Piece is being picked up from a pocket
     if(this.isFromPocket(el)){
+      console.log(this.getPocketIdFromPiece(el))
       this.activePocket = this.pockets[this.getPocketIdFromPiece(el)].el;
       this.lastPosition = el.getBoundingClientRect();
 
@@ -260,7 +218,7 @@ class Pockets {
       this.isMainCanvasMoving = true;
     }
 
-    if(isPuzzlePiece || isMainCanvas){
+    if(Utils.isPuzzlePiece || isMainCanvas){
       window.addEventListener("mousemove", this.onMouseMove.bind(this));
     } else {
       this.isMouseDown = false;
@@ -273,7 +231,6 @@ class Pockets {
   }
 
   onMouseMove(e){
-    // moving
     e.preventDefault();
     
     if(this.isMovingSinglePiece){
@@ -284,7 +241,9 @@ class Pockets {
 
       if(isOverPockets && this.elementClone === null){
         this.makeClone(this.movingElement);
-      } else if(!isOverPockets && this.elementClone){
+      }
+      
+      if(!isOverPockets && this.elementClone){
         this.removeClone(this.movingElement);
       }
 
@@ -312,10 +271,12 @@ class Pockets {
         this.setActivePiecesToPocketSize();
         this.movingElement.remove();
       } else {
+        
         if(this.isDragActive){
           this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
           window.dispatchEvent(this.getPocketDropEventMessage());
         } else {
+          console.log(targetPocket)
           this.addToPocket(targetPocket, this.movingElement);
         }
       }
@@ -471,8 +432,36 @@ class Pockets {
     Array.from(this.pocketBridge?.childNodes).forEach(el => el.remove());
   }
 
+  setElementPositionInPocket(element, pocket){
+    let dropX, dropY;
+
+    const els = Array.from(pocket.childNodes);
+    if(els.length === 1){
+      dropX = pocket.offsetWidth / 2 - element.offsetWidth / 2;
+      dropY = pocket.offsetHeight / 2 - element.offsetHeight / 2;
+    } else {
+      dropX = Utils.getRandomInt(this.pocketDropBoundingBox.left, this.pocketDropBoundingBox.right);
+      dropY = Utils.getRandomInt(this.pocketDropBoundingBox.top, this.pocketDropBoundingBox.bottom);
+    }
+
+    element.style.top = dropY * this.pieceScaleWhileInPocket + "px";
+    element.style.left = dropX * this.pieceScaleWhileInPocket + "px";
+  }
+
+  resetElementPositionsInPockets(){
+    for(let i=1, l=Object.entries(this.pockets).length; i<=l; i++){
+      const pocket = this.pockets[i].el;
+      const els = Array.from(pocket.childNodes);
+      if(els.length){
+        els.forEach(el => {
+          this.setElementPositionInPocket(el, pocket);
+        })
+      }
+    }
+  }
+
   addToPocket(pocket, element){
-    // console.log("adding to pocket", pocket, element)
+    console.log("adding to pocket", pocket)
     if(!element) return;
 
     let pocketId, pocketEl;
@@ -483,20 +472,10 @@ class Pockets {
     } else {
       pocketEl = pocket;
       pocketId = this.getIdForPocket(pocket);
+      console.log("pocket id is", pocketId)
     }
 
-    let dropX, dropY;
-
-    if(pocketEl?.childNodes?.length === 0){
-      dropX = pocketEl.offsetWidth / 2 - element.offsetWidth / 2;
-      dropY = pocketEl.offsetHeight / 2 - element.offsetHeight / 2;
-    } else {
-      dropX = Utils.getRandomInt(this.pocketDropBoundingBox.left, this.pocketDropBoundingBox.right);
-      dropY = Utils.getRandomInt(this.pocketDropBoundingBox.top, this.pocketDropBoundingBox.bottom);
-    }
-
-    element.style.top = dropY * this.pieceScaleWhileInPocket + "px";
-    element.style.left = dropX * this.pieceScaleWhileInPocket + "px";
+    this.setElementPositionInPocket(element, pocketEl);
     
     element.setAttribute("data-pocket-id", pocketId);
     element.classList.add("in-pocket");
@@ -508,11 +487,7 @@ class Pockets {
     }
     
     this.setPieceSize(element, this.pieceScaleWhileInPocket);
-    // move(element)
-    //     .x(newX)
-    //     .y(newY)
-    //     .duration(this.animationDuration)
-    //     .end()
+
     Utils.requestSave([element]);
   }
 
@@ -576,6 +551,7 @@ class Pockets {
   }
 
   makeClone(element){
+    console.log("making clone")
     this.elementClone = element.cloneNode(true);
     this.elementClone.style.pointerEvents = "none";
     this.pocketBridge.appendChild(this.elementClone);
@@ -584,6 +560,7 @@ class Pockets {
   }
 
   addToBridge(element){
+    console.log("adding to bridge")
     this.pocketBridge.appendChild(element);
 
     const bridgeBox = {
@@ -628,7 +605,7 @@ class Pockets {
     this.pocketsHandle.style.borderRadius = "15px";
     this.pocketsHandle.style.backgroundColor = "blue";
 
-    if(this.orientation.name === LAYOUTS.Landscape.name){
+    if(this.orientation === LANDSCAPE_LAYOUT){
       this.pocketsHandle.style.left = `-${height / 2 - 1}px`;
       this.pocketsHandle.style.top = this.ui.offsetHeight / 2 - 15 + "px";
     } else {
@@ -638,8 +615,8 @@ class Pockets {
 
     this.ui.appendChild(this.pocketsHandle);
 
-    const lengthForCollapse = this.orientation.name === LAYOUTS.Landscape.name ? width : height;
-    const axisToAnimate = this.orientation.name === LAYOUTS.Landscape.name ? "x" : "y";
+    const lengthForCollapse = this.orientation === LANDSCAPE_LAYOUT ? width : height;
+    const axisToAnimate = this.orientation === LANDSCAPE_LAYOUT ? "x" : "y";
 
     this.pocketsHandle.addEventListener("mousedown", (e) => {
       e.preventDefault();
@@ -659,64 +636,196 @@ class Pockets {
     })
   }
 
+  reposition(){
+    if(this.orientation === LANDSCAPE_LAYOUT){
+      this.ui.style.left = `${window.innerWidth - this.pocketDepth}px`;
+      this.ui.style.top = `${this.getValueToCenterUi()}px`;
+    } else {
+      this.ui.style.left = `${this.getValueToCenterUi()}px`;
+      this.ui.style.top = `${window.innerHeight - this.pocketDepth}px`;
+    }
+  }
+
+  getValueToCenterUi(){
+    let val;
+    if(this.orientation === LANDSCAPE_LAYOUT){
+      val = window.innerHeight;
+    } else {
+      val = window.innerWidth;
+    }
+    return this.useFullViewportLength ? 0 : val / 2 - this.fixedLengthPixelAmount / 2;
+  }
+
+  makePocket(id, useFullLength, lastPocket = false, ){
+    let pocket = document.querySelector(`group-draw-${id}`);
+
+    if(!pocket){
+      pocket = document.createElement("div");
+      pocket.id = `group-draw-${id}`;
+      pocket.classList.add("pocket");
+  
+      pocket.style.display = "flex";
+      pocket.style.position = "relative";
+      pocket.style.boxSizing = "border-box";
+      pocket.style.backgroundColor = "#000";
+    }
+
+    if(this.orientation === LANDSCAPE_LAYOUT){
+      pocket.style.width = `${parseInt(this.ui.style.width)}px`;
+      pocket.style.height = `${parseInt(this.ui.style.height) / 4}px`;
+      pocket.style.borderLeft = `2px solid ${this.borderColor}`;
+      console.log("setting pocket border" + id)
+      pocket.style.borderTop = "none";
+    } else {
+      pocket.style.width = `${parseInt(this.ui.style.width) / 4}px`;
+      pocket.style.height = `${parseInt(this.ui.style.height)}px`;
+      console.log("setting pocket border" + id)
+      pocket.style.borderTop = `2px solid ${this.borderColor}`;
+      pocket.style.borderLeft = "none";
+    }
+    
+    if(!useFullLength){
+      if(id === 1){
+        if(this.orientation === LANDSCAPE_LAYOUT){
+          pocket.style.borderTop = `2px solid ${this.borderColor}`;
+        } else {
+          pocket.style.borderLeft = `2px solid ${this.borderColor}`;
+        }
+
+        pocket.style.borderTopLeftRadius = this.borderRadius + "px";
+      }
+      if(id === 4){
+        if(this.orientation === LANDSCAPE_LAYOUT){        
+          pocket.style.borderBottom = `2px solid ${this.borderColor}`;
+          pocket.style.borderBottomLeftRadius = this.borderRadius + "px";
+          pocket.style.borderTopRightRadius = "0px";
+        } else {
+          pocket.style.borderRight = `2px solid ${this.borderColor}`;
+          pocket.style.borderTopRightRadius = this.borderRadius + "px";
+          pocket.style.borderBottomLeftRadius = "0px";
+        }
+      }
+    }
+
+    if(!lastPocket){
+      if(this.orientation === LANDSCAPE_LAYOUT){
+        pocket.style.borderBottom = `2px solid ${this.borderColor}`;
+      } else {
+        pocket.style.borderRight = `2px solid ${this.borderColor}`;
+      }
+    }
+
+    this.pockets[id] = {
+      el: pocket,
+      pieceIds: this.pockets[id]?.pieceIds || [],
+    };
+
+    return pocket;
+  }
+
   render(){
-    const container = document.createElement("div");
-    container.id = "pockets";
+    let container;
+    const existingUi = document.querySelector("#pockets");
 
-    if(this.orientation.name === LAYOUTS.Landscape.name){
+    if(!existingUi){
+      container = document.createElement("div");
+      container.id = "pockets";
+      container.style.position = "absolute";
+
+      if(this.orientation === LANDSCAPE_LAYOUT){
+        container.style.width = this.pocketDepth + "px";
+        container.style.height = this.useFullViewportLength ? "100%" : this.fixedLengthPixelAmount + "px";
+        container.style.left = `${window.innerWidth - this.pocketDepth}px`;
+        container.style.top = `${this.getValueToCenterUi()}px`;
+      } else {
+        container.style.width = this.useFullViewportLength ? "100%" : this.fixedLengthPixelAmount + "px";
+        container.style.height = this.pocketDepth + "px";
+        container.style.top = `${window.innerHeight - this.pocketDepth}px`;
+        container.style.left = `${this.getValueToCenterUi()}px`;
+      }
+
+      this.ui = container;
+
+      const pocketsContainer = document.createElement("div");
+      pocketsContainer.id = "pockets-container";
+      pocketsContainer.style.display = "flex";
+
+      if(this.orientation === LANDSCAPE_LAYOUT){
+        pocketsContainer.style.flexDirection = "column";
+      } else {
+        pocketsContainer.style.flexDirection = "row";
+      }
+
+      pocketsContainer.style.height = "100%";
+      pocketsContainer.style.position = "relative";
+      pocketsContainer.style.top = 0;
+      pocketsContainer.style.left = 0;
+
+      pocketsContainer.appendChild(this.makePocket(1, this.useFullWidth));
+      pocketsContainer.appendChild(this.makePocket(2, this.useFullWidth));
+      pocketsContainer.appendChild(this.makePocket(3, this.useFullWidth));
+      pocketsContainer.appendChild(this.makePocket(4, this.useFullWidth, true));
+
+      container.appendChild(pocketsContainer);
+  
+      const cloneContainer = document.createElement("div");
+      cloneContainer.id = "pocket-bridge";
+      cloneContainer.style.width = this.mainCanvas.offsetWidth + "px";
+      cloneContainer.style.height = this.mainCanvas.offsetHeight + "px";
+      cloneContainer.style.position = "fixed";
+      cloneContainer.style.bottom = 0;
+      cloneContainer.style.left = 0;
+      cloneContainer.style.pointerEvents = "none";
+      this.pocketBridge = cloneContainer;
+      container.appendChild(cloneContainer);
+      document.body.appendChild(container);
+  
+      this.pocketBridge = cloneContainer;
+  
+      this.makeHandle();
+    } else {
+      container = existingUi;
+
+      const pocketsContainer = document.querySelector("#pockets-container");
+      if(this.orientation === LANDSCAPE_LAYOUT){
+        pocketsContainer.style.flexDirection = "column";
+      } else {
+        pocketsContainer.style.flexDirection = "row";
+      }
+
+      this.makePocket(1, this.useFullWidth);
+      this.makePocket(2, this.useFullWidth);
+      this.makePocket(3, this.useFullWidth);
+      this.makePocket(4, this.useFullWidth, true);
+    }
+
+    if(this.orientation === LANDSCAPE_LAYOUT){
       container.style.width = this.pocketDepth + "px";
-      container.style.height = this.useFullViewportLength ? "100%" : this.fixedWidthPixelAmount + "px";
+      container.style.height = this.useFullViewportLength ? "100%" : this.fixedLengthPixelAmount + "px";
+      container.style.left = `${window.innerWidth - this.pocketDepth}px`;
+      container.style.top = `${this.getValueToCenterUi()}px`;
     } else {
-      container.style.width = this.useFullViewportLength ? "100%" : this.fixedWidthPixelAmount + "px";
+      container.style.width = this.useFullViewportLength ? "100%" : this.fixedLengthPixelAmount + "px";
       container.style.height = this.pocketDepth + "px";
+      container.style.top = `${window.innerHeight - this.pocketDepth}px`;
+      container.style.left = `${this.getValueToCenterUi()}px`;
     }
 
-    if(this.orientation.name === LAYOUTS.Landscape.name){
-      container.style.left = `${window[this.orientation.windowPropForDepth] - this.pocketDepth}px`;
-      container.style.top = this.useFullViewportLength ? 0 : this.viewportLength / 2 - this.fixedWidthPixelAmount / 2 + "px";
-    } else {
-      container.style.top = `${window[this.orientation.windowPropForDepth] - this.pocketDepth}px`;
-      container.style.left = this.useFullViewportLength ? 0 : this.viewportLength / 2 - this.fixedWidthPixelAmount / 2 + "px";
-    }
 
-    container.style.position = "fixed";
+    // for(let i=1, l=Object.entries(this.pockets).length; i<=l; i++){
+    //   const pocket = this.pockets[i];
+    //   const pieceIds = pocket.pieceIds;
 
-    const drawContainer = document.createElement("div");
-    drawContainer.style.display = "flex";
-    drawContainer.style.height = "100%";
-
-    if(this.orientation.name === LAYOUTS.Landscape.name){
-      drawContainer.style.flexDirection = "column";
-    } else {
-      drawContainer.style.flexDirection = "row";
-    }
-
-    drawContainer.style.position = "relative";
-    drawContainer.style.top = 0;
-    drawContainer.style.left = 0;
-    container.appendChild(drawContainer);
-
-    drawContainer.appendChild(this.makePocket(1, this.useFullWidth));
-    drawContainer.appendChild(this.makePocket(2, this.useFullWidth));
-    drawContainer.appendChild(this.makePocket(3, this.useFullWidth));
-    drawContainer.appendChild(this.makePocket(4, this.useFullWidth, true));
-
-    const cloneContainer = document.createElement("div");
-    cloneContainer.id = "pocket-bridge";
-    cloneContainer.style.width = this.mainCanvas.offsetWidth + "px";
-    cloneContainer.style.height = this.mainCanvas.offsetHeight + "px";
-    cloneContainer.style.position = "fixed";
-    cloneContainer.style.bottom = 0;
-    cloneContainer.style.left = 0;
-    cloneContainer.style.pointerEvents = "none";
-    this.pocketBridge = cloneContainer;
-    container.appendChild(cloneContainer);
-    document.body.appendChild(container);
-
-    this.ui = container;
-    this.pocketBridge = cloneContainer;
-
-    this.makeHandle();
+    //   if(pieceIds?.length){
+    //     const elements = pieceIds.map(p => {
+    //     const a = document.querySelector(`#${p}`);
+    //     console.log(`#${p}`)
+    //     });
+    //     console.log(elements)
+    //         this.addPiecesToPocket(pocket.el, elements)
+    //       }
+    //     }
+    //   }
   }
 }
 
