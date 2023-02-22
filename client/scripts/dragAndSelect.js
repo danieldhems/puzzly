@@ -262,8 +262,9 @@ class DragAndSelect {
         window.dispatchEvent(this.getDragActiveEventMessage(false));
       });
 
-    if(this.selectedPieces.length > 0){
-      const pieceEl = el.parentNode;
+    if(!isEmptySpace && this.selectedPieces.length > 0){
+      const pieceEl = Utils.getPuzzlePieceElementFromEvent(e);
+
       if(pieceEl.classList.contains("puzzle-piece") && pieceEl.classList.contains("selected")){
         this.diffX = e.clientX - this.selectedPiecesContainer.offsetLeft * this.zoomLevel;
         this.diffY = e.clientY - this.selectedPiecesContainer.offsetTop * this.zoomLevel;

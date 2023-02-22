@@ -1,5 +1,10 @@
 #pockets {
   position: fixed;
+  display: none;
+}
+
+#pockets.initalised {
+  display: block;
 }
 
 #pockets-inner {
