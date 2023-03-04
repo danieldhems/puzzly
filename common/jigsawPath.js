@@ -2,38 +2,64 @@ class JigsawPath {
   constructor(pieceSize, connectorSize, connectorWidth){
     this.pieceSize = pieceSize;
     this.connectorSize = connectorSize;
-		this.connectorWidth = connectorWidth;
+	this.connectorWidth = connectorWidth;
+	this.humpSize = this.connectorSize * 1.2;
+	this.halfConnectorSize = this.connectorSize / 2;
   }
+  getTopPlug(){
+	// Assume 'top' is the default plug,
+	// and all other plugs are taken from the rotation of this one
+	return {
+		cp1: {
+			x: `-${this.halfConnectorSize}`,
+			y: `-${this.humpSize}`,
+		},	
+		cp2: {
+			x: this.connectorWidth + this.halfConnectorSize,
+			y: `-${this.humpSize}`,
+		},
+		destX: this.connectorWidth,
+		destY: 0,
+	}
+  }
+
+  rotate(x, y, deg){
+	const rad = deg * Math.PI / 180;
+	return {
+		x: x * Math.cos(rad) - y * Math.sin((rad)),
+		y: y * Math.cos(rad) - x * Math.sin((rad)),
+	}
+  }
+
 	getPlug(side, startPos){
 		let cp1x, cp1y, cp2x, cp2y, destX, destY;
-		const humpSize = this.connectorSize * 1.2;
-		const halfConnectorSize = this.connectorSize / 2;
+		
 		if(side === "top"){
-			cp1x = startPos.x - halfConnectorSize;
-			cp1y = startPos.y - humpSize;
-			cp2x = startPos.x + this.connectorWidth + halfConnectorSize;
-			cp2y = startPos.y - humpSize;
-			destX = startPos.x + this.connectorWidth;
-			destY = startPos.y;
+			cp1x = `-${this.halfConnectorSize}`;
+			cp1y = `-${this.humpSize}`;
+			cp2x = this.connectorWidth + this.halfConnectorSize;
+			cp2y = `-${this.humpSize}`;
+			destX = this.connectorWidth;
+			destY = 0;
 		} else if(side === "right"){
-			cp1x = startPos.x + humpSize;
-			cp1y = startPos.y - halfConnectorSize;
-			cp2x = startPos.x + humpSize;
-			cp2y = startPos.y + this.connectorWidth + halfConnectorSize;
-			destX = startPos.x;
-			destY = startPos.y + this.connectorWidth
+			cp1x = this.humpSize;
+			cp1y = `-${this.halfConnectorSize}`;
+			cp2x = this.humpSize;
+			cp2y = this.connectorWidth + this.halfConnectorSize;
+			destX = `-${this.humpSize}`;
+			destY = this.connectorWidth;
 		} else if(side === "bottom"){
-			cp1x = startPos.x + halfConnectorSize;
-			cp1y = startPos.y + humpSize;
-			cp2x = startPos.x - this.connectorWidth - halfConnectorSize;
-			cp2y = startPos.y + humpSize;
-			destX = startPos.x - this.connectorWidth;
-			destY = startPos.y;
+			cp1x = this.halfConnectorSize;
+			cp1y = this.humpSize;
+			cp2x = `-${this.connectorWidth + this.halfConnectorSize}`;
+			cp2y = this.humpSize;
+			destX = `-${this.connectorWidth}`;
+			destY = 0;
 		} else if(side === "left"){
-			cp1x = startPos.x - humpSize;
-			cp1y = startPos.y + halfConnectorSize;
-			cp2x = startPos.x - humpSize;
-			cp2y = startPos.y - this.connectorWidth - halfConnectorSize;
+			cp1x = startPos.x - this.humpSize;
+			cp1y = startPos.y + this.halfConnectorSize;
+			cp2x = startPos.x - this.humpSize;
+			cp2y = startPos.y - this.connectorWidth - this.halfConnectorSize;
 			destX = startPos.x;
 			destY = startPos.y - this.connectorWidth
 		}
@@ -55,31 +81,31 @@ class JigsawPath {
 		const connectorSize = this.connectorSize * 1.2;
 		const halfConnectorSize = this.connectorSize / 2;
 		if(side === "top"){
-			cp1x = startPos.x - halfConnectorSize;
+			cp1x = startPos.x - this.halfConnectorSize;
 			cp1y = startPos.y + connectorSize;
-			cp2x = startPos.x + this.connectorWidth + halfConnectorSize;
+			cp2x = startPos.x + this.connectorWidth + this.halfConnectorSize;
 			cp2y = startPos.y + connectorSize;
 			destX = startPos.x + this.connectorWidth;
 			destY = startPos.y;
 		} else if(side === "right"){
 			cp1x = startPos.x - connectorSize;
-			cp1y = startPos.y - halfConnectorSize;
+			cp1y = startPos.y - this.halfConnectorSize;
 			cp2x = startPos.x - connectorSize;
-			cp2y = startPos.y + this.connectorWidth + halfConnectorSize;
+			cp2y = startPos.y + this.connectorWidth + this.halfConnectorSize;
 			destX = startPos.x;
 			destY = startPos.y + this.connectorWidth
 		} else if(side === "bottom"){
-			cp1x = startPos.x + halfConnectorSize;
+			cp1x = startPos.x + this.halfConnectorSize;
 			cp1y = startPos.y - connectorSize;
-			cp2x = startPos.x - this.connectorWidth - halfConnectorSize;
+			cp2x = startPos.x - this.connectorWidth - this.halfConnectorSize;
 			cp2y = startPos.y - connectorSize;
 			destX = startPos.x - this.connectorWidth;
 			destY = startPos.y;
 		} else if(side === "left"){
 			cp1x = startPos.x + connectorSize;
-			cp1y = startPos.y + halfConnectorSize;
+			cp1y = startPos.y + this.halfConnectorSize;
 			cp2x = startPos.x + connectorSize;
-			cp2y = startPos.y - this.connectorWidth - halfConnectorSize;
+			cp2y = startPos.y - this.connectorWidth - this.halfConnectorSize;
 			destX = startPos.x;
 			destY = startPos.y - this.connectorWidth
 		}

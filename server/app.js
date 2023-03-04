@@ -45,6 +45,10 @@ app.get('/new', function(req, res){
 	res.sendFile(path.join(__dirname, '../client/new.html'));
 });
 
+app.get('/puzzle-piece', function(req, res){
+	res.sendFile(path.join(__dirname, '../client/puzzle-piece.html'));
+});
+
 // puzzleApi.clean();
 
 module.exports = app;

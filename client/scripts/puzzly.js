@@ -60,12 +60,12 @@ class Puzzly {
 		this.loadedAssets = [];
 		this.previewImage = new Image();
 		this.previewImage.src = this.puzzleImgPath;
-		this.sprite = new Image();
-		this.sprite.src = this.spritePath;
 		this.puzzleImage = new Image();
 		this.puzzleImage.src = this.puzzleImgPath;
-		this.shadowSprite = new Image();
-		this.shadowSprite.src = this.shadowSpritePath;
+		// this.sprite = new Image();
+		// this.sprite.src = this.spritePath;
+		// this.shadowSprite = new Image();
+		// this.shadowSprite.src = this.shadowSpritePath;
 
 		this.previewImageAlwaysOn = true;
 
@@ -143,8 +143,7 @@ class Puzzly {
 
 		const assets = [
 			this.previewImage,
-			this.sprite,
-			this.shadowSprite,
+			this.puzzleImage,
 		];
 
 		this.loadAssets(assets).then( () => {
@@ -628,6 +627,7 @@ class Puzzly {
 		el.setAttribute('data-num-pieces-from-top-edge', piece.numPiecesFromTopEdge)
 		el.setAttribute('data-num-pieces-from-left-edge', piece.numPiecesFromLeftEdge)
 		el.setAttribute('data-is-solved', piece.isSolved)
+		el.setAttribute('data-svg-path', piece.svgPathString)
 		
 		if(!!piece.group){
 			el.setAttribute('data-group', piece.group)

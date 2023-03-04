@@ -1,5 +1,5 @@
 var router = require('express').Router();
-var { default: PuzzleGenerator } = require("./puzzleGenerator");
+var { default: PuzzleGenerator } = require("../../common/puzzleGenerator");
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
@@ -7,7 +7,7 @@ const assert = require('assert');
 var Sharp = require('sharp');
 
 // Connection URL
-const url = 'mongodb://localhost:27017';
+const url = 'mongodb://127.0.0.1:27017';
 
 // Database Name
 const dbName = 'puzzly';

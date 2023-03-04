@@ -1,0 +1,236 @@
+<!doctype html>
+<html style="height: 100%;">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <base href="/">
+    <title>Puzzle piece preview</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <style>
+        #container {
+            margin: 50px;
+            position: relative;
+        }
+
+        svg {
+            border: 1px solid;
+        }
+    </style>
+  </head>
+  <body style="margin: 0;">
+    <div id="container"></div>
+    <script>
+        class JigsawPath {
+            constructor(pieceSize, connectorSize){
+                this.pieceSize = pieceSize;
+                this.connectorSize = connectorSize;
+                this.humpSize = this.connectorSize * 1.2;
+                this.halfConnectorSize = this.connectorSize / 2;
+
+                this.getTopPlug = this.getTopPlug.bind(this);
+                this.rotate = this.rotate.bind(this);
+                this.getRotatedConnector = this.getRotatedConnector.bind(this);
+            }
+            getTopPlug(){
+                // Assume 'top' is the default plug,
+                // and all other plugs are taken from the rotation of this one
+                return {
+                    cp1: {
+                        x: 0 - this.halfConnectorSize,
+                        y: 0 - this.humpSize,
+                    },	
+                    cp2: {
+                        x: this.connectorSize + this.halfConnectorSize,
+                        y: 0 - this.humpSize,
+                    },
+                    destX: this.connectorSize,
+                    destY: 0,
+                }
+            }
+            
+            rotate(point, deg, origin){
+                const rad = deg * Math.PI / 180;
+                console.log("rotate", point, deg, origin)
+
+                const { x: ox, y: oy } = origin;
+                const { x: px, y: py } = point;
+
+                const qx = ox + Math.cos(rad) * (px - ox) - Math.sin(rad) * (py - oy);
+                const qy = oy + Math.sin(rad) * (px - ox) + Math.cos(rad) * (py - oy);
+
+                return {
+                    x: qx,
+                    y: qy,
+                }
+            }
+
+            getRotatedConnector(connector, deg, origin){
+                console.log("getting rotation for connector", connector)
+                const cp1Abs = {
+                    x: origin.x - connector.cp1.x,
+                    y: origin.y - connector.cp1.y,
+                };
+                const cp2Abs = {
+                    x: cp1Abs.x + connector.cp2.x,
+                    y: cp1Abs.y,
+                };
+                const rotatedCp1 = this.rotate(cp1Abs, deg, origin);
+                const rotatedCp2 = this.rotate(cp2Abs, deg, origin);
+                const rotatedDest = this.rotate({x: origin.x + connector.destX, y: origin.y}, deg, origin);
+                return {
+                    cp1: rotatedCp1,
+                    cp2: rotatedCp2,
+                    destX: rotatedDest.x,
+                    destY: rotatedDest.y,
+                }
+            }
+        }
+    </script>
+    <script type="module">
+        const imgx = 0;
+        const imgy = 0;
+
+        const pieceSize = 200;
+        const connectorSize = 60;
+        const totalPieceArea = pieceSize + connectorSize * 2;
+        
+        const GeneratorConfig = {
+            connectorDistanceFromCorner: pieceSize / 2 - connectorSize / 2,
+        }
+
+        const jigsawShapes = new JigsawPath(pieceSize, connectorSize);
+
+        function getSvg(svgPathString){
+            const clipId = `svg-1`;
+
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("id", `piece-svg-1`);
+            svg.classList.add("svg-container");
+            svg.setAttribute("width", totalPieceArea);
+            svg.setAttribute("height", totalPieceArea);
+            svg.setAttribute("viewBox", `0 0 ${totalPieceArea} ${totalPieceArea}`);
+
+            const clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+            clipPath.setAttribute("id", clipId);
+
+            const clipPathPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            clipPathPath.setAttribute("d", svgPathString);
+            clipPath.appendChild(clipPathPath);
+
+            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            g.setAttribute("clip-path", `url(#${clipId})`);
+            
+            const gImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            gImage.setAttribute("href", "");
+            gImage.classList.add("svg-image")
+            gImage.setAttribute("id", `svg-image-1`);
+            gImage.setAttribute("x", 0);
+            gImage.setAttribute("y", 0);
+            gImage.setAttribute("transform", `translate(-${imgx} -${imgy})`);
+            g.appendChild(gImage);
+
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", svgPathString);
+            path.setAttribute("stroke", "#000");
+            path.setAttribute("vector-effect", "non-scaling-stroke");
+            path.setAttribute("stroke-width", 1);
+            path.setAttribute("stroke-line-join", "miter");
+
+            svg.appendChild(path);
+            svg.appendChild(g);
+            svg.appendChild(clipPath);
+
+            return svg;
+        }
+
+        function drawPoint({x, y}){
+            const el = document.createElement("div");
+            el.style.position = "absolute";
+            el.style.left = x + "px";
+            el.style.top = y + "px";
+            el.style.width = "5px";
+            el.style.height = "5px";
+            el.style.backgroundColor = "red";
+
+            const container = document.getElementById("container");
+            container.appendChild(el);
+        }
+
+        const rotate = jigsawShapes.rotate;
+        const getRotatedConnector = jigsawShapes.getRotatedConnector;
+
+        // const topConnector = jigsawShapes.getTopPlug();
+        const bottomConnector = jigsawShapes.getTopPlug();
+        const leftConnector = jigsawShapes.getTopPlug();
+
+        const topBoundary = connectorSize;
+        const leftBoundary = connectorSize;
+        const rightBoundary = connectorSize;
+        const bottomBoundary = connectorSize;
+
+        // Keep track of the position of the latest svg path vertice so we can determine what the point of origin for the next rotation is
+        // (Because we're constructing an SVG path with relative values, so we don't have a handle on the absolute values we need)
+        const pathTrace = {x: 0, y: 0};
+
+        let svgString = `M ${leftBoundary} ${topBoundary} `;
+        pathTrace.x += leftBoundary;
+        pathTrace.y += topBoundary;
+        drawPoint(pathTrace);
+
+        svgString += `h ${GeneratorConfig.connectorDistanceFromCorner} `;
+        pathTrace.x += GeneratorConfig.connectorDistanceFromCorner;
+        drawPoint(pathTrace);
+
+        const topConnector = getRotatedConnector(jigsawShapes.getTopPlug(), 0, pathTrace)
+
+        svgString += `c ${topConnector.cp1.x} ${topConnector.cp1.y}, ${topConnector.cp2.x} ${topConnector.cp2.y}, ${topConnector.destX} ${topConnector.destY} `;
+        pathTrace.x += connectorSize;
+        drawPoint(pathTrace);
+
+        // svgString += `h ${GeneratorConfig.connectorDistanceFromCorner} `;
+        // pathTrace.x += GeneratorConfig.connectorDistanceFromCorner;
+        // drawPoint(pathTrace);
+
+        // svgString += `v ${GeneratorConfig.connectorDistanceFromCorner} `;
+        // pathTrace.y += GeneratorConfig.connectorDistanceFromCorner;
+        // drawPoint(pathTrace);
+
+        // const rightConnector = getRotatedConnector(jigsawShapes.getTopPlug(), 1, pathTrace);
+        // console.log("right", rightConnector)
+
+        // svgString += `c ${rightConnector.cp1.x} ${rightConnector.cp1.y}, ${rightConnector.cp2.x} ${rightConnector.cp2.y}, ${rightConnector.destX} ${rightConnector.destY} `;
+        // pathTrace.y += rightConnector.destY;
+        // drawPoint(pathTrace);
+
+        // svgString += `v ${GeneratorConfig.connectorDistanceFromCorner} `;
+        // pathTrace.y += GeneratorConfig.connectorDistanceFromCorner;
+
+        // svgString += `h -${GeneratorConfig.connectorDistanceFromCorner} `;
+        // pathTrace.x -= GeneratorConfig.connectorDistanceFromCorner;
+
+        // svgString += `c ${bottomConnector.cp1.x} ${bottomConnector.cp1.y}, ${bottomConnector.cp2.x} ${bottomConnector.cp2.y}, ${bottomConnector.destX} ${bottomConnector.destY} `;
+        // pathTrace.x = pathTrace.x - rightConnector.destX;
+        // pathTrace.y = pathTrace.y - rightConnector.destY;
+
+        // svgString += `h -${GeneratorConfig.connectorDistanceFromCorner} `;
+        // pathTrace.x -= GeneratorConfig.connectorDistanceFromCorner;
+
+        // svgString += `v -${GeneratorConfig.connectorDistanceFromCorner} `;
+        // pathTrace.y -= GeneratorConfig.connectorDistanceFromCorner;
+
+        // svgString += `c ${leftConnector.cp1.x} ${leftConnector.cp1.y}, ${leftConnector.cp2.x} ${leftConnector.cp2.y}, ${leftConnector.destX} ${leftConnector.destY} `;
+        // pathTrace.x = pathTrace.x - leftConnector.destX;
+        // pathTrace.y = pathTrace.y - leftConnector.destY;
+
+        // svgString += `v -${GeneratorConfig.connectorDistanceFromCorner} `;
+        // pathTrace.y -= GeneratorConfig.connectorDistanceFromCorner;
+
+        const svgElement = getSvg(svgString);
+        const container = document.getElementById("container");
+        container.appendChild(svgElement);
+    </script>
+</body>
+</html>
