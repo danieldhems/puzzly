@@ -131,22 +131,6 @@
             clipPathMainPath.setAttribute("d", svgPathString);
             clipPath.appendChild(clipPathMainPath);
 
-            const clipPathTopConnectorPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            clipPathTopConnectorPath.setAttribute("d", topConnectorSvgString);
-            clipPath.appendChild(clipPathTopConnectorPath);
-
-            const clipPathRightConnectorPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            clipPathRightConnectorPath.setAttribute("d", rightConnectorSvgString);
-            clipPath.appendChild(clipPathRightConnectorPath);
-
-            const clipPathBottomConnectorPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            clipPathBottomConnectorPath.setAttribute("d", bottomConnectorSvgString);
-            clipPath.appendChild(clipPathBottomConnectorPath);
-
-            const clipPathLeftConnectorPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            clipPathLeftConnectorPath.setAttribute("d", leftConnectorSvgString);
-            clipPath.appendChild(clipPathLeftConnectorPath);
-
             const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
             g.setAttribute("clip-path", `url(#${clipId})`);
             
@@ -166,39 +150,7 @@
             path.setAttribute("stroke-width", 1);
             path.setAttribute("stroke-line-join", "miter");
 
-            const topConnectorPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            topConnectorPath.setAttribute("d", topConnectorSvgString);
-            topConnectorPath.setAttribute("stroke", "#000");
-            topConnectorPath.setAttribute("vector-effect", "non-scaling-stroke");
-            topConnectorPath.setAttribute("stroke-width", 1);
-            topConnectorPath.setAttribute("stroke-line-join", "miter");
-
-            const rightConnectorPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            rightConnectorPath.setAttribute("d", rightConnectorSvgString);
-            rightConnectorPath.setAttribute("stroke", "#000");
-            rightConnectorPath.setAttribute("vector-effect", "non-scaling-stroke");
-            rightConnectorPath.setAttribute("stroke-width", 1);
-            rightConnectorPath.setAttribute("stroke-line-join", "miter");
-
-            const bottomConnectorPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            bottomConnectorPath.setAttribute("d", bottomConnectorSvgString);
-            bottomConnectorPath.setAttribute("stroke", "#000");
-            bottomConnectorPath.setAttribute("vector-effect", "non-scaling-stroke");
-            bottomConnectorPath.setAttribute("stroke-width", 1);
-            bottomConnectorPath.setAttribute("stroke-line-join", "miter");
-
-            const leftConnectorPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            leftConnectorPath.setAttribute("d", leftConnectorSvgString);
-            leftConnectorPath.setAttribute("stroke", "#000");
-            leftConnectorPath.setAttribute("vector-effect", "non-scaling-stroke");
-            leftConnectorPath.setAttribute("stroke-width", 1);
-            leftConnectorPath.setAttribute("stroke-line-join", "miter");
-
             svg.appendChild(path);
-            svg.appendChild(topConnectorPath);
-            svg.appendChild(rightConnectorPath);
-            svg.appendChild(bottomConnectorPath);
-            svg.appendChild(leftConnectorPath);
             svg.appendChild(g);
             svg.appendChild(clipPath);
 
@@ -233,24 +185,20 @@
         let svgString = `M ${leftBoundary} ${topBoundary} `;
         pathTrace.x += leftBoundary;
         pathTrace.y += topBoundary;
-        drawPoint(pathTrace);
+        // drawPoint(pathTrace);
 
         svgString += `h ${GeneratorConfig.connectorDistanceFromCorner} `;
         pathTrace.x += GeneratorConfig.connectorDistanceFromCorner;
-        drawPoint(pathTrace);
+        // drawPoint(pathTrace);
 
-        const topConnector = getRotatedConnector(jigsawShapes.getTopSocket(), 0, {x:0,y:0});
+        const topConnector = getRotatedConnector(jigsawShapes.getTopSocket(), 0, pathTrace);
         console.log("top", topConnector)
 
-        const topConnectorSvgString = `
-            M ${pathTrace.x} ${pathTrace.y}
+        svgString += `
             c ${topConnector.cp1.x} ${topConnector.cp1.y}, ${topConnector.cp2.x} ${topConnector.cp2.y}, ${topConnector.dest.x} ${topConnector.dest.y}
-            Z
         `;
         
         // Update pathtrace's X value to top connector's dest X
-        
-        svgString += `M ${pathTrace.x + connectorSize} ${pathTrace.y}`;
         
         pathTrace.x += connectorSize;
         
@@ -267,13 +215,11 @@
         pathTrace.y += GeneratorConfig.connectorDistanceFromCorner;
         // drawPoint(pathTrace);
 
-        const rightConnector = getRotatedConnector(jigsawShapes.getTopPlug(), 90, {x:0,y:0});
+        const rightConnector = getRotatedConnector(jigsawShapes.getTopPlug(), 90, pathTrace);
         console.log("right", rightConnector)
 
-        const rightConnectorSvgString = `
-            M ${pathTrace.x} ${pathTrace.y}
+        svgString += `
             c ${rightConnector.cp1.x} ${rightConnector.cp1.y}, ${rightConnector.cp2.x} ${rightConnector.cp2.y}, ${rightConnector.dest.x} ${Math.abs(rightConnector.dest.y)}
-            z
         `;
         // drawPoint(pathTrace);
 
@@ -288,18 +234,15 @@
         pathTrace.x -= GeneratorConfig.connectorDistanceFromCorner;
         // drawPoint(pathTrace);
 
-        const bottomConnector = getRotatedConnector(jigsawShapes.getTopPlug(), 180, pathTrace);
+        const bottomConnector = getRotatedConnector(jigsawShapes.getTopSocket(), 180, pathTrace);
 
-        const bottomConnectorSvgString = `
-            M ${pathTrace.x} ${pathTrace.y}
+        svgString += `
             c ${bottomConnector.cp1.x} ${bottomConnector.cp1.y}, ${bottomConnector.cp2.x} ${bottomConnector.cp2.y}, ${bottomConnector.dest.x} ${bottomConnector.dest.y}
-            Z
         `;
 
         pathTrace.x -= connectorSize;
         // // drawPoint(pathTrace);
 
-        svgString += `M ${pathTrace.x} ${pathTrace.y} `;
         pathTrace.x -= GeneratorConfig.connectorDistanceFromCorner;
         // // drawPoint(pathTrace);
 
@@ -309,23 +252,19 @@
         pathTrace.y -= GeneratorConfig.connectorDistanceFromCorner;
         // // drawPoint(pathTrace);
 
-        const leftConnector = getRotatedConnector(jigsawShapes.getTopPlug(), 270, pathTrace);
+        const leftConnector = getRotatedConnector(jigsawShapes.getTopSocket(), 270, pathTrace);
 
-        const leftConnectorSvgString = `
-            M ${pathTrace.x} ${pathTrace.y}
+        svgString += `
             c ${leftConnector.cp1.x} ${leftConnector.cp1.y}, ${leftConnector.cp2.x} ${leftConnector.cp2.y}, ${leftConnector.dest.x} ${leftConnector.dest.y}
-            z    
         `;
         pathTrace.y -= connectorSize;
         // // drawPoint(pathTrace);
-
-        svgString += `M ${pathTrace.x} ${pathTrace.y} `;
 
         svgString += `v -${GeneratorConfig.connectorDistanceFromCorner} `;
         pathTrace.y -= GeneratorConfig.connectorDistanceFromCorner;
         // drawPoint(pathTrace);
 
-        const svgElement = getSvg(svgString, topConnectorSvgString);
+        const svgElement = getSvg(svgString);
         const container = document.getElementById("container");
         container.appendChild(svgElement);
     </script>
