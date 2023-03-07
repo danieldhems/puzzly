@@ -1,452 +1,77 @@
 class JigsawPath {
-  constructor(pieceSize, connectorSize, connectorWidth){
+  constructor(pieceSize, connectorSize){
     this.pieceSize = pieceSize;
     this.connectorSize = connectorSize;
-	this.connectorWidth = connectorWidth;
 	this.humpSize = this.connectorSize * 1.2;
 	this.halfConnectorSize = this.connectorSize / 2;
-  }
-  getTopPlug(){
-	// Assume 'top' is the default plug,
-	// and all other plugs are taken from the rotation of this one
-	return {
-		cp1: {
-			x: `-${this.halfConnectorSize}`,
-			y: `-${this.humpSize}`,
-		},	
-		cp2: {
-			x: this.connectorWidth + this.halfConnectorSize,
-			y: `-${this.humpSize}`,
-		},
-		destX: this.connectorWidth,
-		destY: 0,
-	}
+
+	this.getPlug = this.getPlug.bind(this);
+	this.getSocket = this.getSocket.bind(this);
+	this.rotate = this.rotate.bind(this);
+	this.getRotatedConnector = this.getRotatedConnector.bind(this);
   }
 
-  rotate(x, y, deg){
-	const rad = deg * Math.PI / 180;
-	return {
-		x: x * Math.cos(rad) - y * Math.sin((rad)),
-		y: y * Math.cos(rad) - x * Math.sin((rad)),
-	}
-  }
-
-	getPlug(side, startPos){
-		let cp1x, cp1y, cp2x, cp2y, destX, destY;
-		
-		if(side === "top"){
-			cp1x = `-${this.halfConnectorSize}`;
-			cp1y = `-${this.humpSize}`;
-			cp2x = this.connectorWidth + this.halfConnectorSize;
-			cp2y = `-${this.humpSize}`;
-			destX = this.connectorWidth;
-			destY = 0;
-		} else if(side === "right"){
-			cp1x = this.humpSize;
-			cp1y = `-${this.halfConnectorSize}`;
-			cp2x = this.humpSize;
-			cp2y = this.connectorWidth + this.halfConnectorSize;
-			destX = `-${this.humpSize}`;
-			destY = this.connectorWidth;
-		} else if(side === "bottom"){
-			cp1x = this.halfConnectorSize;
-			cp1y = this.humpSize;
-			cp2x = `-${this.connectorWidth + this.halfConnectorSize}`;
-			cp2y = this.humpSize;
-			destX = `-${this.connectorWidth}`;
-			destY = 0;
-		} else if(side === "left"){
-			cp1x = startPos.x - this.humpSize;
-			cp1y = startPos.y + this.halfConnectorSize;
-			cp2x = startPos.x - this.humpSize;
-			cp2y = startPos.y - this.connectorWidth - this.halfConnectorSize;
-			destX = startPos.x;
-			destY = startPos.y - this.connectorWidth
-		}
+	getPlug(){
+		// Assume 'top' is the default plug,
+		// and all others are taken from the rotation of this one
 		return {
 			cp1: {
-				x: cp1x,
-				y: cp1y,
-			},
+				x: 0 - this.halfConnectorSize,
+				y: 0 - this.humpSize,
+			},	
 			cp2: {
-				x: cp2x,
-				y: cp2y,
+				x: this.connectorSize + this.halfConnectorSize,
+				y: 0 - this.humpSize,
 			},
-			destX,
-			destY,
+			dest: {
+				x: this.connectorSize,
+				y: 0,
+			}
 		}
 	}
-	getSocket(side, startPos){
-		let cp1x, cp1y, cp2x, cp2y, destX, destY;
-		const connectorSize = this.connectorSize * 1.2;
-		const halfConnectorSize = this.connectorSize / 2;
-		if(side === "top"){
-			cp1x = startPos.x - this.halfConnectorSize;
-			cp1y = startPos.y + connectorSize;
-			cp2x = startPos.x + this.connectorWidth + this.halfConnectorSize;
-			cp2y = startPos.y + connectorSize;
-			destX = startPos.x + this.connectorWidth;
-			destY = startPos.y;
-		} else if(side === "right"){
-			cp1x = startPos.x - connectorSize;
-			cp1y = startPos.y - this.halfConnectorSize;
-			cp2x = startPos.x - connectorSize;
-			cp2y = startPos.y + this.connectorWidth + this.halfConnectorSize;
-			destX = startPos.x;
-			destY = startPos.y + this.connectorWidth
-		} else if(side === "bottom"){
-			cp1x = startPos.x + this.halfConnectorSize;
-			cp1y = startPos.y - connectorSize;
-			cp2x = startPos.x - this.connectorWidth - this.halfConnectorSize;
-			cp2y = startPos.y - connectorSize;
-			destX = startPos.x - this.connectorWidth;
-			destY = startPos.y;
-		} else if(side === "left"){
-			cp1x = startPos.x + connectorSize;
-			cp1y = startPos.y + this.halfConnectorSize;
-			cp2x = startPos.x + connectorSize;
-			cp2y = startPos.y - this.connectorWidth - this.halfConnectorSize;
-			destX = startPos.x;
-			destY = startPos.y - this.connectorWidth
-		}
+
+	getSocket(){
+		// Assume 'top' is the default socket,
+		// and all others are taken from the rotation of this one
 		return {
 			cp1: {
-				x: cp1x,
-				y: cp1y,
-			},
+				x: 0 - this.halfConnectorSize,
+				y: this.humpSize,
+			},	
 			cp2: {
-				x: cp2x,
-				y: cp2y,
+				x: this.connectorSize + this.halfConnectorSize,
+				y: this.humpSize,
 			},
-			destX,
-			destY,
-		}
-	}
-  getTopPlug(leftBoundary, topBoundary, rightBoundary){
-		return {
-			firstCurve: {
-				destX: leftBoundary + this.connectorDistanceFromCorner + (this.connectorSize/6),
-				destY: topBoundary - (this.connectorSize/5),
-				cpX: leftBoundary + this.connectorDistanceFromCorner + (this.connectorSize/5),
-				cpY: topBoundary - (this.connectorSize/10),
-			},
-			secondCurve: {
-				cp1: {
-					x: leftBoundary + this.connectorDistanceFromCorner - this.connectorDistanceFromCorner/4,
-					y: topBoundary - (this.connectorSize/3),
-				},
-				cp2: {
-					x: leftBoundary + this.connectorDistanceFromCorner - this.connectorDistanceFromCorner/4,
-					y: topBoundary - this.connectorSize,
-				},
-				destX: leftBoundary + (this.pieceSize / 2),
-				destY: topBoundary - this.connectorSize,
-			},
-			thirdCurve: {
-				cp1: {
-					x: rightBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					y: topBoundary - this.connectorSize,
-				},
-				cp2: {
-					x: rightBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					y: topBoundary - (this.connectorSize/3),
-				},
-				destX: rightBoundary - this.connectorDistanceFromCorner - (this.connectorSize/6),
-				destY: topBoundary - (this.connectorSize/5),
-			},
-			fourthCurve: {
-				cpX: rightBoundary - this.connectorDistanceFromCorner - (this.connectorSize/5),
-				cpY: topBoundary - (this.connectorSize/10),
-				destX: rightBoundary - this.connectorDistanceFromCorner,
-				destY: topBoundary,
+			dest: {
+				x: this.connectorSize,
+				y: 0,
 			}
 		}
 	}
 
-	getTopSocket(leftBoundary, topBoundary, rightBoundary){
+	rotate(point, deg){
+		const rad = deg * Math.PI / 180;
+
+		const origin = { x: 0, y: 0};
+		const { x: px, y: py } = point;
+
+		const qx = origin.x + Math.cos(rad) * (px - origin.x) - Math.sin(rad) * (py - origin.y);
+		const qy = origin.y + Math.sin(rad) * (px - origin.x) + Math.cos(rad) * (py - origin.y);
+
 		return {
-			firstCurve: {
-				destX: leftBoundary + this.connectorDistanceFromCorner + (this.connectorSize/6),
-				destY: topBoundary + (this.connectorSize/5),
-				cpX: leftBoundary + this.connectorDistanceFromCorner + (this.connectorSize/5),
-				cpY: topBoundary + (this.connectorSize/10),
-			},
-			secondCurve: {
-				cp1: {
-					x: leftBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					y: topBoundary + (this.connectorSize/3),
-				},
-				cp2: {
-					x: leftBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					y: topBoundary + this.connectorSize,
-				},
-				destX: leftBoundary + (this.pieceSize/2),
-				destY: topBoundary + this.connectorSize,
-			},
-			thirdCurve: {
-				cp1: {
-					x: rightBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					y: topBoundary + this.connectorSize,
-				},
-				cp2: {
-					x: rightBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					y: topBoundary + (this.connectorSize/3),
-				},
-				destX: rightBoundary - this.connectorDistanceFromCorner - (this.connectorSize/6),
-				destY: topBoundary + (this.connectorSize/5),
-			},
-			fourthCurve: {
-				cpX: rightBoundary - this.connectorDistanceFromCorner - (this.connectorSize/5),
-				cpY: topBoundary + (this.connectorSize/10),
-				destX: rightBoundary - this.connectorDistanceFromCorner,
-				destY: topBoundary,
-			}
+			x: qx,
+			y: qy,
 		}
 	}
 
-	getRightPlug(topBoundary, rightBoundary, bottomBoundary){
+	getRotatedConnector(connector, deg){
+		const rotatedCp1 = this.rotate(connector.cp1, deg);
+		const rotatedCp2 = this.rotate(connector.cp2, deg);
+		const rotatedDest = this.rotate(connector.dest, deg);
 		return {
-			firstCurve: {
-				destX: rightBoundary + (this.connectorSize/5),
-				destY: topBoundary + this.connectorDistanceFromCorner + (this.connectorSize/6),
-				cpX: rightBoundary + (this.connectorSize/10),
-				cpY: topBoundary + this.connectorDistanceFromCorner + (this.connectorSize/5),
-			},
-			secondCurve: {
-				cp1: {
-					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					x: rightBoundary + (this.connectorSize / 3),
-				},
-				cp2: {
-					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					x: rightBoundary + this.connectorSize,
-				},
-				destX: rightBoundary + this.connectorSize,
-				destY: bottomBoundary - (this.pieceSize / 2),
-			},
-			thirdCurve: {
-				cp1: {
-					y: bottomBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					x: rightBoundary + this.connectorSize,
-				},
-				cp2: {
-					y: bottomBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					x: rightBoundary + (this.connectorSize/3),
-				},
-				destY: bottomBoundary - this.connectorDistanceFromCorner - (this.connectorSize/6),
-				destX: rightBoundary + (this.connectorSize/5),
-			},
-			fourthCurve: {
-				cpY: bottomBoundary - this.connectorDistanceFromCorner - (this.connectorSize/5),
-				cpX: rightBoundary + (this.connectorSize/10),
-				destY: bottomBoundary - this.connectorDistanceFromCorner,
-				destX: rightBoundary,
-			}
-		}
-	}
-
-	getRightSocket(topBoundary, rightBoundary, bottomBoundary){
-		return {
-			firstCurve: {
-				destX: rightBoundary - (this.connectorSize/5),
-				destY: topBoundary + this.connectorDistanceFromCorner + (this.connectorSize/6),
-				cpX: rightBoundary - (this.connectorSize/10),
-				cpY: topBoundary + this.connectorDistanceFromCorner + (this.connectorSize/5),
-			},
-			secondCurve: {
-				cp1: {
-					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					x: rightBoundary - (this.connectorSize/3),
-				},
-				cp2: {
-					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					x: rightBoundary - this.connectorSize,
-				},
-				destX: rightBoundary - this.connectorSize,
-				destY: topBoundary + (this.pieceSize/2),
-			},
-			thirdCurve: {
-				cp1: {
-					y: bottomBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					x: rightBoundary - this.connectorSize,
-				},
-				cp2: {
-					y: bottomBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					x: rightBoundary - (this.connectorSize/3),
-				},
-				destY: bottomBoundary - this.connectorDistanceFromCorner - (this.connectorSize/6),
-				destX: rightBoundary - (this.connectorSize/5),
-			},
-			fourthCurve: {
-				cpY: bottomBoundary - this.connectorDistanceFromCorner - (this.connectorSize/5),
-				cpX: rightBoundary - (this.connectorSize/10),
-				destY: bottomBoundary - this.connectorDistanceFromCorner,
-				destX: rightBoundary,
-			}
-		}
-	}
-
-	getBottomPlug(rightBoundary, bottomBoundary, leftBoundary){
-		return {
-			firstCurve: {
-				destX: rightBoundary - this.connectorDistanceFromCorner - (this.connectorSize/6),
-				destY: bottomBoundary + (this.connectorSize/5),
-				cpX: rightBoundary - this.connectorDistanceFromCorner - (this.connectorSize/5),
-				cpY: bottomBoundary + (this.connectorSize/10),
-			},
-			secondCurve: {
-				cp1: {
-					x: rightBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					y: bottomBoundary + (this.connectorSize/3),
-				},
-				cp2: {
-					x: rightBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					y: bottomBoundary + this.connectorSize,
-				},
-				destX: leftBoundary + (this.pieceSize/2),
-				destY: bottomBoundary + this.connectorSize,
-			},
-			thirdCurve: {
-				cp1: {
-					x: leftBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					y: bottomBoundary + this.connectorSize,
-				},
-				cp2: {
-					x: leftBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					y: bottomBoundary + (this.connectorSize/3),
-				},
-				destX: leftBoundary + this.connectorDistanceFromCorner + (this.connectorSize/6),
-				destY: bottomBoundary + (this.connectorSize/5),
-			},
-			fourthCurve: {
-				cpX: leftBoundary + this.connectorDistanceFromCorner + (this.connectorSize/5),
-				cpY: bottomBoundary + (this.connectorSize/10),
-				destX: leftBoundary + this.connectorDistanceFromCorner,
-				destY: bottomBoundary,
-			}
-		}
-	}
-
-	getBottomSocket(rightBoundary, bottomBoundary, leftBoundary){
-		return {
-			firstCurve: {
-				destX: rightBoundary - this.connectorDistanceFromCorner - (this.connectorSize/6),
-				destY: bottomBoundary - (this.connectorSize/5),
-				cpX: rightBoundary - this.connectorDistanceFromCorner - (this.connectorSize/5),
-				cpY: bottomBoundary - (this.connectorSize/10),
-			},
-			secondCurve: {
-				cp1: {
-					x: rightBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					y: bottomBoundary - (this.connectorSize/3),
-				},
-				cp2: {
-					x: rightBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					y: bottomBoundary - this.connectorSize,
-				},
-				destX: rightBoundary - (this.pieceSize/2),
-				destY: bottomBoundary - this.connectorSize,
-			},
-			thirdCurve: {
-				cp1: {
-					x: leftBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					y: bottomBoundary - this.connectorSize,
-				},
-				cp2: {
-					x: leftBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					y: bottomBoundary - (this.connectorSize/3),
-				},
-				destX: leftBoundary + this.connectorDistanceFromCorner + (this.connectorSize/6),
-				destY: bottomBoundary - (this.connectorSize/5),
-			},
-			fourthCurve: {
-				cpX: leftBoundary + this.connectorDistanceFromCorner + (this.connectorSize/5),
-				cpY: bottomBoundary - (this.connectorSize/10),
-				destX: leftBoundary + this.connectorDistanceFromCorner,
-				destY: bottomBoundary,
-			}
-		}
-	}
-
-	getLeftPlug(bottomBoundary, leftBoundary, topBoundary){
-		return {
-			firstCurve: {
-				destX: leftBoundary - (this.connectorSize/5),
-				destY: bottomBoundary - this.connectorDistanceFromCorner - (this.connectorSize/6),
-				cpX: leftBoundary - (this.connectorSize/10),
-				cpY: bottomBoundary - this.connectorDistanceFromCorner - (this.connectorSize/5),
-			},
-			secondCurve: {
-				cp1: {
-					y: bottomBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					x: leftBoundary - (this.connectorSize/3),
-				},
-				cp2: {
-					y: bottomBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					x: leftBoundary - this.connectorSize,
-				},
-				destX: leftBoundary - this.connectorSize,
-				destY: bottomBoundary - (this.pieceSize/2),
-			},
-			thirdCurve: {
-				cp1: {
-					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					x: leftBoundary - this.connectorSize,
-				},
-				cp2: {
-					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					x: leftBoundary - (this.connectorSize/3),
-				},
-				destY: topBoundary + this.connectorDistanceFromCorner + (this.connectorSize/6),
-				destX: leftBoundary - (this.connectorSize/5),
-			},
-			fourthCurve: {
-				cpY: topBoundary + this.connectorDistanceFromCorner + (this.connectorSize/5),
-				cpX: leftBoundary - (this.connectorSize/10),
-				destY: topBoundary + this.connectorDistanceFromCorner,
-				destX: leftBoundary,
-			}
-		}
-	}
-
-	getLeftSocket(bottomBoundary, leftBoundary, topBoundary){
-		return {
-			firstCurve: {
-				destX: leftBoundary + (this.connectorSize/5),
-				destY: bottomBoundary - this.connectorDistanceFromCorner - (this.connectorSize/6),
-				cpX: leftBoundary + (this.connectorSize/10),
-				cpY: bottomBoundary - this.connectorDistanceFromCorner - (this.connectorSize/5),
-			},
-			secondCurve: {
-				cp1: {
-					y: bottomBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					x: leftBoundary + (this.connectorSize/3),
-				},
-				cp2: {
-					y: bottomBoundary - this.connectorDistanceFromCorner + (this.connectorDistanceFromCorner/4),
-					x: leftBoundary + this.connectorSize,
-				},
-				destX: leftBoundary + this.connectorSize,
-				destY: bottomBoundary - (this.pieceSize/2)
-			},
-			thirdCurve: {
-				cp1: {
-					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					x: leftBoundary + this.connectorSize,
-				},
-				cp2: {
-					y: topBoundary + this.connectorDistanceFromCorner - (this.connectorDistanceFromCorner/4),
-					x: leftBoundary + (this.connectorSize/3),
-				},
-				destY: topBoundary + this.connectorDistanceFromCorner + (this.connectorSize/6),
-				destX: leftBoundary + (this.connectorSize/5),
-			},
-			fourthCurve: {
-				cpY: topBoundary + this.connectorDistanceFromCorner + (this.connectorSize/5),
-				cpX: leftBoundary + (this.connectorSize/10),
-				destY: topBoundary + this.connectorDistanceFromCorner,
-				destX: leftBoundary,
-			}
+			cp1: rotatedCp1,
+			cp2: rotatedCp2,
+			dest: rotatedDest
 		}
 	}
 

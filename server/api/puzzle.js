@@ -78,7 +78,7 @@ var api = {
 			const spritePathWithExt = spritePath + ".png";
 			const shadowSpritePathWithExt = shadowSpritePath + ".png";
 
-			const generator = await PuzzleGenerator(puzzleImgPath, data, spritePath, shadowSpritePath);
+			const generator = await PuzzleGenerator(data);
 
 			const pieceConfigData = {
 				pieceSize: generator.pieceSize,

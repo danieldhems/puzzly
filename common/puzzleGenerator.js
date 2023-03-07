@@ -5,7 +5,6 @@ const jigsawPath = require("./jigsawPath").default;
 let loadedImage;
 
 const GeneratorConfig = {
-	spriteName: null,
 	connectorRatio: null,
 	piecesPerSideHorizontal: null,
 	piecesPerSideVertical: null,
@@ -24,8 +23,6 @@ const PuzzleGenerator = async function(puzzleConfig) {
 	const connectorWidthRatio = 30;
 	
 	GeneratorConfig.debugOptions = puzzleConfig.debugOptions;
-	GeneratorConfig.spriteName = spriteName;
-	GeneratorConfig.shadowSpriteName = shadowSpriteName;
 	GeneratorConfig.connectorWidthRatio = connectorWidthRatio;
 	GeneratorConfig.connectorRatio = GeneratorConfig.connectorDistanceFromCornerRatio = 50 - (connectorWidthRatio/2);
 	GeneratorConfig.piecesPerSideHorizontal = Math.sqrt(puzzleConfig.selectedNumPieces);
@@ -38,7 +35,6 @@ const PuzzleGenerator = async function(puzzleConfig) {
 	GeneratorConfig.stageHeight = puzzleConfig.stageHeight;
 
 	GeneratorConfig.connectorDistanceFromCorner = GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorDistanceFromCornerRatio;
-	GeneratorConfig.connectorWidth = GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorWidthRatio;
 	GeneratorConfig.connectorSize = Math.floor(GeneratorConfig.pieceSize / 100 * GeneratorConfig.connectorRatio);
 	GeneratorConfig.connectorLateralControlPointDistance = GeneratorConfig.connectorSize * 1.2;
 	GeneratorConfig.largestPieceSpan = GeneratorConfig.pieceSize + (GeneratorConfig.connectorSize * 2);
@@ -329,10 +325,10 @@ const generateDataForPuzzlePieces = async(puzzleId) => {
 
 		currentPiece.type = getConnectors(adjacentPieceBehind, adjacentPieceAbove, endOfRow, finalRow);
 		currentPiece = assignInitialPieceData(puzzleId, curImgX, curImgY, currentPiece, numPiecesFromLeftEdge, numPiecesFromTopEdge, i);
-		const { svgString, svgTopConnector3dString } = drawJigsawShape(null, null, currentPiece);
+		const { svgString } = drawJigsawShape(currentPiece);
 		currentPiece.svgPathString = svgString;
-		currentPiece.svgTopConnector3dString = svgTopConnector3dString;
-		// console.log("generated piece", currentPiece)
+
+		console.log("generated piece", currentPiece)
 
 		pieces.push(currentPiece);
 
@@ -383,11 +379,8 @@ const generateDataForPuzzlePieces = async(puzzleId) => {
 	return pieces;
 }
 
-const drawJigsawShape = (ctx, path, piece, showGuides = false, stroke = false) => {
+const drawJigsawShape = (piece) => {
 	let svgString = "";
-	let svgTopConnector3dString = "";
-
-	const offsetFor3DEffect = 2;
 
 	let x = 0;
 	let y = 0;
@@ -402,103 +395,91 @@ const drawJigsawShape = (ctx, path, piece, showGuides = false, stroke = false) =
 
 	let topConnector = null, rightConnector = null, bottomConnector = null, leftConnector = null;
 	
-	const jigsawShapes = new jigsawPath(GeneratorConfig.pieceSize, GeneratorConfig.connectorSize, GeneratorConfig.connectorWidth);
+	const jigsawShapes = new jigsawPath(GeneratorConfig.pieceSize, GeneratorConfig.connectorSize);
 	
-	path && path.moveTo(leftBoundary, topBoundary);
+	const getRotatedConnector = jigsawShapes.getRotatedConnector;
+
 	svgString += `M ${leftBoundary} ${topBoundary} `;
 
 	let pos = {
 		x: leftBoundary + GeneratorConfig.connectorDistanceFromCorner,
 		y: topBoundary
 	};
+
 	if(pieceHelper.has(piece.type, 'plug', 'top')){
-		topConnector = jigsawShapes.getTopPlug();
+		topConnector = getRotatedConnector(jigsawShapes.getPlug(), 0);
 	} else if(pieceHelper.has(piece.type, 'socket', 'top')){
-		topConnector = jigsawShapes.getSocket("top", pos);
+		topConnector = getRotatedConnector(jigsawShapes.getSocket(), 0);
 	}
 
 	if(topConnector){
-		path && path.lineTo(leftBoundary + GeneratorConfig.connectorDistanceFromCorner, topBoundary);
 		svgString += `h ${GeneratorConfig.connectorDistanceFromCorner} `;
-		
-		path && path.bezierCurveTo(topConnector.cp1.x, topConnector.cp1.y, topConnector.cp2.x, topConnector.cp2.y, topConnector.destX, topConnector.destY);
-		svgString += `c ${topConnector.cp1.x} ${topConnector.cp1.y}, ${topConnector.cp2.x} ${topConnector.cp2.y}, ${topConnector.destX} ${topConnector.destY} `;
+		svgString += `c ${topConnector.cp1.x} ${topConnector.cp1.y}, ${topConnector.cp2.x} ${topConnector.cp2.y}, ${topConnector.dest.x} ${topConnector.dest.y} `;
+		svgString += `h ${GeneratorConfig.connectorDistanceFromCorner} `;
+	} else {
+		svgString += `h ${GeneratorConfig.pieceSize} `;
 	}
-	path && path.lineTo(rightBoundary, topBoundary);
-	svgString += `h ${rightBoundary} `;
 
 	pos = {
 		x: rightBoundary,
 		y: topBoundary + GeneratorConfig.connectorDistanceFromCorner
 	};
+
 	if(pieceHelper.has(piece.type, 'plug', 'right')){
-		rightConnector = jigsawShapes.getPlug("right", pos);
+		rightConnector = getRotatedConnector(jigsawShapes.getPlug(), 90);
 	} else if(pieceHelper.has(piece.type, 'socket', 'right')){
-		rightConnector = jigsawShapes.getSocket("right", pos);
+		rightConnector = getRotatedConnector(jigsawShapes.getSocket(), 90);
 	}
 
 	if(rightConnector !== null){
-		path && path.lineTo(rightBoundary, topBoundary + GeneratorConfig.connectorDistanceFromCorner);
 		svgString += `v ${GeneratorConfig.connectorDistanceFromCorner} `;
-
-		path && path.bezierCurveTo(rightConnector.cp1.x, rightConnector.cp1.y, rightConnector.cp2.x, rightConnector.cp2.y, rightConnector.destX, rightConnector.destY);
-		svgString += `c ${rightConnector.cp1.x} ${rightConnector.cp1.y}, ${rightConnector.cp2.x} ${rightConnector.cp2.y}, ${rightConnector.destX} ${rightConnector.destY} `;
+		svgString += `c ${rightConnector.cp1.x} ${rightConnector.cp1.y}, ${rightConnector.cp2.x} ${rightConnector.cp2.y}, ${rightConnector.dest.x} ${rightConnector.dest.y} `;
+		svgString += `v ${GeneratorConfig.connectorDistanceFromCorner} `;
+	} else {
+		svgString += `v ${GeneratorConfig.pieceSize} `;
 	}
-	path && path.lineTo(rightBoundary, bottomBoundary);
-	svgString += `v ${bottomBoundary} `;
 
 	pos = {
 		x: rightBoundary - GeneratorConfig.connectorDistanceFromCorner,
 		y: bottomBoundary
 	}
+
 	if(pieceHelper.has(piece.type, 'plug', 'bottom')){
-		bottomConnector = jigsawShapes.getPlug("bottom", pos);
+		bottomConnector = getRotatedConnector(jigsawShapes.getPlug(), 180);
 	} else if(pieceHelper.has(piece.type, 'socket', 'bottom')){
-		bottomConnector = jigsawShapes.getSocket("bottom", pos);
+		bottomConnector = getRotatedConnector(jigsawShapes.getSocket(), 180);
 	}
 
 	if(bottomConnector){
-		path && path.lineTo(rightBoundary - GeneratorConfig.connectorDistanceFromCorner, bottomBoundary);
 		svgString += `h -${GeneratorConfig.connectorDistanceFromCorner} `;
-
-		path && path.bezierCurveTo(bottomConnector.cp1.x, bottomConnector.cp1.y, bottomConnector.cp2.x, bottomConnector.cp2.y, bottomConnector.destX, bottomConnector.destY);
-		svgString += `c ${bottomConnector.cp1.x} ${bottomConnector.cp1.y}, ${bottomConnector.cp2.x} ${bottomConnector.cp2.y}, ${bottomConnector.destX} ${bottomConnector.destY} `;
+		svgString += `c ${bottomConnector.cp1.x} ${bottomConnector.cp1.y}, ${bottomConnector.cp2.x} ${bottomConnector.cp2.y}, ${bottomConnector.dest.x} ${bottomConnector.dest.y} `;
+		svgString += `h -${GeneratorConfig.connectorDistanceFromCorner} `;
+	} else {
+		svgString += `h -${GeneratorConfig.pieceSize} `;
 	}
-	path && path.lineTo(leftBoundary, bottomBoundary)
-	svgString += `h -${GeneratorConfig.connectorDistanceFromCorner} `;
+
 
 	pos = {
 		x: leftBoundary,
 		y: bottomBoundary - GeneratorConfig.connectorDistanceFromCorner
 	}
+
 	if(pieceHelper.has(piece.type, 'plug', 'left')){
-		leftConnector = jigsawShapes.getPlug("left", pos);
+		leftConnector = getRotatedConnector(jigsawShapes.getPlug(), 270);
 	} else if(pieceHelper.has(piece.type, 'socket', 'left')){
-		leftConnector = jigsawShapes.getSocket("left", pos);
+		leftConnector = getRotatedConnector(jigsawShapes.getSocket(), 270);
 	}
+
 	if(leftConnector !== null){
-		path && path.lineTo(leftBoundary, bottomBoundary - GeneratorConfig.connectorDistanceFromCorner);
 		svgString += `v -${GeneratorConfig.connectorDistanceFromCorner} `;
-
-		path && path.bezierCurveTo(leftConnector.cp1.x, leftConnector.cp1.y, leftConnector.cp2.x, leftConnector.cp2.y, leftConnector.destX, leftConnector.destY);
-		svgString += `c ${leftConnector.cp1.x} ${leftConnector.cp1.y}, ${leftConnector.cp2.x} ${leftConnector.cp2.y}, ${leftConnector.destX} ${leftConnector.destY} `;
-	}
-	path && path.lineTo(leftBoundary, topBoundary);
-	svgString += `v -${topBoundary} `;
-
-	if(showGuides){
-		if(topConnector) jigsawShapes.drawPlugGuides(ctx, topConnector)
-		if(rightConnector) jigsawShapes.drawPlugGuides(ctx, rightConnector)
-		if(bottomConnector) jigsawShapes.drawPlugGuides(ctx, bottomConnector)
-		if(leftConnector) jigsawShapes.drawPlugGuides(ctx, leftConnector)
+		svgString += `c ${leftConnector.cp1.x} ${leftConnector.cp1.y}, ${leftConnector.cp2.x} ${leftConnector.cp2.y}, ${leftConnector.dest.x} ${leftConnector.dest.y} `;
+		svgString += `v -${GeneratorConfig.connectorDistanceFromCorner} `;
+	} else {
+		svgString += `v -${GeneratorConfig.pieceSize} `;
 	}
 
-	if(stroke){
-		ctx.strokeStyle = GeneratorConfig.strokeStyle;
-		ctx.stroke(path)
-	}
 
-	return { path, svgString, svgTopConnector3dString };
+	return { svgString };
 }
 
 exports.default = PuzzleGenerator;
