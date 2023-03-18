@@ -4,6 +4,7 @@ var	bodyParser = require('body-parser');
 var puzzleApi = require('./api/puzzle.js');
 var piecesApi = require('./api/pieces.js');
 var upload = require('./api/upload.js');
+var generatorTest = require('./api/generator-test.js');
 
 var app = express();
 
@@ -18,6 +19,7 @@ app.use(bodyParser.json({limit: '50mb'}));
 app.use('/api/puzzle', puzzleApi.router);
 app.use('/api/pieces', piecesApi.router);
 app.use('/api/upload', upload);
+app.use('/api/generator-test', generatorTest);
 app.use('/api/toggleVisibility', require('./api/pieceFiltering.js'));
 
 // Configure base URL for home page
@@ -47,6 +49,10 @@ app.get('/new', function(req, res){
 
 app.get('/puzzle-piece', function(req, res){
 	res.sendFile(path.join(__dirname, '../client/puzzle-piece.html'));
+});
+
+app.get('/generator', function(req, res){
+	res.sendFile(path.join(__dirname, '../client/generator-test.html'));
 });
 
 // puzzleApi.clean();

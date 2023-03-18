@@ -9,6 +9,7 @@ import Utils from "./utils.js";
 
 const ZOOM_INTERVAL = .1;
 const DEFAULT_ZOOM_LEVEL = 1;
+
 class Puzzly {
 	constructor(canvasId, puzzleId, config){
 		Object.assign(this, {
@@ -577,7 +578,7 @@ class Puzzly {
 		path.setAttribute("d", piece.svgPathString);
 		path.setAttribute("stroke", "#000");
 		path.setAttribute("vector-effect", "non-scaling-stroke");
-		path.setAttribute("stroke-width", 1);
+		path.setAttribute("stroke-width", 10);
 		path.setAttribute("stroke-line-join", "miter");
 
 		svg.appendChild(path);
@@ -588,7 +589,7 @@ class Puzzly {
 	}
 
 	renderJigsawPiece(piece){
-		let el, fgEl, bgEl;
+		let el;
 
 		const solvedCnvContainer = document.getElementById('group-container-1111');
 
