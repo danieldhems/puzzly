@@ -10,26 +10,37 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <style>
+        body {
+            background-color:yellowgreen;
+        }
         #container {
             margin: 50px;
             position: relative;
         }
 
         .puzzle-piece {
-            /* border: 1px solid; */
+            /* border: 1px dotted; */
+            /* margin: 0 50px 50px; */
+            float: left;
+            position: relative;
+        }
+
+        #generator-result {
+            width: 100%;
+            display: flow-root;
         }
 
         svg {
-            /* transform: scale(.99); */
+            paint-order: stroke;
         }
     </style>
   </head>
   <body style="margin: 0;">
     <div id="container">
         <h2>Piece size:</h2>
-        <input id="piece-size" type="text" />
+        <input id="piece-size" class="input-fld" type="text" />
         <h2>Piece types to generate:</h2>
-        <input id="piece-types" type="text" />
+        <input id="piece-types" class="input-fld" type="text" />
         <h2>Generator result:</h2>
         <div id="generator-result"></div>
         <button id="submit">Go</button>
@@ -39,20 +50,19 @@
             [0,1,1,0],
             [0,1,0,1],
             [1,1,1,1],
-            [1,0,1,0],
+            [1,-1,1,0],
         ];
 
         // Initial values
         let pieceSize = 200;
-        let pieceTypes = types[1];
+        let selectedPieceType = types[0];
         
         const strokeWidth = 1;
-        const pathOffsetX = -1.5;
-        const pathOffsetY = -.2;
 
         const pieceSizeField = document.getElementById("piece-size");
         const strokeWidthField = document.getElementById("stroke-width");
         const pieceTypesField = document.getElementById("piece-types");
+        const inputField = document.querySelectorAll(".input-fld");
         const goButton = document.getElementById("submit");
         const resultElement = document.getElementById("generator-result");
 
@@ -64,7 +74,19 @@
 
         pieceTypesField.addEventListener("keyup", e => {
             const input = e.target.value;
-            pieceTypes = types[parseInt(input)];
+            selectedPieceType = types[parseInt(input)];
+        });
+
+        inputField.forEach(el => {
+            el.addEventListener("keyup", e => {
+                if(e.keyCode === 13){
+                    fetchPreview({
+                        pieceSize,
+                        pieceTypes: [selectedPieceType],
+                        strokeWidth,
+                    });
+                }
+            })
         });
 
         function fetchPreview(request){
@@ -81,75 +103,98 @@
 
         function onFetchSuccess(response){
             const connectorSize = response.generator.connectorSize;
+            resultElement.innerHTML = "";
                 
             for(let i=0, l=response.generatedPieces.length; i<l; i++){
                 const currentPiece = response.generatedPieces[i];
                 
                 let width = pieceSize;
                 let height = pieceSize;
+
+                console.log(currentPiece)
                 
                 if(currentPiece.pieceType[0] === 1){
+                    console.log(i, "height increased")
                     height += connectorSize;
                 }
                 
                 if(currentPiece.pieceType[1] === 1){
+                    console.log(i, "width increased")
                     width += connectorSize;
                 }
                 
                 if(currentPiece.pieceType[2] === 1){
+                    console.log(i, "height increased")
                     height += connectorSize;
                 }
                 
                 if(currentPiece.pieceType[3] === 1){
+                    console.log(i, "width increased")
                     width += connectorSize;
                 }
                 
                 const element = document.createElement("div");
-                element.id = `puzzle-piece-${i}`;
-                element.classList.add("puzzle-piece")
-                element.style.width = width + 10 + "px";
-                element.style.height = height + 10 + "px";
-
+                
                 const svg = getSvg(
+                    currentPiece,
                     width,
                     height,
-                    response.generatedPieces[0].svgString
+                    i,
                 );
-                element.appendChild((svg));
-                resultElement.innerHTML = "";
-                resultElement.appendChild(element);
+                
+                const el = document.createElement("div");
+                el.id = `puzzle-piece-${i}`;
+                el.classList.add("puzzle-piece")
+                el.style.width = width + "px";
+                el.style.height = height + "px";
+                el.setAttribute("data-type", currentPiece.pieceType.join(","))
+                el.innerHTML = svg;
+
+                resultElement.appendChild(el);
             }
         }
 
         goButton.addEventListener("click", e => {
             fetchPreview({
                 pieceSize,
-                pieceTypes,
+                pieceTypes: types,
                 strokeWidth,
             });
         })
 
-        function getSvg(width, height, svgPathString){
-            const clipId = `svg-1`;
+        function getSvg(piece, width, height, index){
+            const clipId = `svg-clip-${index}`;
+            const pathId = `svg-path-${index}`;
+
+            const widthPercentageScaled = width / 100;
+            const heightPercentageScaled = height / 100;
+            const multiplier = 0;
+            const vWidth = width;
+            const vHeight = height;
+            
+            let pathOffsetX, pathOffsetY;
+
+            pathOffsetX = strokeWidth;
+            pathOffsetY = strokeWidth;
 
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             // svg.setAttribute("id", `piece-svg-1`);
             svg.classList.add("svg-container");
-            svg.setAttribute("width", "100%");
-            svg.setAttribute("height", "100%");
-            // svg.setAttribute("viewBox", "0 0 100% 100%");
-            // svg.setAttribute("style", `transform: scale(calc(1 - ${(strokeWidth * 2) / 1000}))`);
+            svg.setAttribute("width", `${width + strokeWidth * 2}px`);
+            svg.setAttribute("height", `${height + strokeWidth * 2}px`);
+            svg.setAttribute("viewBox", `0 0 ${vWidth} ${vHeight}`);
+
+            const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
 
             const clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
             clipPath.setAttribute("id", clipId);
 
-            const clipPathPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            clipPathPath.setAttribute("d", svgPathString);
-            clipPathPath.setAttribute("style", `transform: scale(106%) translateX(${pathOffsetX}%) translateY(${pathOffsetY}%);`)
-            clipPath.appendChild(clipPathPath);
+            // const clipPathPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            // clipPathPath.setAttribute("d", svgPathString);
+            // clipPathPath.setAttribute("style", `transform: scale(${scale}) translateX(${pathOffsetX}%) translateY(${pathOffsetY}%);`)
             
             const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            g.setAttribute("clip-path", `url(#${clipId})`);
+            // g.setAttribute("clip-path", `url(#${pathId})`);
             
             const gImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
             gImage.setAttribute("href", "./beach.jpeg");
@@ -160,18 +205,48 @@
             g.appendChild(gImage);
             
             const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            path.setAttribute("d", svgPathString);
+            path.setAttribute("id", pathId);
+            path.setAttribute("d", piece.svgString);
             path.setAttribute("stroke", "#000");
             path.setAttribute("vector-effect", "non-scaling-stroke");
             path.setAttribute("stroke-width", strokeWidth);
             path.setAttribute("stroke-line-join", "miter");
-            path.setAttribute("style", `transform: scale(106%) translateX(${pathOffsetX}%) translateY(${pathOffsetY}%);`)
+            // path.setAttribute("style", `transform: scale(${scale}) translateX(${pathOffsetX}%) translateY(${pathOffsetY}%);`)
 
-            svg.appendChild(path);
+            const clipPathUse = document.createElementNS("http://www.w3.org/2000/svg", "use");
+            clipPathUse.setAttribute("xlink:href", `#${pathId}`);
+            clipPath.appendChild(clipPathUse);
+            
+            const gUse = document.createElementNS("http://www.w3.org/2000/svg", "use");
+            gUse.setAttribute("xlink:href", `#${pathId}`);
+            gUse.setAttribute("clip-path", `url(#${clipId})`);
+            g.appendChild(gUse);
+            
+            defs.appendChild(path);
+            defs.appendChild(clipPath);
+            svg.appendChild(defs);
             svg.appendChild(g);
-            svg.appendChild(clipPath);
 
-            return svg;
+            const scale = .98;
+            const x = 2;
+            const y = 2;
+
+            const template = `
+                <svg class="svg-container puzzle-piece" width="260px" height="260px" viewBox="0 0 ${vWidth} ${vHeight}" id="puzzle-piece-0" data-type="0,1,1,0" style="width: ${width}px; height: ${height}px;">
+                    <defs>
+                        <path id="${pathId}" d="${piece.svgString}" stroke="#000" stroke-width="${strokeWidth}" stroke-line-join="miter" transform="scale(${scale})"></path>
+                        <clipPath id="${clipId}">
+                            <use xlink:href="#${pathId}" x="${x}" y="${y}" />
+                        </clipPath>
+                    </defs>
+                    <g>
+                        <use xlink:href="#${pathId}" x="${x}" y="${y}" />
+                        <image href="./beach.jpeg" class="svg-image" id="svg-image-1" x="-400" y="-400" clip-path="url(#${clipId})"></image>
+                    </g>
+                </svg>
+            `;
+
+            return template;
         }
 
         // const svgElement = getSvg(svgString);
@@ -180,7 +255,7 @@
 
         fetchPreview({
             pieceSize,
-            pieceTypes,
+            pieceTypes: types,
             strokeWidth,
         });
     </script>

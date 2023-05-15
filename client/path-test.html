@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="test" width="200" height="200"></canvas>
+
+    <script>
+        const cnv = document.querySelector("#test");
+        const ctx = cnv.getContext("2d");
+
+        const image = new Image();
+        image.src = "/halflife-3-2.jpg";
+        image.onload = function(){
+            console.log("image loaded")
+            const path = new Path2D("M 0 28 h 32.9 c -14 -34, 42 -34, 28 0 h 32.9 v 32.9 c -34 -13.999999999999998, -34 42, 1.7145055188062944e-15 28 v 32.9 h -94 v -32.9 c 34 13.999999999999993, 33.99999999999999 -42.00000000000001, -5.143516556418883e-15 -28 z");
+            ctx.clip(path);
+            ctx.drawImage(image, 0, 0);
+        }
+    </script>
+</body>
+</html>

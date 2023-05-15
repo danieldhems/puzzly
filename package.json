@@ -4,7 +4,7 @@
   "description": "Puzzle app",
   "main": "index.js",
   "scripts": {
-    "server": "nodemon server/web",
+    "server": "nodemon server",
     "db": "mongod --dbpath=./data",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -24,8 +24,6 @@
     "mongoose": "^4.2.3",
     "multer": "^1.1.0",
     "nodemon": "^2.0.7",
-    "path": "^0.12.7",
-    "path2d-polyfill": "^1.2.2",
     "sharp": "^0.30.7",
     "util": "^0.10.3"
   },

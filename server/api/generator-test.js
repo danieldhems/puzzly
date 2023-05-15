@@ -1,23 +1,27 @@
-var router = require('express').Router();
-var { default: PuzzleGenerator } = require("../../common/puzzleGenerator");
+var router = require("express").Router();
+// var { default: PuzzleGenerator } = require("../../common/puzzleGenerator");
 
-async function generate(req, res){
-    const { pieceTypes } = req.body;
-    const config = {
-        ...req.body,
-    };
+async function generate(req, res) {
+  const { pieceTypes } = req.body;
+  const config = {
+    ...req.body,
+  };
 
-    const generator = await PuzzleGenerator(config);
+  console.log("pieceTypes", pieceTypes);
 
-    const generatedPieces = [];
+  const generator = await PuzzleGenerator(config);
 
-    let piece = { type: pieceTypes };
+  const generatedPieces = [];
+
+  for (let i = 0, l = pieceTypes.length; i < l; i++) {
+    let piece = { type: pieceTypes[i] };
     generatedPieces.push(generator.drawJigsawShape(piece));
+  }
 
-   res.status(200).send({
+  res.status(200).send({
     generator,
-    generatedPieces
-   });
+    generatedPieces,
+  });
 }
 
 router.post("/", generate);
