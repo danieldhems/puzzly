@@ -597,7 +597,7 @@ class PuzzlyCreator {
   }
 
   async createPuzzle() {
-    const puzzleConfig = {
+    const puzzleData = {
       ...this.sourceImage,
       ...this.crop,
       ...this.getImageDimensions(this.imageUploadPreviewEl),
@@ -612,48 +612,45 @@ class PuzzlyCreator {
 
     const generator = await PuzzleGenerator(
       this.sourceImage.fullSizePath,
-      puzzleConfig
+      puzzleData
     );
-    const { sprite, pieces } = await generator.generateDataForPuzzlePieces();
 
-    const testimage = document.createElement("img");
-    document.body.appendChild(testimage);
-    testimage.src = sprite;
-    testimage.onload = function () {
-      console.log("image loaded");
-    };
+    const { spriteEncodedString, pieces, config } =
+      await generator.generateDataForPuzzlePieces();
 
-    // fetch("/api/puzzle", {
-    //   body: JSON.stringify(puzzleConfig),
-    //   method: "POST",
-    //   headers: {
-    //     "content-type": "application/json",
-    //   },
-    // })
-    //   .then((response) => response.json())
-    //   .then(
-    //     function (response) {
-    //       console.log("response", response);
-    //       const puzzleId = response._id;
-    //       Utils.insertUrlParam("puzzleId", puzzleId);
-    //       this.newPuzzleForm.style.display = "none";
-    //       puzzleConfig.boardSize = this.boardSize;
-    //       puzzleConfig.puzzleImgPath = response.puzzleImgPath;
-    //       puzzleConfig.spritePath = response.spritePath;
-    //       puzzleConfig.shadowSpritePath = response.shadowSpritePath;
-    //       puzzleConfig.pieces = response.pieces;
-    //       puzzleConfig.imagePreviewType = response.imagePreviewType;
-    //       (puzzleConfig.pieceSize = response.pieceSize),
-    //         (puzzleConfig.connectorSize = response.connectorSize),
-    //         (puzzleConfig.connectorWidth = response.connectorWidth),
-    //         (puzzleConfig.connectorDistanceFromCorner =
-    //           response.connectorDistanceFromCorner);
-    //       new Puzzly("canvas", puzzleId, puzzleConfig);
-    //     }.bind(this)
-    //   )
-    //   .catch(function (err) {
-    //     console.log(err);
-    //   });
+    Object.assign(puzzleData, {
+      spriteEncodedString,
+      pieces,
+      config,
+    });
+
+    fetch("/api/puzzle", {
+      body: JSON.stringify(puzzleData),
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then(
+        function (response) {
+          console.log("response", response);
+          const puzzleId = response._id;
+
+          Utils.insertUrlParam("puzzleId", puzzleId);
+
+          this.newPuzzleForm.style.display = "none";
+
+          puzzleData.boardSize = this.boardSize;
+          puzzleData.pieces = response.pieces;
+          puzzleData.spritePath = response.spritePath;
+
+          new Puzzly("canvas", puzzleId, puzzleData);
+        }.bind(this)
+      )
+      .catch(function (err) {
+        console.log(err);
+      });
   }
 }
 

@@ -17,7 +17,7 @@ const GeneratorConfig = {
   connectorLateralControlPointDistance: null,
   largestPieceSpan: null,
   strokeWidth: 1,
-  shadowColor: "grey",
+  shadowColor: "#000",
   strokeStyle: "#000",
 };
 
@@ -223,7 +223,11 @@ const generateDataForPuzzlePieces = async (puzzleId) => {
 
   // writeToPngFile(cnv, GeneratorConfig.spritePath);
 
-  return { sprite: cnv.toDataURL(), pieces };
+  return {
+    spriteEncodedString: cnv.toDataURL(),
+    pieces,
+    config: GeneratorConfig,
+  };
 };
 
 const createCanvas = (width, height) => {

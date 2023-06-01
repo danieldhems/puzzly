@@ -5,6 +5,7 @@ const MongoClient = require("mongodb").MongoClient;
 const ObjectID = require("mongodb").ObjectID;
 const assert = require("assert");
 var Sharp = require("sharp");
+const fs = require("fs");
 
 // Connection URL
 const url = "mongodb://127.0.0.1:27017";
@@ -42,91 +43,79 @@ var api = {
       const piecesColl = db.collection(piecesCollection);
 
       const data = req.body;
-      console.log("create", data);
+      // console.log("create", data);
       data.numberOfSolvedPieces = 0;
       data.dateCreated = new Date();
       data.elapsedTime = 0;
 
-      const imageNameWithoutExt = data.imageName.split(".")[0];
-
-      let img = Sharp(data.fullSizePath);
-      const imgMetadata = await img.metadata();
-      const { width: origW, height: origH } = imgMetadata;
-
-      try {
-        const opts = {
-          left: Math.floor((origW / 100) * data.leftOffsetPercentage),
-          top: Math.floor((origH / 100) * data.topOffsetPercentage),
-          width: Math.floor((origW / 100) * data.widthPercentage),
-          height: Math.floor((origH / 100) * data.heightPercentage),
-        };
-
-        await img.extract(opts);
-      } catch (e) {
-        console.log(e);
-      }
-
-      await img.resize(data.boardSize, data.boardSize);
-
-      const puzzleImgPath = `./uploads/puzzle_${data.imageName}`;
-      await img.toFile(puzzleImgPath);
-
       const timeStamp = new Date().getMilliseconds();
 
-      // These are the paths we want the sprites to be created at - they'll be created by the generator
+      const imageNameWithoutExt = data.imageName.split(".")[0];
+
+      // These are the paths we want the sprites to be created at - they're uploaded by the client in base64
       const spritePath =
         "./uploads/sprite_" +
         imageNameWithoutExt +
         "_" +
         data.selectedNumPieces +
         "_" +
-        timeStamp;
-      const shadowSpritePath =
-        "./uploads/shdsprite_" +
-        imageNameWithoutExt +
-        "_" +
-        data.selectedNumPieces +
-        "_" +
-        timeStamp;
+        timeStamp +
+        ".png";
 
-      const spritePathWithExt = spritePath + ".png";
-      const shadowSpritePathWithExt = shadowSpritePath + ".png";
+      const puzzleImgPath = `./uploads/puzzle_${data.imageName}`;
 
-      const dataForGenerator = Object.assign(data, {
-        imagePath: puzzleImgPath,
-        spritePath,
-        shadowSpritePath,
-      });
+      var base64Data = data.spriteEncodedString.replace(
+        /^data:image\/png;base64,/,
+        ""
+      );
 
-      const generator = await PuzzleGenerator(dataForGenerator);
+      let img;
 
-      const pieceConfigData = {
-        pieceSize: generator.pieceSize,
-        connectorSize: generator.connectorSize,
-        connectorWidth: generator.connectorWidth,
-        connectorDistanceFromCorner: generator.connectorDistanceFromCorner,
-      };
+      try {
+        // Save to disk the puzzle sprite that the client has produced
+        fs.writeFile(spritePath, base64Data, "base64", async function (err) {
+          if (err) {
+            console.log("fs error", err);
+          }
+
+          // Create the resized and cropped puzzle preview image from the uploaded source image
+          img = Sharp(data.fullSizePath);
+
+          const imgMetadata = await img.metadata();
+          const { width: origW, height: origH } = imgMetadata;
+          const opts = {
+            left: Math.floor((origW / 100) * data.leftOffsetPercentage),
+            top: Math.floor((origH / 100) * data.topOffsetPercentage),
+            width: Math.floor((origW / 100) * data.widthPercentage),
+            height: Math.floor((origH / 100) * data.heightPercentage),
+          };
+
+          img.extract(opts);
+          img.resize(data.boardSize, data.boardSize);
+
+          await img.toFile(puzzleImgPath);
+        });
+      } catch (e) {
+        console.log("Error!", e);
+      }
+
+      console.log("data from client", data);
 
       const dbPayload = {
         ...data,
-        ...pieceConfigData,
         puzzleImgPath,
-        spritePath: spritePathWithExt,
-        shadowSpritePath: shadowSpritePathWithExt,
+        spritePath,
       };
 
-      puzzleColl.insertOne(dbPayload).then(async (result) => {
-        // console.log("puzzle added to DB", result.ops)
-        const puzzleId = result.ops[0]._id;
+      const puzzleDBResponse = await puzzleColl.insertOne(dbPayload);
+      const piecesDBResponse = await piecesColl.insertMany(data.pieces);
 
-        const presult = await piecesColl.insertMany(pieces);
-        // console.log("piece insertion result", presult)
+      // console.log("puzzleDBResponse", puzzleDBResponse.ops[0]);
+      // console.log("piecesDBResponse", piecesDBResponse);
 
-        res.status(200).send({
-          ...result.ops[0],
-          pieces,
-          ...pieceConfigData,
-        });
+      res.status(200).send({
+        ...puzzleDBResponse.ops[0],
+        pieces: piecesDBResponse.ops,
       });
     });
   },

@@ -70,9 +70,10 @@ class Puzzly {
     this.movingPieces = [];
     this.loadedAssets = [];
     this.previewImage = new Image();
-    this.previewImage.src = this.puzzleImgPath;
+    this.previewImage.src = this.previewPath;
     this.puzzleImage = new Image();
-    this.puzzleImage.src = this.puzzleImgPath;
+    this.puzzleImage.src = this.spritePath;
+    console.log(this);
     // this.sprite = new Image();
     // this.sprite.src = this.spritePath;
     // this.shadowSprite = new Image();
@@ -188,6 +189,7 @@ class Puzzly {
     ];
 
     const assets = [this.previewImage, this.puzzleImage];
+    console.log("assets", assets);
 
     this.loadAssets(assets).then(() => {
       this.init();
@@ -212,7 +214,7 @@ class Puzzly {
       height: this.boardHeight,
     };
 
-    this.shadowOffset = (this.pieceSize / 100) * 2;
+    this.shadowOffset = 3;
 
     this.connectorToleranceAmount = 40;
     this.connectorTolerance =
@@ -688,6 +690,7 @@ class Puzzly {
   }
 
   renderJigsawPiece(piece) {
+    console.log("rendering piece");
     let el, fgEl, bgEl;
 
     const solvedCnvContainer = document.getElementById("group-container-1111");
@@ -733,7 +736,6 @@ class Puzzly {
       piece.numPiecesFromLeftEdge
     );
     el.setAttribute("data-is-solved", piece.isSolved);
-    el.setAttribute("data-svg-path", piece.svgPathString);
 
     fgEl = document.createElement("div");
     fgEl.classList.add("puzzle-piece-fg");
@@ -761,11 +763,11 @@ class Puzzly {
     bgEl.style.height = piece.pieceHeight + "px";
     bgEl.style.top = this.shadowOffset + "px";
     bgEl.style.left = this.shadowOffset + "px";
-    bgEl.style.backgroundImage = `url(${this.shadowSpritePath}`;
+    bgEl.style.backgroundImage = `url(${this.spritePath}`;
     bgEl.style.backgroundPositionX =
-      piece.spriteX === 0 ? 0 : "-" + piece.spriteX + "px";
+      piece.spriteShadowX === 0 ? 0 : "-" + piece.spriteShadowX + "px";
     bgEl.style.backgroundPositionY =
-      piece.spriteY === 0 ? 0 : "-" + piece.spriteY + "px";
+      piece.spriteShadowY === 0 ? 0 : "-" + piece.spriteShadowY + "px";
     bgEl.style.zIndex = 1;
     // bgEl.style.pointerEvents = "none";
 
