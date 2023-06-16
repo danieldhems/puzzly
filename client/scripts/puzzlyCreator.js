@@ -621,7 +621,7 @@ class PuzzlyCreator {
     Object.assign(puzzleData, {
       spriteEncodedString,
       pieces,
-      config,
+      ...config,
     });
 
     fetch("/api/puzzle", {
@@ -644,6 +644,7 @@ class PuzzlyCreator {
           puzzleData.boardSize = this.boardSize;
           puzzleData.pieces = response.pieces;
           puzzleData.spritePath = response.spritePath;
+          puzzleData.puzzleImgPath = response.puzzleImgPath;
 
           new Puzzly("canvas", puzzleId, puzzleData);
         }.bind(this)

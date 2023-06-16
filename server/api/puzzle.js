@@ -108,13 +108,23 @@ var api = {
       };
 
       const puzzleDBResponse = await puzzleColl.insertOne(dbPayload);
+      const puzzleId = puzzleDBResponse.ops[0]._id;
+      // console.log("puzzle DB result", puzzleDBResponse.ops[0]._id);
+
+      data.pieces.forEach((element) => {
+        element.puzzleId = puzzleId;
+      });
+
+      // console.log("data for pieces insertion", data.pieces);
+
       const piecesDBResponse = await piecesColl.insertMany(data.pieces);
 
       // console.log("puzzleDBResponse", puzzleDBResponse.ops[0]);
-      // console.log("piecesDBResponse", piecesDBResponse);
+      // console.log("piecesDBResponse", piecesDBResponse.ops[0]);
 
       res.status(200).send({
         ...puzzleDBResponse.ops[0],
+        ...data,
         pieces: piecesDBResponse.ops,
       });
     });

@@ -31,7 +31,7 @@ class Puzzly {
     });
 
     this.pieces = config.pieces;
-    this.connectorSize = this.connectorWidth;
+    // this.connectorSize = this.connectorWidth;
 
     this.animationDuration = 200;
 
@@ -70,14 +70,10 @@ class Puzzly {
     this.movingPieces = [];
     this.loadedAssets = [];
     this.previewImage = new Image();
-    this.previewImage.src = this.previewPath;
+    this.previewImage.src = this.puzzleImgPath;
     this.puzzleImage = new Image();
     this.puzzleImage.src = this.spritePath;
     console.log(this);
-    // this.sprite = new Image();
-    // this.sprite.src = this.spritePath;
-    // this.shadowSprite = new Image();
-    // this.shadowSprite.src = this.shadowSpritePath;
 
     this.previewImageAlwaysOn = true;
 
@@ -189,7 +185,6 @@ class Puzzly {
     ];
 
     const assets = [this.previewImage, this.puzzleImage];
-    console.log("assets", assets);
 
     this.loadAssets(assets).then(() => {
       this.init();
@@ -197,8 +192,6 @@ class Puzzly {
   }
 
   init() {
-    console.log(this);
-
     this.zoomLevel = 1;
 
     this.boardHeight = this.boardWidth = this.boardSize;
@@ -267,8 +260,8 @@ class Puzzly {
 
       if (Object.keys(this.groups).length) {
         for (let g in this.groups) {
-          // const elements = this.getPiecesInGroup(g);
-          // this.drawPiecesIntoGroup(g, elements);
+          const elements = this.getPiecesInGroup(g);
+          this.drawPiecesIntoGroup(g, elements);
         }
       }
 
@@ -690,7 +683,6 @@ class Puzzly {
   }
 
   renderJigsawPiece(piece) {
-    console.log("rendering piece");
     let el, fgEl, bgEl;
 
     const solvedCnvContainer = document.getElementById("group-container-1111");
@@ -724,6 +716,8 @@ class Puzzly {
     el.setAttribute("data-pageY", piece.pageY);
     el.setAttribute("data-spriteX", piece.spriteX);
     el.setAttribute("data-spriteY", piece.spriteY);
+    el.setAttribute("data-spriteshadowx", piece.spriteShadowX);
+    el.setAttribute("data-spriteshadowy", piece.spriteShadowY);
     el.setAttribute("data-imgW", piece.imgW);
     el.setAttribute("data-imgH", piece.imgH);
     el.setAttribute("data-is-inner-piece", piece.isInnerPiece);
@@ -1041,8 +1035,6 @@ class Puzzly {
   }
 
   handleDrop(element) {
-    element = element.nodeName === "svg" ? element.parentNode : element;
-
     if (!this.dragAndSelectActive) {
       const connection = this.checkConnections(element);
       console.log(connection);
@@ -2080,10 +2072,8 @@ class Puzzly {
     const tolerance = this.connectorTolerance;
     let box;
 
-    // console.log("connectorsize", this.connectorSize)
-    // console.log("tolerance setting", this.connectorTolerance)
-    // console.log("percentage of", this.connectorSize / 100 * this.connectorTolerance)
-    // console.log("tolerance", tolerance, "tolerance", tolerance)
+    console.log("connectorsize", this.connectorSize);
+    console.log("tolerance setting", this.connectorTolerance);
 
     const topBoundary = hasTopPlug
       ? this.connectorDistanceFromCorner + this.connectorSize
@@ -2496,7 +2486,6 @@ class Puzzly {
 
   checkConnections(element) {
     let connectionFound;
-    // console.log("checking connec")
 
     // checker
     let containerBoundingBox,
@@ -2521,6 +2510,8 @@ class Puzzly {
       type: this.getType(element),
       connections,
     };
+
+    console.log("piece data", piece);
 
     const hasRightConnector =
       Utils.has(piece.type, "plug", "right") ||
@@ -2671,7 +2662,11 @@ class Puzzly {
           );
         }
 
-        // console.log('checking right', thisPieceConnectorBoundingBoxRight, targetPieceConnectorBoundingBox)
+        console.log(
+          "checking right",
+          thisPieceConnectorBoundingBoxRight,
+          targetPieceConnectorBoundingBox
+        );
         if (
           Utils.hasCollision(
             thisPieceConnectorBoundingBoxRight,
@@ -2730,7 +2725,11 @@ class Puzzly {
             "top"
           );
         }
-        // console.log('checking bottom', thisPieceConnectorBoundingBoxBottom, targetPieceConnectorBoundingBox)
+        console.log(
+          "checking bottom",
+          thisPieceConnectorBoundingBoxBottom,
+          targetPieceConnectorBoundingBox
+        );
         if (
           Utils.hasCollision(
             thisPieceConnectorBoundingBoxBottom,
@@ -2789,7 +2788,11 @@ class Puzzly {
           );
         }
 
-        // console.log('checking left', thisPieceConnectorBoundingBoxLeft, targetPieceConnectorBoundingBox)
+        console.log(
+          "checking left",
+          thisPieceConnectorBoundingBoxLeft,
+          targetPieceConnectorBoundingBox
+        );
         if (
           Utils.hasCollision(
             thisPieceConnectorBoundingBoxLeft,
@@ -2849,7 +2852,11 @@ class Puzzly {
           );
         }
 
-        // console.log('checking top', thisPieceConnectorBoundingBoxTop, targetPieceConnectorBoundingBox)
+        console.log(
+          "checking top",
+          thisPieceConnectorBoundingBoxTop,
+          targetPieceConnectorBoundingBox
+        );
         if (
           Utils.hasCollision(
             thisPieceConnectorBoundingBoxTop,
@@ -3043,6 +3050,17 @@ class Puzzly {
     return value + "px";
   }
 
+  makeCanvas(id, width = this.boardWidth, height = this.boardHeight) {
+    const el = document.createElement("canvas");
+    el.id = id;
+    el.width = width;
+    el.height = height;
+    el.style.width = width + "px";
+    el.style.height = height + "px";
+    el.style.pointerEvents = "none";
+    return el;
+  }
+
   drawPiecesIntoGroup(groupId, pieces) {
     const cnv = document.querySelector(`#group-canvas-${groupId}`);
     const ctx = cnv.getContext("2d");
@@ -3051,7 +3069,17 @@ class Puzzly {
     pieces.forEach((p) => {
       const data = p.dataset;
 
-      // ctx.drawImage(this.shadowSprite, data.spritex, data.spritey, data.imgw, data.imgh, parseInt(data.solvedx) + this.shadowOffset, parseInt(data.solvedy) + this.shadowOffset, data.imgw, data.imgh);
+      ctx.drawImage(
+        this.puzzleImage,
+        data.spriteshadowx,
+        data.spriteshadowy,
+        data.imgw,
+        data.imgh,
+        parseInt(data.solvedx) + this.shadowOffset,
+        parseInt(data.solvedy) + this.shadowOffset,
+        data.imgw,
+        data.imgh
+      );
 
       if (p instanceof HTMLDivElement) {
         p.childNodes.forEach((n) => (n.style.visibility = "hidden"));
@@ -3063,8 +3091,6 @@ class Puzzly {
 
     pieces.forEach((p) => {
       const data = p.dataset;
-      console.log("drawing to group canvas", data);
-      // salmon
       ctx.drawImage(
         this.puzzleImage,
         data.spritex,
@@ -3155,7 +3181,6 @@ class Puzzly {
 
   createGroup(elementA, elementB) {
     const groupId = new Date().getTime();
-    //salmon
     const container = this.createGroupContainer(elementA, elementB, groupId);
     this.setElementAttribute(elementA, "data-group", groupId);
     this.setElementAttribute(elementB, "data-group", groupId);
@@ -3176,10 +3201,15 @@ class Puzzly {
       this.setElementAttribute(container, "data-is-solved", true);
     }
 
-    container.append;
+    const canvasId = `group-canvas-${groupId}`;
+    const newCanvas = this.makeCanvas(canvasId);
 
-    // this.drawPiecesIntoGroup(groupId, [elementA, elementB]);
-    // this.save([elementA, elementB]);
+    container.appendChild(newCanvas);
+    container.appendChild(elementA);
+    container.appendChild(elementB);
+
+    this.drawPiecesIntoGroup(groupId, [elementA, elementB]);
+    this.save([elementA, elementB]);
 
     return {
       groupId,
@@ -3282,16 +3312,10 @@ class Puzzly {
     // Re-draw group with new piece
     const elementsInTargetGroup = this.getPiecesInGroup(group);
     const allPieces = [...elementsInTargetGroup, ...followingEls];
-    // this.drawPiecesIntoGroup(group, allPieces);
+    this.drawPiecesIntoGroup(group, allPieces);
 
     // Update all connections
     this.updateConnections(group);
-  }
-
-  readyCanvas(group) {
-    const cnv = document.querySelector(`#group-canvas-${group}`);
-    const ctx = cnv.getContext("2d");
-    ctx.restore();
   }
 
   mergeGroups(pieceA, pieceB) {
@@ -3320,7 +3344,7 @@ class Puzzly {
     this.fullImageViewerEl.style.top = this.boardTop + "px";
     this.fullImageViewerEl.style.width = this.boardWidth + "px";
     this.fullImageViewerEl.style.height = this.boardHeight + "px";
-    this.fullImageViewerEl.style.background = `url(${this.puzzleImgPath}) no-repeat`;
+    this.fullImageViewerEl.style.background = `url(${this.previewImage.src}) no-repeat`;
 
     if (this.imagePreviewType === "alwaysOn") {
       this.fullImageViewerEl.style.opacity = 0.2;
