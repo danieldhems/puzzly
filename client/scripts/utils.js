@@ -1,3 +1,5 @@
+import { PUZZLE_PIECE_CLASSES } from "./constants.js";
+
 const Utils = {
   hasCollision(source, target, sourceEl, targetEl) {
     if (
@@ -370,8 +372,7 @@ const Utils = {
   isPuzzlePiece(target) {
     const classes = target.classList;
     return (
-      (classes.contains("puzzle-piece") ||
-        classes.contains("puzzle-piece-fg")) &&
+      PUZZLE_PIECE_CLASSES.some((c) => classes.contains(c)) &&
       !classes.contains("in-pocket")
     );
   },

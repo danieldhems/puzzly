@@ -3053,10 +3053,19 @@ class Puzzly {
   makeCanvas(id, width = this.boardWidth, height = this.boardHeight) {
     const el = document.createElement("canvas");
     el.id = id;
-    el.width = width;
-    el.height = height;
-    el.style.width = width + "px";
-    el.style.height = height + "px";
+
+    const widthWithShadowOffset = width + this.shadowOffset;
+    const heightWithShadowOffset = height + this.shadowOffset;
+
+    // Include the shadow offset in the canvas' width and height, else its drawing coordinates won't match the alignment of the pieces
+    el.width = widthWithShadowOffset;
+    el.height = heightWithShadowOffset;
+
+    el.style.width = this.getPxString(widthWithShadowOffset);
+    el.style.height = this.getPxString(heightWithShadowOffset);
+    el.style.position = "absolute";
+    el.style.top = 0;
+    el.style.left = 0;
     el.style.pointerEvents = "none";
     return el;
   }
@@ -3064,7 +3073,7 @@ class Puzzly {
   drawPiecesIntoGroup(groupId, pieces) {
     const cnv = document.querySelector(`#group-canvas-${groupId}`);
     const ctx = cnv.getContext("2d");
-    ctx.imageSmoothingEnabled = false;
+    // ctx.imageSmoothingEnabled = false;
 
     pieces.forEach((p) => {
       const data = p.dataset;
@@ -3143,6 +3152,8 @@ class Puzzly {
 
     container.style.top = this.getPxString(topPos);
     container.style.left = this.getPxString(leftPos);
+    container.style.width = this.getPxString(this.boardWidth);
+    container.style.height = this.getPxString(this.boardHeight);
 
     container.appendChild(pieceAEl);
     container.appendChild(pieceBEl);
@@ -3156,27 +3167,6 @@ class Puzzly {
     this.canvas.appendChild(container);
 
     return container;
-  }
-
-  setPiecePositionsWithinContainer(arg) {
-    const updateFn = (el) => {
-      const pos = this.getElementBoundingBoxRelativeToTopContainer(el);
-      this.setElementAttribute(
-        el,
-        "data-position-within-container-top",
-        pos.top
-      );
-      this.setElementAttribute(
-        el,
-        "data-position-within-container-left",
-        pos.left
-      );
-    };
-    if (arg instanceof Array) {
-      arg.forEach(updateFn);
-    } else {
-      updateFn(arg);
-    }
   }
 
   createGroup(elementA, elementB) {
