@@ -207,7 +207,8 @@ class Puzzly {
       height: this.boardHeight,
     };
 
-    this.shadowOffset = 3;
+    this.shadowOffsetRatio = 0.01;
+    this.shadowOffset = this.pieceSize * this.shadowOffsetRatio;
 
     this.connectorToleranceAmount = 40;
     this.connectorTolerance =
@@ -532,7 +533,7 @@ class Puzzly {
       }
 
       // Minus key
-      if (event.which === 189 && canZoomOut) {
+      if (event.which === 189) {
         this.zoomLevel -= ZOOM_INTERVAL;
       }
 

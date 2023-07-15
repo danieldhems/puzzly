@@ -174,7 +174,7 @@ class PuzzlyCreator {
   }
 
   onUploadSuccess(response) {
-    // console.log('onUploadSuccess', response)
+    console.log("onUploadSuccess", response);
 
     if (response.data) {
       this.imagePreviewEl.style.display = "flex";
@@ -610,10 +610,19 @@ class PuzzlyCreator {
       originalImageSize: this.sourceImage.dimensions,
     };
 
-    const generator = await PuzzleGenerator(
-      this.sourceImage.fullSizePath,
-      puzzleData
-    );
+    const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {
+      body: JSON.stringify(puzzleData),
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+    });
+
+    const { puzzleImagePath } = await makePuzzleImageResponse.json();
+
+    console.log("puzzle image path result", puzzleImagePath);
+
+    const generator = await PuzzleGenerator(puzzleImagePath, puzzleData);
 
     const { spriteEncodedString, pieces, config } =
       await generator.generateDataForPuzzlePieces();

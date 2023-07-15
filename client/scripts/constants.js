@@ -22,3 +22,5 @@ export const PuzzleSizes = [
 ];
 
 export const PUZZLE_PIECE_CLASSES = ["puzzle-piece", "puzzle-piece-fg"];
+
+export const PIECE_SIZE = 50;

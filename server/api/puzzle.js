@@ -4,7 +4,6 @@ var router = require("express").Router();
 const MongoClient = require("mongodb").MongoClient;
 const ObjectID = require("mongodb").ObjectID;
 const assert = require("assert");
-var Sharp = require("sharp");
 const fs = require("fs");
 
 // Connection URL
@@ -43,13 +42,13 @@ var api = {
       const piecesColl = db.collection(piecesCollection);
 
       const data = req.body;
+
       // console.log("create", data);
       data.numberOfSolvedPieces = 0;
       data.dateCreated = new Date();
       data.elapsedTime = 0;
 
       const timeStamp = new Date().getMilliseconds();
-
       const imageNameWithoutExt = data.imageName.split(".")[0];
 
       // These are the paths we want the sprites to be created at - they're uploaded by the client in base64
@@ -62,14 +61,10 @@ var api = {
         timeStamp +
         ".png";
 
-      const puzzleImgPath = `./uploads/puzzle_${data.imageName}`;
-
       var base64Data = data.spriteEncodedString.replace(
         /^data:image\/png;base64,/,
         ""
       );
-
-      let img;
 
       try {
         // Save to disk the puzzle sprite that the client has produced
@@ -77,23 +72,6 @@ var api = {
           if (err) {
             console.log("fs error", err);
           }
-
-          // Create the resized and cropped puzzle preview image from the uploaded source image
-          img = Sharp(data.fullSizePath);
-
-          const imgMetadata = await img.metadata();
-          const { width: origW, height: origH } = imgMetadata;
-          const opts = {
-            left: Math.floor((origW / 100) * data.leftOffsetPercentage),
-            top: Math.floor((origH / 100) * data.topOffsetPercentage),
-            width: Math.floor((origW / 100) * data.widthPercentage),
-            height: Math.floor((origH / 100) * data.heightPercentage),
-          };
-
-          img.extract(opts);
-          img.resize(data.boardSize, data.boardSize);
-
-          await img.toFile(puzzleImgPath);
         });
       } catch (e) {
         console.log("Error!", e);
@@ -103,7 +81,6 @@ var api = {
 
       const dbPayload = {
         ...data,
-        puzzleImgPath,
         spritePath,
       };
 

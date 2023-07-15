@@ -1,5 +1,5 @@
 class JigsawPath {
-  constructor({ pieceSize, connectorSize, strokeWidth }) {
+  constructor(pieceSize, connectorSize) {
     this.pieceSize = pieceSize;
     this.connectorSize = connectorSize;
     this.humpSize = parseInt((this.connectorSize * 1.2).toFixed());
