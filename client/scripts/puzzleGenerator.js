@@ -2,10 +2,15 @@ import { PIECE_SIZE } from "./constants.js";
 import jigsawPath from "./jigsawPath.js";
 import Utils from "./utils.js";
 
+// How big the connectors should be (how far they stick of from the piece's body), expressed as a percentage of the body of the piece
 const CONNECTOR_SIZE_PERC = 30;
+// How far in from the corner the connector should be.
+// This may need to be re-addressed when we approach wild shapes as we may prefer to randomise this.
 const SHOULDER_SIZE_PERC = 35;
+const SHADOW_COLOR = "#000";
+const STROKE_STYLE = "#000";
 
-const GeneratorConfig = {
+const Generator = {
   connectorRatio: null,
   piecesPerSideHorizontal: null,
   piecesPerSideVertical: null,
@@ -16,68 +21,60 @@ const GeneratorConfig = {
   connectorLateralControlPointDistance: null,
   largestPieceSpan: null,
   strokeWidth: 1,
-  shadowColor: "#000",
-  strokeStyle: "#000",
+  shadowColor: SHADOW_COLOR,
+  strokeStyle: STROKE_STYLE,
 };
 
 const PuzzleGenerator = async function (imagePath, puzzleConfig) {
-  GeneratorConfig.debugOptions = puzzleConfig.debugOptions;
-  GeneratorConfig.image = await loadImage(imagePath);
+  Generator.debugOptions = puzzleConfig.debugOptions;
+  Generator.image = await loadImage(imagePath);
 
-  GeneratorConfig.spritePath = puzzleConfig.spritePath;
+  Generator.spritePath = puzzleConfig.spritePath;
 
-  GeneratorConfig.piecesPerSideHorizontal = Math.sqrt(
-    puzzleConfig.selectedNumPieces
-  );
-  GeneratorConfig.piecesPerSideVertical = Math.sqrt(
-    puzzleConfig.selectedNumPieces
-  );
-  GeneratorConfig.selectedNumberOfPieces = puzzleConfig.selectedNumPieces;
+  Generator.piecesPerSideHorizontal = Math.sqrt(puzzleConfig.selectedNumPieces);
+  Generator.piecesPerSideVertical = Math.sqrt(puzzleConfig.selectedNumPieces);
+  Generator.selectedNumberOfPieces = puzzleConfig.selectedNumPieces;
 
-  GeneratorConfig.actualPieceSizeBasedOnBoardSize = Math.floor(
-    puzzleConfig.boardSize / GeneratorConfig.piecesPerSideHorizontal
+  Generator.actualPieceSizeBasedOnBoardSize = Math.floor(
+    puzzleConfig.boardSize / Generator.piecesPerSideHorizontal
   );
 
-  GeneratorConfig.isPieceSizeScaled =
-    GeneratorConfig.actualPieceSizeBasedOnBoardSize < PIECE_SIZE;
-  GeneratorConfig.pieceSize = GeneratorConfig.isPieceSizeScaled
+  Generator.isPieceSizeScaled =
+    Generator.actualPieceSizeBasedOnBoardSize < PIECE_SIZE;
+  Generator.pieceSize = Generator.isPieceSizeScaled
     ? PIECE_SIZE
-    : GeneratorConfig.actualPieceSizeBasedOnBoardSize;
+    : Generator.actualPieceSizeBasedOnBoardSize;
 
-  GeneratorConfig.totalWidth =
-    GeneratorConfig.piecesPerSideHorizontal * GeneratorConfig.pieceSize;
-  GeneratorConfig.totalHeight =
-    GeneratorConfig.piecesPerSideVertical * GeneratorConfig.pieceSize;
+  Generator.totalWidth =
+    Generator.piecesPerSideHorizontal * Generator.pieceSize;
+  Generator.totalHeight = Generator.piecesPerSideVertical * Generator.pieceSize;
 
-  GeneratorConfig.strokeWidth = puzzleConfig.strokeWidth;
+  Generator.strokeWidth = puzzleConfig.strokeWidth;
 
-  GeneratorConfig.stageWidth = puzzleConfig.stageWidth;
-  GeneratorConfig.stageHeight = puzzleConfig.stageHeight;
+  Generator.stageWidth = puzzleConfig.stageWidth;
+  Generator.stageHeight = puzzleConfig.stageHeight;
 
-  GeneratorConfig.connectorDistanceFromCorner =
-    (GeneratorConfig.pieceSize / 100) * SHOULDER_SIZE_PERC;
+  Generator.connectorDistanceFromCorner =
+    (Generator.pieceSize / 100) * SHOULDER_SIZE_PERC;
 
-  GeneratorConfig.actualConnectorSize = Math.floor(
-    (GeneratorConfig.actualPieceSizeBasedOnBoardSize / 100) *
-      CONNECTOR_SIZE_PERC
+  Generator.actualConnectorSize = Math.floor(
+    (Generator.actualPieceSizeBasedOnBoardSize / 100) * CONNECTOR_SIZE_PERC
   );
 
-  GeneratorConfig.scaledConnectorSize = Math.floor(
-    (GeneratorConfig.pieceSize / 100) * CONNECTOR_SIZE_PERC
+  Generator.scaledConnectorSize = Math.floor(
+    (Generator.pieceSize / 100) * CONNECTOR_SIZE_PERC
   );
 
-  GeneratorConfig.largestPieceSpan =
-    GeneratorConfig.pieceSize + GeneratorConfig.scaledConnectorSize * 2;
+  Generator.largestPieceSpan =
+    Generator.pieceSize + Generator.scaledConnectorSize * 2;
 
-  GeneratorConfig.spriteSpacing =
-    GeneratorConfig.piecesPerSideVertical *
-    GeneratorConfig.largestPieceSpan *
-    1.1;
+  Generator.spriteSpacing =
+    Generator.piecesPerSideVertical * Generator.largestPieceSpan * 1.1;
 
-  console.log("GeneratorConfig", GeneratorConfig);
+  console.log("Generator", Generator);
 
   return {
-    ...GeneratorConfig,
+    ...Generator,
     generateDataForPuzzlePieces,
     drawJigsawShape,
   };
@@ -115,8 +112,8 @@ const generateDataForPuzzlePieces = async (puzzleId) => {
   let finalRow = false;
 
   const cnv = createCanvas(
-    GeneratorConfig.spriteSpacing,
-    GeneratorConfig.spriteSpacing * 2
+    Generator.spriteSpacing,
+    Generator.spriteSpacing * 2
   );
   const ctx = cnv.getContext("2d");
   ctx.webkitImageSmoothingEnabled = true;
@@ -124,22 +121,22 @@ const generateDataForPuzzlePieces = async (puzzleId) => {
   while (!done) {
     let currentPiece = {};
     // All pieces not on top row
-    if (pieces.length >= GeneratorConfig.piecesPerSideHorizontal) {
+    if (pieces.length >= Generator.piecesPerSideHorizontal) {
       adjacentPieceAbove =
-        pieces[pieces.length - GeneratorConfig.piecesPerSideHorizontal];
+        pieces[pieces.length - Generator.piecesPerSideHorizontal];
     }
 
     // Last piece in row, next piece should be a corner or right side
     if (
       pieces.length > 1 &&
-      pieces.length % (GeneratorConfig.piecesPerSideHorizontal - 1) === 0
+      pieces.length % (Generator.piecesPerSideHorizontal - 1) === 0
     ) {
       endOfRow = true;
     } else {
       endOfRow = false;
     }
 
-    if (rowCount === GeneratorConfig.piecesPerSideVertical) {
+    if (rowCount === Generator.piecesPerSideVertical) {
       finalRow = true;
     }
 
@@ -179,16 +176,16 @@ const generateDataForPuzzlePieces = async (puzzleId) => {
     await createPuzzlePiece(currentPiece, ctx);
 
     // reached last piece, start next row
-    if (pieces.length % GeneratorConfig.piecesPerSideHorizontal === 0) {
+    if (pieces.length % Generator.piecesPerSideHorizontal === 0) {
       curImgX = 0;
 
       const firstPieceOnRowAbove =
-        pieces[pieces.length - GeneratorConfig.piecesPerSideHorizontal];
+        pieces[pieces.length - Generator.piecesPerSideHorizontal];
 
       curImgY =
         firstPieceOnRowAbove.imgY +
         firstPieceOnRowAbove.imgH -
-        GeneratorConfig.actualConnectorSize;
+        Generator.actualConnectorSize;
 
       numPiecesFromLeftEdge = 0;
       numPiecesFromTopEdge++;
@@ -197,25 +194,25 @@ const generateDataForPuzzlePieces = async (puzzleId) => {
     } else {
       if (rowCount > 1) {
         const nextPieceAbove =
-          pieces[pieces.length - GeneratorConfig.piecesPerSideHorizontal];
+          pieces[pieces.length - Generator.piecesPerSideHorizontal];
 
         if (
           Utils.has(currentPiece.type, "plug", "top") &&
           Utils.has(nextPieceAbove.type, "plug", "bottom")
         ) {
-          curImgY += GeneratorConfig.actualConnectorSize;
+          curImgY += Generator.actualConnectorSize;
         } else if (
           Utils.has(currentPiece.type, "socket", "top") &&
           Utils.has(nextPieceAbove.type, "socket", "bottom")
         ) {
-          curImgY -= GeneratorConfig.actualConnectorSize;
+          curImgY -= Generator.actualConnectorSize;
         }
       }
 
       if (Utils.has(currentPiece.type, "socket", "right")) {
-        curImgX += currentPiece.imgW - GeneratorConfig.actualConnectorSize;
+        curImgX += currentPiece.imgW - Generator.actualConnectorSize;
       } else if (Utils.has(currentPiece.type, "plug", "right")) {
-        curImgX += currentPiece.imgW - GeneratorConfig.actualConnectorSize;
+        curImgX += currentPiece.imgW - Generator.actualConnectorSize;
       }
 
       numPiecesFromLeftEdge++;
@@ -223,17 +220,17 @@ const generateDataForPuzzlePieces = async (puzzleId) => {
 
     i++;
 
-    if (i >= GeneratorConfig.selectedNumberOfPieces) {
+    if (i >= Generator.selectedNumberOfPieces) {
       done = true;
     }
   }
 
-  // writeToPngFile(cnv, GeneratorConfig.spritePath);
+  // writeToPngFile(cnv, Generator.spritePath);
 
   return {
     spriteEncodedString: cnv.toDataURL(),
     pieces,
-    config: GeneratorConfig,
+    config: Generator,
   };
 };
 
@@ -254,7 +251,7 @@ const createPuzzlePiece = async (data, ctxForSprite) => {
 
   const { path: pathString } = drawJigsawShape(data);
 
-  shdCtx.fillStyle = GeneratorConfig.shadowColor;
+  shdCtx.fillStyle = Generator.shadowColor;
   const path = new Path2D(pathString);
   shdCtx.fill(path);
 
@@ -273,15 +270,15 @@ const createPuzzlePiece = async (data, ctxForSprite) => {
   const tmpCnv = createCanvas(data.pieceWidth, data.pieceHeight);
   const tmpCtx = tmpCnv.getContext("2d");
 
-  tmpCtx.strokeStyle = GeneratorConfig.strokeStyle;
-  tmpCtx.lineWidth = GeneratorConfig.strokeWidth;
+  tmpCtx.strokeStyle = Generator.strokeStyle;
+  tmpCtx.lineWidth = Generator.strokeWidth;
   tmpCnv.width = data.pieceWidth;
   tmpCnv.height = data.pieceHeight;
 
   const p = new Path2D(pathString);
   tmpCtx.clip(p);
   tmpCtx.drawImage(
-    GeneratorConfig.image,
+    Generator.image,
     data.imgX,
     data.imgY,
     data.imgW,
@@ -299,27 +296,27 @@ const createPuzzlePiece = async (data, ctxForSprite) => {
 };
 
 const getPieceWidthAndHeightWithConnectors = (piece) => {
-  let scaledWidth = GeneratorConfig.pieceSize;
-  let scaledHeight = GeneratorConfig.pieceSize;
-  let actualWidth = GeneratorConfig.actualPieceSizeBasedOnBoardSize;
-  let actualHeight = GeneratorConfig.actualPieceSizeBasedOnBoardSize;
+  let scaledWidth = Generator.pieceSize;
+  let scaledHeight = Generator.pieceSize;
+  let actualWidth = Generator.actualPieceSizeBasedOnBoardSize;
+  let actualHeight = Generator.actualPieceSizeBasedOnBoardSize;
 
   if (Utils.has(piece.type, "plug", "left")) {
-    actualWidth += GeneratorConfig.actualConnectorSize;
-    scaledWidth += GeneratorConfig.scaledConnectorSize;
+    actualWidth += Generator.actualConnectorSize;
+    scaledWidth += Generator.scaledConnectorSize;
   }
   if (Utils.has(piece.type, "plug", "right")) {
-    actualWidth += GeneratorConfig.actualConnectorSize;
-    scaledWidth += GeneratorConfig.scaledConnectorSize;
+    actualWidth += Generator.actualConnectorSize;
+    scaledWidth += Generator.scaledConnectorSize;
   }
 
   if (Utils.has(piece.type, "plug", "top")) {
-    actualHeight += GeneratorConfig.actualConnectorSize;
-    scaledHeight += GeneratorConfig.scaledConnectorSize;
+    actualHeight += Generator.actualConnectorSize;
+    scaledHeight += Generator.scaledConnectorSize;
   }
   if (Utils.has(piece.type, "plug", "bottom")) {
-    actualHeight += GeneratorConfig.actualConnectorSize;
-    scaledHeight += GeneratorConfig.scaledConnectorSize;
+    actualHeight += Generator.actualConnectorSize;
+    scaledHeight += Generator.scaledConnectorSize;
   }
 
   return {
@@ -451,22 +448,18 @@ const assignInitialPieceData = (
     getPieceWidthAndHeightWithConnectors(piece);
 
   const piecePositionOnSprite = {
-    x: Math.floor(
-      GeneratorConfig.largestPieceSpan * 1.1 * numPiecesFromLeftEdge
-    ),
-    y: Math.floor(
-      GeneratorConfig.largestPieceSpan * 1.1 * numPiecesFromTopEdge
-    ),
+    x: Math.floor(Generator.largestPieceSpan * 1.1 * numPiecesFromLeftEdge),
+    y: Math.floor(Generator.largestPieceSpan * 1.1 * numPiecesFromTopEdge),
   };
 
   const rightLimit =
-    GeneratorConfig.stageWidth -
-    GeneratorConfig.largestPieceSpan -
-    GeneratorConfig.stageWidth / 100;
+    Generator.stageWidth -
+    Generator.largestPieceSpan -
+    Generator.stageWidth / 100;
   const bottomLimit =
-    GeneratorConfig.stageHeight -
-    GeneratorConfig.largestPieceSpan -
-    GeneratorConfig.stageHeight / 100;
+    Generator.stageHeight -
+    Generator.largestPieceSpan -
+    Generator.stageHeight / 100;
 
   const randPos = {
     x: getRandomInt(1, rightLimit),
@@ -482,20 +475,20 @@ const assignInitialPieceData = (
       spriteX: piecePositionOnSprite.x,
       spriteY: piecePositionOnSprite.y,
       spriteShadowX: piecePositionOnSprite.x,
-      spriteShadowY: piecePositionOnSprite.y + GeneratorConfig.spriteSpacing,
-      pageX: GeneratorConfig.debugOptions.noDispersal
+      spriteShadowY: piecePositionOnSprite.y + Generator.spriteSpacing,
+      pageX: Generator.debugOptions.noDispersal
         ? piecePositionOnSprite.x
         : randPos.x,
-      pageY: GeneratorConfig.debugOptions.noDispersal
+      pageY: Generator.debugOptions.noDispersal
         ? piecePositionOnSprite.y
         : randPos.y,
       imgW: Math.floor(actualWidth),
       imgH: Math.floor(actualHeight),
       pieceWidth: Math.floor(
-        GeneratorConfig.isPieceSizeScaled ? scaledWidth : actualWidth
+        Generator.isPieceSizeScaled ? scaledWidth : actualWidth
       ),
       pieceHeight: Math.floor(
-        GeneratorConfig.isPieceSizeScaled ? scaledHeight : actualHeight
+        Generator.isPieceSizeScaled ? scaledHeight : actualHeight
       ),
       solvedX: imgX,
       solvedY: imgY,
@@ -533,8 +526,8 @@ const drawJigsawShape = (piece) => {
   const hasTopPlug = Utils.has(piece.type, "plug", "top");
   const hasLeftPlug = Utils.has(piece.type, "plug", "left");
 
-  let topBoundary = hasTopPlug ? y + GeneratorConfig.scaledConnectorSize : y;
-  let leftBoundary = hasLeftPlug ? x + GeneratorConfig.scaledConnectorSize : x;
+  let topBoundary = hasTopPlug ? y + Generator.scaledConnectorSize : y;
+  let leftBoundary = hasLeftPlug ? x + Generator.scaledConnectorSize : x;
 
   let topConnector = null,
     rightConnector = null,
@@ -542,8 +535,8 @@ const drawJigsawShape = (piece) => {
     leftConnector = null;
 
   const jigsawShapes = new jigsawPath(
-    GeneratorConfig.pieceSize,
-    GeneratorConfig.scaledConnectorSize
+    Generator.pieceSize,
+    Generator.scaledConnectorSize
   );
 
   const getRotatedConnector = jigsawShapes.getRotatedConnector;
@@ -555,14 +548,14 @@ const drawJigsawShape = (piece) => {
   } else if (Utils.has(piece.type, "socket", "top")) {
     topConnector = getRotatedConnector(jigsawShapes.getSocket(), 0);
   }
-  console.log(GeneratorConfig.connectorDistanceFromCorner);
+  console.log(Generator.connectorDistanceFromCorner);
 
   if (topConnector) {
-    svgString += `h ${GeneratorConfig.connectorDistanceFromCorner} `;
+    svgString += `h ${Generator.connectorDistanceFromCorner} `;
     svgString += `c ${topConnector.cp1.x} ${topConnector.cp1.y}, ${topConnector.cp2.x} ${topConnector.cp2.y}, ${topConnector.dest.x} ${topConnector.dest.y} `;
-    svgString += `h ${GeneratorConfig.connectorDistanceFromCorner} `;
+    svgString += `h ${Generator.connectorDistanceFromCorner} `;
   } else {
-    svgString += `h ${GeneratorConfig.pieceSize} `;
+    svgString += `h ${Generator.pieceSize} `;
   }
 
   if (Utils.has(piece.type, "plug", "right")) {
@@ -572,11 +565,11 @@ const drawJigsawShape = (piece) => {
   }
 
   if (rightConnector !== null) {
-    svgString += `v ${GeneratorConfig.connectorDistanceFromCorner} `;
+    svgString += `v ${Generator.connectorDistanceFromCorner} `;
     svgString += `c ${rightConnector.cp1.x} ${rightConnector.cp1.y}, ${rightConnector.cp2.x} ${rightConnector.cp2.y}, ${rightConnector.dest.x} ${rightConnector.dest.y} `;
-    svgString += `v ${GeneratorConfig.connectorDistanceFromCorner} `;
+    svgString += `v ${Generator.connectorDistanceFromCorner} `;
   } else {
-    svgString += `v ${GeneratorConfig.pieceSize} `;
+    svgString += `v ${Generator.pieceSize} `;
   }
 
   if (Utils.has(piece.type, "plug", "bottom")) {
@@ -586,11 +579,11 @@ const drawJigsawShape = (piece) => {
   }
 
   if (bottomConnector) {
-    svgString += `h -${GeneratorConfig.connectorDistanceFromCorner} `;
+    svgString += `h -${Generator.connectorDistanceFromCorner} `;
     svgString += `c ${bottomConnector.cp1.x} ${bottomConnector.cp1.y}, ${bottomConnector.cp2.x} ${bottomConnector.cp2.y}, ${bottomConnector.dest.x} ${bottomConnector.dest.y} `;
-    svgString += `h -${GeneratorConfig.connectorDistanceFromCorner} `;
+    svgString += `h -${Generator.connectorDistanceFromCorner} `;
   } else {
-    svgString += `h -${GeneratorConfig.pieceSize} `;
+    svgString += `h -${Generator.pieceSize} `;
   }
 
   if (Utils.has(piece.type, "plug", "left")) {
@@ -600,7 +593,7 @@ const drawJigsawShape = (piece) => {
   }
 
   if (leftConnector !== null) {
-    svgString += `v -${GeneratorConfig.connectorDistanceFromCorner} `;
+    svgString += `v -${Generator.connectorDistanceFromCorner} `;
     svgString += `c ${leftConnector.cp1.x} ${leftConnector.cp1.y}, ${leftConnector.cp2.x} ${leftConnector.cp2.y}, ${leftConnector.dest.x} ${leftConnector.dest.y} `;
   }
 

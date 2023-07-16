@@ -1,11 +1,10 @@
-import { PuzzleSizes } from "./constants.js";
-import Utils from "./utils.js";
+import { PuzzleSizes, PIECE_SIZE } from "./constants.js";
 import PuzzleGenerator from "./puzzleGenerator.js";
+import Utils from "./utils.js";
 
 class PuzzlyCreator {
   constructor() {
     this.sourceImage = {
-      path: null,
       dimensions: {},
     };
 
@@ -597,6 +596,18 @@ class PuzzlyCreator {
   }
 
   async createPuzzle() {
+    const piecesPerSideHorizontal = Math.sqrt(this.selectedNumPieces);
+    const piecesPerSideVertical = Math.sqrt(this.selectedNumPieces);
+
+    const actualPieceSizeBasedOnBoardSize = Math.floor(
+      this.boardSize / piecesPerSideHorizontal
+    );
+
+    const sanitisedPieceSize = Math.max(
+      actualPieceSizeBasedOnBoardSize,
+      PIECE_SIZE
+    );
+
     const puzzleData = {
       ...this.sourceImage,
       ...this.crop,
@@ -606,8 +617,8 @@ class PuzzlyCreator {
       debugOptions: this.debugOptions,
       selectedNumPieces: this.selectedNumPieces,
       imagePreviewType: this.imagePreviewType,
-      boardSize: this.boardSize,
       originalImageSize: this.sourceImage.dimensions,
+      boardSize: sanitisedPieceSize * piecesPerSideHorizontal,
     };
 
     const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {
@@ -650,10 +661,9 @@ class PuzzlyCreator {
 
           this.newPuzzleForm.style.display = "none";
 
-          puzzleData.boardSize = this.boardSize;
           puzzleData.pieces = response.pieces;
           puzzleData.spritePath = response.spritePath;
-          puzzleData.puzzleImgPath = response.puzzleImgPath;
+          puzzleData.previewPath = response.previewPath;
 
           new Puzzly("canvas", puzzleId, puzzleData);
         }.bind(this)

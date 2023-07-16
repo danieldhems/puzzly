@@ -7,6 +7,7 @@ async function makeImage(data, puzzleImgPath) {
 
   const imgMetadata = await img.metadata();
   const { width: origW, height: origH } = imgMetadata;
+
   const opts = {
     left: Math.floor((origW / 100) * data.leftOffsetPercentage),
     top: Math.floor((origH / 100) * data.topOffsetPercentage),
@@ -15,7 +16,12 @@ async function makeImage(data, puzzleImgPath) {
   };
 
   img.extract(opts);
-  img.resize(data.boardSize, data.boardSize);
+
+  const isSquare = origW === origH;
+  const resizeWidth = isSquare ? origW : origW < origH ? origW : origH;
+  const resizeHeight = isSquare ? origH : origH < origW ? origH : origW;
+
+  img.resize(resizeWidth, resizeHeight);
 
   await img.toFile(puzzleImgPath);
 
@@ -27,7 +33,7 @@ async function main(req, res) {
 
   const puzzleImgPath = `./uploads/puzzle_${data.imageName}`;
   const puzzleImagePath = await makeImage(data, puzzleImgPath);
-  console.log("send back puzzle image path", puzzleImagePath);
+
   res.status(200).send({ puzzleImagePath });
 }
 

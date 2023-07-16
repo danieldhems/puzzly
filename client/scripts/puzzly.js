@@ -70,7 +70,7 @@ class Puzzly {
     this.movingPieces = [];
     this.loadedAssets = [];
     this.previewImage = new Image();
-    this.previewImage.src = this.puzzleImgPath;
+    this.previewImage.src = this.previewPath;
     this.puzzleImage = new Image();
     this.puzzleImage.src = this.spritePath;
     console.log(this);
