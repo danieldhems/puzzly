@@ -268,7 +268,7 @@ const Utils = {
   },
 
   isOutOfBounds(sourceEl) {
-    const cnvBox = document.querySelector("#canvas").getBoundingClientRect();
+    const cnvBox = document.querySelector("#stage").getBoundingClientRect();
     const pocketsBox = document
       .querySelector("#pockets")
       .getBoundingClientRect();
@@ -389,6 +389,22 @@ const Utils = {
     if (isPuzzlePieceLayerElement) {
       return e.target.parentNode;
     }
+  },
+
+  getOrientation(boundingBox) {
+    const width = boundingBox.width;
+    const height = boundingBox.height;
+    return width === height
+      ? "square"
+      : width < height
+      ? "portrait"
+      : "landscape";
+  },
+
+  getStageOrientation(stageElementBoundingBox) {
+    const width = stageElementBoundingBox.width;
+    const height = stageElementBoundingBox.height;
+    return width < height ? "portrait" : "landscape";
   },
 };
 

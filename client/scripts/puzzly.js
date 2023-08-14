@@ -8,7 +8,7 @@ import Utils from "./utils.js";
  */
 
 const ZOOM_INTERVAL = 0.1;
-const DEFAULT_ZOOM_LEVEL = 1;
+const INITIAL_ZOOM_LEVEL = 1;
 
 class Puzzly {
   constructor(canvasId, puzzleId, config) {
@@ -237,10 +237,13 @@ class Puzzly {
 
     this.Pockets = new Pockets(this);
     this.DragAndSelect = new DragAndSelect(this);
+    this.stage = document.querySelector("#stage");
 
     this.makeSolvedCanvas();
     this.initiFullImagePreviewer();
     this.generatePieceSectorMap();
+    this.initiateStage();
+    this.setCanvasScaleAndPosition(this.boardAreaEl.getBoundingClientRect());
 
     this.isFullImageViewerActive = false;
 
@@ -315,6 +318,64 @@ class Puzzly {
     });
   }
 
+  initiateStage() {
+    this.stage = this.makeStage();
+    this.setStageSize(this.boardAreaEl.getBoundingClientRect());
+    this.canvas.appendChild(this.stage);
+  }
+
+  setStageSize(puzzleBoardSize) {
+    this.stage.style.width = this.getPxString(puzzleBoardSize.width * 5);
+    this.stage.style.height = this.getPxString(puzzleBoardSize.height * 3);
+  }
+
+  setCanvasScaleAndPosition(puzzleBoardSize) {
+    const orientation = Utils.getOrientation(
+      document.body.getBoundingClientRect()
+    );
+
+    // Seperate method?
+    const ratio =
+      orientation === "square"
+        ? puzzleBoardSize.width / this.stage.getBoundingClientRect().width
+        : orientation === "landscape"
+        ? puzzleBoardSize.width / this.stage.getBoundingClientRect().width
+        : puzzleBoardSize.height / this.stage.getBoundingClientRect().height;
+
+    // Set the initial zoom level and apply it
+    this.setZoomLevel(
+      this.setInitialZoomLevel(window.innerWidth / this.stage.offsetWidth)
+    );
+
+    // Set position
+    this.canvas.style.left = 0;
+    this.canvas.style.top = this.getPxString(
+      window.innerHeight / this.stage.offsetHeight
+    );
+  }
+
+  makeStage() {
+    const stageElement = document.createElement("div");
+    stageElement.id = "stage";
+    stageElement.style.position = "absolute";
+    stageElement.style.top = 0;
+    stageElement.style.left = 0;
+    stageElement.style.pointerEvents = "none";
+
+    const stageSheenElement = document.createElement("div");
+    stageSheenElement.classList.add("stage-sheen");
+    stageSheenElement.style.width = "100%";
+    stageSheenElement.style.height = "100%";
+    stageSheenElement.style.position = "absolute";
+    stageSheenElement.style.top = 0;
+    stageSheenElement.style.left = 0;
+    stageSheenElement.style.backgroundColor = "#ddd";
+    stageSheenElement.style.opacity = 0.2;
+
+    stageElement.appendChild(stageSheenElement);
+    return stageElement;
+  }
+
   onControlsHandleClick(e) {
     if (this.ControlsElPanelIsOpen) {
       this.ControlsElPanel.classList.add("is-hidden");
@@ -381,15 +442,6 @@ class Puzzly {
 
   renderPieces(pieces) {
     pieces.forEach((p) => this.renderJigsawPiece(p));
-  }
-
-  setPageScale() {
-    this.currentScaleValue =
-      this.fullPageScaleValue =
-      this.zoomLevel =
-        window.innerWidth / this.canvasWidth;
-    this.canvas.style.transformOrigin = "0 0";
-    this.canvas.style.transform = `scale(${this.currentScaleValue})`;
   }
 
   toggleSounds() {
@@ -485,7 +537,7 @@ class Puzzly {
     element.style.position = "absolute";
     element.style.top = this.boardBoundingBox.top + "px";
     element.style.left = this.boardBoundingBox.left + "px";
-    element.style.border = "3px groove #222";
+    element.style.border = "6px groove #222";
     element.style.width = this.boardSize + "px";
     element.style.height = this.boardSize + "px";
   }
@@ -524,35 +576,64 @@ class Puzzly {
     ) {
       event.preventDefault();
 
-      const prevZoomLevel = this.zoomLevel;
-      const canZoomOut = this.zoomLevel > DEFAULT_ZOOM_LEVEL;
+      this.prevZoomLevel = this.zoomLevel;
+      const canZoomOut = this.zoomLevel > this.INITIAL_ZOOM_LEVEL;
 
       // Plus key
       if (event.which === 187) {
-        this.zoomLevel += ZOOM_INTERVAL;
+        this.increaseZoomLevel(ZOOM_INTERVAL);
       }
 
       // Minus key
       if (event.which === 189) {
-        this.zoomLevel -= ZOOM_INTERVAL;
+        this.decreaseZoomLevel(ZOOM_INTERVAL);
       }
 
       // "0" Number key
       if (event.which === 48) {
-        this.zoomLevel = DEFAULT_ZOOM_LEVEL;
+        this.resetZoomLevel();
       }
+    }
+  }
 
-      if (this.isPreviewActive) {
-        this.updatePreviewerSizeAndPosition();
-      }
+  setInitialZoomLevel(zoomLevel) {
+    this.INITIAL_ZOOM_LEVEL = zoomLevel;
+    return this.INITIAL_ZOOM_LEVEL;
+  }
 
-      if (this.zoomLevel !== prevZoomLevel) {
-        this.canvas.style.transform = `scale(${this.zoomLevel})`;
-        this.canvas.style.transformOrigin = "50% 50%";
+  // Might want an observer of some kind for the scaleCanvas method calls here, instead of manually calling it in all of these helper methods.
+  resetZoomLevel() {
+    this.zoomLevel = this.INITIAL_ZOOM_LEVEL;
+    this.scaleCanvas(this.zoomLevel);
+  }
 
-        this.Pockets.setScale(this.zoomLevel);
-        this.DragAndSelect.setScale(this.zoomLevel);
-      }
+  setZoomLevel(zoomLevel) {
+    this.zoomLevel = zoomLevel;
+    this.scaleCanvas(this.zoomLevel);
+  }
+
+  increaseZoomLevel(increment) {
+    this.zoomLevel += increment;
+    this.scaleCanvas(this.zoomLevel);
+  }
+
+  decreaseZoomLevel(increment) {
+    this.zoomLevel -= increment;
+    this.scaleCanvas(this.zoomLevel);
+  }
+
+  scaleCanvas(scale) {
+    this.canvas.style.transform = `scale(${scale})`;
+
+    if (this.zoomLevel !== this.prevZoomLevel) {
+      // this.canvas.style.transformOrigin = "50% 50%";
+
+      this.Pockets.setScale(this.zoomLevel);
+      this.DragAndSelect.setScale(this.zoomLevel);
+    }
+
+    if (this.isPreviewActive) {
+      this.updatePreviewerSizeAndPosition();
     }
   }
 
@@ -782,7 +863,7 @@ class Puzzly {
       // fish
       this.Pockets.addToPocket(piece.pocketId, el);
     } else if (!Utils.hasGroup(piece) && !piece.isSolved) {
-      this.canvas.appendChild(el);
+      this.addPieceToStage(el);
     } else {
       if (piece.isSolved === undefined) {
         let groupContainer = document.querySelector(
@@ -834,6 +915,10 @@ class Puzzly {
         solvedCnvContainer.append(el);
       }
     }
+  }
+
+  addPieceToStage(piece) {
+    this.stage.appendChild(piece);
   }
 
   initGroupContainerPositions(piecesFromPersistence) {
