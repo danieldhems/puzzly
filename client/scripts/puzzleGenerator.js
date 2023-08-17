@@ -71,7 +71,7 @@ const PuzzleGenerator = async function (imagePath, puzzleConfig) {
   Generator.spriteSpacing =
     Generator.piecesPerSideVertical * Generator.largestPieceSpan * 1.1;
 
-  console.log("Generator", Generator);
+  // console.log("Generator", Generator);
 
   return {
     ...Generator,
@@ -169,7 +169,7 @@ const generateDataForPuzzlePieces = async (puzzleId) => {
     const { svgString } = drawJigsawShape(currentPiece);
     currentPiece.svgPathString = svgString;
 
-    console.log("generated piece", currentPiece);
+    // console.log("generated piece", currentPiece);
 
     pieces.push(currentPiece);
 
@@ -242,7 +242,7 @@ const createCanvas = (width, height) => {
 };
 
 const createPuzzlePiece = async (data, ctxForSprite) => {
-  console.log(data);
+  // console.log(data);
 
   const shadowCnv = createCanvas(data.pieceWidth, data.pieceHeight);
   const shdCtx = shadowCnv.getContext("2d");
@@ -548,7 +548,7 @@ const drawJigsawShape = (piece) => {
   } else if (Utils.has(piece.type, "socket", "top")) {
     topConnector = getRotatedConnector(jigsawShapes.getSocket(), 0);
   }
-  console.log(Generator.connectorDistanceFromCorner);
+  // console.log(Generator.connectorDistanceFromCorner);
 
   if (topConnector) {
     svgString += `h ${Generator.connectorDistanceFromCorner} `;

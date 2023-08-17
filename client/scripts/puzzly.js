@@ -31,7 +31,7 @@ class Puzzly {
     });
 
     this.pieces = config.pieces;
-    // this.connectorSize = this.connectorWidth;
+    this.connectorSize = this.scaledConnectorSize;
 
     this.animationDuration = 200;
 
@@ -194,19 +194,6 @@ class Puzzly {
   init() {
     this.zoomLevel = 1;
 
-    this.boardHeight = this.boardWidth = this.boardSize;
-    const boardVerticalSpace = window.innerHeight / 2 - this.boardHeight / 2;
-    const leftPos = window.innerWidth / 2 - this.boardWidth / 2;
-
-    this.boardBoundingBox = {
-      top: boardVerticalSpace,
-      right: leftPos + this.boardHeight,
-      left: leftPos,
-      bottom: boardVerticalSpace + this.boardHeight,
-      width: this.boardHeight,
-      height: this.boardHeight,
-    };
-
     this.shadowOffsetRatio = 0.01;
     this.shadowOffset = this.pieceSize * this.shadowOffsetRatio;
 
@@ -224,16 +211,12 @@ class Puzzly {
     this.canvasWidth = window.innerWidth;
     this.canvasHeight = window.innerHeight;
 
-    this.drawBoardArea();
-
     this.boardTop = this.boardAreaEl.offsetTop;
     this.boardRight =
       this.boardAreaEl.offsetLeft + this.boardAreaEl.offsetWidth;
     this.boardBottom =
       this.boardAreaEl.offsetTop + this.boardAreaEl.offsetHeight;
     this.boardLeft = this.boardAreaEl.offsetLeft;
-    this.boardWidth = this.boardAreaEl.offsetWidth;
-    this.boardHeight = this.boardAreaEl.offsetHeight;
 
     this.Pockets = new Pockets(this);
     this.DragAndSelect = new DragAndSelect(this);
@@ -242,8 +225,14 @@ class Puzzly {
     this.makeSolvedCanvas();
     this.initiFullImagePreviewer();
     this.generatePieceSectorMap();
+    this.drawBoardArea();
     this.initiateStage();
+    this.setBoardPosition(this.boardAreaEl, this.stage);
     this.setCanvasScaleAndPosition(this.boardAreaEl.getBoundingClientRect());
+
+    const boardAreaRect = this.boardAreaEl.getBoundingClientRect();
+    this.boardWidth = this.boardAreaEl.offsetWidth;
+    this.boardHeight = this.boardAreaEl.offsetHeight;
 
     this.isFullImageViewerActive = false;
 
@@ -350,7 +339,7 @@ class Puzzly {
     // Set position
     this.canvas.style.left = 0;
     this.canvas.style.top = this.getPxString(
-      window.innerHeight / this.stage.offsetHeight
+      this.boardAreaEl.getBoundingClientRect().height / 2
     );
   }
 
@@ -524,22 +513,22 @@ class Puzzly {
     });
   }
 
-  getConnectorSnapAdjustment(distance) {
-    if (distance.charAt(0) === "+") {
-      return this.connectorSize + parseInt(distance.substr(1));
-    } else {
-      return this.connectorSize - parseInt(distance.substr(1));
-    }
-  }
-
   drawBoardArea() {
     const element = document.getElementById("boardArea");
     element.style.position = "absolute";
-    element.style.top = this.boardBoundingBox.top + "px";
-    element.style.left = this.boardBoundingBox.left + "px";
-    element.style.border = "6px groove #222";
+
+    element.style.border = "10px groove #000";
     element.style.width = this.boardSize + "px";
     element.style.height = this.boardSize + "px";
+  }
+
+  setBoardPosition(board, stage) {
+    board.style.top = this.getPxString(
+      stage.offsetHeight / 2 - this.boardSize / 2
+    );
+    board.style.left = this.getPxString(
+      stage.offsetWidth / 2 - this.boardSize / 2
+    );
   }
 
   makeSolvedCanvas() {
@@ -880,7 +869,7 @@ class Puzzly {
           groupContainer.style.position = "absolute";
           groupContainer.style.top = piece.containerY + "px";
           groupContainer.style.left = piece.containerX + "px";
-          this.canvas.appendChild(groupContainer);
+          this.stage.prepend(groupContainer);
         }
 
         groupContainer.appendChild(el);
@@ -918,7 +907,7 @@ class Puzzly {
   }
 
   addPieceToStage(piece) {
-    this.stage.appendChild(piece);
+    this.stage.prepend(piece);
   }
 
   initGroupContainerPositions(piecesFromPersistence) {
@@ -2704,7 +2693,7 @@ class Puzzly {
 
     if (checkRight && !connectionFound) {
       targetElement = Utils.getElementByPieceId(piece.id + 1);
-      // console.log('source element', element, 'target eleme÷nt', targetElement)
+      // console.log('source element', element, 'target element', targetElement)
       targetPiece = this.getPieceFromElement(targetElement, [
         "piece-id",
         "group",
@@ -3137,6 +3126,7 @@ class Puzzly {
   }
 
   makeCanvas(id, width = this.boardWidth, height = this.boardHeight) {
+    console.log(this.boardWidth, this.boardHeight);
     const el = document.createElement("canvas");
     el.id = id;
 
@@ -3250,7 +3240,7 @@ class Puzzly {
 
     container.style.position = "absolute";
 
-    this.canvas.appendChild(container);
+    this.stage.prepend(container);
 
     return container;
   }
