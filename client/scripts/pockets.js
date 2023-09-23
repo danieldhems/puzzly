@@ -1,8 +1,9 @@
 import Utils from "./utils.js";
 
 class Pockets {
-  constructor(config){
+  constructor(config) {
     this.mainCanvas = config.canvas;
+    this.stage = config.stage;
     this.shadowOffset = config.shadowOffset;
     this.largestPieceSpan = config.largestPieceSpan;
     this.connectorSize = config.connectorSize;
@@ -15,9 +16,9 @@ class Pockets {
     this.isMainCanvasMoving = false;
     this.isDragActive = false;
 
-    this.pieceScaleWhileInPocket = .8;
+    this.pieceScaleWhileInPocket = 0.8;
     this.zoomLevel = 1; // If this hasn't been set externally yet, assume it's the default value
-    
+
     this.pockets = {};
     this.activePocketHasMultiplePieces = false;
 
@@ -28,18 +29,18 @@ class Pockets {
 
     this.currentOrientation = this.getOrientation();
 
-    this.init(config)
+    this.init(config);
 
     window.addEventListener("DOMContentLoaded", this.init);
-    
-    window.addEventListener("mousedown", e => this.onMouseDown(e));
-    window.addEventListener("mouseup", e => this.onMouseUp(e));
-    window.addEventListener("resize", e => this.onResize(e));
+
+    window.addEventListener("mousedown", (e) => this.onMouseDown(e));
+    window.addEventListener("mouseup", (e) => this.onMouseUp(e));
+    window.addEventListener("resize", (e) => this.onResize(e));
 
     return this;
   }
 
-  init(config){
+  init(config) {
     this.ui = document.querySelector("#pockets");
     this.pocketsBridge = document.querySelector("#pockets-bridge");
     this.pocketsHandle = document.querySelector("#pockets-handle");
@@ -54,164 +55,196 @@ class Pockets {
     this.ui.classList.add("initalised");
 
     this.setScale(config.zoomLevel);
-    this.pocketDropBoundingBox = this.getTargetBoxForPlacementInsidePocket(config.pieceSize);
+    this.pocketDropBoundingBox = this.getTargetBoxForPlacementInsidePocket(
+      config.pieceSize
+    );
 
     this.pocketsHandle.addEventListener("mousedown", (e) => {
       e.preventDefault();
-      if(this.isCollapsed){
+      if (this.isCollapsed) {
         move(this.ui)
-          [axisToAnimate](window[this.orientation.windowPropForDepth] - this.pocketDepth)
+          [axisToAnimate](
+            window[this.orientation.windowPropForDepth] - this.pocketDepth
+          )
           .duration(this.animationDuration)
           .end();
         this.isCollapsed = false;
       } else {
         move(this.ui)
-          [axisToAnimate](window[this.orientation.windowPropForDepth] - lengthForCollapse / 2)
+          [axisToAnimate](
+            window[this.orientation.windowPropForDepth] - lengthForCollapse / 2
+          )
           .duration(this.animationDuration)
           .end();
         this.isCollapsed = true;
       }
-    })
+    });
   }
 
-  getOrientation(){
-    return window.innerWidth > window.innerHeight ? "landscape" : window.innerHeight > window.innerWidth ? "portrait" : null;
+  getOrientation() {
+    return window.innerWidth > window.innerHeight
+      ? "landscape"
+      : window.innerHeight > window.innerWidth
+      ? "portrait"
+      : null;
   }
 
-  shouldTriggerResize(){
-    return window.innerWidth > window.innerHeight && this.currentOrientation === "portrait" ||
-    window.innerHeight > window.innerWidth && this.currentOrientation === "landscape";
+  shouldTriggerResize() {
+    return (
+      (window.innerWidth > window.innerHeight &&
+        this.currentOrientation === "portrait") ||
+      (window.innerHeight > window.innerWidth &&
+        this.currentOrientation === "landscape")
+    );
   }
 
-  onResize(){
-    if(this.shouldTriggerResize()){
+  onResize() {
+    if (this.shouldTriggerResize()) {
       this.resetElementPositionsInPockets();
       this.currentOrientation = this.getOrientation();
     }
   }
 
-  setScale(num){
+  setScale(num) {
     this.zoomLevel = num;
-    this.pocketsBridge.style.transform = `scale(${num})`;
+    // this.pocketsBridge.style.transform = `scale(${num})`;
   }
 
-  getPocketIdFromPiece(el){
-    if(el.classList.contains("puzzle-piece")){
+  getPocketIdFromPiece(el) {
+    if (el.classList.contains("puzzle-piece")) {
       return parseInt(el.dataset.pocketId);
     }
   }
 
-  getIdForPocket(pocket){
+  getIdForPocket(pocket) {
     return pocket.id.split("-")[1];
   }
 
-  setPieceSize(el, scale = null, origin = null){
+  setPieceSize(el, scale = null, origin = null) {
     // When returning pieces to the canvas we need to remove the scale transform from them in order for them to be correctly scaled by the canvas itself, else they'll end up smaller or large than intended
-    el.style.transform = scale ? `scale(${scale})` : 'none';
-    if(scale && origin){
+    el.style.transform = scale ? `scale(${scale})` : "none";
+    if (scale && origin) {
       el.style.transformOrigin = origin;
     }
   }
 
-  setSizeForPiecesInPocket(){
-    this.getPiecesInActivePocket().forEach(el => this.setPieceSize(el, this.pieceScaleWhileInPocket));
+  setSizeForPiecesInPocket() {
+    this.getPiecesInActivePocket().forEach((el) =>
+      this.setPieceSize(el, this.pieceScaleWhileInPocket)
+    );
   }
 
-  resetPieceScale(el){
+  resetPieceScale(el) {
     el.style.transform = "scale(1)";
   }
 
-  setActivePiecesToPocketSize(){
+  setActivePiecesToPocketSize() {
     const activePieces = this.getPiecesInActivePocket();
-    if(activePieces){
-      Array.from(activePieces).forEach(el => {
-        this.setPieceSize(el, this.pieceScaleWhileInPocket)
+    if (activePieces) {
+      Array.from(activePieces).forEach((el) => {
+        this.setPieceSize(el, this.pieceScaleWhileInPocket);
       });
     }
   }
 
-  setActivePiecesToCurrentScale(){
+  setActivePiecesToCurrentScale() {
     const activePieces = this.getPiecesInActivePocket();
-    if(activePieces){
+    if (activePieces) {
       const pArr = Array.from(activePieces);
       // beef
       // const origin = pArr.length === 1 ? "50% 50%" : null;
-      pArr.forEach(el => {
+      pArr.forEach((el) => {
         this.setPieceSize(el, this.zoomLevel, origin);
       });
     }
   }
 
-  getPocketByCollision(box){
-    if(Utils.isOverPockets(box)){
+  getPocketByCollision(box) {
+    if (Utils.isOverPockets(box)) {
       let i = 0;
-      while(i <= this.pockets.length){
+      while (i <= this.pockets.length) {
         const pocket = this.pockets[i];
-        console.log(pocket)
-        if(Utils.hasCollision(box, pocket.getBoundingClientRect())){
+        console.log(pocket);
+        if (Utils.hasCollision(box, pocket.getBoundingClientRect())) {
           return pocket;
         }
         i++;
-      };
+      }
     }
   }
 
-  isFromPocket(el){
+  isFromPocket(el) {
     return el?.parentNode?.classList?.contains("pocket");
   }
 
-  isFromCanvas(el){
-    return el.parentNode.id === "canvas" || el.parentNode.parentNode.id === "canvas";
+  isFromCanvas(el) {
+    return (
+      el.parentNode.id === "canvas" || el.parentNode.parentNode.id === "canvas"
+    );
   }
 
-  getPocketIdFromElement(el){
+  getPocketIdFromElement(el) {
     return el.classList?.contains("pocket") && el.id.split("-")[2];
   }
 
-  getEventBoundingBox(e){
-    return {top: e.clientY, right: e.clientX, bottom: e.clientY, left: e.clientX};
+  getEventBoundingBox(e) {
+    return {
+      top: e.clientY,
+      right: e.clientX,
+      bottom: e.clientY,
+      left: e.clientX,
+    };
   }
 
-  getPocketDropEventMessage(){
+  getPocketDropEventMessage() {
     return new CustomEvent("puzzly_pockets_pieces_added");
   }
 
-  onMouseDown(e){
+  onMouseDown(e) {
     e.stopPropagation();
     let el = e.target;
     let shouldTrackPiece;
 
     // If the empty space inside a pocket is clicked, do nothing
-    if(el.classList?.contains("pocket")){
+    if (el.classList?.contains("pocket")) {
       return;
     }
 
-    if(Utils.isPuzzlePiece(el)){
+    if (Utils.isPuzzlePiece(el)) {
       el = Utils.getPuzzlePieceElementFromEvent(e);
       shouldTrackPiece = !Utils.hasGroup(el);
     }
 
-    this.isDragActive = el.classList ? el.classList.contains("selected") : false;
+    this.isDragActive = el.classList
+      ? el.classList.contains("selected")
+      : false;
 
-    const isMainCanvas = el.id === "canvas" || el.id === "boardArea" || el.dataset?.isSolved === "true";
+    const isMainCanvas =
+      el.id === "canvas" ||
+      el.id === "boardArea" ||
+      el.dataset?.isSolved === "true";
 
     // Picking up a single piece from the canvas
-    if(shouldTrackPiece && this.isFromCanvas(el)){
+    if (shouldTrackPiece && this.isFromCanvas(el)) {
       this.isMovingSinglePiece = true;
       this.movingElement = this.isDragActive ? el.parentNode : el;
-      
-      const movingElementBoundingBox = this.movingElement.getBoundingClientRect();
 
-      if(Utils.isOverPockets(movingElementBoundingBox) && this.elementClone === null){
-        this.makeClone(this.movingElement);
+      const movingElementBoundingBox =
+        this.movingElement.getBoundingClientRect();
+
+      if (
+        Utils.isOverPockets(movingElementBoundingBox) &&
+        this.elementClone === null
+      ) {
+        this.addToBridge(this.movingElement);
       }
     }
 
     // Piece is being picked up from a pocket
-    if(this.isFromPocket(el)){
-      console.log(this.getPocketIdFromPiece(el))
+    if (this.isFromPocket(el)) {
+      console.log(this.getPocketIdFromPiece(el));
       this.activePocket = this.pockets[this.getPocketIdFromPiece(el)];
-      console.log(this.activePocket)
+      console.log(this.activePocket);
       this.lastPosition = el.getBoundingClientRect();
 
       this.setActivePiecesToCurrentScale();
@@ -224,11 +257,11 @@ class Pockets {
       this.diffY = e.clientY - this.movingElement.offsetTop;
     }
 
-    if(isMainCanvas) {
+    if (isMainCanvas) {
       this.isMainCanvasMoving = true;
     }
 
-    if(Utils.isPuzzlePiece || isMainCanvas){
+    if (Utils.isPuzzlePiece || isMainCanvas) {
       window.addEventListener("mousemove", this.onMouseMove.bind(this));
     } else {
       this.isMouseDown = false;
@@ -236,39 +269,40 @@ class Pockets {
     }
   }
 
-  enablePointerEvents(){
+  enablePointerEvents() {
     this.ui.style.pointerEvents = "auto";
     const pieces = this.ui.querySelectorAll(".puzzle-piece");
-    pieces.forEach(el => el.style.pointerEvents = "auto")
-  }
-  
-  disablePointerEvents(){
-    this.ui.style.pointerEvents = "none";
-    const pieces = this.ui.querySelectorAll(".puzzle-piece");
-    pieces.forEach(el => el.style.pointerEvents = "none")
+    pieces.forEach((el) => (el.style.pointerEvents = "auto"));
   }
 
-  onMouseMove(e){
+  disablePointerEvents() {
+    this.ui.style.pointerEvents = "none";
+    const pieces = this.ui.querySelectorAll(".puzzle-piece");
+    pieces.forEach((el) => (el.style.pointerEvents = "none"));
+  }
+
+  onMouseMove(e) {
     e.preventDefault();
-    
-    if(this.isMovingSinglePiece){
+
+    if (this.isMovingSinglePiece) {
       const movingElementBox = this.movingElement.getBoundingClientRect();
       const isOverPockets = Utils.isOverPockets.call(this, movingElementBox);
 
       this.disablePointerEvents();
 
-      if(isOverPockets && this.elementClone === null){
-        this.makeClone(this.movingElement);
+      if (isOverPockets && this.elementClone === null) {
+        console.log("cloning");
+        this.addToBridge(this.movingElement);
       }
-      
-      if(!isOverPockets && this.elementClone){
+
+      if (!isOverPockets && this.elementClone) {
         this.removeClone(this.movingElement);
       }
 
-      if(this.elementClone){
+      if (this.elementClone) {
         this.setClonePosition();
       }
-    } else if(this.activePocket) {
+    } else if (this.activePocket) {
       const x = this.diffX ? e.clientX - this.diffX : e.clientX;
       const y = this.diffY ? e.clientY - this.diffY : e.clientY;
       this.movingElement.style.top = y + "px";
@@ -276,32 +310,34 @@ class Pockets {
     }
   }
 
-  onMouseUp(e){
+  onMouseUp(e) {
     // console.log("on mouse up", e)
     const trackingBox = Utils.getEventBox(e);
     const targetPocket = this.getPocketByCollision(trackingBox);
 
     this.enablePointerEvents();
 
-    if(trackingBox && targetPocket){
-      if(this.activePocket){
+    if (trackingBox && targetPocket) {
+      if (this.activePocket) {
         this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
         this.setActivePiecesToPocketSize();
         this.movingElement.remove();
       } else {
-        
-        if(this.isDragActive){
+        if (this.isDragActive) {
           this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
           window.dispatchEvent(this.getPocketDropEventMessage());
         } else {
-          console.log(targetPocket)
+          console.log(targetPocket);
           this.addToPocket(targetPocket, this.movingElement);
         }
       }
     } else {
-      if(this.activePocket){
-        if(Utils.isOutOfBounds(this.movingElement.getBoundingClientRect())){
-          this.addPiecesToPocket(this.activePocket, this.movingElement.childNodes);
+      if (this.activePocket) {
+        if (Utils.isOutOfBounds(this.movingElement.getBoundingClientRect())) {
+          this.addPiecesToPocket(
+            this.activePocket,
+            this.movingElement.childNodes
+          );
           this.movingElement.remove();
         } else {
           this.returnToCanvas(this.getPiecesInTransit());
@@ -309,20 +345,20 @@ class Pockets {
         }
       }
 
-      if(this.elementClone){
+      if (this.elementClone) {
         this.removeClone();
       }
     }
 
-    if(this.isMainCanvasMoving){
+    if (this.isMainCanvasMoving) {
       this.setCloneContainerPosition();
     }
 
-    if(this.isMovingSinglePiece){
+    if (this.isMovingSinglePiece) {
       this.isMovingSinglePiece = false;
     }
 
-    if(this.activePiecesContainer){
+    if (this.activePiecesContainer) {
       this.activePiecesContainer.remove();
       this.activePiecesContainer = null;
     }
@@ -336,20 +372,22 @@ class Pockets {
     window.removeEventListener("mousemove", this.mouseFn);
   }
 
-  eventTargetIsPocket(e){
+  eventTargetIsPocket(e) {
     return e.target.classList.contains("pocket");
   }
 
-  eventTargetIsCanvas(e){
+  eventTargetIsCanvas(e) {
     return e.target.id === "canvas";
   }
 
-  getPiecesInActivePocket(){
-    return Array.from(this.activePocket.childNodes).filter(el => el.classList.contains("puzzle-piece"));
+  getPiecesInActivePocket() {
+    return Array.from(this.activePocket.childNodes).filter((el) =>
+      el.classList.contains("puzzle-piece")
+    );
   }
 
-  getPiecesInTransit(){
-    if(this.movingElement.classList.contains("active-pieces-container")){
+  getPiecesInTransit() {
+    if (this.movingElement.classList.contains("active-pieces-container")) {
       return Array.from(this.movingElement.childNodes);
     } else {
       return [this.movingElement];
@@ -358,7 +396,7 @@ class Pockets {
 
   // Create a container for all the pieces in a given pocket with the pieces arranged in a grid.
   // This container will be set as the movingElement.
-  getMovingElementForActivePocket(e){
+  getMovingElementForActivePocket(e) {
     const activePieces = Array.from(this.getPiecesInActivePocket());
 
     this.activePocketHasMultiplePieces = true;
@@ -369,17 +407,21 @@ class Pockets {
     container.style.position = "absolute";
 
     this.activePiecesContainer = container;
-    
-    const rowLength = activePieces.length > 2 ? Math.ceil(Math.sqrt(activePieces.length)) : 2;
 
-    let currX = 0, currY = 0;
+    const rowLength =
+      activePieces.length > 2 ? Math.ceil(Math.sqrt(activePieces.length)) : 2;
+
+    let currX = 0,
+      currY = 0;
     let colNumber = 1;
     let numRows = 0;
-    let maxX = 0, maxY = 0, nextRowY = 0;
+    let maxX = 0,
+      maxY = 0,
+      nextRowY = 0;
 
     let firstPieceOnRow = activePieces[0];
 
-    for(let i = 0, l = activePieces.length; i < l; i++){
+    for (let i = 0, l = activePieces.length; i < l; i++) {
       const el = activePieces[i];
 
       // move(el).x(currX * this.zoomLevel).y(currY * this.zoomLevel).duration(this.animationDuration).end();
@@ -394,135 +436,144 @@ class Pockets {
         left: this.activePocket.offsetLeft + el.offsetLeft,
         width: el.offsetWidth,
         height: el.offsetHeight,
-      }
+      };
 
-      if(currX + box.width > maxX){
+      if (currX + box.width > maxX) {
         maxX = currX + box.width;
       }
 
-      if(maxY === 0){
+      if (maxY === 0) {
         maxY = box.height;
       }
 
-      if(currY + box.height > maxY){
+      if (currY + box.height > maxY) {
         maxY = currY + box.height;
       }
 
-      currX += box.width + box.width / 100 * 2;
+      currX += box.width + (box.width / 100) * 2;
 
-      if(currY + box.height > nextRowY){
-        nextRowY = currY + box.height + box.height / 100 * 2;
+      if (currY + box.height > nextRowY) {
+        nextRowY = currY + box.height + (box.height / 100) * 2;
       }
 
-      if(colNumber === rowLength){
+      if (colNumber === rowLength) {
         currY = nextRowY;
         currX = 0;
         colNumber = 1;
         numRows++;
 
-        firstPieceOnRow = el; 
+        firstPieceOnRow = el;
       } else {
         colNumber++;
       }
 
       container.appendChild(el);
-    };
+    }
 
     container.style.width = maxX * this.zoomLevel + "px";
     container.style.height = maxY * this.zoomLevel + "px";
 
     const pocketBox = this.activePocket.getBoundingClientRect();
 
-    const x = e.clientX - pocketBox.left - (maxX / 2  * this.zoomLevel);
-    const y = e.clientY - pocketBox.top - (maxY / 2  * this.zoomLevel);
-    
+    const x = e.clientX - pocketBox.left - (maxX / 2) * this.zoomLevel;
+    const y = e.clientY - pocketBox.top - (maxY / 2) * this.zoomLevel;
+
     container.style.top = y + "px";
     container.style.left = x + "px";
 
     return container;
   }
 
-  resetActivePocket(){
+  resetActivePocket() {
     this.activePocket = null;
   }
 
-  clearPocketsBridge(){
-    Array.from(this.pocketsBridge?.childNodes).forEach(el => el.remove());
+  clearPocketsBridge() {
+    Array.from(this.pocketsBridge?.childNodes).forEach((el) => el.remove());
   }
 
-  setElementPositionInPocket(element, pocket){
+  setElementPositionInPocket(element, pocket) {
     // salmon
     let dropX, dropY;
 
     const els = Array.from(pocket.childNodes);
-    if(els.length === 1){
+    if (els.length === 1) {
       dropX = pocket.offsetWidth / 2 - element.offsetWidth / 2;
       dropY = pocket.offsetHeight / 2 - element.offsetHeight / 2;
     } else {
-      dropX = Utils.getRandomInt(this.pocketDropBoundingBox.left, this.pocketDropBoundingBox.right);
-      dropY = Utils.getRandomInt(this.pocketDropBoundingBox.top, this.pocketDropBoundingBox.bottom);
+      dropX = Utils.getRandomInt(
+        this.pocketDropBoundingBox.left,
+        this.pocketDropBoundingBox.right
+      );
+      dropY = Utils.getRandomInt(
+        this.pocketDropBoundingBox.top,
+        this.pocketDropBoundingBox.bottom
+      );
     }
 
     element.style.top = dropY * this.pieceScaleWhileInPocket + "px";
     element.style.left = dropX * this.pieceScaleWhileInPocket + "px";
   }
 
-  resetElementPositionsInPockets(){
-    for(let i=0, l=this.pockets.length; i<l; i++){
+  resetElementPositionsInPockets() {
+    for (let i = 0, l = this.pockets.length; i < l; i++) {
       const pocket = this.pockets[i];
       const els = pocket.childNodes;
-      if(els.length){
-        els.forEach(el => {
+      if (els.length) {
+        els.forEach((el) => {
           this.setElementPositionInPocket(el, pocket);
-        })
+        });
       }
     }
   }
 
-  addToPocket(pocket, element){
-    console.log("adding to pocket", pocket)
-    if(!element) return;
+  addToPocket(pocket, element) {
+    console.log("adding to pocket", pocket);
+    if (!element) return;
 
     let pocketId, pocketEl;
 
-    if(Number.isInteger(pocket)){
+    if (Number.isInteger(pocket)) {
       pocketEl = this.pockets[pocket];
       pocketId = pocket;
     } else {
       pocketEl = pocket;
       pocketId = this.getIdForPocket(pocket);
-      console.log("pocket id is", pocketId)
+      console.log("pocket id is", pocketId);
     }
 
     this.setElementPositionInPocket(element, pocketEl);
-    
+
     element.setAttribute("data-pocket-id", pocketId);
     element.classList.add("in-pocket");
-    
+
     pocketEl?.appendChild(element);
-    
-    if(this.elementClone){
+
+    if (this.elementClone) {
       this.removeClone();
     }
-    
+
     this.setPieceSize(element, this.pieceScaleWhileInPocket);
 
     Utils.requestSave([element]);
   }
 
-  addPiecesToPocket(pocket, pieces){
+  addPiecesToPocket(pocket, pieces) {
     const pieceArray = Array.from(pieces);
-    pieceArray.forEach(p => this.addToPocket(pocket, p));
+    pieceArray.forEach((p) => this.addToPocket(pocket, p));
   }
 
-  returnToCanvas(els){
-    for(let i = 0, l = els.length; i < l; i++){
+  returnToCanvas(els) {
+    for (let i = 0, l = els.length; i < l; i++) {
       const el = els[i];
-      const pos = Utils.getPositionRelativeToCanvas(el.getBoundingClientRect(), this.zoomLevel)
+      const pos = Utils.getPositionRelativeToCanvas(
+        el.getBoundingClientRect(),
+        this.zoomLevel
+      );
 
       el.style.top = pos.y + "px";
       el.style.left = pos.x + "px";
-      
+
       this.setPieceSize(el);
       this.mainCanvas.appendChild(el);
       el.classList.remove("in-pocket");
@@ -530,17 +581,17 @@ class Pockets {
       el.style.pointerEvents = "auto";
 
       this.notifyDrop(el);
-    };
+    }
 
-    Utils.requestSave(els)
+    Utils.requestSave(els);
   }
 
-  notifyDrop(piece){
-    const event = new CustomEvent("puzzly_piece_drop", { detail: { piece }});
-    window.dispatchEvent(event)
+  notifyDrop(piece) {
+    const event = new CustomEvent("puzzly_piece_drop", { detail: { piece } });
+    window.dispatchEvent(event);
   }
 
-  getTargetBoxForPlacementInsidePocket(pieceSize){
+  getTargetBoxForPlacementInsidePocket(pieceSize) {
     const expansionRange = 10;
     const pocketCenterX = this.pockets[0].offsetWidth / 2;
     const pocketCenterY = this.pockets[0].offsetHeight / 2;
@@ -565,45 +616,45 @@ class Pockets {
       right: expandedCenterBoundingBox.right - pieceSize,
       bottom: expandedCenterBoundingBox.bottom - pieceSize,
       left: expandedCenterBoundingBox.left * this.zoomLevel,
-    }
+    };
   }
 
-  makeClone(element){
+  makeClone(element) {
     // console.log("making clone")
     this.elementClone = element.cloneNode(true);
     this.elementClone.style.pointerEvents = "none";
-    this.pocketsBridge.appendChild(this.elementClone);
     this.setClonePosition();
     this.pocketsBridge.style.zIndex = 2;
+    return this.elementClone;
   }
 
-  addToBridge(element){
-    // console.log("adding to bridge")
-    this.pocketsBridge.appendChild(element);
+  addToBridge(element) {
+    console.log("adding to bridge", element);
+    this.pocketsBridge.appendChild(this.makeClone(element));
 
-    const bridgeBox = {
-      top: parseInt(this.pocketsBridge.style.top),
-      left: parseInt(this.pocketsBridge.style.left),
-    };
+    const bridgeBox = this.pocketsBridge.getBoundingClientRect();
     const elementBox = element.getBoundingClientRect();
 
-    element.style.top = bridgeBox.top + elementBox.top + "px";
-    element.style.left = bridgeBox.left + elementBox.left + "px";
+    element.style.top = bridgeBox.top + elementBox.top * this.zoomLevel + "px";
+    element.style.left =
+      bridgeBox.left + elementBox.left * this.zoomLevel + "px";
 
     this.pocketsBridge.style.zIndex = 2;
   }
 
-  setClonePosition(){
+  setClonePosition() {
+    Utils.drawBox(this.movingElement.getBoundingClientRect());
     this.elementClone.style.top = parseInt(this.movingElement.style.top) + "px";
-    this.elementClone.style.left = parseInt(this.movingElement.style.left) + "px";
+    this.elementClone.style.left =
+      parseInt(this.movingElement.style.left) + "px";
   }
 
-  setCloneContainerPosition(){
+  setCloneContainerPosition() {
     this.pocketsBridge.style.top = parseInt(this.mainCanvas.style.top) + "px";
     this.pocketsBridge.style.left = parseInt(this.mainCanvas.style.left) + "px";
   }
 
-  removeClone(){
+  removeClone() {
     this.elementClone.remove();
     this.elementClone = null;
     this.pocketsBridge.style.zIndex = 1;

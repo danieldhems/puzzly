@@ -305,6 +305,9 @@ class Puzzly {
       // console.log("received puzzly_dragandselect_active", e)
       this.dragAndSelectActive = e.detail;
     });
+
+    this.Pockets = new Pockets(this);
+    this.DragAndSelect = new DragAndSelect(this);
   }
 
   initiateStage() {
@@ -314,8 +317,8 @@ class Puzzly {
   }
 
   setStageSize(puzzleBoardSize) {
-    this.stage.style.width = this.getPxString(puzzleBoardSize.width * 5);
-    this.stage.style.height = this.getPxString(puzzleBoardSize.height * 3);
+    this.stage.style.width = this.getPxString(puzzleBoardSize.width * 3);
+    this.stage.style.height = this.getPxString(puzzleBoardSize.height * 2);
   }
 
   setCanvasScaleAndPosition(puzzleBoardSize) {
@@ -349,9 +352,10 @@ class Puzzly {
     stageElement.style.position = "absolute";
     stageElement.style.top = 0;
     stageElement.style.left = 0;
-    stageElement.style.pointerEvents = "none";
+    // stageElement.style.pointerEvents = "none";
 
     const stageSheenElement = document.createElement("div");
+    stageSheenElement.style.pointerEvents = "none";
     stageSheenElement.classList.add("stage-sheen");
     stageSheenElement.style.width = "100%";
     stageSheenElement.style.height = "100%";
@@ -997,6 +1001,7 @@ class Puzzly {
       const isStage =
         e.target.id === "canvas" ||
         e.target.id === "boardArea" ||
+        e.target.id === "stage" ||
         e.target.dataset.group === "1111" ||
         e.target.dataset.issolved;
 
@@ -1339,30 +1344,6 @@ class Puzzly {
     }
 
     return asArray ? arr : obj;
-  }
-
-  // deprecated
-  moveCanvas(e) {
-    const element = this.canvas;
-    if (this.isMouseDown && this.isCanvasMoving) {
-      const newPosTop = e.clientY - this.canvasDiffY;
-      const newPosLeft = e.clientX - this.canvasDiffX;
-
-      const topLimit = 0;
-      const leftLimit = 0;
-      const rightLimit = window.innerWidth - this.canvasWidth;
-      const bottomLimit = window.innerHeight - this.canvasHeight;
-
-      if (
-        newPosTop <= topLimit &&
-        newPosLeft <= leftLimit &&
-        newPosTop >= bottomLimit &&
-        newPosLeft >= rightLimit
-      ) {
-        element.style.top = newPosTop + "px";
-        element.style.left = newPosLeft + "px";
-      }
-    }
   }
 
   setElementAttribute(el, attr, value) {
@@ -1864,34 +1845,11 @@ class Puzzly {
     // console.log("shouldProceedToNextSide()", currentSide, element, firstPieceOnNextSide)
     let targetBox;
 
-    if (firstPieceOnNextSide) {
-      targetBox = {
-        top: parseInt(firstPieceOnNextSide.style.top) * this.zoomLevel,
-        right:
-          parseInt(firstPieceOnNextSide.style.left) +
-          firstPieceOnNextSide.offsetWidth * this.zoomLevel,
-        bottom:
-          parseInt(firstPieceOnNextSide.style.top) +
-          firstPieceOnNextSide.offsetHeight * this.zoomLevel,
-        left: parseInt(firstPieceOnNextSide.style.left) * this.zoomLevel,
-      };
-    } else {
-      targetBox = {
-        top: this.boardAreaEl.offsetTop,
-        right: this.boardAreaEl.offsetLeft + this.boardAreaEl.offsetWidth,
-        bottom: this.boardAreaEl.offsetTop + this.boardAreaEl.offsetHeight,
-        left: this.boardAreaEl.offsetLeft,
-      };
-    }
+    targetBox = firstPieceOnNextSide
+      ? firstPieceOnNextSide.getBoundingClientRect()
+      : this.boardAreaEl.getBoundingClientRect();
 
-    const box = {
-      top: parseInt(element.style.top) * this.zoomLevel,
-      right:
-        parseInt(element.style.left) + element.offsetWidth * this.zoomLevel,
-      bottom:
-        parseInt(element.style.top) + element.offsetHeight * this.zoomLevel,
-      left: parseInt(element.style.left) * this.zoomLevel,
-    };
+    const box = element.getBoundingClientRect();
 
     switch (currentSide) {
       case "top":
@@ -1925,6 +1883,7 @@ class Puzzly {
     firstPieceOnNextSideFromPreviousIteration,
     spacing
   ) {
+    // trout
     // console.log("getPositionForFirstPieceOnNextSide", element, nextElement, currentSide)
     let targetBox;
 
@@ -1988,10 +1947,10 @@ class Puzzly {
   }
 
   arrangePieces() {
+    // salmon
     const sides = ["top", "right", "bottom", "left"];
     let i = 0;
     let sideIndex = 0;
-    let verticalSpace = 0;
 
     let currentSide = sides[sideIndex];
 
@@ -2006,18 +1965,30 @@ class Puzzly {
 
     const piecesInPlay = this.shuffleArray(Utils.getIndividualPiecesOnCanvas());
 
-    let currentX = this.boardAreaEl.offsetLeft * this.zoomLevel;
-    let currentY =
-      (this.boardAreaEl.offsetTop - this.largestPieceSpan - spacing) *
-      this.zoomLevel;
+    // console.log("box left", this.boardAreaEl.getBoundingClientRect().left);
+
+    const boardAreaRect = this.boardAreaEl.getBoundingClientRect();
+
+    let currentX = boardAreaRect.left;
+    let currentY = this.boardAreaEl.offsetTop - this.largestPieceSpan - spacing;
 
     while (i < piecesInPlay.length) {
-      const p = piecesInPlay[i];
+      const currentPiece = piecesInPlay[i];
+      const nextPiece = piecesInPlay[i + 1];
 
-      move(p).x(currentX).y(currentY).duration(this.animationDuration).end();
+      const currentPieceBoundingBox = currentPiece.getBoundingClientRect();
+      const nextPieceBoundingBox = nextPiece?.getBoundingClientRect();
+
+      console.log("current piece", currentPiece);
+
+      move(currentPiece)
+        .x(currentX)
+        .y(currentY)
+        .duration(this.animationDuration)
+        .end();
 
       if (i === 0) {
-        firstPiecesOnEachSide[currentSide] = piecesInPlay[i];
+        firstPiecesOnEachSide[currentSide] = currentPiece;
       }
 
       const nextSide = sideIndex < 3 ? sideIndex + 1 : 0;
@@ -2026,7 +1997,7 @@ class Puzzly {
       if (
         this.shouldProceedToNextSide(
           currentSide,
-          piecesInPlay[i],
+          currentPiece,
           firstPiecesOnEachSide[sides[nextSide]]
         )
       ) {
@@ -2036,8 +2007,8 @@ class Puzzly {
         }
 
         const nextPos = this.getPositionForFirstPieceOnNextSide(
-          piecesInPlay[i],
-          !isLastPiece ? piecesInPlay[i + 1] : null,
+          currentPiece,
+          !isLastPiece ? nextPiece : null,
           currentSide,
           firstPiecesOnEachSide[sides[nextSide]],
           spacing
@@ -2046,24 +2017,23 @@ class Puzzly {
         sideIndex = nextSide;
         currentSide = sides[nextSide];
 
-        firstPiecesOnEachSide[currentSide] = piecesInPlay[i + 1];
+        firstPiecesOnEachSide[currentSide] = nextPiece;
 
         currentX = nextPos.x;
         currentY = nextPos.y;
       } else {
+        Utils.drawBox(currentPieceBoundingBox);
         if (currentSide === "top") {
-          currentX += piecesInPlay[i].offsetWidth + spacing * this.zoomLevel;
+          currentX += currentPieceBoundingBox.width + spacing;
         } else if (currentSide === "right") {
-          currentY += piecesInPlay[i].offsetHeight + spacing * this.zoomLevel;
+          currentY += currentPieceBoundingBox.height + spacing;
         } else if (currentSide === "bottom") {
           if (!isLastPiece) {
-            currentX -=
-              (piecesInPlay[i + 1].offsetWidth + spacing) * this.zoomLevel;
+            currentX -= nextPieceBoundingBox.width + spacing;
           }
         } else if (currentSide === "left") {
           if (!isLastPiece) {
-            currentY -=
-              (piecesInPlay[i + 1].offsetHeight + spacing) * this.zoomLevel;
+            currentY -= nextPieceBoundingBox.height + spacing;
           }
         }
       }

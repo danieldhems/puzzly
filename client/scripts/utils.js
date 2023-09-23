@@ -366,6 +366,9 @@ const Utils = {
     const pocketsBox = document
       .querySelector("#pockets")
       .getBoundingClientRect();
+
+    // Utils.drawBox(box);
+    // Utils.drawBox(pocketsBox);
     return Utils.hasCollision(box, pocketsBox);
   },
 
