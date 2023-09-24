@@ -88,12 +88,35 @@
         <img id="full-size-image" />
       </form>
     </div>
-    <div id="canvas">
-      <div id="boardArea"></div>
-      <div id="full-image-viewer"></div>
-      <div id="group-container-1111" class="group-container">
-        <canvas id="group-canvas-1111"></canvas>
+    <!-- The root container for the puzzle page -->
+    <div id="stage">
+      <!--
+        The main play area where the pieces can be moved around and connected.
+        Pieces can not be placed outside of this area
+      -->
+      <div id="play-boundary">
+        <!--
+          The area in which the puzzle is solved.
+          This is also where the full puzzle image preview lives.
+        -->
+        <div id="solved-puzzle-area">
+          <div id="group-container-1111" class="group-container">
+            <canvas id="group-canvas-1111" class="fill-container"></canvas>
+          </div>
+          <div id="solved-preview" class="fill-container"></div>
+        </div>
+        <div id="pieces-container" class="fill-container"></div>
       </div>
+      <div id="pockets">
+        <div id="pockets-inner">
+          <div id="pocket-0" class="pocket"></div>
+          <div id="pocket-1" class="pocket"></div>
+          <div id="pocket-2" class="pocket"></div>
+          <div id="pocket-3" class="pocket"></div>
+        </div>
+        <div id="pockets-handle"></div>
+      </div>
+      <div id="pockets-bridge"></div>
     </div>
     <div id="debug-info"></div>
     <div id="controls">
@@ -121,16 +144,6 @@
         <a id="js-create-new-puzzle" class="button" href="/" title="New puzzle">Create new puzzle</a>
       </div>
     </div>
-    <div id="pockets">
-      <div id="pockets-inner">
-        <div id="pocket-0" class="pocket"></div>
-        <div id="pocket-1" class="pocket"></div>
-        <div id="pocket-2" class="pocket"></div>
-        <div id="pocket-3" class="pocket"></div>
-      </div>
-      <div id="pockets-handle"></div>
-    </div>
-    <div id="pockets-bridge"></div>
     <script src="https://code.createjs.com/1.0.0/tweenjs.min.js"></script>
     <script type="module" src="./scripts/puzzlyCreator.js"></script>
     <script type="module" src="./scripts/puzzly.js"></script>

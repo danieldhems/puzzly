@@ -24,3 +24,13 @@ export const PuzzleSizes = [
 export const PUZZLE_PIECE_CLASSES = ["puzzle-piece", "puzzle-piece-fg"];
 
 export const PIECE_SIZE = 100;
+
+export const ELEMENT_IDS = {
+  SOLVED_PUZZLE_AREA: "solved-puzzle-area",
+  PLAY_BOUNDARY: "play-boundary",
+  STAGE: "stage",
+  PIECES_CONTAINER: "pieces-container",
+  BRIDGE: "bridge",
+};
+
+export const SOLVING_AREA_SIZE_PERCENTAGE = 15;

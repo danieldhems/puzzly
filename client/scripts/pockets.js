@@ -52,7 +52,7 @@ class Pockets {
 
     this.pockets = [pocket0, pocket1, pocket2, pocket3];
 
-    this.ui.classList.add("initalised");
+    this.ui.classList.add("initialised");
 
     this.setScale(config.zoomLevel);
     this.pocketDropBoundingBox = this.getTargetBoxForPlacementInsidePocket(
