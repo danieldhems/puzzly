@@ -1,5 +1,6 @@
 import Pockets from "./pockets.js";
 import DragAndSelect from "./dragAndSelect.js";
+import Bridge from "./bridge.js";
 import Utils from "./utils.js";
 
 /**
@@ -308,6 +309,7 @@ class Puzzly {
 
     this.Pockets = new Pockets(this);
     this.DragAndSelect = new DragAndSelect(this);
+    this.Bridge = new Bridge(this);
   }
 
   initiateStage() {
@@ -1068,6 +1070,8 @@ class Puzzly {
         this.diffY =
           clientPos.y - this.movingElement.offsetTop * this.zoomLevel;
       }
+
+      this.Bridge.add(this.movingElement);
 
       this.isMouseDown = true;
 

@@ -363,7 +363,7 @@ class Pockets {
       this.activePiecesContainer = null;
     }
 
-    this.clearPocketsBridge();
+    // this.clearPocketsBridge();
 
     this.movingElement = null;
     this.isMainCanvasMoving = false;
@@ -484,12 +484,13 @@ class Pockets {
     return container;
   }
 
-  resetActivePocket() {
-    this.activePocket = null;
+  addPiecesToPocket(pocket, pieces) {
+    const pieceArray = Array.from(pieces);
+    pieceArray.forEach((p) => this.addToPocket(pocket, p));
   }
 
-  clearPocketsBridge() {
-    Array.from(this.pocketsBridge?.childNodes).forEach((el) => el.remove());
+  resetActivePocket() {
+    this.activePocket = null;
   }
 
   setElementPositionInPocket(element, pocket) {
@@ -558,11 +559,6 @@ class Pockets {
     Utils.requestSave([element]);
   }
 
-  addPiecesToPocket(pocket, pieces) {
-    const pieceArray = Array.from(pieces);
-    pieceArray.forEach((p) => this.addToPocket(pocket, p));
-  }
-
   returnToCanvas(els) {
     for (let i = 0, l = els.length; i < l; i++) {
       const el = els[i];
@@ -617,47 +613,6 @@ class Pockets {
       bottom: expandedCenterBoundingBox.bottom - pieceSize,
       left: expandedCenterBoundingBox.left * this.zoomLevel,
     };
-  }
-
-  makeClone(element) {
-    // console.log("making clone")
-    this.elementClone = element.cloneNode(true);
-    this.elementClone.style.pointerEvents = "none";
-    this.setClonePosition();
-    this.pocketsBridge.style.zIndex = 2;
-    return this.elementClone;
-  }
-
-  addToBridge(element) {
-    console.log("adding to bridge", element);
-    this.pocketsBridge.appendChild(this.makeClone(element));
-
-    const bridgeBox = this.pocketsBridge.getBoundingClientRect();
-    const elementBox = element.getBoundingClientRect();
-
-    element.style.top = bridgeBox.top + elementBox.top * this.zoomLevel + "px";
-    element.style.left =
-      bridgeBox.left + elementBox.left * this.zoomLevel + "px";
-
-    this.pocketsBridge.style.zIndex = 2;
-  }
-
-  setClonePosition() {
-    Utils.drawBox(this.movingElement.getBoundingClientRect());
-    this.elementClone.style.top = parseInt(this.movingElement.style.top) + "px";
-    this.elementClone.style.left =
-      parseInt(this.movingElement.style.left) + "px";
-  }
-
-  setCloneContainerPosition() {
-    this.pocketsBridge.style.top = parseInt(this.mainCanvas.style.top) + "px";
-    this.pocketsBridge.style.left = parseInt(this.mainCanvas.style.left) + "px";
-  }
-
-  removeClone() {
-    this.elementClone.remove();
-    this.elementClone = null;
-    this.pocketsBridge.style.zIndex = 1;
   }
 }
 
