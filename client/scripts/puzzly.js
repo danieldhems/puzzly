@@ -2,6 +2,7 @@ import Pockets from "./pockets.js";
 import DragAndSelect from "./dragAndSelect.js";
 import Bridge from "./bridge.js";
 import Utils from "./utils.js";
+import Events from "./events.js";
 import { ELEMENT_IDS, SOLVING_AREA_SIZE_PERCENTAGE } from "./constants.js";
 
 /**
@@ -227,13 +228,16 @@ class Puzzly {
 
     const solvingAreaBoundingBox = this.solvingArea.getBoundingClientRect();
 
-    this.setupPlayBoundary(solvingAreaBoundingBox);
-    this.setPlayBoundaryScaleAndPosition(solvingAreaBoundingBox);
-
     this.boardWidth = solvingAreaBoundingBox.width;
     this.boardHeight = solvingAreaBoundingBox.height;
 
     this.isFullImageViewerActive = false;
+
+    this.Pockets = new Pockets(this);
+    this.DragAndSelect = new DragAndSelect(this);
+    this.Bridge = new Bridge(this);
+
+    this.setPlayBoundaryScaleAndPosition(solvingAreaBoundingBox);
 
     const storage = this.getApplicablePersistence(
       this.pieces,
@@ -305,16 +309,7 @@ class Puzzly {
       this.dragAndSelectActive = e.detail;
     });
 
-    this.Pockets = new Pockets(this);
-    this.DragAndSelect = new DragAndSelect(this);
-    this.Bridge = new Bridge(this);
-  }
-
-  setupPlayBoundary(puzzleBoardSize) {
-    this.playBoundary.style.width = this.getPxString(puzzleBoardSize.width * 3);
-    this.playBoundary.style.height = this.getPxString(
-      puzzleBoardSize.height * 2
-    );
+    Events.notify("puzzle_loaded", this);
   }
 
   setPlayBoundaryScaleAndPosition(puzzleBoardSize) {
@@ -342,8 +337,11 @@ class Puzzly {
 
     // Set position
     this.playBoundary.style.left = 0;
+    console.log("setting playboundary top");
     this.playBoundary.style.top = this.getPxString(
-      this.solvingArea.getBoundingClientRect().height / 2
+      (this.stage.getBoundingClientRect().height -
+        this.playBoundary.getBoundingClientRect().height) /
+        2
     );
   }
 
@@ -496,18 +494,19 @@ class Puzzly {
   }
 
   setupSolvingArea() {
-    const stageBoundingBox = this.stage.getBoundingClientRect();
-    this.solvingArea.style.width = this.getPxString(
-      (stageBoundingBox.width / 100) * SOLVING_AREA_SIZE_PERCENTAGE
-    );
-    this.solvingArea.style.height = this.getPxString(
-      (stageBoundingBox.height / 100) * SOLVING_AREA_SIZE_PERCENTAGE
-    );
+    const playBoundaryWidth = this.boardSize * 3;
+    const playBoundaryHeight = this.boardSize * 2;
+
+    this.playBoundary.style.width = this.getPxString(playBoundaryWidth);
+    this.playBoundary.style.height = this.getPxString(playBoundaryHeight);
+
+    this.solvingArea.style.width = this.getPxString(this.boardSize);
+    this.solvingArea.style.height = this.getPxString(this.boardSize);
     this.solvingArea.style.top = this.getPxString(
-      stageBoundingBox.height / 2 - this.solvingArea.offsetHeight / 2
+      playBoundaryHeight / 2 - this.solvingArea.offsetHeight / 2
     );
     this.solvingArea.style.left = this.getPxString(
-      stageBoundingBox.width / 2 - this.solvingArea.offsetWidth / 2
+      playBoundaryWidth / 2 - this.solvingArea.offsetWidth / 2
     );
   }
 
@@ -600,10 +599,9 @@ class Puzzly {
     this.playBoundary.style.transform = `scale(${scale})`;
 
     if (this.zoomLevel !== this.prevZoomLevel) {
-      // this.stage.style.transformOrigin = "50% 50%";
-
       this.Pockets.setScale(this.zoomLevel);
       this.DragAndSelect.setScale(this.zoomLevel);
+      Events.notify("change_scale", this.zoomLevel);
     }
 
     if (this.isPreviewActive) {
@@ -988,8 +986,9 @@ class Puzzly {
 
       if (isPuzzlePiece) {
         element = Utils.getPuzzlePieceElementFromEvent(e);
-        this.lastPosition = Utils.getPositionRelativeToCanvas(
+        this.lastPosition = Utils.getPositionRelativeToContainer(
           element.getBoundingClientRect(),
+          this.playBoundary.getBoundingClientRect(),
           this.zoomLevel
         );
       }
@@ -1050,7 +1049,7 @@ class Puzzly {
           clientPos.y - this.movingElement.offsetTop * this.zoomLevel;
       }
 
-      this.Bridge.add(this.movingElement);
+      Events.notify("piece_pickup", this.movingElement);
 
       this.isMouseDown = true;
 
@@ -1092,6 +1091,7 @@ class Puzzly {
             eventX / this.zoomLevel - this.diffX / this.zoomLevel;
           this.movingElement.style.top = newPosTop + "px";
           this.movingElement.style.left = newPosLeft + "px";
+          this.Bridge.setClonePosition();
         }
       }
     }
@@ -1232,6 +1232,8 @@ class Puzzly {
         } else {
           this.handleDrop(element);
         }
+
+        Events.notify("piece_drop");
       }
     }
 
@@ -1930,7 +1932,6 @@ class Puzzly {
   }
 
   arrangePieces() {
-    // salmon
     const sides = ["top", "right", "bottom", "left"];
     let i = 0;
     let sideIndex = 0;

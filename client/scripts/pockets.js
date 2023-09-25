@@ -1,9 +1,10 @@
+import Bridge from "./bridge.js";
+import { ELEMENT_IDS } from "./constants.js";
 import Utils from "./utils.js";
 
 class Pockets {
   constructor(config) {
-    this.mainCanvas = config.canvas;
-    this.stage = config.stage;
+    this.playBoundary = config.playBoundary;
     this.shadowOffset = config.shadowOffset;
     this.largestPieceSpan = config.largestPieceSpan;
     this.connectorSize = config.connectorSize;
@@ -31,13 +32,13 @@ class Pockets {
 
     this.init(config);
 
+    this.Bridge = new Bridge(config);
+
     window.addEventListener("DOMContentLoaded", this.init);
 
     window.addEventListener("mousedown", (e) => this.onMouseDown(e));
     window.addEventListener("mouseup", (e) => this.onMouseUp(e));
     window.addEventListener("resize", (e) => this.onResize(e));
-
-    return this;
   }
 
   init(config) {
@@ -179,7 +180,8 @@ class Pockets {
 
   isFromCanvas(el) {
     return (
-      el.parentNode.id === "canvas" || el.parentNode.parentNode.id === "canvas"
+      el.parentNode.id === ELEMENT_IDS.PLAY_BOUNDARY ||
+      el.parentNode.parentNode.id === ELEMENT_IDS.PLAY_BOUNDARY
     );
   }
 
@@ -220,8 +222,8 @@ class Pockets {
       : false;
 
     const isMainCanvas =
-      el.id === "canvas" ||
-      el.id === "boardArea" ||
+      el.id === ELEMENT_IDS.PLAY_BOUNDARY ||
+      el.id === ELEMENT_IDS.SOLVED_PUZZLE_AREA ||
       el.dataset?.isSolved === "true";
 
     // Picking up a single piece from the canvas
@@ -229,15 +231,8 @@ class Pockets {
       this.isMovingSinglePiece = true;
       this.movingElement = this.isDragActive ? el.parentNode : el;
 
-      const movingElementBoundingBox =
-        this.movingElement.getBoundingClientRect();
-
-      if (
-        Utils.isOverPockets(movingElementBoundingBox) &&
-        this.elementClone === null
-      ) {
-        this.addToBridge(this.movingElement);
-      }
+      // add to bridge
+      this.disablePointerEvents();
     }
 
     // Piece is being picked up from a pocket
@@ -276,6 +271,7 @@ class Pockets {
   }
 
   disablePointerEvents() {
+    console.log("disabling pointer events");
     this.ui.style.pointerEvents = "none";
     const pieces = this.ui.querySelectorAll(".puzzle-piece");
     pieces.forEach((el) => (el.style.pointerEvents = "none"));
@@ -284,25 +280,7 @@ class Pockets {
   onMouseMove(e) {
     e.preventDefault();
 
-    if (this.isMovingSinglePiece) {
-      const movingElementBox = this.movingElement.getBoundingClientRect();
-      const isOverPockets = Utils.isOverPockets.call(this, movingElementBox);
-
-      this.disablePointerEvents();
-
-      if (isOverPockets && this.elementClone === null) {
-        console.log("cloning");
-        this.addToBridge(this.movingElement);
-      }
-
-      if (!isOverPockets && this.elementClone) {
-        this.removeClone(this.movingElement);
-      }
-
-      if (this.elementClone) {
-        this.setClonePosition();
-      }
-    } else if (this.activePocket) {
+    if (this.activePocket) {
       const x = this.diffX ? e.clientX - this.diffX : e.clientX;
       const y = this.diffY ? e.clientY - this.diffY : e.clientY;
       this.movingElement.style.top = y + "px";
@@ -315,6 +293,7 @@ class Pockets {
     const trackingBox = Utils.getEventBox(e);
     const targetPocket = this.getPocketByCollision(trackingBox);
 
+    // notify to remove from bridge
     this.enablePointerEvents();
 
     if (trackingBox && targetPocket) {
@@ -562,8 +541,9 @@ class Pockets {
   returnToCanvas(els) {
     for (let i = 0, l = els.length; i < l; i++) {
       const el = els[i];
-      const pos = Utils.getPositionRelativeToCanvas(
+      const pos = Utils.getPositionRelativeToContainer(
         el.getBoundingClientRect(),
+        this.playBoundary.getBoundingClientRect(),
         this.zoomLevel
       );
 
@@ -571,7 +551,7 @@ class Pockets {
       el.style.left = pos.x + "px";
 
       this.setPieceSize(el);
-      this.mainCanvas.appendChild(el);
+      this.playBoundary.appendChild(el);
       el.classList.remove("in-pocket");
       el.setAttribute("data-pocket-id", null);
       el.style.pointerEvents = "auto";

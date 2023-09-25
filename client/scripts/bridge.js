@@ -1,57 +1,90 @@
+import { ELEMENT_IDS } from "./constants.js";
+import Utils from "./utils.js";
+
 class Bridge {
   constructor(puzzly) {
     this.bridge = document.querySelector("#pockets-bridge");
     this.stage = document.querySelector("#stage");
+    this.playBoundary = document.querySelector(`#${ELEMENT_IDS.PLAY_BOUNDARY}`);
     this.movingElement = null;
     this.elementClone = null;
-    this.zoomLevel = puzzly.zoomLevel;
 
-    this.setZoomLevel(this.zoomLevel);
-    this.setupBridge(this.stage);
+    this.isMouseDown = false;
+    this.isMouseMoving = false;
+
+    this.setupBridge(this.playBoundary);
+
+    window.addEventListener("piece_pickup", this.add.bind(this));
+    window.addEventListener("piece_drop", this.remove.bind(this));
+    window.addEventListener("change_scale", this.sync.bind(this));
+    window.addEventListener("mousemove", this.onMouseMove.bind(this));
+    window.addEventListener("puzzle_loaded", this.onLoad.bind(this));
   }
 
-  setZoomLevel(zoomLevel) {
-    this.zoomLevel = zoomLevel;
+  onLoad(event) {
+    const config = event.detail;
+    this.setScale(config.zoomLevel);
   }
 
-  setupBridge(stage) {
-    const stageBoundingBox = stage.getBoundingClientRect();
-    this.bridge.style.width = stageBoundingBox.width + "px";
-    this.bridge.style.height = stageBoundingBox.height + "px";
-    this.bridge.style.top = stageBoundingBox.top + "px";
-    this.bridge.style.left = stageBoundingBox.left + "px";
+  setScale(level) {
+    this.zoomLevel = level;
+    this.bridge.style.transform = `scale(${this.zoomLevel})`;
+
+    const rect = this.playBoundary.getBoundingClientRect();
+
+    // It would be better to read the top value from the playboundary instead of calculating it again here.
+    // Had issues with application logic and the timing of things being set, so just doing this for now...
+    this.bridge.style.top =
+      (this.stage.getBoundingClientRect().height -
+        this.playBoundary.getBoundingClientRect().height) /
+        2 +
+      "px";
+    this.bridge.style.left = rect.left + "px";
+  }
+
+  sync(event) {
+    const zoomLevel = event.detail;
+    const rect = this.playBoundary.getBoundingClientRect();
+    this.bridge.style.transform = `scale(${zoomLevel})`;
+    this.bridge.style.top = rect.top + "px";
+    this.bridge.style.left = rect.left + "px";
+  }
+
+  setupBridge(playBoundary) {
+    const rect = playBoundary.getBoundingClientRect();
+    this.bridge.style.width = rect.width + "px";
+    this.bridge.style.height = rect.height + "px";
     this.bridge.style.transform = `scale(${this.zoomLevel})`;
   }
 
   makeClone(element) {
-    // console.log("making clone")
-    this.elementClone = element.cloneNode(true);
-    this.elementClone.style.pointerEvents = "none";
-    this.elementClone.style.transform = `scale(${this.zoomLevel})`;
-    this.setClonePosition();
-    this.bridge.style.zIndex = 2;
-    return this.elementClone;
+    console.log("making clone");
+    const clone = element.cloneNode(true);
+    clone.style.pointerEvents = "none";
+    return clone;
   }
 
-  add(element) {
-    console.log("adding to bridge", element);
+  add(eventData) {
+    const element = eventData.detail;
+    console.log("adding to bridge");
     this.movingElement = element;
-    this.bridge.appendChild(this.makeClone(element));
-
-    const bridgeBox = this.bridge.getBoundingClientRect();
-    const elementBox = element.getBoundingClientRect();
-
-    element.style.top = bridgeBox.top + elementBox.top * this.zoomLevel + "px";
-    element.style.left =
-      bridgeBox.left + elementBox.left * this.zoomLevel + "px";
-
+    this.elementClone = this.makeClone(this.movingElement);
+    this.bridge.appendChild(this.elementClone);
+    this.setClonePosition();
     this.bridge.style.zIndex = 2;
+  }
+
+  onMouseMove(e) {
+    if (this.elementClone) {
+      this.setClonePosition();
+    }
   }
 
   setClonePosition() {
-    this.elementClone.style.top = parseInt(this.movingElement.style.top) + "px";
-    this.elementClone.style.left =
-      parseInt(this.movingElement.style.left) + "px";
+    const top = this.movingElement.offsetTop;
+    const left = this.movingElement.offsetLeft;
+    this.elementClone.style.top = top + "px";
+    this.elementClone.style.left = left + "px";
   }
 
   setCloneContainerPosition() {
@@ -59,7 +92,7 @@ class Bridge {
     this.bridge.style.left = parseInt(this.mainCanvas.style.left) + "px";
   }
 
-  removeClone() {
+  remove() {
     this.elementClone.remove();
     this.elementClone = null;
     this.bridge.style.zIndex = 1;

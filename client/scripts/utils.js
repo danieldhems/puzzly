@@ -1,4 +1,4 @@
-import { PUZZLE_PIECE_CLASSES } from "./constants.js";
+import { ELEMENT_IDS, PUZZLE_PIECE_CLASSES } from "./constants.js";
 
 const Utils = {
   hasCollision(source, target, sourceEl, targetEl) {
@@ -295,24 +295,21 @@ const Utils = {
     }
   },
 
-  getPositionRelativeToCanvas(elementRect, zoomLevel) {
-    const cnv = document.querySelector("#canvas");
-    const cnvRect = cnv.getBoundingClientRect();
+  getPositionRelativeToContainer(elementRect, containerRect, zoomLevel) {
+    const pieceOffsetWithCanvasX = elementRect.left - containerRect.left;
+    const pieceOffsetWithCanvasY = elementRect.top - containerRect.top;
 
-    const pieceOffsetWithCanvasX = elementRect.left - cnvRect.left;
-    const pieceOffsetWithCanvasY = elementRect.top - cnvRect.top;
-
-    const piecePercX = (pieceOffsetWithCanvasX / cnvRect.width) * 100;
-    const piecePercY = (pieceOffsetWithCanvasY / cnvRect.height) * 100;
+    const piecePercX = (pieceOffsetWithCanvasX / containerRect.width) * 100;
+    const piecePercY = (pieceOffsetWithCanvasY / containerRect.height) * 100;
 
     const x =
-      cnvRect.left === 0
-        ? elementRect.left - cnvRect.left
-        : (cnvRect.width / 100) * piecePercX;
+      containerRect.left === 0
+        ? elementRect.left - containerRect.left
+        : (containerRect.width / 100) * piecePercX;
     const y =
-      cnvRect.top === 0
-        ? elementRect.top - cnvRect.top
-        : (cnvRect.height / 100) * piecePercY;
+      containerRect.top === 0
+        ? elementRect.top - containerRect.top
+        : (containerRect.height / 100) * piecePercY;
 
     return {
       y: y / zoomLevel,
