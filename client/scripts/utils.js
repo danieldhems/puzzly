@@ -268,7 +268,9 @@ const Utils = {
   },
 
   isOutOfBounds(sourceEl) {
-    const cnvBox = document.querySelector("#stage").getBoundingClientRect();
+    const cnvBox = document
+      .querySelector(`#${ELEMENT_IDS.PLAY_BOUNDARY}`)
+      .getBoundingClientRect();
     const pocketsBox = document
       .querySelector("#pockets")
       .getBoundingClientRect();
@@ -278,8 +280,9 @@ const Utils = {
     );
   },
 
-  drawBox(box, borderColor = null, container = null) {
+  drawBox(box, container = null, borderColor = null) {
     const div = document.createElement("div");
+    div.classList.add("bounding-box-indicator");
     div.style.position = "absolute";
     div.style.zIndex = 100;
     div.style.top = (box.top || box.y) + "px";
@@ -293,6 +296,41 @@ const Utils = {
     } else {
       document.body.appendChild(div);
     }
+  },
+
+  removeAllBoundingBoxIndicators() {
+    const elements = document.querySelectorAll(".bounding-box-indicator");
+    if (elements.length > 0) {
+      elements.forEach((el) => el.remove());
+    }
+  },
+
+  getBoundingBoxForOffset(element) {
+    return element
+      ? {
+          top: element.offsetTop,
+          right: element.offsetLeft + element.offsetWidth,
+          bottom: element.offsetTop + element.offsetHeight,
+          left: element.offsetLeft,
+          width: element.offsetWidth,
+          height: element.offsetHeight,
+        }
+      : null;
+  },
+
+  getStyleBoundingBox(element) {
+    const top = parseInt(element.style.top);
+    const left = parseInt(element.style.left);
+    return element
+      ? {
+          top,
+          right: left + element.offsetWidth,
+          bottom: top + element.offsetHeight,
+          left,
+          width: element.offsetWidth,
+          height: element.offsetHeight,
+        }
+      : null;
   },
 
   getPositionRelativeToContainer(elementRect, containerRect, zoomLevel) {

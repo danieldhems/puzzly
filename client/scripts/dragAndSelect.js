@@ -2,7 +2,7 @@ import Utils from "./utils.js";
 
 class DragAndSelect {
   constructor(opts) {
-    this.canvas = opts.canvas;
+    this.canvas = opts.playBoundary;
     this.zoomLevel = opts.zoomLevel;
     this.selectedPieces = [];
 

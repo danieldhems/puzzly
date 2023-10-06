@@ -1,4 +1,4 @@
-import { ELEMENT_IDS } from "./constants.js";
+import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
 import Utils from "./utils.js";
 
 class Bridge {
@@ -14,11 +14,13 @@ class Bridge {
 
     this.setupBridge(this.playBoundary);
 
-    window.addEventListener("piece_pickup", this.add.bind(this));
-    window.addEventListener("piece_drop", this.remove.bind(this));
-    window.addEventListener("change_scale", this.sync.bind(this));
+    window.addEventListener(EVENT_TYPES.PIECE_PICKUP, this.add.bind(this));
+    window.addEventListener(EVENT_TYPES.PIECE_DROP, this.remove.bind(this));
+    window.addEventListener(EVENT_TYPES.CHANGE_SCALE, this.sync.bind(this));
+    window.addEventListener(EVENT_TYPES.SYNC, this.sync.bind(this));
+    window.addEventListener(EVENT_TYPES.PUZZLE_LOADED, this.onLoad.bind(this));
+    window.addEventListener(EVENT_TYPES.CLEAR_BRIDGE, this.remove.bind(this));
     window.addEventListener("mousemove", this.onMouseMove.bind(this));
-    window.addEventListener("puzzle_loaded", this.onLoad.bind(this));
   }
 
   onLoad(event) {
@@ -58,7 +60,6 @@ class Bridge {
   }
 
   makeClone(element) {
-    console.log("making clone");
     const clone = element.cloneNode(true);
     clone.style.pointerEvents = "none";
     return clone;
@@ -66,7 +67,6 @@ class Bridge {
 
   add(eventData) {
     const element = eventData.detail;
-    console.log("adding to bridge");
     this.movingElement = element;
     this.elementClone = this.makeClone(this.movingElement);
     this.bridge.appendChild(this.elementClone);

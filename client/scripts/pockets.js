@@ -1,5 +1,5 @@
 import Bridge from "./bridge.js";
-import { ELEMENT_IDS } from "./constants.js";
+import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
 import Utils from "./utils.js";
 
 class Pockets {
@@ -17,7 +17,7 @@ class Pockets {
     this.isMainCanvasMoving = false;
     this.isDragActive = false;
 
-    this.pieceScaleWhileInPocket = 0.8;
+    this.pieceScaleWhileInPocket = 0.6;
     this.zoomLevel = 1; // If this hasn't been set externally yet, assume it's the default value
 
     this.pockets = {};
@@ -39,6 +39,7 @@ class Pockets {
     window.addEventListener("mousedown", (e) => this.onMouseDown(e));
     window.addEventListener("mouseup", (e) => this.onMouseUp(e));
     window.addEventListener("resize", (e) => this.onResize(e));
+    window.addEventListener(EVENT_TYPES.CHANGE_SCALE, this.setScale.bind(this));
   }
 
   init(config) {
@@ -106,9 +107,9 @@ class Pockets {
     }
   }
 
-  setScale(num) {
-    this.zoomLevel = num;
-    // this.pocketsBridge.style.transform = `scale(${num})`;
+  setScale(event) {
+    const zoomLevel = event.detail;
+    this.zoomLevel = zoomLevel;
   }
 
   getPocketIdFromPiece(el) {
@@ -228,10 +229,7 @@ class Pockets {
 
     // Picking up a single piece from the canvas
     if (shouldTrackPiece && this.isFromCanvas(el)) {
-      this.isMovingSinglePiece = true;
-      this.movingElement = this.isDragActive ? el.parentNode : el;
-
-      // add to bridge
+      this.movingElement = el;
       this.disablePointerEvents();
     }
 
@@ -289,11 +287,10 @@ class Pockets {
   }
 
   onMouseUp(e) {
-    // console.log("on mouse up", e)
     const trackingBox = Utils.getEventBox(e);
     const targetPocket = this.getPocketByCollision(trackingBox);
-
     // notify to remove from bridge
+
     this.enablePointerEvents();
 
     if (trackingBox && targetPocket) {
@@ -306,7 +303,7 @@ class Pockets {
           this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
           window.dispatchEvent(this.getPocketDropEventMessage());
         } else {
-          console.log(targetPocket);
+          console.log("targetPocket", targetPocket);
           this.addToPocket(targetPocket, this.movingElement);
         }
       }
@@ -323,14 +320,6 @@ class Pockets {
           this.resetActivePocket();
         }
       }
-
-      if (this.elementClone) {
-        this.removeClone();
-      }
-    }
-
-    if (this.isMainCanvasMoving) {
-      this.setCloneContainerPosition();
     }
 
     if (this.isMovingSinglePiece) {
@@ -341,8 +330,6 @@ class Pockets {
       this.activePiecesContainer.remove();
       this.activePiecesContainer = null;
     }
-
-    // this.clearPocketsBridge();
 
     this.movingElement = null;
     this.isMainCanvasMoving = false;
@@ -356,7 +343,7 @@ class Pockets {
   }
 
   eventTargetIsCanvas(e) {
-    return e.target.id === "canvas";
+    return e.target.id === ELEMENT_IDS.PLAY_BOUNDARY;
   }
 
   getPiecesInActivePocket() {
@@ -509,6 +496,8 @@ class Pockets {
 
   addToPocket(pocket, element) {
     console.log("adding to pocket", pocket);
+    console.log("element", element);
+    console.log("pocket", pocket);
     if (!element) return;
 
     let pocketId, pocketEl;

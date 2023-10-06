@@ -635,11 +635,12 @@ class PuzzlyCreator {
 
     const generator = await PuzzleGenerator(puzzleImagePath, puzzleData);
 
-    const { spriteEncodedString, pieces, config } = 
+    const { spriteEncodedString, pieces, config } =
       await generator.generateDataForPuzzlePieces();
 
     Object.assign(puzzleData, {
       spriteEncodedString,
+      puzzleImagePath,
       pieces,
       ...config,
     });

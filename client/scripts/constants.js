@@ -34,3 +34,12 @@ export const ELEMENT_IDS = {
 };
 
 export const SOLVING_AREA_SIZE_PERCENTAGE = 15;
+
+export const EVENT_TYPES = {
+  PIECE_PICKUP: "piece_pickup",
+  PIECE_DROP: "piece_drop",
+  CHANGE_SCALE: "change_scale",
+  PUZZLE_LOADED: "puzzle_loaded",
+  SYNC: "SYNC",
+  CLEAR_BRIDGE: "CLEAR_BRIDGE",
+};
