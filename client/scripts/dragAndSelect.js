@@ -37,7 +37,9 @@ class DragAndSelect {
       this.toggleDrawCursor();
       this.toggleHighlightPieces(this.selectedPieces);
       this.selectedPieces = [];
-      window.dispatchEvent(this.getDragActiveEventMessage(false));
+      this.selectedPiecesContainer?.remove();
+      this.selectedPiecesContainer = null;
+      Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, false);
     });
   }
 

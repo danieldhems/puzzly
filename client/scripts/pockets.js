@@ -208,9 +208,10 @@ class Pockets {
   }
 
   isFromCanvas(el) {
+    console.log("el.parentNode", el.parentNode.parentNode);
     return (
-      el.parentNode.id === ELEMENT_IDS.PLAY_BOUNDARY ||
-      el.parentNode.parentNode.id === ELEMENT_IDS.PLAY_BOUNDARY
+      el.parentNode.id === ELEMENT_IDS.PIECES_CONTAINER ||
+      el.parentNode.parentNode.id === ELEMENT_IDS.PIECES_CONTAINER
     );
   }
 
@@ -233,11 +234,13 @@ class Pockets {
 
   onMouseDown(e) {
     e.stopPropagation();
-    let el = e.target;
+    let el = Utils.getPuzzlePieceElementFromEvent(e);
     let shouldTrackPiece;
 
+    if (!el) return;
+
     // If the empty space inside a pocket is clicked, do nothing
-    if (el.classList?.contains("pocket")) {
+    if (el?.classList?.contains("pocket")) {
       return;
     }
 
@@ -255,17 +258,9 @@ class Pockets {
       el.id === ELEMENT_IDS.SOLVED_PUZZLE_AREA ||
       el.dataset?.isSolved === "true";
 
-    // Picking up a single piece from the canvas
-    if (shouldTrackPiece && this.isFromCanvas(el)) {
-      this.movingElement = el;
-      this.disablePointerEvents();
-    }
-
-    // Piece is being picked up from a pocket
     if (this.isFromPocket(el)) {
-      console.log(this.getPocketIdFromPiece(el));
+      // Piece is being picked up from a pocket
       this.activePocket = this.pockets[this.getPocketIdFromPiece(el)];
-      console.log(this.activePocket);
       this.lastPosition = el.getBoundingClientRect();
 
       this.setActivePiecesToCurrentScale();
@@ -276,6 +271,10 @@ class Pockets {
 
       this.diffX = e.clientX - this.movingElement.offsetLeft;
       this.diffY = e.clientY - this.movingElement.offsetTop;
+    } else {
+      // Picking up a single piece from the canvas
+      this.movingElement = el;
+      this.disablePointerEvents();
     }
 
     if (isMainCanvas) {
@@ -297,7 +296,6 @@ class Pockets {
   }
 
   disablePointerEvents() {
-    console.log("disabling pointer events");
     this.ui.style.pointerEvents = "none";
     const pieces = this.ui.querySelectorAll(".puzzle-piece");
     pieces.forEach((el) => (el.style.pointerEvents = "none"));
@@ -327,11 +325,13 @@ class Pockets {
         this.setActivePiecesToPocketSize();
         this.movingElement.remove();
       } else {
-        if (this.isDragActive) {
-          this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
+        if (this.isDragActive && this.movingElement) {
+          this.addPiecesToPocket(
+            targetPocket,
+            this.movingElement.parentNode.childNodes
+          );
           window.dispatchEvent(this.getPocketDropEventMessage());
         } else {
-          console.log("targetPocket", targetPocket);
           this.addToPocket(targetPocket, this.movingElement);
         }
       }
@@ -532,7 +532,6 @@ class Pockets {
     } else {
       pocketEl = pocket;
       pocketId = this.getIdForPocket(pocket);
-      console.log("pocket id is", pocketId);
     }
 
     this.setElementPositionInPocket(element, pocketEl);

@@ -416,7 +416,10 @@ const Utils = {
   },
 
   getPuzzlePieceElementFromEvent(e) {
-    const classes = e.target.classList;
+    const classes = e.target?.classList;
+
+    if (!classes) return;
+
     const isPuzzlePiece = classes.contains("puzzle-piece");
     const isPuzzlePieceLayerElement = classes.contains("puzzle-piece-fg");
 

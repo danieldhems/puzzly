@@ -1013,7 +1013,11 @@ class Puzzly {
         this.isMovingSinglePiece = true;
         this.movingElement = this.movingPiece = element;
 
-        if (!isStage && !this.dragAndSelectActive) {
+        if (
+          !isStage &&
+          !this.dragAndSelectActive &&
+          !element.classList.contains("in-pocket")
+        ) {
           Events.notify(EVENT_TYPES.PIECE_PICKUP, this.movingElement);
         }
       }
@@ -1114,7 +1118,6 @@ class Puzzly {
   handleDrop(element) {
     if (!this.dragAndSelectActive) {
       const connection = this.checkConnections(element);
-      console.log(connection);
 
       if (connection) {
         const { targetEl } = connection;
