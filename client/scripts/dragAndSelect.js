@@ -5,6 +5,7 @@ import Utils from "./utils.js";
 class DragAndSelect {
   constructor(opts) {
     this.playBoundary = opts.playBoundary;
+    this.piecesContainer = opts.piecesContainer;
     this.zoomLevel = opts.zoomLevel;
     this.selectedPieces = [];
 
@@ -31,6 +32,7 @@ class DragAndSelect {
     window.addEventListener("mousedown", this.onMouseDown.bind(this));
     window.addEventListener("mousemove", this.onMouseMove.bind(this));
     window.addEventListener("mouseup", this.onMouseUp.bind(this));
+    window.addEventListener(EVENT_TYPES.CHANGE_SCALE, this.setScale.bind(this));
     window.addEventListener("puzzly_pockets_pieces_added", (e) => {
       this.toggleDrawCursor();
       this.toggleHighlightPieces(this.selectedPieces);
@@ -39,8 +41,9 @@ class DragAndSelect {
     });
   }
 
-  setScale(scale) {
-    this.zoomLevel = scale;
+  setScale(eventData) {
+    const value = eventData.detail;
+    this.zoomLevel = value;
   }
 
   isMouseHoldInitiated() {
@@ -125,10 +128,6 @@ class DragAndSelect {
     document.body.style.cursor = this.drawBoxActive ? "crosshair" : "default";
   }
 
-  getDragActiveEventMessage(isActive) {
-    return new CustomEvent("puzzly_dragandselect_active", { detail: isActive });
-  }
-
   getCollidingPieces() {
     const dragBoxRect = this.drawBox.getBoundingClientRect();
     return Utils.getIndividualPiecesOnCanvas().filter((el) =>
@@ -136,15 +135,8 @@ class DragAndSelect {
     );
   }
 
-  toggleHighlightPieces(pieces) {
-    pieces.forEach((el) => {
-      el.style.opacity = this.drawBoxActive ? 0.5 : 1;
-      if (this.drawBoxActive) {
-        el.classList.add("selected");
-      } else {
-        el.classList.remove("selected");
-      }
-    });
+  toggleHighlightPieces() {
+    this.selectedPiecesContainer.style.opacity = this.drawBoxActive ? 0.2 : 1;
   }
 
   getBoundingBoxForDragContainer(pieces) {
@@ -197,7 +189,6 @@ class DragAndSelect {
     const b = document.createElement("div");
     b.id = "selected-pieces-container";
     b.style.position = "absolute";
-    // b.style.border = "2px solid";
     b.style.top = box.top + "px";
     b.style.left = box.left + "px";
     b.style.width = box.width + "px";
@@ -206,6 +197,7 @@ class DragAndSelect {
     pieces.forEach((p) => {
       p.style.left = p.offsetLeft - box.left + "px";
       p.style.top = p.offsetTop - box.top + "px";
+      p.classList.add("selected");
       b.appendChild(p);
     });
 
@@ -213,12 +205,13 @@ class DragAndSelect {
   }
 
   dropPieces(pieces) {
+    // Put pieces back in play area
     pieces.forEach((p) => {
       p.style.left =
         p.offsetLeft + parseInt(this.selectedPiecesContainer.style.left) + "px";
       p.style.top =
         p.offsetTop + parseInt(this.selectedPiecesContainer.style.top) + "px";
-      Events.notify(EVENT_TYPES.PIECE_DROP, p);
+      this.piecesContainer.appendChild(p);
     });
   }
 
@@ -250,7 +243,7 @@ class DragAndSelect {
           this.activateDrawBox(e);
           this.toggleDrawCursor();
 
-          window.dispatchEvent(this.getDragActiveEventMessage(true));
+          Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, true);
         })
         .catch((e) => {
           this.isMouseDownHeld = false;
@@ -262,9 +255,11 @@ class DragAndSelect {
             this.drawBoxActive = false;
             this.selectedPiecesContainer.remove();
             this.selectedPiecesContainer = null;
+
+            Events.notify(EVENT_TYPES.CLEAR_BRIDGE, false);
           }
 
-          window.dispatchEvent(this.getDragActiveEventMessage(false));
+          Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, false);
         });
 
     if (!isEmptySpace && this.selectedPieces.length > 0) {
@@ -278,7 +273,6 @@ class DragAndSelect {
           e.clientX - this.selectedPiecesContainer.offsetLeft * this.zoomLevel;
         this.diffY =
           e.clientY - this.selectedPiecesContainer.offsetTop * this.zoomLevel;
-
         this.selectedPiecesAreMoving = true;
       }
     }
@@ -301,6 +295,7 @@ class DragAndSelect {
     }
 
     if (this.selectedPiecesAreMoving) {
+      console.log(this.zoomLevel);
       const newPosTop =
         e.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
       const newPosLeft =
@@ -330,19 +325,19 @@ class DragAndSelect {
     this.selectedPiecesAreMoving = false;
 
     if (this.touchEndTime - this.touchStartTime < 250) {
-      this.toggleDrawCursor();
-      this.toggleHighlightPieces(this.selectedPieces);
+      if (this.selectedPieces.length > 0) {
+        // Drag finished -> put pieces back
+        this.toggleDrawCursor();
+        this.toggleHighlightPieces(this.selectedPieces);
+        this.dropPieces(this.selectedPieces);
 
-      this.dropPieces(this.selectedPieces);
+        Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, false);
+        Events.notify(EVENT_TYPES.CLEAR_BRIDGE);
 
-      window.dispatchEvent(this.getDragActiveEventMessage(false));
-
-      if (this.selectedPieces.length) {
         Utils.requestSave(this.selectedPieces);
       }
 
-      // this.selectedPiecesContainer?.remove();
-      Events.notify(EVENT_TYPES.CLEAR_BRIDGE);
+      this.selectedPiecesContainer?.remove();
       this.selectedPiecesContainer = null;
 
       this.selectedPieces = [];
@@ -362,21 +357,16 @@ class DragAndSelect {
       this.selectedPiecesContainer = this.getContainerForMove(
         this.selectedPieces
       );
-      this.selectedPiecesContainerRectLeft =
-        this.selectedPiecesContainer.offsetLeft;
-      this.selectedPiecesContainerRectTop =
-        this.selectedPiecesContainer.offsetTop;
 
+      this.playBoundary.appendChild(this.selectedPiecesContainer);
       this.piecesSelected = true;
 
       this.toggleHighlightPieces(this.selectedPieces);
       this.toggleDrawCursor();
       this.deactivateDrawBox();
 
-      // Need to rethink how this should work with the bridge
       Events.notify(EVENT_TYPES.PIECE_PICKUP, this.selectedPiecesContainer);
-
-      window.dispatchEvent(this.getDragActiveEventMessage(true));
+      Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, true);
     } else if (
       this.selectedPiecesContainer &&
       droppedElementIsInSelectedGroup

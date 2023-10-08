@@ -43,9 +43,9 @@ class Pockets {
 
     window.addEventListener("DOMContentLoaded", this.init);
 
-    window.addEventListener("mousedown", (e) => this.onMouseDown(e));
-    window.addEventListener("mouseup", (e) => this.onMouseUp(e));
-    window.addEventListener("resize", (e) => this.onResize(e));
+    window.addEventListener("mousedown", this.onMouseDown.bind(this));
+    window.addEventListener("mouseup", this.onMouseUp.bind(this));
+    window.addEventListener("resize", this.onResize.bind(this));
     window.addEventListener(EVENT_TYPES.CHANGE_SCALE, this.setScale.bind(this));
   }
 

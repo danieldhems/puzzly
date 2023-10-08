@@ -222,8 +222,6 @@ class Puzzly {
     this.largestPieceSpan = this.pieceSize + this.connectorSize * 2;
     this.pieceSeparationDistance = this.largestPieceSpan + 20;
 
-    this.Pockets = new Pockets(this);
-    this.DragAndSelect = new DragAndSelect(this);
     this.playBoundary = document.querySelector("#play-boundary");
 
     this.setupSolvingArea();
@@ -239,6 +237,7 @@ class Puzzly {
 
     this.Pockets = new Pockets(this);
     this.DragAndSelect = new DragAndSelect(this);
+    this.Bridge = new Bridge(this);
 
     this.setPlayBoundaryScaleAndPosition(solvingAreaBoundingBox);
     this.generatePieceSectorMap();
@@ -309,12 +308,11 @@ class Puzzly {
       this.handleDrop(e.detail.piece);
     });
 
-    window.addEventListener("puzzly_dragandselect_active", (e) => {
-      // console.log("received puzzly_dragandselect_active", e)
+    window.addEventListener(EVENT_TYPES.DRAGANDSELECT_ACTIVE, (e) => {
       this.dragAndSelectActive = e.detail;
     });
 
-    Events.notify("puzzle_loaded", this);
+    Events.notify(EVENT_TYPES.PUZZLE_LOADED, this);
   }
 
   setPlayBoundaryScaleAndPosition(puzzleBoardSize) {
@@ -342,7 +340,6 @@ class Puzzly {
 
     // Set position
     this.playBoundary.style.left = 0;
-    console.log("setting playboundary top");
     this.playBoundary.style.top = this.getPxString(
       (this.stage.getBoundingClientRect().height -
         this.playBoundary.getBoundingClientRect().height) /
@@ -1016,8 +1013,8 @@ class Puzzly {
         this.isMovingSinglePiece = true;
         this.movingElement = this.movingPiece = element;
 
-        if (!isStage) {
-          Events.notify("piece_pickup", this.movingElement);
+        if (!isStage && !this.dragAndSelectActive) {
+          Events.notify(EVENT_TYPES.PIECE_PICKUP, this.movingElement);
         }
       }
 
@@ -1101,6 +1098,14 @@ class Puzzly {
           this.movingElement.style.left =
             updatedPlayBoundaryPosition.left + "px";
           this.movingElement.style.top = updatedPlayBoundaryPosition.top + "px";
+        } else {
+          const newPosTop =
+            eventY / this.zoomLevel - this.diffY / this.zoomLevel;
+          const newPosLeft =
+            eventX / this.zoomLevel - this.diffX / this.zoomLevel;
+          this.movingElement.style.top = newPosTop + "px";
+          this.movingElement.style.left = newPosLeft + "px";
+          this.Bridge.setClonePosition();
         }
       }
     }
@@ -3481,7 +3486,7 @@ class Puzzly {
   }
 
   async save(pieces) {
-    console.log("Saving", pieces);
+    // console.log("Saving", pieces);
 
     if (pieces.length === 0) {
       console.warn("Nothing to save");

@@ -1,4 +1,5 @@
 import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
+import Utils from "./utils.js";
 
 class Bridge {
   constructor() {
@@ -10,6 +11,7 @@ class Bridge {
 
     this.isMouseDown = false;
     this.isMouseMoving = false;
+    this.dragAndSelectActive = false;
 
     this.setupBridge(this.playBoundary);
 
@@ -80,10 +82,9 @@ class Bridge {
   }
 
   setClonePosition() {
-    const top = this.movingElement.offsetTop;
-    const left = this.movingElement.offsetLeft;
-    this.elementClone.style.top = top + "px";
-    this.elementClone.style.left = left + "px";
+    const box = Utils.getStyleBoundingBox(this.movingElement);
+    this.elementClone.style.top = box.top + "px";
+    this.elementClone.style.left = box.left + "px";
   }
 
   setCloneContainerPosition() {
@@ -92,13 +93,9 @@ class Bridge {
   }
 
   remove() {
-    this.elementClone.remove();
+    this.elementClone?.remove();
     this.elementClone = null;
     this.bridge.style.zIndex = 1;
-  }
-
-  clearbridge() {
-    Array.from(this.bridge?.childNodes).forEach((el) => el.remove());
   }
 }
 
