@@ -35,7 +35,6 @@
 
 @media (orientation:landscape) {
   #pockets {
-      width: 150px;
       height: 50%;
       top: 25%;
   }
@@ -76,7 +75,6 @@
 
 @media (orientation:portrait) {
   #pockets {
-      height: 150px;
       width: 70%;
       left: 15%;
   }

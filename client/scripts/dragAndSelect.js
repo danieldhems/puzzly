@@ -295,7 +295,6 @@ class DragAndSelect {
     }
 
     if (this.selectedPiecesAreMoving) {
-      console.log(this.zoomLevel);
       const newPosTop =
         e.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
       const newPosLeft =

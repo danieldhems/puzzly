@@ -2,6 +2,8 @@ import Bridge from "./bridge.js";
 import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
 import Utils from "./utils.js";
 
+const POCKET_DEPTH = 150;
+
 class Pockets {
   constructor(config) {
     this.playBoundary = config.playBoundary;
@@ -41,8 +43,6 @@ class Pockets {
 
     this.init(config);
 
-    window.addEventListener("DOMContentLoaded", this.init);
-
     window.addEventListener("mousedown", this.onMouseDown.bind(this));
     window.addEventListener("mouseup", this.onMouseUp.bind(this));
     window.addEventListener("resize", this.onResize.bind(this));
@@ -54,11 +54,7 @@ class Pockets {
     this.pocketsBridge = document.querySelector("#pockets-bridge");
     this.pocketsHandle = document.querySelector("#pockets-handle");
 
-    if (this.currentOrientation === "landscape") {
-      this.ui.style.left = window.innerWidth - this.ui.offsetWidth + "px";
-    } else {
-      this.ui.style.left = window.innerHeight - this.ui.offsetHeight + "px";
-    }
+    this.setSizeAndPosition();
 
     const pocket0 = document.querySelector("#pocket-0");
     const pocket1 = document.querySelector("#pocket-1");
@@ -104,6 +100,16 @@ class Pockets {
         this.isCollapsed = true;
       }
     });
+  }
+
+  setSizeAndPosition() {
+    if (this.currentOrientation === "landscape") {
+      this.ui.style.width = POCKET_DEPTH + "px";
+      this.ui.style.left = window.innerWidth - POCKET_DEPTH + "px";
+    } else {
+      this.ui.style.height = POCKET_DEPTH + "px";
+      this.ui.style.top = window.innerHeight - POCKET_DEPTH + "px";
+    }
   }
 
   getOrientation() {
@@ -189,7 +195,6 @@ class Pockets {
       let i = 0;
       while (i <= this.pockets.length) {
         const pocket = this.pockets[i];
-        console.log(pocket);
         if (Utils.hasCollision(box, pocket.getBoundingClientRect())) {
           return pocket;
         }
