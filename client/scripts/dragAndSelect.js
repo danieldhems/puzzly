@@ -1,8 +1,10 @@
+import { EVENT_TYPES } from "./constants.js";
+import Events from "./events.js";
 import Utils from "./utils.js";
 
 class DragAndSelect {
   constructor(opts) {
-    this.canvas = opts.playBoundary;
+    this.playBoundary = opts.playBoundary;
     this.zoomLevel = opts.zoomLevel;
     this.selectedPieces = [];
 
@@ -26,9 +28,9 @@ class DragAndSelect {
 
     this.initiateDrawBox();
 
-    window.addEventListener("mousedown", (e) => this.onMouseDown(e));
-    window.addEventListener("mousemove", (e) => this.onMouseMove(e));
-    window.addEventListener("mouseup", (e) => this.onMouseUp(e));
+    window.addEventListener("mousedown", this.onMouseDown.bind(this));
+    window.addEventListener("mousemove", this.onMouseMove.bind(this));
+    window.addEventListener("mouseup", this.onMouseUp.bind(this));
     window.addEventListener("puzzly_pockets_pieces_added", (e) => {
       this.toggleDrawCursor();
       this.toggleHighlightPieces(this.selectedPieces);
@@ -151,10 +153,12 @@ class DragAndSelect {
     for (let i = 0, l = pieces.length; i < l; i++) {
       const piece = pieces[i];
 
-      const left = piece.offsetLeft;
-      const top = piece.offsetTop;
-      const right = piece.offsetLeft + piece.offsetWidth;
-      const bottom = piece.offsetTop + piece.offsetHeight;
+      const box = Utils.getStyleBoundingBox(piece);
+
+      const left = box.left;
+      const top = box.top;
+      const right = box.left + box.width;
+      const bottom = box.top + box.height;
 
       if (i === 0) {
         minX = left;
@@ -205,7 +209,6 @@ class DragAndSelect {
       b.appendChild(p);
     });
 
-    this.canvas.appendChild(b);
     return b;
   }
 
@@ -215,7 +218,7 @@ class DragAndSelect {
         p.offsetLeft + parseInt(this.selectedPiecesContainer.style.left) + "px";
       p.style.top =
         p.offsetTop + parseInt(this.selectedPiecesContainer.style.top) + "px";
-      this.canvas.appendChild(p);
+      Events.notify(EVENT_TYPES.PIECE_DROP, p);
     });
   }
 
@@ -338,7 +341,8 @@ class DragAndSelect {
         Utils.requestSave(this.selectedPieces);
       }
 
-      this.selectedPiecesContainer?.remove();
+      // this.selectedPiecesContainer?.remove();
+      Events.notify(EVENT_TYPES.CLEAR_BRIDGE);
       this.selectedPiecesContainer = null;
 
       this.selectedPieces = [];
@@ -369,6 +373,9 @@ class DragAndSelect {
       this.toggleDrawCursor();
       this.deactivateDrawBox();
 
+      // Need to rethink how this should work with the bridge
+      Events.notify(EVENT_TYPES.PIECE_PICKUP, this.selectedPiecesContainer);
+
       window.dispatchEvent(this.getDragActiveEventMessage(true));
     } else if (
       this.selectedPiecesContainer &&
@@ -394,9 +401,9 @@ class DragAndSelect {
   isDragOutOfBounds(e) {
     const selectedPiecesRect =
       this.selectedPiecesContainer.getBoundingClientRect();
-    const canvasRect = this.canvas.getBoundingClientRect();
+    const playBoundaryRect = this.playBoundary.getBoundingClientRect();
 
-    return !Utils.isInside(selectedPiecesRect, canvasRect);
+    return !Utils.isInside(selectedPiecesRect, playBoundaryRect);
   }
 }
 

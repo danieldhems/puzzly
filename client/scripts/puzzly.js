@@ -135,6 +135,7 @@ class Puzzly {
       this.interactionEventDown,
       (e) => {
         this.randomisePiecePositions();
+        this.onControlsHandleClick();
       }
     );
 
@@ -225,7 +226,6 @@ class Puzzly {
     this.DragAndSelect = new DragAndSelect(this);
     this.playBoundary = document.querySelector("#play-boundary");
 
-    this.generatePieceSectorMap();
     this.setupSolvingArea();
     // this.setupSolvedCanvas();
     this.setupFullImagePreviewer();
@@ -239,9 +239,9 @@ class Puzzly {
 
     this.Pockets = new Pockets(this);
     this.DragAndSelect = new DragAndSelect(this);
-    this.Bridge = new Bridge(this);
 
     this.setPlayBoundaryScaleAndPosition(solvingAreaBoundingBox);
+    this.generatePieceSectorMap();
 
     const storage = this.getApplicablePersistence(
       this.pieces,
@@ -271,6 +271,7 @@ class Puzzly {
         this.getRandomCoordsFromSectorMap()
       );
       this.renderPieces(this.pieces);
+      this.arrangePieces();
       this.assignPieceConnections();
     }
 
@@ -621,23 +622,6 @@ class Puzzly {
     }
 
     return arr;
-  }
-
-  randomisePiecePositions() {
-    const sectors = this.getSequentialArray(0, this.selectedNumPieces, true);
-    this.pieces.forEach((p, i) => {
-      const el = Utils.getElementByPieceId(p.id);
-      const sector = this.pieceSectors[sectors[i]];
-      const pos = {
-        x: Utils.getRandomInt(sector.x, sector.x + sector.w - p.imgW),
-        y: Utils.getRandomInt(sector.y, sector.y + sector.h - p.imgH),
-      };
-      // el.style.top = pos.y + "px";
-      // el.style.left = pos.x + "px";
-
-      move(el).x(pos.x).y(pos.y).duration(this.animationDuration).end();
-    });
-    this.save(this.allPieces());
   }
 
   animatePiece(el, x, y) {
@@ -1117,14 +1101,6 @@ class Puzzly {
           this.movingElement.style.left =
             updatedPlayBoundaryPosition.left + "px";
           this.movingElement.style.top = updatedPlayBoundaryPosition.top + "px";
-        } else {
-          const newPosTop =
-            eventY / this.zoomLevel - this.diffY / this.zoomLevel;
-          const newPosLeft =
-            eventX / this.zoomLevel - this.diffX / this.zoomLevel;
-          this.movingElement.style.top = newPosTop + "px";
-          this.movingElement.style.left = newPosLeft + "px";
-          this.Bridge.setClonePosition();
         }
       }
     }
@@ -1836,8 +1812,8 @@ class Puzzly {
 
   // Generate map of sectors that can be used for even dispersal of pieces around outside of puzzle board
   generatePieceSectorMap() {
-    console.log("canvas width", this.playBoundaryWidth);
-    const totalArea = this.playBoundaryWidth * this.playBoundaryHeight;
+    const box = Utils.getStyleBoundingBox(this.playBoundary);
+    const totalArea = box.width * box.height;
     const pieceSectorSize = totalArea / this.selectedNumPieces;
 
     const sqr = Math.abs(Math.sqrt(pieceSectorSize));
@@ -1853,7 +1829,7 @@ class Puzzly {
         ...area,
       };
 
-      if (currX + sqr + sqr < window.innerWidth) {
+      if (currX + sqr + sqr < box.width) {
         currX += sqr;
       } else {
         currX = 0;
@@ -1910,7 +1886,9 @@ class Puzzly {
       : Utils.getStyleBoundingBox(this.solvingArea);
 
     const box = Utils.getStyleBoundingBox(element);
-    const nextElementBox = Utils.getStyleBoundingBox(nextElement);
+    const nextElementBox = nextElement
+      ? Utils.getStyleBoundingBox(nextElement)
+      : null;
 
     switch (currentSide) {
       case "top":
@@ -2004,7 +1982,9 @@ class Puzzly {
         currentY = nextPos.y;
       } else {
         const currentPieceBoundingBox = Utils.getStyleBoundingBox(currentPiece);
-        const nextPieceBoundingBox = Utils.getStyleBoundingBox(nextPiece);
+        const nextPieceBoundingBox = nextPiece
+          ? Utils.getStyleBoundingBox(nextPiece)
+          : null;
 
         if (currentSide === "top") {
           currentX += currentPieceBoundingBox.width + spacing;
@@ -2025,6 +2005,26 @@ class Puzzly {
     }
 
     this.save(piecesInPlay);
+  }
+
+  randomisePiecePositions() {
+    const sectors = this.getSequentialArray(0, this.selectedNumPieces, true);
+    const pieces = this.shuffleArray(Utils.getIndividualPiecesOnCanvas());
+
+    let i = 0;
+    while (i < pieces.length - 1) {
+      const el = pieces[i];
+      const box = Utils.getStyleBoundingBox(el);
+      const sector = this.pieceSectors[sectors[i]];
+      const pos = {
+        x: Utils.getRandomInt(sector.x, sector.x + sector.w - box.width),
+        y: Utils.getRandomInt(sector.y, sector.y + sector.h - box.height),
+      };
+      move(el).x(pos.x).y(pos.y).duration(this.animationDuration).end();
+      i++;
+    }
+
+    this.save(this.allPieces());
   }
 
   shuffleArray(array) {

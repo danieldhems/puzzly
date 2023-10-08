@@ -30,9 +30,16 @@ class Pockets {
 
     this.currentOrientation = this.getOrientation();
 
-    this.init(config);
+    this.orientation = {
+      portrait: {
+        windowPropForDepth: "y",
+      },
+      landscape: {
+        windowPropForDepth: "x",
+      },
+    };
 
-    this.Bridge = new Bridge(config);
+    this.init(config);
 
     window.addEventListener("DOMContentLoaded", this.init);
 
@@ -46,6 +53,12 @@ class Pockets {
     this.ui = document.querySelector("#pockets");
     this.pocketsBridge = document.querySelector("#pockets-bridge");
     this.pocketsHandle = document.querySelector("#pockets-handle");
+
+    if (this.currentOrientation === "landscape") {
+      this.ui.style.left = window.innerWidth - this.ui.offsetWidth + "px";
+    } else {
+      this.ui.style.left = window.innerHeight - this.ui.offsetHeight + "px";
+    }
 
     const pocket0 = document.querySelector("#pocket-0");
     const pocket1 = document.querySelector("#pocket-1");
@@ -63,18 +76,28 @@ class Pockets {
 
     this.pocketsHandle.addEventListener("mousedown", (e) => {
       e.preventDefault();
+      const orientation = this.getOrientation();
+      let axisToAnimate, windowPropForDepth, depth;
+      if (orientation === "landscape") {
+        axisToAnimate = "x";
+        windowPropForDepth = "innerWidth";
+        depth = this.ui.offsetWidth;
+      } else {
+        axisToAnimate = "y";
+        windowPropForDepth = "innerHeight";
+        depth = this.ui.offsetHeight;
+      }
+
       if (this.isCollapsed) {
         move(this.ui)
-          [axisToAnimate](
-            window[this.orientation.windowPropForDepth] - this.pocketDepth
-          )
+          [axisToAnimate](window[windowPropForDepth] - depth)
           .duration(this.animationDuration)
           .end();
         this.isCollapsed = false;
       } else {
         move(this.ui)
           [axisToAnimate](
-            window[this.orientation.windowPropForDepth] - lengthForCollapse / 2
+            window[windowPropForDepth] - this.pocketsHandle.offsetWidth
           )
           .duration(this.animationDuration)
           .end();
@@ -460,7 +483,6 @@ class Pockets {
   }
 
   setElementPositionInPocket(element, pocket) {
-    // salmon
     let dropX, dropY;
 
     const els = Array.from(pocket.childNodes);
@@ -478,8 +500,8 @@ class Pockets {
       );
     }
 
-    element.style.top = dropY * this.pieceScaleWhileInPocket + "px";
-    element.style.left = dropX * this.pieceScaleWhileInPocket + "px";
+    element.style.top = dropY + "px";
+    element.style.left = dropX + "px";
   }
 
   resetElementPositionsInPockets() {
@@ -495,9 +517,6 @@ class Pockets {
   }
 
   addToPocket(pocket, element) {
-    console.log("adding to pocket", pocket);
-    console.log("element", element);
-    console.log("pocket", pocket);
     if (!element) return;
 
     let pocketId, pocketEl;
@@ -556,31 +575,15 @@ class Pockets {
     window.dispatchEvent(event);
   }
 
-  getTargetBoxForPlacementInsidePocket(pieceSize) {
-    const expansionRange = 10;
-    const pocketCenterX = this.pockets[0].offsetWidth / 2;
-    const pocketCenterY = this.pockets[0].offsetHeight / 2;
-    const pieceSizeHalf = pieceSize / 2;
-
-    const centerBoundingBox = {
-      top: pocketCenterY - pieceSizeHalf,
-      right: pocketCenterX + pieceSizeHalf,
-      bottom: pocketCenterY + pieceSizeHalf,
-      left: pocketCenterX - pieceSizeHalf,
-    };
-
-    const expandedCenterBoundingBox = {
-      top: centerBoundingBox.top - expansionRange,
-      right: centerBoundingBox.right + expansionRange,
-      bottom: centerBoundingBox.bottom + expansionRange,
-      left: centerBoundingBox.left - expansionRange,
-    };
-
+  getTargetBoxForPlacementInsidePocket() {
+    const box = Utils.getStyleBoundingBox(this.pockets[0]);
+    const onePercentWidth = box.width / 100;
+    const onePercentHeight = box.height / 100;
     return {
-      top: expandedCenterBoundingBox.top * this.zoomLevel,
-      right: expandedCenterBoundingBox.right - pieceSize,
-      bottom: expandedCenterBoundingBox.bottom - pieceSize,
-      left: expandedCenterBoundingBox.left * this.zoomLevel,
+      top: onePercentHeight * 10,
+      left: onePercentWidth * 20,
+      right: onePercentWidth * 10 + 5,
+      bottom: onePercentHeight * 10 + 5,
     };
   }
 }

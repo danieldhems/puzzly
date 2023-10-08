@@ -1,8 +1,7 @@
 import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
-import Utils from "./utils.js";
 
 class Bridge {
-  constructor(puzzly) {
+  constructor() {
     this.bridge = document.querySelector("#pockets-bridge");
     this.stage = document.querySelector("#stage");
     this.playBoundary = document.querySelector(`#${ELEMENT_IDS.PLAY_BOUNDARY}`);
