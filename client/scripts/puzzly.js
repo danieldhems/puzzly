@@ -339,11 +339,20 @@ class Puzzly {
     );
 
     // Set position
-    this.playBoundary.style.left = 0;
-    this.playBoundary.style.top = this.getPxString(
+
+    this.initialPlayBoundaryPositionLeft = 0;
+    this.initialPlayBoundaryPositionTop =
       (this.stage.getBoundingClientRect().height -
         this.playBoundary.getBoundingClientRect().height) /
-        2
+      2;
+
+    this.resetPlayBoundaryPosition();
+  }
+
+  resetPlayBoundaryPosition() {
+    this.playBoundary.style.left = this.initialPlayBoundaryPositionLeft;
+    this.playBoundary.style.top = this.getPxString(
+      this.initialPlayBoundaryPositionTop
     );
   }
 
@@ -500,9 +509,7 @@ class Puzzly {
     this.solvingArea.style.left = this.getPxString(
       playBoundaryWidth / 2 - this.solvingArea.offsetWidth / 2
     );
-  }
 
-  setupSolvedCanvas() {
     const solvedCnvContainer = document.getElementById("group-container-1111");
     solvedCnvContainer.style.pointerEvents = "none";
     solvedCnvContainer.style.top = this.getPxString(this.boardTop);
@@ -516,13 +523,14 @@ class Puzzly {
 
     const solvedCnv = document.getElementById("group-canvas-1111");
     // solvedCnv.style.pointerEvents = 'none';
-    solvedCnv.width = this.boardWidth + this.shadowOffset;
-    solvedCnv.height = this.boardHeight + this.shadowOffset;
+    const solvingAreaBox = Utils.getStyleBoundingBox(this.solvingArea);
+    solvedCnv.width = solvingAreaBox.width + this.shadowOffset;
+    solvedCnv.height = solvingAreaBox.height + this.shadowOffset;
     solvedCnv.style.width = this.getPxString(
-      this.boardWidth + this.shadowOffset
+      solvingAreaBox.width + this.shadowOffset
     );
     solvedCnv.style.height = this.getPxString(
-      this.boardHeight + this.shadowOffset
+      solvingAreaBox.height + this.shadowOffset
     );
   }
 
@@ -552,11 +560,15 @@ class Puzzly {
       // Minus key
       if (event.which === 189) {
         this.decreaseZoomLevel(ZOOM_INTERVAL);
+        if (ZOOM_INTERVAL === INITIAL_ZOOM_LEVEL) {
+          this.resetPlayBoundaryPosition();
+        }
       }
 
       // "0" Number key
       if (event.which === 48) {
         this.resetZoomLevel();
+        this.resetPlayBoundaryPosition();
       }
     }
   }
@@ -943,7 +955,6 @@ class Puzzly {
   }
 
   onMouseDown(e) {
-    // alert(`onMouseDown: ${e.target}`)
     let element, thisPiece;
     e.preventDefault();
 
@@ -1011,14 +1022,6 @@ class Puzzly {
       } else {
         this.isMovingSinglePiece = true;
         this.movingElement = this.movingPiece = element;
-
-        if (
-          !isStage &&
-          !this.dragAndSelectActive &&
-          !element.classList.contains("in-pocket")
-        ) {
-          Events.notify(EVENT_TYPES.PIECE_PICKUP, this.movingElement);
-        }
       }
 
       if (isStage) {
@@ -1031,50 +1034,16 @@ class Puzzly {
           clientPos.y - this.movingElement.offsetTop * this.zoomLevel;
       }
 
+      if (this.movingElement && !this.isMovingStage) {
+        Events.notify(EVENT_TYPES.PIECE_PICKUP, this.movingElement);
+      }
+
       this.isMouseDown = true;
 
-      this.playBoundary.addEventListener(
+      window.addEventListener(
         this.interactionEventMove,
         this.onMouseMove.bind(this)
       );
-    }
-  }
-
-  dragIsWithinHorizontalBounds(x) {
-    return x > 10 && x <= window.innerWidth - 10;
-  }
-
-  dragIsAtWithinVerticalBounds(y) {
-    return y > 10 && y <= window.innerHeight - 10;
-  }
-
-  isViewportInsidePlayBoundary() {
-    const box = this.playBoundary.getBoundingClientRect();
-    const sbox = this.stage.getBoundingClientRect();
-    return (
-      box.top < sbox.top &&
-      box.right > sbox.right &&
-      box.bottom > sbox.bottom &&
-      box.left < sbox.left
-    );
-  }
-
-  getUpdatedPlayBoundaryPosition(element, projectedPosition) {
-    const ebox = element.getBoundingClientRect();
-    const sbox = this.stage.getBoundingClientRect();
-    let top, left;
-    if (this.zoomLevel > this.INITIAL_ZOOM_LEVEL) {
-      top =
-        ebox.top < sbox.top && projectedPosition.top > sbox.top
-          ? sbox.top
-          : projectedPosition.top;
-      left =
-        ebox.left < sbox.left && projectedPosition.left > sbox.left
-          ? sbox.left
-          : projectedPosition.left;
-      return { top, left };
-    } else {
-      return false;
     }
   }
 
@@ -1083,8 +1052,8 @@ class Puzzly {
     let eventX, eventY;
 
     if (this.movingElement) {
-      eventX = e.touches ? e.touches[0].clientX : e.clientX;
-      eventY = e.touches ? e.touches[0].clientY : e.clientY;
+      eventX = e.clientX;
+      eventY = e.clientY;
 
       if (!this.dragAndSelectActive) {
         if (this.isMovingStage) {
@@ -1154,33 +1123,17 @@ class Puzzly {
     }
   }
 
-  resetPieceToLastPosition(element) {
-    console.log("resetPieceToLastPosition", element, this.lastPosition);
-    element.style.top = this.lastPosition.y + "px";
-    element.style.left = this.lastPosition.x + "px";
-    Events.notify(EVENT_TYPES.CLEAR_BRIDGE);
-  }
-
   onMouseUp(e) {
     // console.log("onmouseup", e)
-
-    const eventBox = {
-      top: e.clientY,
-      right: e.clientX,
-      bottom: e.clientY,
-      left: e.clientX,
-    };
 
     if (this.isMovingStage) {
       Events.notify(EVENT_TYPES.SYNC);
     }
 
-    console.log("this.dragAndSelectActive", this.dragAndSelectActive);
     if (this.isMouseDown && !this.isMovingStage && !this.dragAndSelectActive) {
       const element = this.movingPiece;
 
       if (Utils.isOutOfBounds(element.getBoundingClientRect())) {
-        console.log("resetting piece");
         this.resetPieceToLastPosition(element);
         this.isMouseDown = false;
         this.movingElement = null;
@@ -1266,6 +1219,51 @@ class Puzzly {
 
     window.removeEventListener(this.interactionEventMove, this.mouseMoveFunc);
     window.removeEventListener(this.interactionEventUp, this.onMouseUp);
+  }
+
+  dragIsWithinHorizontalBounds(x) {
+    return x > 10 && x <= window.innerWidth - 10;
+  }
+
+  dragIsAtWithinVerticalBounds(y) {
+    return y > 10 && y <= window.innerHeight - 10;
+  }
+
+  isViewportInsidePlayBoundary() {
+    const box = this.playBoundary.getBoundingClientRect();
+    const sbox = this.stage.getBoundingClientRect();
+    return (
+      box.top < sbox.top &&
+      box.right > sbox.right &&
+      box.bottom > sbox.bottom &&
+      box.left < sbox.left
+    );
+  }
+
+  getUpdatedPlayBoundaryPosition(element, projectedPosition) {
+    const ebox = element.getBoundingClientRect();
+    const sbox = this.stage.getBoundingClientRect();
+    let top, left;
+    if (this.zoomLevel > this.INITIAL_ZOOM_LEVEL) {
+      top =
+        ebox.top < sbox.top && projectedPosition.top > sbox.top
+          ? sbox.top
+          : projectedPosition.top;
+      left =
+        ebox.left < sbox.left && projectedPosition.left > sbox.left
+          ? sbox.left
+          : projectedPosition.left;
+      return { top, left };
+    } else {
+      return false;
+    }
+  }
+
+  resetPieceToLastPosition(element) {
+    console.log("resetPieceToLastPosition", element, this.lastPosition);
+    element.style.top = this.lastPosition.y + "px";
+    element.style.left = this.lastPosition.x + "px";
+    Events.notify(EVENT_TYPES.CLEAR_BRIDGE);
   }
 
   getDataAttributeRaw(el, key) {
@@ -2162,38 +2160,44 @@ class Puzzly {
   }
 
   getTopLeftCornerBoundingBox() {
+    const box = Utils.getStyleBoundingBox(this.solvingArea);
+    console.log("box", box);
     return {
-      top: this.boardTop,
-      right: this.boardLeft + this.connectorTolerance,
-      bottom: this.boardTop + this.connectorTolerance,
-      left: this.boardLeft,
+      top: box.top,
+      right: box.right + this.connectorTolerance,
+      bottom: box.bottom + this.connectorTolerance,
+      left: box.left,
     };
   }
 
   getTopRightCornerBoundingBox() {
+    const box = Utils.getStyleBoundingBox(this.solvingArea);
+    console.log("box", box);
     return {
-      top: this.boardTop,
-      right: this.boardRight,
-      bottom: this.boardTop + this.connectorTolerance,
-      left: this.boardRight - this.connectorTolerance,
+      top: box.top,
+      right: box.right,
+      bottom: box.top + this.connectorTolerance,
+      left: box.right - this.connectorTolerance,
     };
   }
 
   getBottomRightCornerBoundingBox() {
+    const box = Utils.getStyleBoundingBox(this.solvingArea);
     return {
-      top: this.boardBottom - this.connectorTolerance,
-      right: this.boardRight,
-      bottom: this.boardBottom,
-      left: this.boardRight - this.connectorTolerance,
+      top: box.bottom - this.connectorTolerance,
+      right: box.right,
+      bottom: box.bottom,
+      left: box.right - this.connectorTolerance,
     };
   }
 
   getBottomLeftCornerBoundingBox() {
+    const box = Utils.getStyleBoundingBox(this.solvingArea);
     return {
-      top: this.boardBottom - this.connectorTolerance,
-      right: this.boardLeft + this.connectorTolerance,
-      bottom: this.boardBottom,
-      left: this.boardLeft,
+      top: box.bottom - this.connectorTolerance,
+      right: box.left + this.connectorTolerance,
+      bottom: box.bottom,
+      left: box.left,
     };
   }
 
@@ -2491,18 +2495,13 @@ class Puzzly {
   checkConnections(element) {
     let connectionFound;
 
-    // checker
     let containerBoundingBox,
       targetElement,
       targetPiece,
       thisPieceConnectorBoundingBoxTop,
       thisPieceConnectorBoundingBoxRight,
       thisPieceConnectorBoundingBoxBottom,
-      thisPieceConnectorBoundingBoxLeft,
-      solvedPieceConnectorBoundingBoxTop,
-      solvedPieceConnectorBoundingBoxRight,
-      solvedPieceConnectorBoundingBoxBottom,
-      solvedPieceConnectorBoundingBoxLeft;
+      thisPieceConnectorBoundingBoxLeft;
 
     let connections = this.getDataAttributeValue(element, "connections");
     connections = connections || [];
