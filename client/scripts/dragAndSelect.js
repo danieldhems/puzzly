@@ -106,17 +106,23 @@ class DragAndSelect {
   updateDrawBox(e) {
     let top, left, width, height;
 
-    if (e.clientX > this.drawBox.offsetLeft) {
-      width = e.clientX - this.drawBox.offsetLeft;
+    if (e.clientX > this.drawBoxStartX) {
+      // Dragging right
+      left = this.drawBoxStartX;
+      width = e.clientX - this.drawBoxStartX;
     } else {
-      left = this.drawBoxStartX - (this.drawBoxStartX - e.clientX);
+      // Dragging left
+      left = e.clientX;
       width = this.drawBoxStartX - e.clientX;
     }
 
-    if (e.clientY > this.drawBox.offsetTop) {
-      height = e.clientY - this.drawBox.offsetTop;
+    if (e.clientY > this.drawBoxStartY) {
+      // Dragging down
+      top = this.drawBoxStartY;
+      height = e.clientY - this.drawBoxStartY;
     } else {
-      top = this.drawBoxStartY - (this.drawBoxStartY - e.clientY);
+      // Dragging up
+      top = e.clientY;
       height = this.drawBoxStartY - e.clientY;
     }
 
