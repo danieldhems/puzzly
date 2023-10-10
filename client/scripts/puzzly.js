@@ -858,7 +858,6 @@ class Puzzly {
           this.setElementAttribute(groupContainer, "data-is-solved", true);
         }
       } else {
-        console.log("adding piece", piece, " to solved canvas");
         solvedCnvContainer.append(el);
       }
     }
@@ -1176,6 +1175,7 @@ class Puzzly {
       Events.notify(EVENT_TYPES.SYNC);
     }
 
+    console.log("this.dragAndSelectActive", this.dragAndSelectActive);
     if (this.isMouseDown && !this.isMovingStage && !this.dragAndSelectActive) {
       const element = this.movingPiece;
 

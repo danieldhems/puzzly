@@ -110,14 +110,14 @@ class DragAndSelect {
       width = e.clientX - this.drawBox.offsetLeft;
     } else {
       left = this.drawBoxStartX - (this.drawBoxStartX - e.clientX);
-      width = this.drawBoxStartX - left;
+      width = this.drawBoxStartX - e.clientX;
     }
 
     if (e.clientY > this.drawBox.offsetTop) {
       height = e.clientY - this.drawBox.offsetTop;
     } else {
       top = this.drawBoxStartY - (this.drawBoxStartY - e.clientY);
-      height = this.drawBoxStartY - top;
+      height = this.drawBoxStartY - e.clientY;
     }
 
     this.drawBox.style.top = top + "px";
@@ -128,6 +128,10 @@ class DragAndSelect {
 
   toggleDrawCursor() {
     document.body.style.cursor = this.drawBoxActive ? "crosshair" : "default";
+  }
+
+  setDrawCursor(state) {
+    document.body.style.cursor = state === 1 ? "crosshair" : "default";
   }
 
   getCollidingPieces() {
@@ -319,34 +323,10 @@ class DragAndSelect {
     this.isMouseDown = false;
     this.isMouseDownHeld = false;
     this.hasMouseMoved = false;
+    this.selectedPiecesAreMoving = false;
 
     this.mouseHoldStartX = null;
     this.mouseHoldStartY = null;
-
-    this.selectedPiecesAreMoving = false;
-
-    if (this.touchEndTime - this.touchStartTime < 250) {
-      if (this.selectedPieces.length > 0) {
-        // Drag finished -> put pieces back
-        this.toggleDrawCursor();
-        this.toggleHighlightPieces(this.selectedPieces);
-        this.dropPieces(this.selectedPieces);
-
-        Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, false);
-        Events.notify(EVENT_TYPES.CLEAR_BRIDGE);
-
-        Utils.requestSave(this.selectedPieces);
-      }
-
-      this.selectedPiecesContainer?.remove();
-      this.selectedPiecesContainer = null;
-
-      this.selectedPieces = [];
-      this.drawBoxActive = false;
-
-      this.touchStartTime = null;
-      this.touchEndTime = null;
-    }
 
     if (this.timer) {
       clearTimeout(this.timer);
@@ -355,6 +335,12 @@ class DragAndSelect {
     if (this.drawBoxActive) {
       // Selection box has been drawn
       this.selectedPieces = this.getCollidingPieces();
+
+      if (this.selectedPieces.length === 0) {
+        this.endDrag();
+        return;
+      }
+
       this.selectedPiecesContainer = this.getContainerForMove(
         this.selectedPieces
       );
@@ -386,7 +372,33 @@ class DragAndSelect {
         this.selectedPiecesContainerRectTop =
           this.selectedPiecesContainer.offsetTop;
       }
+    } else if (this.touchEndTime - this.touchStartTime < 250) {
+      // Drag finished -> put pieces back
+      this.endDrag();
     }
+  }
+
+  endDrag() {
+    this.deactivateDrawBox();
+    this.setDrawCursor(0);
+
+    if (this.selectedPieces.length > 0) {
+      this.toggleHighlightPieces(this.selectedPieces);
+      this.dropPieces(this.selectedPieces);
+    }
+
+    Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, false);
+    Events.notify(EVENT_TYPES.CLEAR_BRIDGE);
+
+    Utils.requestSave(this.selectedPieces);
+    this.selectedPiecesContainer?.remove();
+    this.selectedPiecesContainer = null;
+
+    this.selectedPieces = [];
+    this.drawBoxActive = false;
+
+    this.touchStartTime = null;
+    this.touchEndTime = null;
   }
 
   isDragOutOfBounds(e) {
