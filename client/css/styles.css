@@ -129,7 +129,7 @@ label {
 
 #solved-puzzle-area {
     position: absolute;
-    border: 10px solid #000;
+    border: 2px solid #000;
 }
 
 #image-preview {

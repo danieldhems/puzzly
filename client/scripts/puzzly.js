@@ -558,7 +558,7 @@ class Puzzly {
       }
 
       // Minus key
-      if (event.which === 189) {
+      if (event.which === 189 && canZoomOut) {
         this.decreaseZoomLevel(ZOOM_INTERVAL);
         if (ZOOM_INTERVAL === INITIAL_ZOOM_LEVEL) {
           this.resetPlayBoundaryPosition();
@@ -1138,8 +1138,6 @@ class Puzzly {
         this.isMouseDown = false;
         this.movingElement = null;
       } else {
-        // console.log('moving piece', element)
-        // console.log('element position top', element.offsetTop, 'left', element.offsetLeft)
         const thisPiece = this.getPieceFromElement(element, ["connects-to"]);
 
         if (this.highlightConnectingPieces) {
@@ -1153,7 +1151,6 @@ class Puzzly {
         if (!this.isMovingSinglePiece) {
           let group = this.getGroup(element);
           const piecesToCheck = this.getCollisionCandidatesInGroup(group);
-          // console.log('pieces to check', piecesToCheck)
 
           const connection = piecesToCheck
             .map((p) => this.checkConnections(p))
@@ -1168,7 +1165,6 @@ class Puzzly {
             }
 
             const isCornerConnection = Utils.isCornerConnection(connectionType);
-            // console.log('is corner connection', isCornerConnection)
 
             if (isCornerConnection || connectionType === "float") {
               this.addToGroup(connection.sourceEl, 1111);
@@ -2161,18 +2157,16 @@ class Puzzly {
 
   getTopLeftCornerBoundingBox() {
     const box = Utils.getStyleBoundingBox(this.solvingArea);
-    console.log("box", box);
     return {
       top: box.top,
-      right: box.right + this.connectorTolerance,
-      bottom: box.bottom + this.connectorTolerance,
+      right: box.left + this.connectorTolerance,
+      bottom: box.top + this.connectorTolerance,
       left: box.left,
     };
   }
 
   getTopRightCornerBoundingBox() {
     const box = Utils.getStyleBoundingBox(this.solvingArea);
-    console.log("box", box);
     return {
       top: box.top,
       right: box.right,
@@ -2211,7 +2205,7 @@ class Puzzly {
   }
 
   getGroupContainer(arg) {
-    if (typeof arg === "number") {
+    if (typeof arg === "number" || typeof arg === "string") {
       return document.getElementById(`group-container-${arg}`);
     } else {
       return arg.parentNode;
@@ -2244,6 +2238,10 @@ class Puzzly {
   getCollisionCandidatesInGroup(group) {
     const piecesInGroup = this.getPiecesInGroup(group);
     const candidates = [];
+
+    if (piecesInGroup.length === this.selectedNumPieces) {
+      return [Utils.getElementByPieceId(0)];
+    }
 
     piecesInGroup.forEach((piece) => {
       const p = this.getPieceFromElement(piece, ["jigsaw-type", "is-solved"]);
@@ -2558,6 +2556,9 @@ class Puzzly {
         : elBoundingBox.bottom;
 
       if (Utils.isTopLeftCorner(piece)) {
+        console.log("checking top left corner");
+        console.log(elBBWithinTolerance);
+        console.log(this.getTopLeftCornerBoundingBox());
         elBBWithinTolerance.right =
           elBoundingBox.left + this.connectorTolerance;
         elBBWithinTolerance.bottom =
@@ -3212,7 +3213,8 @@ class Puzzly {
   }
 
   getPiecesInGroup(group) {
-    return document.querySelectorAll(`[data-group='${group}']`);
+    const container = this.getGroupContainer(group);
+    return container.querySelectorAll(".puzzle-piece");
   }
 
   assignPiecesToTopGroup(pieces) {
