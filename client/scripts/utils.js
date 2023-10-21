@@ -267,17 +267,33 @@ const Utils = {
     return document.querySelectorAll(`[data-piece-id='${id}']`)[0];
   },
 
-  isOutOfBounds(sourceEl) {
+  isOutOfBounds(sourceEls) {
     const cnvBox = document
       .querySelector(`#${ELEMENT_IDS.PLAY_BOUNDARY}`)
       .getBoundingClientRect();
     const pocketsBox = document
       .querySelector("#pockets")
       .getBoundingClientRect();
-    return (
-      !Utils.isInside(sourceEl, cnvBox) &&
-      !Utils.isOverPockets(sourceEl, pocketsBox)
-    );
+    return Array.from(sourceEls).some((el) => {
+      const elBox = el.getBoundingClientRect();
+      return (
+        !Utils.isInside(elBox, cnvBox) &&
+        !Utils.isOverPockets(elBox, pocketsBox)
+      );
+    });
+  },
+
+  getPieceIdFromElement(element) {
+    return element.dataset["piece-id"];
+  },
+
+  getGroupIdFromElement(element) {
+    return element.dataset.group;
+  },
+
+  getElementsInGroupByElement(groupedElement) {
+    const groupId = this.getGroupIdByElement(groupedElement);
+    return Array.from(document.querySelectorAll(`[data-group='${groupId}']`));
   },
 
   drawBox(box, container = null, borderColor = null) {

@@ -323,7 +323,7 @@ class Pockets {
       }
     } else {
       if (this.activePocket) {
-        if (Utils.isOutOfBounds(this.movingElement.getBoundingClientRect())) {
+        if (Utils.isOutOfBounds([this.movingElement])) {
           console.log("is out of bounds");
           this.addPiecesToPocket(
             this.activePocket,

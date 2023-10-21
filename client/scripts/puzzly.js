@@ -961,20 +961,24 @@ class Puzzly {
       if (isPuzzlePiece) {
         element = Utils.getPuzzlePieceElementFromEvent(e);
 
-        // Remember last position of moving element(s)
+        // Remember last position of moving element / moving group
         let elementBoundingBox;
         if (element.classList.contains("grouped")) {
-          elementBoundingBox =
-            this.getGroupContainer(element).getBoundingClientRect();
+          const container = this.getGroupContainer(element);
+          elementBoundingBox = {
+            y: container.offsetTop * this.zoomLevel,
+            x: container.offsetLeft * this.zoomLevel,
+          };
+
+          this.lastPosition = elementBoundingBox;
         } else {
           elementBoundingBox = element.getBoundingClientRect();
+          this.lastPosition = Utils.getPositionRelativeToContainer(
+            elementBoundingBox,
+            this.playBoundary.getBoundingClientRect(),
+            this.zoomLevel
+          );
         }
-
-        this.lastPosition = Utils.getPositionRelativeToContainer(
-          elementBoundingBox,
-          this.playBoundary.getBoundingClientRect(),
-          this.zoomLevel
-        );
       }
 
       if (isStage) {
@@ -1131,7 +1135,11 @@ class Puzzly {
     if (this.isMouseDown && !this.isMovingStage && !this.dragAndSelectActive) {
       const element = this.movingPiece;
 
-      if (Utils.isOutOfBounds(element.getBoundingClientRect())) {
+      const movingElements = this.isMovingSinglePiece
+        ? [element]
+        : this.getCollisionCandidatesInGroup(this.getGroup(element));
+
+      if (Utils.isOutOfBounds(movingElements)) {
         this.resetPieceToLastPosition(element);
         this.isMouseDown = false;
         this.movingElement = null;
@@ -1254,7 +1262,6 @@ class Puzzly {
   }
 
   resetPieceToLastPosition(element) {
-    console.log("resetPieceToLastPosition", element, this.lastPosition);
     if (element.classList.contains("grouped")) {
       const container = this.getGroupContainer(element);
       container.style.top = this.lastPosition.y + "px";
@@ -2574,9 +2581,9 @@ class Puzzly {
         : elBoundingBox.bottom;
 
       if (Utils.isTopLeftCorner(piece)) {
-        console.log("checking top left corner");
-        console.log(elBBWithinTolerance);
-        console.log(this.getTopLeftCornerBoundingBox());
+        // console.log("checking top left corner");
+        // console.log(elBBWithinTolerance);
+        // console.log(this.getTopLeftCornerBoundingBox());
         elBBWithinTolerance.right =
           elBoundingBox.left + this.connectorTolerance;
         elBBWithinTolerance.bottom =
@@ -2683,11 +2690,11 @@ class Puzzly {
           );
         }
 
-        console.log(
-          "checking right",
-          thisPieceConnectorBoundingBoxRight,
-          targetPieceConnectorBoundingBox
-        );
+        // console.log(
+        //   "checking right",
+        //   thisPieceConnectorBoundingBoxRight,
+        //   targetPieceConnectorBoundingBox
+        // );
         if (
           Utils.hasCollision(
             thisPieceConnectorBoundingBoxRight,
@@ -2746,11 +2753,11 @@ class Puzzly {
             "top"
           );
         }
-        console.log(
-          "checking bottom",
-          thisPieceConnectorBoundingBoxBottom,
-          targetPieceConnectorBoundingBox
-        );
+        // console.log(
+        //   "checking bottom",
+        //   thisPieceConnectorBoundingBoxBottom,
+        //   targetPieceConnectorBoundingBox
+        // );
         if (
           Utils.hasCollision(
             thisPieceConnectorBoundingBoxBottom,
@@ -2809,11 +2816,11 @@ class Puzzly {
           );
         }
 
-        console.log(
-          "checking left",
-          thisPieceConnectorBoundingBoxLeft,
-          targetPieceConnectorBoundingBox
-        );
+        // console.log(
+        //   "checking left",
+        //   thisPieceConnectorBoundingBoxLeft,
+        //   targetPieceConnectorBoundingBox
+        // );
         if (
           Utils.hasCollision(
             thisPieceConnectorBoundingBoxLeft,
@@ -2873,11 +2880,11 @@ class Puzzly {
           );
         }
 
-        console.log(
-          "checking top",
-          thisPieceConnectorBoundingBoxTop,
-          targetPieceConnectorBoundingBox
-        );
+        // console.log(
+        //   "checking top",
+        //   thisPieceConnectorBoundingBoxTop,
+        //   targetPieceConnectorBoundingBox
+        // );
         if (
           Utils.hasCollision(
             thisPieceConnectorBoundingBoxTop,
@@ -2893,7 +2900,7 @@ class Puzzly {
       this.getElementBoundingBoxForFloatDetection(element);
     const solvedBoundingBox = this.getPieceSolvedBoundingBox(element);
 
-    console.log("checking float", thisPieceBoundingBox, solvedBoundingBox);
+    // console.log("checking float", thisPieceBoundingBox, solvedBoundingBox);
     if (Utils.hasCollision(thisPieceBoundingBox, solvedBoundingBox)) {
       connectionFound = "float";
     }
