@@ -960,8 +960,18 @@ class Puzzly {
 
       if (isPuzzlePiece) {
         element = Utils.getPuzzlePieceElementFromEvent(e);
+
+        // Remember last position of moving element(s)
+        let elementBoundingBox;
+        if (element.classList.contains("grouped")) {
+          elementBoundingBox =
+            this.getGroupContainer(element).getBoundingClientRect();
+        } else {
+          elementBoundingBox = element.getBoundingClientRect();
+        }
+
         this.lastPosition = Utils.getPositionRelativeToContainer(
-          element.getBoundingClientRect(),
+          elementBoundingBox,
           this.playBoundary.getBoundingClientRect(),
           this.zoomLevel
         );
@@ -1245,8 +1255,14 @@ class Puzzly {
 
   resetPieceToLastPosition(element) {
     console.log("resetPieceToLastPosition", element, this.lastPosition);
-    element.style.top = this.lastPosition.y + "px";
-    element.style.left = this.lastPosition.x + "px";
+    if (element.classList.contains("grouped")) {
+      const container = this.getGroupContainer(element);
+      container.style.top = this.lastPosition.y + "px";
+      container.style.left = this.lastPosition.x + "px";
+    } else {
+      element.style.top = this.lastPosition.y + "px";
+      element.style.left = this.lastPosition.x + "px";
+    }
     Events.notify(EVENT_TYPES.CLEAR_BRIDGE);
   }
 
