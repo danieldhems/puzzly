@@ -1,5 +1,5 @@
 import { PuzzleSizes, PIECE_SIZE } from "./constants.js";
-import PuzzleGenerator from "./puzzleGenerator.js";
+import puzzleGenerator from "./puzzleGenerator.js";
 import Utils from "./utils.js";
 
 class PuzzlyCreator {
@@ -20,7 +20,7 @@ class PuzzlyCreator {
       highlightConnectingPieces: false,
     };
 
-    this.boardSize = Math.ceil((window.innerHeight / 100) * 30);
+    this.boardSize = Math.ceil((window.innerHeight / 100) * 40);
 
     this.imagePreviewType = "toggle";
 
@@ -186,6 +186,15 @@ class PuzzlyCreator {
       this.sourceImage.dimensions.width = response.data.width;
       this.sourceImage.dimensions.height = response.data.height;
       this.cropNotNeeded = response.data.width === response.data.height;
+
+      const { width, height } = this.sourceImage.dimensions;
+
+      // Forcing square puzzles for now
+      // TODO: Revisit when we support rectangular puzzles
+      const imageSize = Math.min(width, height);
+
+      this.puzzleToImageRatio = this.boardSize / imageSize;
+      this.imageSize = imageSize;
     }
   }
 
@@ -599,15 +608,6 @@ class PuzzlyCreator {
     const piecesPerSideHorizontal = Math.sqrt(this.selectedNumPieces);
     const piecesPerSideVertical = Math.sqrt(this.selectedNumPieces);
 
-    const actualPieceSizeBasedOnBoardSize = Math.floor(
-      this.boardSize / piecesPerSideHorizontal
-    );
-
-    const sanitisedPieceSize = Math.max(
-      actualPieceSizeBasedOnBoardSize,
-      PIECE_SIZE
-    );
-
     const puzzleData = {
       ...this.sourceImage,
       ...this.crop,
@@ -618,7 +618,9 @@ class PuzzlyCreator {
       selectedNumPieces: this.selectedNumPieces,
       imagePreviewType: this.imagePreviewType,
       originalImageSize: this.sourceImage.dimensions,
-      boardSize: sanitisedPieceSize * piecesPerSideHorizontal,
+      boardSize: this.boardSize,
+      imageSize: this.imageSize,
+      puzzleToImageRatio: this.puzzleToImageRatio,
     };
 
     const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {
@@ -633,10 +635,33 @@ class PuzzlyCreator {
 
     console.log("puzzle image path result", puzzleImagePath);
 
-    const generator = await PuzzleGenerator(puzzleImagePath, puzzleData);
+    const generator = await puzzleGenerator(puzzleImagePath, puzzleData);
 
     const { spriteEncodedString, pieces, config } =
       await generator.generateDataForPuzzlePieces();
+
+    // const { width, height } = puzzleData.originalImageSize;
+
+    // const img = new Image(width, height);
+    // img.src = spriteEncodedString;
+
+    // const getFormDataForImgFile = await fetch(img.src)
+    //   .then((response) => response.blob())
+    //   .then((response) => {
+    //     console.log("fetched image from base64 string", response);
+
+    //     const imgFile = new File([response], "testfile.png", {
+    //       type: "image/png",
+    //     });
+    //     const formData = new FormData();
+    //     formData.append("files[]", imgFile);
+    //     return formData;
+    //   });
+
+    // const spriteUploadResult = await fetch("api/uploadPuzzleSprite", {
+    //   method: "POST",
+    //   body: getFormDataForImgFile,
+    // });
 
     Object.assign(puzzleData, {
       spriteEncodedString,

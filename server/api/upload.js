@@ -23,6 +23,8 @@ async function upload(req, res) {
 
     //Use the mv() method to place the file in upload directory (i.e. "uploads")
     const previewPath = uploadDir + "preview_" + image.name;
+    const puzzlePath = uploadDir + "puzzle_" + image.name;
+
     const fullSizePath = uploadDir + "fullsize_" + image.name;
     image.mv(fullSizePath);
 

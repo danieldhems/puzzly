@@ -21,8 +21,7 @@ async function makeImage(data, puzzleImgPath) {
   const resizeWidth = isSquare ? origW : origW < origH ? origW : origH;
   const resizeHeight = isSquare ? origH : origH < origW ? origH : origW;
 
-  img.resize(resizeWidth, resizeHeight);
-
+  img.resize(data.boardSize, data.boardSize);
   await img.toFile(puzzleImgPath);
 
   return puzzleImgPath;

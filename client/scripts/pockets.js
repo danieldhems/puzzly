@@ -46,6 +46,7 @@ class Pockets {
     window.addEventListener("mousedown", this.onMouseDown.bind(this));
     window.addEventListener("mouseup", this.onMouseUp.bind(this));
     window.addEventListener("resize", this.onResize.bind(this));
+    window.addEventListener(EVENT_TYPES.RESIZE, this.onResize.bind(this));
     window.addEventListener(EVENT_TYPES.CHANGE_SCALE, this.setScale.bind(this));
   }
 
@@ -120,7 +121,7 @@ class Pockets {
       : null;
   }
 
-  shouldTriggerResize() {
+  hasOrientationChanged() {
     return (
       (window.innerWidth > window.innerHeight &&
         this.currentOrientation === "portrait") ||
@@ -130,10 +131,9 @@ class Pockets {
   }
 
   onResize() {
-    if (this.shouldTriggerResize()) {
-      this.resetElementPositionsInPockets();
-      this.currentOrientation = this.getOrientation();
-    }
+    console.log("resizing");
+    this.setSizeAndPosition();
+    this.currentOrientation = this.getOrientation();
   }
 
   setScale(event) {
@@ -281,9 +281,7 @@ class Pockets {
       this.isMainCanvasMoving = true;
     }
 
-    if (Utils.isPuzzlePiece || isMainCanvas) {
-      window.addEventListener("mousemove", this.onMouseMove.bind(this));
-    } else {
+    if (!Utils.isPuzzlePiece || !isMainCanvas) {
       this.isMouseDown = false;
       this.isMovingSinglePiece = false;
     }
@@ -301,21 +299,9 @@ class Pockets {
     pieces.forEach((el) => (el.style.pointerEvents = "none"));
   }
 
-  onMouseMove(e) {
-    e.preventDefault();
-
-    if (this.activePocket) {
-      const x = this.diffX ? e.clientX - this.diffX : e.clientX;
-      const y = this.diffY ? e.clientY - this.diffY : e.clientY;
-      this.movingElement.style.top = y + "px";
-      this.movingElement.style.left = x + "px";
-    }
-  }
-
   onMouseUp(e) {
     const trackingBox = Utils.getEventBox(e);
     const targetPocket = this.getPocketByCollision(trackingBox);
-    // notify to remove from bridge
 
     this.enablePointerEvents();
 
@@ -338,12 +324,14 @@ class Pockets {
     } else {
       if (this.activePocket) {
         if (Utils.isOutOfBounds(this.movingElement.getBoundingClientRect())) {
+          console.log("is out of bounds");
           this.addPiecesToPocket(
             this.activePocket,
             this.movingElement.childNodes
           );
           this.movingElement.remove();
         } else {
+          console.log("returning to canvas");
           this.returnToCanvas(this.getPiecesInTransit());
           this.resetActivePocket();
         }
@@ -362,8 +350,6 @@ class Pockets {
     this.movingElement = null;
     this.isMainCanvasMoving = false;
     this.activePocket = null;
-
-    window.removeEventListener("mousemove", this.mouseFn);
   }
 
   eventTargetIsPocket(e) {
@@ -553,11 +539,14 @@ class Pockets {
   returnToCanvas(els) {
     for (let i = 0, l = els.length; i < l; i++) {
       const el = els[i];
-      const pos = Utils.getPositionRelativeToContainer(
-        el.getBoundingClientRect(),
-        this.playBoundary.getBoundingClientRect(),
-        this.zoomLevel
-      );
+      const playboundaryRect = this.playBoundary.getBoundingClientRect();
+      const pocketsRect = this.ui.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+
+      const pos = {
+        x: elRect.left - playboundaryRect.left,
+        y: elRect.top - playboundaryRect.top,
+      };
 
       el.style.top = pos.y + "px";
       el.style.left = pos.x + "px";

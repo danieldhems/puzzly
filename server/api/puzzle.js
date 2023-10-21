@@ -77,12 +77,14 @@ var api = {
         console.log("Error!", e);
       }
 
-      console.log("data from client", data);
+      // console.log("data from client", data);
 
       const dbPayload = {
         ...data,
         spritePath,
       };
+
+      delete dbPayload.spriteEncodedString;
 
       const puzzleDBResponse = await puzzleColl.insertOne(dbPayload);
       const puzzleId = puzzleDBResponse.ops[0]._id;

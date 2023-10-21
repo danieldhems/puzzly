@@ -6,6 +6,7 @@ class Bridge {
     this.bridge = document.querySelector("#pockets-bridge");
     this.stage = document.querySelector("#stage");
     this.playBoundary = document.querySelector(`#${ELEMENT_IDS.PLAY_BOUNDARY}`);
+    this.pockets = document.querySelector(`#${ELEMENT_IDS.POCKETS}`);
     this.movingElement = null;
     this.elementClone = null;
 
@@ -18,7 +19,7 @@ class Bridge {
     window.addEventListener(EVENT_TYPES.PIECE_PICKUP, this.add.bind(this));
     window.addEventListener(EVENT_TYPES.PIECE_DROP, this.remove.bind(this));
     window.addEventListener(EVENT_TYPES.CHANGE_SCALE, this.sync.bind(this));
-    window.addEventListener(EVENT_TYPES.SYNC, this.sync.bind(this));
+    window.addEventListener(EVENT_TYPES.RESIZE, this.sync.bind(this));
     window.addEventListener(EVENT_TYPES.PUZZLE_LOADED, this.onLoad.bind(this));
     window.addEventListener(EVENT_TYPES.CLEAR_BRIDGE, this.remove.bind(this));
     window.addEventListener("mousemove", this.onMouseMove.bind(this));
@@ -82,9 +83,22 @@ class Bridge {
   }
 
   setClonePosition() {
-    const box = Utils.getStyleBoundingBox(this.movingElement);
-    this.elementClone.style.top = box.top + "px";
-    this.elementClone.style.left = box.left + "px";
+    const isFromPocket = this.elementClone.classList.contains("in-pocket");
+    if (isFromPocket) {
+      // Calculation is needed to ascertain the position of pieces from the pockets
+      const playboundaryRect = this.playBoundary.getBoundingClientRect();
+      const pocketsRect = this.pockets.getBoundingClientRect();
+      const cloneRect = this.elementClone.getBoundingClientRect();
+
+      this.elementClone.style.top =
+        playboundaryRect.top + pocketsRect.top + cloneRect.top + "px";
+      this.elementClone.style.left =
+        playboundaryRect.left + pocketsRect.left + cloneRect.left + "px";
+    } else {
+      const box = Utils.getStyleBoundingBox(this.movingElement);
+      this.elementClone.style.top = box.top + "px";
+      this.elementClone.style.left = box.left + "px";
+    }
   }
 
   setCloneContainerPosition() {

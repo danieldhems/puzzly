@@ -145,6 +145,10 @@ label {
 #play-boundary {
     position: absolute;
     transform-origin: 0 0;
+    /* left: 50%;
+    margin-left: -25%;
+    top: 50%;
+    margin-top: -25%; */
 }
 
 #play-boundary:before {
