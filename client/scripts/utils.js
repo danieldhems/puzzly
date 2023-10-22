@@ -283,6 +283,17 @@ const Utils = {
     });
   },
 
+  isOverPlayBoundaryAndPockets(element) {
+    const cnvBox = document
+      .querySelector(`#${ELEMENT_IDS.PLAY_BOUNDARY}`)
+      .getBoundingClientRect();
+    const pocketsBox = document
+      .querySelector("#pockets")
+      .getBoundingClientRect();
+    const bb = element.getBoundingClientRect();
+    return Utils.hasCollision(bb, cnvBox) && Utils.hasCollision(bb, pocketsBox);
+  },
+
   getPieceIdFromElement(element) {
     return element.dataset["piece-id"];
   },

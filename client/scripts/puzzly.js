@@ -1139,7 +1139,10 @@ class Puzzly {
         ? [element]
         : this.getCollisionCandidatesInGroup(this.getGroup(element));
 
-      if (Utils.isOutOfBounds(movingElements)) {
+      if (
+        Utils.isOutOfBounds(movingElements) ||
+        Utils.isOverPlayBoundaryAndPockets(element)
+      ) {
         this.resetPieceToLastPosition(element);
         this.isMouseDown = false;
         this.movingElement = null;

@@ -2,7 +2,7 @@ import Bridge from "./bridge.js";
 import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
 import Utils from "./utils.js";
 
-const POCKET_DEPTH = 150;
+const POCKET_DEPTH = 110;
 
 class Pockets {
   constructor(config) {
@@ -305,6 +305,7 @@ class Pockets {
 
     this.enablePointerEvents();
 
+    const element = e.target;
     if (trackingBox && targetPocket) {
       if (this.activePocket) {
         this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
@@ -323,7 +324,10 @@ class Pockets {
       }
     } else {
       if (this.activePocket) {
-        if (Utils.isOutOfBounds([this.movingElement])) {
+        if (
+          Utils.isOutOfBounds([this.movingElement]) ||
+          Utils.isOverPlayBoundaryAndPockets(element)
+        ) {
           console.log("is out of bounds");
           this.addPiecesToPocket(
             this.activePocket,
