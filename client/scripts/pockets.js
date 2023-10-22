@@ -1,4 +1,3 @@
-import Bridge from "./bridge.js";
 import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
 import Utils from "./utils.js";
 
@@ -19,7 +18,6 @@ class Pockets {
     this.isMainCanvasMoving = false;
     this.isDragActive = false;
 
-    this.pieceScaleWhileInPocket = 0.6;
     this.zoomLevel = 1; // If this hasn't been set externally yet, assume it's the default value
 
     this.pockets = {};
@@ -151,43 +149,8 @@ class Pockets {
     return pocket.id.split("-")[1];
   }
 
-  setPieceSize(el, scale = null, origin = null) {
-    // When returning pieces to the canvas we need to remove the scale transform from them in order for them to be correctly scaled by the canvas itself, else they'll end up smaller or large than intended
-    el.style.transform = scale ? `scale(${scale})` : "none";
-    if (scale && origin) {
-      el.style.transformOrigin = origin;
-    }
-  }
-
-  setSizeForPiecesInPocket() {
-    this.getPiecesInActivePocket().forEach((el) =>
-      this.setPieceSize(el, this.pieceScaleWhileInPocket)
-    );
-  }
-
   resetPieceScale(el) {
     el.style.transform = "scale(1)";
-  }
-
-  setActivePiecesToPocketSize() {
-    const activePieces = this.getPiecesInActivePocket();
-    if (activePieces) {
-      Array.from(activePieces).forEach((el) => {
-        this.setPieceSize(el, this.pieceScaleWhileInPocket);
-      });
-    }
-  }
-
-  setActivePiecesToCurrentScale() {
-    const activePieces = this.getPiecesInActivePocket();
-    if (activePieces) {
-      const pArr = Array.from(activePieces);
-      // beef
-      // const origin = pArr.length === 1 ? "50% 50%" : null;
-      pArr.forEach((el) => {
-        this.setPieceSize(el, this.zoomLevel, origin);
-      });
-    }
   }
 
   getPocketByCollision(box) {
@@ -204,7 +167,7 @@ class Pockets {
   }
 
   isFromPocket(el) {
-    return el?.parentNode?.classList?.contains("pocket");
+    return el?.parentNode?.parentNode?.classList?.contains("pocket");
   }
 
   isFromCanvas(el) {
@@ -260,17 +223,18 @@ class Pockets {
 
     if (this.isFromPocket(el)) {
       // Piece is being picked up from a pocket
-      this.activePocket = this.pockets[this.getPocketIdFromPiece(el)];
       this.lastPosition = el.getBoundingClientRect();
+      this.activePocket = this.pockets[this.getPocketIdFromPiece(el)];
 
-      this.setActivePiecesToCurrentScale();
       this.movingElement = this.getMovingElementForActivePocket(e);
-      this.activePocket.appendChild(this.movingElement);
 
-      this.setActivePiecesToCurrentScale();
-
+      const pos = this.getPositionForMovingElement();
+      this.movingElement.style.top = pos.top + "px";
+      this.movingElement.style.left = pos.left + "px";
       this.diffX = e.clientX - this.movingElement.offsetLeft;
       this.diffY = e.clientY - this.movingElement.offsetTop;
+
+      this.activePocket.appendChild(this.movingElement);
     } else {
       // Picking up a single piece from the canvas
       this.movingElement = el;
@@ -285,6 +249,27 @@ class Pockets {
       this.isMouseDown = false;
       this.isMovingSinglePiece = false;
     }
+
+    if (this.movingElement) {
+      window.addEventListener("mousemove", (e) => this.onMouseMove(e));
+    }
+  }
+
+  onMouseMove(e) {
+    const newPosTop = e.clientY - this.diffY;
+    const newPosLeft = e.clientX - this.diffX;
+    if (this.movingElement) {
+      this.movingElement.style.top = newPosTop + "px";
+      this.movingElement.style.left = newPosLeft + "px";
+    }
+  }
+
+  getPositionForMovingElement() {
+    // const activePocketBB = this.activePocket.getBoundingClientRect();
+    return {
+      top: 0 - this.movingElement.offsetHeight / 2,
+      left: 0 - this.movingElement.offsetWidth / 2,
+    };
   }
 
   enablePointerEvents() {
@@ -309,7 +294,6 @@ class Pockets {
     if (trackingBox && targetPocket) {
       if (this.activePocket) {
         this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
-        this.setActivePiecesToPocketSize();
         this.movingElement.remove();
       } else {
         if (this.isDragActive && this.movingElement) {
@@ -328,7 +312,6 @@ class Pockets {
           Utils.isOutOfBounds([this.movingElement]) ||
           Utils.isOverPlayBoundaryAndPockets(element)
         ) {
-          console.log("is out of bounds");
           this.addPiecesToPocket(
             this.activePocket,
             this.movingElement.childNodes
@@ -346,14 +329,11 @@ class Pockets {
       this.isMovingSinglePiece = false;
     }
 
-    if (this.activePiecesContainer) {
-      this.activePiecesContainer.remove();
-      this.activePiecesContainer = null;
-    }
-
     this.movingElement = null;
     this.isMainCanvasMoving = false;
     this.activePocket = null;
+
+    window.removeEventListener("mousemove", this.onMouseUp);
   }
 
   eventTargetIsPocket(e) {
@@ -365,8 +345,8 @@ class Pockets {
   }
 
   getPiecesInActivePocket() {
-    return Array.from(this.activePocket.childNodes).filter((el) =>
-      el.classList.contains("puzzle-piece")
+    return Array.from(
+      this.activePocket.querySelectorAll(".pocket-inner .puzzle-piece")
     );
   }
 
@@ -390,8 +370,6 @@ class Pockets {
     // container.style.border = "1px solid white";
     container.style.position = "absolute";
 
-    this.activePiecesContainer = container;
-
     const rowLength =
       activePieces.length > 2 ? Math.ceil(Math.sqrt(activePieces.length)) : 2;
 
@@ -408,16 +386,17 @@ class Pockets {
     for (let i = 0, l = activePieces.length; i < l; i++) {
       const el = activePieces[i];
 
-      // move(el).x(currX * this.zoomLevel).y(currY * this.zoomLevel).duration(this.animationDuration).end();
-      el.style.top = currY * this.zoomLevel + "px";
-      el.style.left = currX * this.zoomLevel + "px";
+      //   // move(el).x(currX * this.zoomLevel).y(currY * this.zoomLevel).duration(this.animationDuration).end();
+      el.style.top = currY + "px";
+      el.style.left = currX + "px";
 
-      const elBox = el.getBoundingClientRect();
+      // const box = el.getBoundingClientRect();
+      // const box = Utils.getStyleBoundingBox(el);
       const box = {
-        top: this.ui.offsetTop + top,
+        top: el.offsetTop,
         right: el.offsetLeft + el.offsetWidth,
         bottom: el.offsetTop + el.offsetHeight,
-        left: this.activePocket.offsetLeft + el.offsetLeft,
+        left: el.offsetLeft,
         width: el.offsetWidth,
         height: el.offsetHeight,
       };
@@ -478,25 +457,12 @@ class Pockets {
   }
 
   setElementPositionInPocket(element, pocket) {
-    let dropX, dropY;
+    const innerElement = pocket.querySelector(".pocket-inner");
+    const rangeX = (innerElement.offsetWidth / 100) * 10;
+    const rangeY = (innerElement.offsetHeight / 100) * 10;
 
-    const els = Array.from(pocket.childNodes);
-    if (els.length === 1) {
-      dropX = pocket.offsetWidth / 2 - element.offsetWidth / 2;
-      dropY = pocket.offsetHeight / 2 - element.offsetHeight / 2;
-    } else {
-      dropX = Utils.getRandomInt(
-        this.pocketDropBoundingBox.left,
-        this.pocketDropBoundingBox.right
-      );
-      dropY = Utils.getRandomInt(
-        this.pocketDropBoundingBox.top,
-        this.pocketDropBoundingBox.bottom
-      );
-    }
-
-    element.style.top = dropY + "px";
-    element.style.left = dropX + "px";
+    element.style.top = Utils.getRandomInt(0, rangeY) + "px";
+    element.style.left = Utils.getRandomInt(0, rangeX) + "px";
   }
 
   resetElementPositionsInPockets() {
@@ -529,13 +495,11 @@ class Pockets {
     element.setAttribute("data-pocket-id", pocketId);
     element.classList.add("in-pocket");
 
-    pocketEl?.appendChild(element);
+    pocketEl?.querySelector("div").appendChild(element);
 
     if (this.elementClone) {
       this.removeClone();
     }
-
-    this.setPieceSize(element, this.pieceScaleWhileInPocket);
 
     Utils.requestSave([element]);
   }
@@ -555,7 +519,6 @@ class Pockets {
       el.style.top = pos.y + "px";
       el.style.left = pos.x + "px";
 
-      this.setPieceSize(el);
       this.playBoundary.appendChild(el);
       el.classList.remove("in-pocket");
       el.setAttribute("data-pocket-id", null);

@@ -83,22 +83,9 @@ class Bridge {
   }
 
   setClonePosition() {
-    const isFromPocket = this.elementClone.classList.contains("in-pocket");
-    if (isFromPocket) {
-      // Calculation is needed to ascertain the position of pieces from the pockets
-      const playboundaryRect = this.playBoundary.getBoundingClientRect();
-      const pocketsRect = this.pockets.getBoundingClientRect();
-      const cloneRect = this.elementClone.getBoundingClientRect();
-
-      this.elementClone.style.top =
-        playboundaryRect.top + pocketsRect.top + cloneRect.top + "px";
-      this.elementClone.style.left =
-        playboundaryRect.left + pocketsRect.left + cloneRect.left + "px";
-    } else {
-      const box = Utils.getStyleBoundingBox(this.movingElement);
-      this.elementClone.style.top = box.top + "px";
-      this.elementClone.style.left = box.left + "px";
-    }
+    const box = Utils.getStyleBoundingBox(this.movingElement);
+    this.elementClone.style.top = box.top + "px";
+    this.elementClone.style.left = box.left + "px";
   }
 
   setCloneContainerPosition() {

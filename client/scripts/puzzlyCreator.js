@@ -1,4 +1,4 @@
-import { PuzzleSizes, PIECE_SIZE } from "./constants.js";
+import { PuzzleSizes } from "./constants.js";
 import puzzleGenerator from "./puzzleGenerator.js";
 import Utils from "./utils.js";
 

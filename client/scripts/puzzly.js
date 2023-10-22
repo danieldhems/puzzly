@@ -1037,7 +1037,12 @@ class Puzzly {
           clientPos.y - this.movingElement.offsetTop * this.zoomLevel;
       }
 
-      if (this.movingElement && !this.isMovingStage) {
+      if (
+        this.movingElement &&
+        !this.isMovingStage &&
+        !this.movingElement.classList.contains("in-pocket")
+      ) {
+        // boo
         Events.notify(EVENT_TYPES.PIECE_PICKUP, this.movingElement);
       }
 
@@ -1073,7 +1078,7 @@ class Puzzly {
           this.movingElement.style.left =
             updatedPlayBoundaryPosition.left + "px";
           this.movingElement.style.top = updatedPlayBoundaryPosition.top + "px";
-        } else {
+        } else if (!this.movingElement.classList.contains("in-pocket")) {
           const newPosTop =
             eventY / this.zoomLevel - this.diffY / this.zoomLevel;
           const newPosLeft =
