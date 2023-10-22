@@ -22,7 +22,16 @@ class Bridge {
     window.addEventListener(EVENT_TYPES.RESIZE, this.sync.bind(this));
     window.addEventListener(EVENT_TYPES.PUZZLE_LOADED, this.onLoad.bind(this));
     window.addEventListener(EVENT_TYPES.CLEAR_BRIDGE, this.remove.bind(this));
+    window.addEventListener(
+      EVENT_TYPES.DRAGANDSELECT_ACTIVE,
+      this.onDragAndSelect.bind(this)
+    );
     window.addEventListener("mousemove", this.onMouseMove.bind(this));
+  }
+
+  onDragAndSelect(e) {
+    const isActive = e.detail;
+    this.isDragAndSelectActive = isActive;
   }
 
   onLoad(event) {
@@ -68,12 +77,14 @@ class Bridge {
   }
 
   add(eventData) {
-    const element = eventData.detail;
-    this.movingElement = element;
-    this.elementClone = this.makeClone(this.movingElement);
-    this.bridge.appendChild(this.elementClone);
-    this.setClonePosition();
-    this.bridge.style.zIndex = 2;
+    if (!this.isDragAndSelectActive) {
+      const element = eventData.detail;
+      this.movingElement = element;
+      this.elementClone = this.makeClone(this.movingElement);
+      this.bridge.appendChild(this.elementClone);
+      this.setClonePosition();
+      this.bridge.style.zIndex = 2;
+    }
   }
 
   onMouseMove(e) {

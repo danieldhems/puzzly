@@ -1040,7 +1040,8 @@ class Puzzly {
       if (
         this.movingElement &&
         !this.isMovingStage &&
-        !this.movingElement.classList.contains("in-pocket")
+        !this.movingElement.classList.contains("in-pocket") &&
+        !this.dragAndSelectActive
       ) {
         // boo
         Events.notify(EVENT_TYPES.PIECE_PICKUP, this.movingElement);
