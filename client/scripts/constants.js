@@ -16,9 +16,6 @@ export const PuzzleSizes = [
   { numPieces: 484, piecesPerSide: 22 },
   { numPieces: 576, piecesPerSide: 24 },
   { numPieces: 676, piecesPerSide: 26 },
-  { numPieces: 1024, piecesPerSide: 32 },
-  { numPieces: 1600, piecesPerSide: 40 },
-  { numPieces: 2025, piecesPerSide: 45 },
 ];
 
 export const PUZZLE_PIECE_CLASSES = ["puzzle-piece", "puzzle-piece-fg"];
@@ -45,6 +42,8 @@ export const EVENT_TYPES = {
   CLEAR_BRIDGE: "CLEAR_BRIDGE",
   DRAGANDSELECT_ACTIVE: "DRAGANDSELECT_ACTIVE",
   DRAGANDSELECT_PIECES_SELECTED: "DRAGANDSELECT_PIECES_SELECTED",
+  ADD_TO_POCKET: "ADD_TO_POCKET",
+  RETURN_TO_CANVAS: "RETURN_TO_CANVAS",
 };
 
 export const SIDES = {

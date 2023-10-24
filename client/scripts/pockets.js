@@ -1,4 +1,5 @@
 import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
+import Events from "./events.js";
 import Utils from "./utils.js";
 
 const POCKET_DEPTH = 110;
@@ -6,6 +7,8 @@ const POCKET_DEPTH = 110;
 class Pockets {
   constructor(config) {
     this.playBoundary = config.playBoundary;
+    this.playBoundaryPieceContainer =
+      this.playBoundary.querySelector("#pieces-container");
     this.shadowOffset = config.shadowOffset;
     this.largestPieceSpan = config.largestPieceSpan;
     this.connectorSize = config.connectorSize;
@@ -44,6 +47,10 @@ class Pockets {
     window.addEventListener("mousedown", this.onMouseDown.bind(this));
     window.addEventListener("mouseup", this.onMouseUp.bind(this));
     window.addEventListener("resize", this.onResize.bind(this));
+    window.addEventListener(
+      EVENT_TYPES.ADD_TO_POCKET,
+      this.onAddToPocket.bind(this)
+    );
     window.addEventListener(EVENT_TYPES.RESIZE, this.onResize.bind(this));
     window.addEventListener(EVENT_TYPES.CHANGE_SCALE, this.setScale.bind(this));
   }
@@ -132,6 +139,11 @@ class Pockets {
     console.log("resizing");
     this.setSizeAndPosition();
     this.currentOrientation = this.getOrientation();
+  }
+
+  onAddToPocket(e) {
+    const pieces = e.detail;
+    this.addPiecesToPocket(this.pockets[0], pieces);
   }
 
   setScale(event) {
@@ -519,20 +531,15 @@ class Pockets {
       el.style.top = pos.y + "px";
       el.style.left = pos.x + "px";
 
-      this.playBoundary.appendChild(el);
+      this.playBoundaryPieceContainer.appendChild(el);
       el.classList.remove("in-pocket");
       el.setAttribute("data-pocket-id", null);
       el.style.pointerEvents = "auto";
 
-      this.notifyDrop(el);
+      Events.notify(EVENT_TYPES.RETURN_TO_CANVAS, el);
     }
 
     Utils.requestSave(els);
-  }
-
-  notifyDrop(piece) {
-    const event = new CustomEvent("puzzly_piece_drop", { detail: { piece } });
-    window.dispatchEvent(event);
   }
 
   getTargetBoxForPlacementInsidePocket() {

@@ -119,6 +119,7 @@ class Puzzly {
 
     this.sendToEdgeShuffleBtn = document.getElementById("shuffle-pieces");
     this.sendToEdgeNeatenBtn = document.getElementById("neaten-pieces");
+    this.gatherPiecesBtn = document.getElementById("gather-pieces");
 
     this.ControlsElHandle = document.getElementById("controls-handle");
     this.ControlsElPanel = document.getElementById("controls-panel");
@@ -178,6 +179,10 @@ class Puzzly {
     this.soundsBtn.addEventListener(
       this.interactionEventDown,
       this.toggleSounds.bind(this)
+    );
+    this.gatherPiecesBtn.addEventListener(
+      this.interactionEventDown,
+      this.gatherPieces.bind(this)
     );
 
     this.DATA_ATTR_KEYS = [
@@ -307,8 +312,9 @@ class Puzzly {
       // console.log("save requested", e.detail.pieces)
       this.save(e.detail.pieces);
     });
-    window.addEventListener("puzzly_piece_drop", (e) => {
-      this.handleDrop(e.detail.piece);
+    window.addEventListener(EVENT_TYPES.RETURN_TO_CANVAS, (e) => {
+      console.log(e);
+      this.handleDrop(e.detail);
     });
 
     window.addEventListener(EVENT_TYPES.DRAGANDSELECT_ACTIVE, (e) => {
@@ -602,6 +608,11 @@ class Puzzly {
     }
   }
 
+  gatherPieces() {
+    const pieces = this.allPieces();
+    Events.notify(EVENT_TYPES.ADD_TO_POCKET, pieces);
+  }
+
   getRandomCoordsFromSectorMap() {
     return this.pieceSectors.map((s) => ({
       x: Utils.getRandomInt(s.x, s.x + s.w),
@@ -811,7 +822,7 @@ class Puzzly {
       // fish
       this.Pockets.addToPocket(piece.pocketId, el);
     } else if (!Utils.hasGroup(piece) && !piece.isSolved) {
-      this.addPieceToPlayBoundary(el);
+      this.addToPlayBoundary(el);
     } else {
       if (piece.isSolved === undefined) {
         let groupContainer = document.querySelector(
@@ -828,7 +839,8 @@ class Puzzly {
           groupContainer.style.position = "absolute";
           groupContainer.style.top = piece.containerY + "px";
           groupContainer.style.left = piece.containerX + "px";
-          this.playBoundary.prepend(groupContainer);
+          // salmon
+          this.addToPlayBoundary(groupContainer);
         }
 
         groupContainer.appendChild(el);
@@ -864,7 +876,7 @@ class Puzzly {
     }
   }
 
-  addPieceToPlayBoundary(piece) {
+  addToPlayBoundary(piece) {
     this.piecesContainer.prepend(piece);
   }
 
@@ -1961,8 +1973,6 @@ class Puzzly {
 
     while (i < piecesInPlay.length) {
       const currentPiece = piecesInPlay[i];
-
-      // salmon
       const pieceData = this.getPieceFromElement(currentPiece, ["jigsaw-type"]);
 
       if (currentSide === SIDES.TOP) {
@@ -3190,7 +3200,7 @@ class Puzzly {
 
     container.style.position = "absolute";
 
-    this.playBoundary.prepend(container);
+    this.addToPlayBoundary(container);
 
     return container;
   }
