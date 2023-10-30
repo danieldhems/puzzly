@@ -57,7 +57,6 @@ class Pockets {
 
   init(config) {
     this.ui = document.querySelector("#pockets");
-    this.pocketsBridge = document.querySelector("#pockets-bridge");
     this.pocketsHandle = document.querySelector("#pockets-handle");
 
     this.setSizeAndPosition();
@@ -209,7 +208,7 @@ class Pockets {
 
   onMouseDown(e) {
     e.stopPropagation();
-    let el = Utils.getPuzzlePieceElementFromEvent(e);
+    let el = e.target;
     let shouldTrackPiece;
 
     if (!el) return;
@@ -234,6 +233,7 @@ class Pockets {
       el.dataset?.isSolved === "true";
 
     if (this.isFromPocket(el)) {
+      Events.notify(EVENT_TYPES.POCKET_PICKUP);
       // Piece is being picked up from a pocket
       this.lastPosition = el.getBoundingClientRect();
       this.activePocket = this.pockets[this.getPocketIdFromPiece(el)];
@@ -297,43 +297,50 @@ class Pockets {
   }
 
   onMouseUp(e) {
+    Events.notify(EVENT_TYPES.POCKET_PUTDOWN);
     const trackingBox = Utils.getEventBox(e);
     const targetPocket = this.getPocketByCollision(trackingBox);
 
     this.enablePointerEvents();
 
-    const element = e.target;
     if (trackingBox && targetPocket) {
       if (this.activePocket) {
-        this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
-        this.movingElement.remove();
+        // this.addPiecesToPocket(targetPocket, this.movingElement.childNodes);
+        // this.movingElement.remove();
       } else {
         if (this.isDragActive && this.movingElement) {
-          this.addPiecesToPocket(
-            targetPocket,
-            this.movingElement.parentNode.childNodes
-          );
-          window.dispatchEvent(this.getPocketDropEventMessage());
+          const elementsToAdd = this.movingElement.classList.contains(
+            "puzzle-piece"
+          )
+            ? this.movingElement.parentNode.childNodes
+            : this.movingElement.childNodes;
+          // this.addPiecesToPocket(targetPocket, elementsToAdd);
+          // window.dispatchEvent(this.getPocketDropEventMessage());
         } else {
-          this.addToPocket(targetPocket, this.movingElement);
+          // this.addToPocket(targetPocket, this.movingElement);
         }
       }
     } else {
       if (this.activePocket) {
-        if (
-          Utils.isOutOfBounds([this.movingElement]) ||
-          Utils.isOverPlayBoundaryAndPockets(element)
-        ) {
-          this.addPiecesToPocket(
-            this.activePocket,
-            this.movingElement.childNodes
-          );
-          this.movingElement.remove();
-        } else {
-          console.log("returning to canvas");
-          this.returnToCanvas(this.getPiecesInTransit());
-          this.resetActivePocket();
-        }
+        // const elementBox = this.movingElement.getBoundingClientRect();
+        // const cnvBox = document
+        //   .querySelector(`#${ELEMENT_IDS.PLAY_BOUNDARY}`)
+        //   .getBoundingClientRect();
+        // if (
+        //   Utils.isInside(elementBox, cnvBox) ||
+        //   !Utils.isOverPockets(trackingBox)
+        // ) {
+        //   console.log("putting back in pocket");
+        //   this.addPiecesToPocket(
+        //     this.activePocket,
+        //     this.movingElement.childNodes
+        //   );
+        //   this.movingElement.remove();
+        // } else {
+        //   console.log("returning to canvas");
+        //   this.returnToCanvas(this.getPiecesInTransit());
+        // this.resetActivePocket();
+        // }
       }
     }
 
@@ -343,9 +350,9 @@ class Pockets {
 
     this.movingElement = null;
     this.isMainCanvasMoving = false;
-    this.activePocket = null;
+    // this.activePocket = null;
 
-    window.removeEventListener("mousemove", this.onMouseUp);
+    window.removeEventListener("mousemove", this.onMouseMove);
   }
 
   eventTargetIsPocket(e) {
@@ -363,7 +370,7 @@ class Pockets {
   }
 
   getPiecesInTransit() {
-    if (this.movingElement.classList.contains("active-pieces-container")) {
+    if (this.movingElement.id === "active-pieces-container") {
       return Array.from(this.movingElement.childNodes);
     } else {
       return [this.movingElement];
@@ -378,7 +385,7 @@ class Pockets {
     this.activePocketHasMultiplePieces = true;
 
     const container = document.createElement("div");
-    container.classList.add("active-pieces-container");
+    container.id = "active-pieces-container";
     // container.style.border = "1px solid white";
     container.style.position = "absolute";
 
@@ -445,13 +452,13 @@ class Pockets {
       container.appendChild(el);
     }
 
-    container.style.width = maxX * this.zoomLevel + "px";
-    container.style.height = maxY * this.zoomLevel + "px";
+    container.style.width = maxX + "px";
+    container.style.height = maxY + "px";
 
     const pocketBox = this.activePocket.getBoundingClientRect();
 
-    const x = e.clientX - pocketBox.left - (maxX / 2) * this.zoomLevel;
-    const y = e.clientY - pocketBox.top - (maxY / 2) * this.zoomLevel;
+    const x = e.clientX - pocketBox.left - maxX / 2;
+    const y = e.clientY - pocketBox.top - maxY / 2;
 
     container.style.top = y + "px";
     container.style.left = x + "px";
@@ -468,13 +475,26 @@ class Pockets {
     this.activePocket = null;
   }
 
+  reset() {
+    this.movingElement?.remove();
+    this.movingElement = null;
+    const activePiecesContainer = document.querySelector(
+      "#active-pieces-container"
+    );
+    activePiecesContainer?.remove();
+    this.resetActivePocket();
+  }
+
   setElementPositionInPocket(element, pocket) {
     const innerElement = pocket.querySelector(".pocket-inner");
     const rangeX = (innerElement.offsetWidth / 100) * 10;
     const rangeY = (innerElement.offsetHeight / 100) * 10;
 
-    element.style.top = Utils.getRandomInt(0, rangeY) + "px";
-    element.style.left = Utils.getRandomInt(0, rangeX) + "px";
+    const top = Utils.getRandomInt(0, rangeY);
+    const left = Utils.getRandomInt(0, rangeX);
+
+    element.style.top = top + "px";
+    element.style.left = left + "px";
   }
 
   resetElementPositionsInPockets() {
@@ -502,23 +522,19 @@ class Pockets {
       pocketId = this.getIdForPocket(pocket);
     }
 
-    this.setElementPositionInPocket(element, pocketEl);
-
     element.setAttribute("data-pocket-id", pocketId);
     element.classList.add("in-pocket");
 
-    pocketEl?.querySelector("div").appendChild(element);
-
-    if (this.elementClone) {
-      this.removeClone();
-    }
+    pocketEl?.querySelector(".pocket-inner").appendChild(element);
+    this.setElementPositionInPocket(element, pocketEl);
 
     Utils.requestSave([element]);
   }
 
   returnToCanvas(els) {
-    for (let i = 0, l = els.length; i < l; i++) {
-      const el = els[i];
+    debugger;
+    els.forEach((el) => {
+      console.log("returning to canvas", el);
       const playboundaryRect = this.playBoundary.getBoundingClientRect();
       const pocketsRect = this.ui.getBoundingClientRect();
       const elRect = el.getBoundingClientRect();
@@ -537,7 +553,7 @@ class Pockets {
       el.style.pointerEvents = "auto";
 
       Events.notify(EVENT_TYPES.RETURN_TO_CANVAS, el);
-    }
+    });
 
     Utils.requestSave(els);
   }

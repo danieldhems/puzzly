@@ -148,7 +148,9 @@ class DragAndSelect {
   }
 
   toggleHighlightPieces() {
-    this.selectedPiecesContainer.style.opacity = this.drawBoxActive ? 0.2 : 1;
+    if (this.selectedPiecesContainer) {
+      this.selectedPiecesContainer.style.opacity = this.drawBoxActive ? 0.2 : 1;
+    }
   }
 
   getBoundingBoxForDragContainer(pieces) {
@@ -319,7 +321,6 @@ class DragAndSelect {
 
   onMouseUp(e) {
     e.preventDefault();
-
     const droppedElementIsInSelectedGroup =
       e.target.classList?.contains("selected");
 
@@ -339,6 +340,7 @@ class DragAndSelect {
     }
 
     if (this.drawBoxActive) {
+      console.log("here");
       // Selection box has been drawn
       this.selectedPieces = this.getCollidingPieces();
 
@@ -379,6 +381,7 @@ class DragAndSelect {
           this.selectedPiecesContainer.offsetTop;
       }
     } else if (this.touchEndTime - this.touchStartTime < 250) {
+      console.log("here");
       // Drag finished -> put pieces back
       this.endDrag();
     }

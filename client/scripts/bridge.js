@@ -1,32 +1,53 @@
 import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
+import Events from "./events.js";
 import Utils from "./utils.js";
 
 class Bridge {
   constructor() {
-    this.bridge = document.querySelector("#pockets-bridge");
+    // this.bridge = document.querySelector("#pockets-bridge");
     this.stage = document.querySelector("#stage");
     this.playBoundary = document.querySelector(`#${ELEMENT_IDS.PLAY_BOUNDARY}`);
     this.pockets = document.querySelector(`#${ELEMENT_IDS.POCKETS}`);
     this.movingElement = null;
-    this.elementClone = null;
 
     this.isMouseDown = false;
     this.isMouseMoving = false;
     this.dragAndSelectActive = false;
 
+    this.diffX = null;
+    this.diffY = null;
+
+    this.pocketsActive = false;
+
     this.setupBridge(this.playBoundary);
 
-    window.addEventListener(EVENT_TYPES.PIECE_PICKUP, this.add.bind(this));
+    // window.addEventListener(EVENT_TYPES.PIECE_PICKUP, this.add.bind(this));
     window.addEventListener(EVENT_TYPES.PIECE_DROP, this.remove.bind(this));
     window.addEventListener(EVENT_TYPES.CHANGE_SCALE, this.sync.bind(this));
     window.addEventListener(EVENT_TYPES.RESIZE, this.sync.bind(this));
     window.addEventListener(EVENT_TYPES.PUZZLE_LOADED, this.onLoad.bind(this));
     window.addEventListener(EVENT_TYPES.CLEAR_BRIDGE, this.remove.bind(this));
     window.addEventListener(
+      EVENT_TYPES.POCKET_PICKUP,
+      this.onPocketPickup.bind(this)
+    );
+    window.addEventListener(
+      EVENT_TYPES.POCKET_PUTDOWN,
+      this.onPocketPutdown.bind(this)
+    );
+    window.addEventListener(
       EVENT_TYPES.DRAGANDSELECT_ACTIVE,
       this.onDragAndSelect.bind(this)
     );
-    window.addEventListener("mousemove", this.onMouseMove.bind(this));
+    // window.addEventListener("mousedown", this.onMouseDown.bind(this));
+  }
+
+  onPocketPickup() {
+    this.pocketsActive = true;
+  }
+
+  onPocketPutdown() {
+    this.pocketsActive = false;
   }
 
   onDragAndSelect(e) {
@@ -80,17 +101,37 @@ class Bridge {
     if (!this.isDragAndSelectActive) {
       const element = eventData.detail;
       this.movingElement = element;
-      this.elementClone = this.makeClone(this.movingElement);
-      this.bridge.appendChild(this.elementClone);
-      this.setClonePosition();
+      this.bridge.appendChild(this.movingElement);
       this.bridge.style.zIndex = 2;
     }
   }
 
-  onMouseMove(e) {
-    if (this.elementClone) {
-      this.setClonePosition();
+  onMouseDown(e) {
+    let el = Utils.getPuzzlePieceElementFromEvent(e);
+    console.log(el);
+    if (el && !this.isDragAndSelectActive && !this.pocketsActive) {
+      this.movingElement = el;
+      this.diffX = e.clientX - this.movingElement.offsetLeft;
+      this.diffY = e.clientY - this.movingElement.offsetTop;
+      window.addEventListener("mousemove", this.onMouseMove.bind(this));
     }
+  }
+
+  onMouseMove(e) {
+    if (this.movingElement) {
+      const newPosTop = e.clientY - this.diffY;
+      const newPosLeft = e.clientX - this.diffX;
+      this.movingElement.style.top = newPosTop + "px";
+      this.movingElement.style.left = newPosLeft + "px";
+      window.addEventListener("mouseup", this.onMouseUp.bind(this));
+    }
+  }
+
+  onMouseUp(e) {
+    Events.notify(EVENT_TYPES.RETURN_TO_CANVAS, this.movingElement);
+    this.movingElement = null;
+    this.remove();
+    window.removeEventListener("mousemove", this.onMouseMove);
   }
 
   setClonePosition() {

@@ -267,20 +267,21 @@ const Utils = {
     return document.querySelectorAll(`[data-piece-id='${id}']`)[0];
   },
 
-  isOutOfBounds(sourceEls) {
+  isOutOfBounds(element) {
+    const elBox = element.getBoundingClientRect();
+    return !Utils.isInside(elBox, cnvBox) && !Utils.isOverPockets(element);
+  },
+
+  isBoxOutOfBounds(box) {
     const cnvBox = document
       .querySelector(`#${ELEMENT_IDS.PLAY_BOUNDARY}`)
       .getBoundingClientRect();
     const pocketsBox = document
       .querySelector("#pockets")
       .getBoundingClientRect();
-    return Array.from(sourceEls).some((el) => {
-      const elBox = el.getBoundingClientRect();
-      return (
-        !Utils.isInside(elBox, cnvBox) &&
-        !Utils.isOverPockets(elBox, pocketsBox)
-      );
-    });
+    return (
+      !Utils.isInside(box, cnvBox) && !Utils.isOverPockets(box, pocketsBox)
+    );
   },
 
   isOverPlayBoundaryAndPockets(element) {
@@ -292,6 +293,14 @@ const Utils = {
       .getBoundingClientRect();
     const bb = element.getBoundingClientRect();
     return Utils.hasCollision(bb, cnvBox) && Utils.hasCollision(bb, pocketsBox);
+  },
+
+  isNumber(val) {
+    return val !== undefined && val !== null && Number.isInteger(val);
+  },
+
+  getPxString(value) {
+    return value + "px";
   },
 
   getPieceIdFromElement(element) {
@@ -457,6 +466,38 @@ const Utils = {
     if (isPuzzlePieceLayerElement) {
       return e.target.parentNode;
     }
+  },
+
+  elementIsInDragContainer(element) {
+    return (
+      element.parentNode.id === ELEMENT_IDS.DRAGANDSELECT_CONTAINER ||
+      element.parentNode.id === ELEMENT_IDS.POCKET_DRAG_CONTAINER
+    );
+  },
+
+  getContainerFromEvent(e) {
+    const classes = e.target?.classList;
+
+    if (!classes) return;
+
+    const isPuzzlePiece = classes.contains("puzzle-piece");
+    const isPuzzlePieceLayerElement = classes.contains("puzzle-piece-fg");
+
+    if (isPuzzlePiece) {
+      return e.target.parentNode;
+    }
+
+    if (isPuzzlePieceLayerElement) {
+      return e.target.parentNode.parentNode;
+    }
+  },
+
+  isPocketDragContainer(element) {
+    return element.id === ELEMENT_IDS.POCKET_DRAG_CONTAINER;
+  },
+
+  isDragAndSelectDragContainer(element) {
+    return element.id === ELEMENT_IDS.DRAGANDSELECT_CONTAINER;
   },
 
   getOrientation(boundingBox) {
