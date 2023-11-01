@@ -1,7 +1,7 @@
 import { ELEMENT_IDS, PUZZLE_PIECE_CLASSES } from "./constants.js";
 
 const Utils = {
-  hasCollision(source, target, sourceEl, targetEl) {
+  hasCollision(source, target) {
     if (
       [
         source.left,

@@ -10,5 +10,11 @@ export class DragAndSelectMovable extends AbstractMovable {
     );
   }
 
-  #onPickup(event) {}
+  #onPickup(event) {
+    const element = event.detail;
+
+    if (this.isDragAndSelectPiece(element)) {
+      this.active = true;
+    }
+  }
 }
