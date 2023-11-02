@@ -1,23 +1,23 @@
-import { AbstractMovable } from "./AbstractMovable";
-import Utils from "./utils";
+import { AbstractMovable } from "./AbstractMovable.js";
+import { EVENT_TYPES } from "./constants.js";
+import Utils from "./utils.js";
 
 export class SingleMovable extends AbstractMovable {
   constructor(...args) {
     super(...args);
 
-    window.addEventListener(
-      EVENT_TYPES.PIECE_PICKUP,
-      this.#onPickup.bind(this)
-    );
-    window.addEventListener("mouseup", this.onMouseUp.bind(this));
-    window.addEventListener(EVENT_TYPES.MOVE_FINISHED, this.clean.bind(this));
+    window.addEventListener(EVENT_TYPES.PIECE_PICKUP, this.onPickup.bind(this));
   }
 
-  #onPickup(event) {
+  onPickup(event) {
     const element = event.detail;
 
     if (this.isSinglePiece(element)) {
+      this.element = element;
       this.active = true;
+      console.log("SingleMovable activated with", this.element);
+
+      AbstractMovable.prototype.onPickup.call(this, event);
     }
   }
 
@@ -31,10 +31,7 @@ export class SingleMovable extends AbstractMovable {
   }
 
   isOutOfBounds(event) {
-    return (
-      !this.isInside(elBox, cnvBox) &&
-      !this.isOverPockets(Utils.getEventBox(event))
-    );
+    return !this.isInsidePlayArea() && !this.isOverPockets(event);
   }
 
   onMouseUp(event) {
@@ -46,5 +43,7 @@ export class SingleMovable extends AbstractMovable {
       const pocket = this.getPocketByCollision(Utils.getEventBox(event));
       this.addToPocket(pocket);
     }
+
+    this.clean();
   }
 }

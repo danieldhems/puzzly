@@ -532,7 +532,6 @@ class Pockets {
   }
 
   returnToCanvas(els) {
-    debugger;
     els.forEach((el) => {
       console.log("returning to canvas", el);
       const playboundaryRect = this.playBoundary.getBoundingClientRect();

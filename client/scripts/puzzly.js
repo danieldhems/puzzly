@@ -9,6 +9,10 @@ import {
   SOLVING_AREA_SIZE_PERCENTAGE,
   SIDES,
 } from "./constants.js";
+import { SingleMovable } from "./SingleMovable.js";
+import { GroupMovable } from "./GroupMovable.js";
+import { PocketMovable } from "./PocketMovable.js";
+import { DragAndSelectMovable } from "./DragAndSelectMovable.js";
 
 /**
  * Puzzly
@@ -241,7 +245,11 @@ class Puzzly {
 
     this.Pockets = new Pockets(this);
     this.DragAndSelect = new DragAndSelect(this);
-    // this.Bridge = new Bridge(this);
+
+    this.SingleMovable = new SingleMovable();
+    this.GroupMovable = new GroupMovable();
+    this.PocketMovable = new PocketMovable();
+    this.DragAndSelectMovable = new DragAndSelectMovable();
 
     this.setPlayBoundaryPosition();
     this.resetPlayBoundaryPosition();
@@ -303,7 +311,7 @@ class Puzzly {
       window.location = "/";
     });
 
-    window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
+    // window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
     window.addEventListener("keydown", this.onKeyDown.bind(this));
     window.addEventListener("puzzly_save", (e) => {
       // console.log("save requested", e.detail.pieces)
@@ -902,6 +910,8 @@ class Puzzly {
       if (isPuzzlePiece) {
         element = Utils.getPuzzlePieceElementFromEvent(e);
 
+        Events.notify(EVENT_TYPES.PIECE_PICKUP, element);
+
         // Remember last position of moving element / moving group
         let elementBoundingBox;
         if (element.classList.contains("grouped")) {
@@ -973,22 +983,12 @@ class Puzzly {
           clientPos.y - this.movingElement.offsetTop * this.zoomLevel;
       }
 
-      if (
-        this.movingElement &&
-        !this.isMovingStage &&
-        !this.movingElement.classList.contains("in-pocket") &&
-        !this.dragAndSelectActive
-      ) {
-        // boo
-        Events.notify(EVENT_TYPES.PIECE_PICKUP, this.movingElement);
-      }
-
       this.isMouseDown = true;
 
-      window.addEventListener(
-        this.interactionEventMove,
-        this.onMouseMove.bind(this)
-      );
+      // window.addEventListener(
+      //   this.interactionEventMove,
+      //   this.onMouseMove.bind(this)
+      // );
     }
   }
 
@@ -1077,11 +1077,6 @@ class Puzzly {
     if (!this.isMouseDown || this.isMovingStage) return;
 
     const element = this.movingPiece;
-
-    // Shouldn't need to check multiple elements if they're always inside a container?
-    const movingElements = this.isMovingSinglePiece
-      ? [element]
-      : this.getCollisionCandidatesInGroup(this.getGroup(element));
 
     const elementBox = element.getBoundingClientRect();
     const playBoundaryBox = this.playBoundary.getBoundingClientRect();
@@ -1232,7 +1227,7 @@ class Puzzly {
     this.isMovingStage = false;
 
     window.removeEventListener(this.interactionEventMove, this.mouseMoveFunc);
-    window.removeEventListener(this.interactionEventUp, this.onMouseUp);
+    // window.removeEventListener(this.interactionEventUp, this.onMouseUp);
   }
 
   isViewportInsidePlayBoundary() {
