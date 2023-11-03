@@ -9,14 +9,14 @@ export class DragAndSelectMovable extends AbstractMovable {
   }
 
   onPickup(event) {
-    const element = event.detail;
+    const { element, position } = event.detail;
 
     if (this.isDragAndSelectPiece(element)) {
       this.element = element.parentNode;
       this.active = true;
       console.log("DragAndSelectMovable activated with", this.element);
 
-      window.addEventListener("mouseup", this.onMouseUp.bind(this));
+      super.onPickup.call(this, event, position);
     }
   }
 

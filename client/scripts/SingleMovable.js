@@ -10,14 +10,13 @@ export class SingleMovable extends AbstractMovable {
   }
 
   onPickup(event) {
-    const element = event.detail;
+    const { element, position } = event.detail;
 
     if (this.isSinglePiece(element)) {
       this.element = element;
       this.active = true;
-      console.log("SingleMovable activated with", this.element);
 
-      AbstractMovable.prototype.onPickup.call(this, event);
+      super.onPickup(position);
     }
   }
 
@@ -45,5 +44,11 @@ export class SingleMovable extends AbstractMovable {
     }
 
     this.clean();
+  }
+
+  clean() {
+    if (this.active) {
+      super.clean();
+    }
   }
 }

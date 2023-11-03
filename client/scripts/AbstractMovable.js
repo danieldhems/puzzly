@@ -1,4 +1,4 @@
-import { ELEMENT_IDS, PUZZLE_PIECE_CLASSES } from "./constants.js";
+import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants.js";
 import Utils from "./utils.js";
 
 export class AbstractMovable {
@@ -6,9 +6,8 @@ export class AbstractMovable {
   lastPosition;
   active = false;
 
-  // Element which contains all pieces in play
-  // Not to be confused with the element that shares its ID
-  stageElement;
+  // Element which contains all pieces in-play
+  piecesContainer;
   groupIdPattern = /^group-container-/;
 
   // Used by PocketMovable to know which pocket the movable originated from, and which the movable's child nodes will be returned to if out of bounds.
@@ -17,12 +16,23 @@ export class AbstractMovable {
   diffX = null;
   diffY = null;
 
+  zoomLevel = 1;
+
   constructor() {
-    this.stageElement = document.querySelector(
+    this.piecesContainer = document.querySelector(
       `#${ELEMENT_IDS.PIECES_CONTAINER}`
     );
     this.pocketsContainer = document.querySelector(`#${ELEMENT_IDS.POCKETS}`);
     this.pockets = this.pocketsContainer.querySelectorAll(`.pocket`);
+
+    window.addEventListener(
+      EVENT_TYPES.CHANGE_SCALE,
+      this.onChangeScale.bind(this)
+    );
+  }
+
+  onChangeScale(event) {
+    this.zoomLevel = event.detail;
   }
 
   isSinglePiece(element) {
@@ -97,7 +107,7 @@ export class AbstractMovable {
   isInsidePlayArea() {
     return Utils.isInside(
       this.element.getBoundingClientRect(),
-      this.stageElement.getBoundingClientRect()
+      this.piecesContainer.getBoundingClientRect()
     );
   }
 
@@ -110,31 +120,33 @@ export class AbstractMovable {
 
   addToStage(element = undefined) {
     const elementToAdd = element || this.element;
-    this.stageElement.prepend(elementToAdd);
+    this.piecesContainer.prepend(elementToAdd);
   }
 
   // Override
   addToPocket() {}
 
   // Lifecycle method called when a movable is picked up i.e. the user has begun interacting with it
-  onPickup(event) {
-    this.diffX = event.clientX - this.element.offsetLeft * this.zoomLevel;
-    this.diffY = event.clientY - this.element.offsetTop * this.zoomLevel;
+  onPickup(position) {
+    this.diffX = position.left - this.element.offsetLeft * this.zoomLevel;
+    this.diffY = position.top - this.element.offsetTop * this.zoomLevel;
 
-    window.addEventListener("mousemove", this.onMouseMove.bind(this));
-    window.addEventListener("mouseup", this.onMouseUp.bind(this));
+    // Store a reference to our event handlers so we can remove them later
+    // (They don't get removed if we don't use these)
+    this.onMouseMove = this.onMouseMove.bind(this);
+    this.onMouseUp = this.onMouseUp.bind(this);
+
+    window.addEventListener("mousemove", this.onMouseMove);
+    window.addEventListener("mouseup", this.onMouseUp);
   }
 
   // Lifecycle method called when a movable is put down up i.e. the user has finished interacting with it
+  // Actually not sure about this one...
   onDrop() {
-    if (this.active) {
-      this.clean();
-    }
+    this.clean();
   }
 
   onMouseMove(event) {
-    console.log(event, this);
-
     const newPosTop =
       event.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
     const newPosLeft =
@@ -142,6 +154,10 @@ export class AbstractMovable {
 
     this.element.style.top = newPosTop + "px";
     this.element.style.left = newPosLeft + "px";
+  }
+
+  onMouseUp() {
+    this.clean();
   }
 
   resetPosition() {
@@ -156,6 +172,9 @@ export class AbstractMovable {
     this.element = null;
     this.lastPosition = null;
 
+    if (typeof this.onMouseMove === "function") {
+      window.removeEventListener("mousemove", this.onMouseMove);
+    }
     if (typeof this.onMouseUp === "function") {
       window.removeEventListener("mouseup", this.onMouseUp);
     }

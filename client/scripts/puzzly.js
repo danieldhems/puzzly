@@ -910,7 +910,10 @@ class Puzzly {
       if (isPuzzlePiece) {
         element = Utils.getPuzzlePieceElementFromEvent(e);
 
-        Events.notify(EVENT_TYPES.PIECE_PICKUP, element);
+        Events.notify(EVENT_TYPES.PIECE_PICKUP, {
+          element,
+          position: { top: e.clientY, left: e.clientX },
+        });
 
         // Remember last position of moving element / moving group
         let elementBoundingBox;
