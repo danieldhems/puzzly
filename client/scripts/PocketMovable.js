@@ -1,7 +1,7 @@
-import { AbstractMovable } from "./AbstractMovable.js";
+import BaseMovable from "./BaseMovable.js";
 import { EVENT_TYPES } from "./constants.js";
 
-export class PocketMovable extends AbstractMovable {
+export class PocketMovable extends BaseMovable {
   constructor(...args) {
     super(...args);
 

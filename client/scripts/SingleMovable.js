@@ -1,8 +1,9 @@
-import { AbstractMovable } from "./AbstractMovable.js";
+import BaseMovable from "./BaseMovable.js";
+import { checkConnections } from "./checkConnections.js";
 import { EVENT_TYPES } from "./constants.js";
 import Utils from "./utils.js";
 
-export class SingleMovable extends AbstractMovable {
+export class SingleMovable extends BaseMovable {
   constructor(...args) {
     super(...args);
 
@@ -36,11 +37,12 @@ export class SingleMovable extends AbstractMovable {
   onMouseUp(event) {
     if (this.isOutOfBounds(event)) {
       this.resetPosition();
-    }
-
-    if (this.isOverPockets(event)) {
+    } else if (this.isOverPockets(event)) {
       const pocket = this.getPocketByCollision(Utils.getEventBox(event));
       this.addToPocket(pocket);
+    } else {
+      const connection = checkConnections.call(this);
+      console.log("connection", connection);
     }
 
     this.clean();

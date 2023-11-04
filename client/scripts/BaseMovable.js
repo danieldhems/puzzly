@@ -1,16 +1,17 @@
 import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants.js";
 import Utils from "./utils.js";
 
-export class AbstractMovable {
+export default class BaseMovable {
   element;
   lastPosition;
   active = false;
 
-  // Element which contains all pieces in-play
-  piecesContainer;
   groupIdPattern = /^group-container-/;
 
-  // Used by PocketMovable to know which pocket the movable originated from, and which the movable's child nodes will be returned to if out of bounds.
+  // Element containing all pieces in-play
+  piecesContainer;
+
+  // Used by PocketMovable to know which pocket the movable originated from, and which the movable's child nodes will be returned to if out-of-bounds.
   activePocket = null;
 
   diffX = null;
@@ -18,12 +19,21 @@ export class AbstractMovable {
 
   zoomLevel = 1;
 
-  constructor() {
+  connectorTolerance = null;
+
+  constructor(puzzly) {
     this.piecesContainer = document.querySelector(
       `#${ELEMENT_IDS.PIECES_CONTAINER}`
     );
+    this.solvingArea = document.getElementById(ELEMENT_IDS.SOLVED_PUZZLE_AREA);
     this.pocketsContainer = document.querySelector(`#${ELEMENT_IDS.POCKETS}`);
     this.pockets = this.pocketsContainer.querySelectorAll(`.pocket`);
+
+    // Needed for collision detection
+    this.connectorTolerance = puzzly.connectorTolerance;
+    this.connectorDistanceFromCorner = puzzly.connectorDistanceFromCorner;
+    this.connectorSize = puzzly.connectorSize;
+    this.shadowOffset = puzzly.shadowOffset;
 
     window.addEventListener(
       EVENT_TYPES.CHANGE_SCALE,
@@ -77,31 +87,10 @@ export class AbstractMovable {
   }
 
   hasCollision(targetElement, source = null) {
-    const targetBox = targetElement.getBoundingClientRect();
+    const targetBoundingBox = targetElement.getBoundingClientRect();
     const thisBoundingBox = source || this.element.getBoundingClientRect();
 
-    if (
-      [
-        thisBoundingBox.left,
-        thisBoundingBox.right,
-        thisBoundingBox.bottom,
-        thisBoundingBox.top,
-        targetBox.left,
-        targetBox.top,
-        targetBox.right,
-        targetBox.bottom,
-      ].includes(NaN)
-    )
-      throw new Error(
-        "Method: hasCollision -> Can't check for collision: non-numeric value(s) provided"
-      );
-
-    return !(
-      thisBoundingBox.left >= targetBox.right ||
-      thisBoundingBox.top >= targetBox.bottom ||
-      thisBoundingBox.right <= targetBox.left ||
-      thisBoundingBox.bottom <= targetBox.top
-    );
+    return Utils.hasCollision(thisBoundingBox, targetBoundingBox);
   }
 
   isInsidePlayArea() {

@@ -170,6 +170,10 @@ const Utils = {
     return type[s] === c;
   },
 
+  getPieceType(element) {
+    return element.dataset.jigsawType.split(",").map((t) => parseInt(t));
+  },
+
   isAdjacent(pieceAId, pieceBId, numPiecesHorizontal) {
     const pieceToRightId = pieceAId + 1;
     const pieceToBottomRightId = pieceAId + numPiecesHorizontal + 1;
@@ -314,6 +318,312 @@ const Utils = {
   getElementsInGroupByElement(groupedElement) {
     const groupId = this.getGroupIdByElement(groupedElement);
     return Array.from(document.querySelectorAll(`[data-group='${groupId}']`));
+  },
+
+  getGroupContainer(arg) {
+    if (typeof arg === "number" || typeof arg === "string") {
+      return document.getElementById(`group-container-${arg}`);
+    } else {
+      return arg.parentNode;
+    }
+  },
+
+  getTopLeftCornerBoundingBox() {
+    const box = this.solvingArea.getBoundingClientRect();
+    return {
+      top: box.top,
+      right: box.left + this.connectorTolerance,
+      bottom: box.top + this.connectorTolerance,
+      left: box.left,
+    };
+  },
+
+  getTopRightCornerBoundingBox() {
+    const box = this.solvingArea.getBoundingClientRect();
+    return {
+      top: box.top,
+      right: box.right,
+      bottom: box.top + this.connectorTolerance,
+      left: box.right - this.connectorTolerance,
+    };
+  },
+
+  getBottomRightCornerBoundingBox() {
+    const box = this.solvingArea.getBoundingClientRect();
+    return {
+      top: box.bottom - this.connectorTolerance,
+      right: box.right,
+      bottom: box.bottom,
+      left: box.right - this.connectorTolerance,
+    };
+  },
+
+  getBottomLeftCornerBoundingBox() {
+    const box = this.solvingArea.getBoundingClientRect();
+    return {
+      top: box.bottom - this.connectorTolerance,
+      right: box.left + this.connectorTolerance,
+      bottom: box.bottom,
+      left: box.left,
+    };
+  },
+
+  getConnectorBoundingBox(side, targetElement = null) {
+    const element = targetElement || this.element;
+    const piece = {
+      type: Utils.getPieceType(element),
+    };
+    const hasLeftPlug = Utils.has(piece.type, "plug", "left");
+    const hasTopPlug = Utils.has(piece.type, "plug", "top");
+
+    const tolerance = this.connectorTolerance;
+    let box;
+
+    // console.log("connectorsize", this.connectorSize);
+    // console.log("tolerance setting", this.connectorTolerance);
+
+    const topBoundary = hasTopPlug
+      ? this.connectorDistanceFromCorner + this.connectorSize
+      : this.connectorDistanceFromCorner;
+    const leftBoundary = hasLeftPlug
+      ? this.connectorDistanceFromCorner + this.connectorSize
+      : this.connectorDistanceFromCorner;
+
+    switch (side) {
+      case "left":
+        box = {
+          top: element.offsetTop + topBoundary + tolerance,
+          right: element.offsetLeft + this.connectorSize - tolerance,
+          bottom:
+            element.offsetTop + topBoundary + this.connectorSize - tolerance,
+          left: element.offsetLeft + tolerance,
+        };
+        break;
+      case "right":
+        box = {
+          top: element.offsetTop + topBoundary + tolerance,
+          right: element.offsetLeft + element.offsetWidth - tolerance,
+          bottom:
+            element.offsetTop + topBoundary + this.connectorSize - tolerance,
+          left:
+            element.offsetLeft +
+            element.offsetWidth -
+            this.connectorSize +
+            tolerance,
+        };
+        break;
+      case "bottom":
+        box = {
+          top:
+            element.offsetTop +
+            element.offsetHeight -
+            this.connectorSize +
+            tolerance -
+            this.shadowOffset,
+          right:
+            element.offsetLeft + leftBoundary + this.connectorSize - tolerance,
+          bottom:
+            element.offsetTop +
+            element.offsetHeight -
+            tolerance -
+            this.shadowOffset,
+          left: element.offsetLeft + leftBoundary + tolerance,
+        };
+        break;
+      case "top":
+        box = {
+          top: element.offsetTop + tolerance,
+          right:
+            element.offsetLeft + leftBoundary + this.connectorSize - tolerance,
+          bottom: element.offsetTop + this.connectorSize - tolerance,
+          left: element.offsetLeft + leftBoundary + tolerance,
+        };
+        break;
+    }
+
+    return box;
+  },
+
+  getConnectorBoundingBoxInGroup(connector, containerBoundingBox) {
+    // console.log("getting connector bounding box in group", element, connector, containerBoundingBox)
+    const piece = element.dataset;
+
+    const hasLeftPlug = Utils.has(piece.type, "plug", "left");
+    const hasTopPlug = Utils.has(piece.type, "plug", "top");
+    const tolerance = this.connectorTolerance;
+
+    switch (connector) {
+      case "right":
+        return {
+          top:
+            containerBoundingBox.top +
+            element.offsetTop +
+            (hasTopPlug
+              ? this.connectorDistanceFromCorner + this.connectorSize
+              : this.connectorDistanceFromCorner) +
+            tolerance,
+          right:
+            containerBoundingBox.left +
+            element.offsetLeft +
+            element.offsetWidth -
+            tolerance,
+          bottom:
+            containerBoundingBox.top +
+            element.offsetTop +
+            (hasTopPlug
+              ? this.connectorDistanceFromCorner + this.connectorSize
+              : this.connectorDistanceFromCorner) +
+            this.connectorSize -
+            tolerance,
+          left:
+            containerBoundingBox.left +
+            element.offsetLeft +
+            element.offsetWidth -
+            this.connectorSize +
+            tolerance,
+        };
+
+      case "bottom":
+        return {
+          top:
+            containerBoundingBox.top +
+            element.offsetTop +
+            element.offsetHeight -
+            this.connectorSize +
+            tolerance,
+          right:
+            containerBoundingBox.left +
+            element.offsetLeft +
+            (hasLeftPlug
+              ? this.connectorDistanceFromCorner + this.connectorSize
+              : this.connectorDistanceFromCorner) +
+            this.connectorSize -
+            tolerance,
+          bottom:
+            containerBoundingBox.top +
+            element.offsetTop +
+            element.offsetHeight -
+            tolerance,
+          left:
+            containerBoundingBox.left +
+            element.offsetLeft +
+            (hasLeftPlug
+              ? this.connectorDistanceFromCorner + this.connectorSize
+              : this.connectorDistanceFromCorner) +
+            tolerance,
+        };
+
+      case "left":
+        return {
+          top:
+            containerBoundingBox.top +
+            element.offsetTop +
+            (hasTopPlug
+              ? this.connectorDistanceFromCorner + this.connectorSize
+              : this.connectorDistanceFromCorner) +
+            tolerance,
+          right:
+            containerBoundingBox.left +
+            element.offsetLeft +
+            this.connectorSize -
+            tolerance,
+          bottom:
+            containerBoundingBox.top +
+            element.offsetTop +
+            (hasTopPlug
+              ? this.connectorDistanceFromCorner + this.connectorSize
+              : this.connectorDistanceFromCorner) +
+            this.connectorSize -
+            tolerance,
+          left: containerBoundingBox.left + element.offsetLeft + tolerance,
+        };
+
+      case "top":
+        return {
+          top: containerBoundingBox.top + element.offsetTop + tolerance,
+          right:
+            containerBoundingBox.left +
+            element.offsetLeft +
+            (hasLeftPlug
+              ? this.connectorDistanceFromCorner + this.connectorSize
+              : this.connectorDistanceFromCorner) +
+            this.connectorSize -
+            tolerance,
+          bottom:
+            containerBoundingBox.top +
+            element.offsetTop +
+            this.connectorSize -
+            tolerance,
+          left:
+            containerBoundingBox.left +
+            element.offsetLeft +
+            (hasLeftPlug
+              ? this.connectorDistanceFromCorner + this.connectorSize
+              : this.connectorDistanceFromCorner) +
+            tolerance,
+        };
+    }
+  },
+
+  getElementBoundingBoxForFloatDetection(element, drawBoundingBox = false) {
+    const hasGroup = !!element.dataset.group;
+
+    const diffX = element.offsetWidth / 2 - this.floatTolerance / 2;
+    const diffY = element.offsetHeight / 2 - this.floatTolerance / 2;
+
+    const pos = {
+      top: hasGroup
+        ? element.parentNode.offsetTop + element.offsetTop
+        : element.offsetTop,
+      right: hasGroup
+        ? element.parentNode.offsetLeft + element.offsetLeft + diffX
+        : element.offsetLeft + diffX,
+      bottom: hasGroup
+        ? element.parentNode.offsetTop + element.offsetTop + diffY
+        : element.offsetTop + diffY,
+      left: hasGroup
+        ? element.parentNode.offsetLeft + element.offsetLeft
+        : element.offsetLeft,
+    };
+
+    // console.log("getElementBoundingBoxForFloatDetection", pos)
+
+    const box = {
+      top: pos.top + this.floatTolerance,
+      right: pos.right + this.floatTolerance,
+      bottom: pos.bottom + this.floatTolerance,
+      left: pos.left + this.floatTolerance,
+    };
+
+    if (drawBoundingBox) {
+      this.drawBoundingBox(box);
+    }
+
+    return box;
+  },
+
+  getPieceSolvedBoundingBox(el) {
+    const solvedX = parseInt(el.dataset.solvedx);
+    const solvedY = parseInt(el.dataset.solvedy);
+
+    // const top = this.boardTop + solvedY;
+    // const right = this.boardLeft + solvedX + el.offsetLeft + this.collisionBoxWidth;
+    // const bottom = this.boardTop + solvedY + el.offsetTop + this.collisionBoxWidth;
+    // const left = this.boardLeft + solvedX;
+
+    const boardBox = Utils.getStyleBoundingBox(this.solvingArea);
+
+    const diffX = el.offsetWidth / 2 - this.floatTolerance / 2;
+    const diffY = el.offsetHeight / 2 - this.floatTolerance / 2;
+
+    const box = {
+      top: boardBox.top + solvedY + diffY,
+      right: boardBox.left + solvedX + diffX + this.floatTolerance / 2,
+      bottom: boardBox.top + solvedY + diffY + this.floatTolerance / 2,
+      left: boardBox.left + solvedX + diffX,
+    };
+
+    return box;
   },
 
   drawBox(box, container = null, borderColor = null) {
