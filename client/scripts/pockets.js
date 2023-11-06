@@ -1,5 +1,6 @@
 import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
 import Events from "./events.js";
+import { hasGroup } from "./Group.js";
 import Utils from "./utils.js";
 
 const POCKET_DEPTH = 110;
@@ -220,7 +221,7 @@ class Pockets {
 
     if (Utils.isPuzzlePiece(el)) {
       el = Utils.getPuzzlePieceElementFromEvent(e);
-      shouldTrackPiece = !Utils.hasGroup(el);
+      shouldTrackPiece = !hasGroup(el);
     }
 
     this.isDragActive = el.classList

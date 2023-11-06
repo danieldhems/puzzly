@@ -1,4 +1,5 @@
 import { ELEMENT_IDS, PUZZLE_PIECE_CLASSES } from "./constants.js";
+import { getGroup, hasGroup, getPiecesInGroup } from "./Group.js";
 
 const Utils = {
   hasCollision(source, target) {
@@ -60,6 +61,73 @@ const Utils = {
         "$1"
       )
     );
+  },
+
+  getIsSolved(el) {
+    return el.dataset.isSolved === "true";
+  },
+
+  getConnectionsForPiece(piece) {
+    const connections = [];
+    const p = this.getPieceFromElement(piece, [
+      "piece-id",
+      "jigsaw-type",
+      "group",
+    ]);
+
+    const pieceTop =
+      !Utils.isTopEdgePiece(p) &&
+      Utils.getElementByPieceId(p.id - this.piecesPerSideHorizontal);
+    const pieceRight =
+      !Utils.isRightEdgePiece(p) && Utils.getElementByPieceId(p.id + 1);
+    const pieceBottom =
+      !Utils.isBottomEdgePiece(p) &&
+      Utils.getElementByPieceId(p.id + this.piecesPerSideHorizontal);
+    const pieceLeft =
+      !Utils.isLeftEdgePiece(p) && Utils.getElementByPieceId(p.id - 1);
+
+    const pieceTopGroup = pieceTop ? getGroup(pieceTop) : null;
+    const pieceRightGroup = pieceRight ? getGroup(pieceRight) : null;
+    const pieceBottomGroup = pieceBottom ? getGroup(pieceBottom) : null;
+    const pieceLeftGroup = pieceLeft ? getGroup(pieceLeft) : null;
+
+    if (
+      pieceTopGroup &&
+      pieceTopGroup === p.group &&
+      !connections.includes("top")
+    ) {
+      connections.push("top");
+    }
+    if (
+      pieceRightGroup &&
+      pieceRightGroup === p.group &&
+      !connections.includes("right")
+    ) {
+      connections.push("right");
+    }
+    if (
+      pieceBottomGroup &&
+      pieceBottomGroup === p.group &&
+      !connections.includes("bottom")
+    ) {
+      connections.push("bottom");
+    }
+    if (
+      pieceLeftGroup &&
+      pieceLeftGroup === p.group &&
+      !connections.includes("left")
+    ) {
+      connections.push("left");
+    }
+    return connections;
+  },
+
+  updateConnections(group) {
+    const pieces = getPiecesInGroup(group);
+    pieces.forEach((p) => {
+      const connections = getConnectionsForPiece(p);
+      p.setAttribute("data-connections", connections.join(", "));
+    });
   },
 
   isTopSide(piece) {
@@ -195,21 +263,10 @@ const Utils = {
     );
   },
 
-  hasGroup(piece) {
-    const obj = piece.dataset || piece;
-    return (
-      obj.group !== undefined && obj.group !== null && !Number.isNaN(obj.group)
-    );
-  },
-
   querySelectorFrom(selector, elements) {
     return [].filter.call(elements, function (element) {
       return element.matches(selector);
     });
-  },
-
-  isNumber(val) {
-    return !Number.isNaN(val);
   },
 
   adjustForZoomLevel(obj, zoomLevel) {
@@ -219,6 +276,73 @@ const Utils = {
       bottom: obj.bottom && obj.bottom * zoomLevel,
       left: obj.left && obj.left * zoomLevel,
     };
+  },
+
+  getPieceFromElement(el) {
+    if (!el) return;
+
+    const data = {};
+    data.id = parseInt(el.dataset.pieceId);
+    data._id = parseInt(el.dataset.pieceIdInPersistence);
+    data.puzzleId = parseInt(el.dataset.puzzleId);
+    data.imgX = parseFloat(el.dataset.imgX);
+    data.imgY = parseFloat(el.dataset.imgY);
+    data.imgY = parseFloat(el.dataset.imgY);
+    data.imgY = parseFloat(el.dataset.imgY);
+    data.solvedX = parseInt(el.dataset.solvedX);
+    data.solvedX = parseInt(el.dataset.solvedX);
+    data.solvedX = parseInt(el.dataset.solvedX);
+    data.solvedY = parseInt(el.dataset.solvedY);
+    data.solvedY = parseInt(el.dataset.solvedY);
+    data.solvedY = parseInt(el.dataset.solvedY);
+    data.imgW = parseInt(el.dataset.imgW);
+    data.imgW = parseInt(el.dataset.imgW);
+    data.imgW = parseInt(el.dataset.imgW);
+    data.imgH = parseInt(el.dataset.imgH);
+    data.numPiecesFromTopEdge = parseInt(el.dataset.numPiecesFromTopEdge);
+    data.numPiecesFromLeftEdge = parseInt(el.dataset.numPiecesFromLeftEdge);
+
+    const type = el.dataset["jigsawType"];
+    if (type) {
+      data.type = type.split(",").map((n) => parseInt(n));
+    } else {
+      console.warn(`Can't get type for piece ${el.toString()}`);
+    }
+
+    const connections = el.dataset.connections;
+    data.connections = connections
+      ? connections.indexOf(",") > 0
+        ? connections.split(",")
+        : [connections]
+      : [];
+
+    data.connectsTo = el.dataset["connectsTo"];
+
+    const isInnerPiece = el.dataset["isInnerPiece"];
+    data.isInnerPiece = isInnerPiece == "true" ? true : false;
+
+    let groupIsSolved;
+    if (getGroup(el)) {
+      const container = getGroupContainer(parseInt(el.dataset.group));
+      if (container.dataset["isSolved"]) {
+        groupIsSolved = true;
+      }
+    }
+    //stout
+    data.isSolved = el.dataset.isSolved === "true" || groupIsSolved;
+    data.group = getGroup(el);
+    data.imageUri = el.dataset["imageUri"];
+    data.pocketId = parseInt(el.dataset["pocketId"]);
+
+    data.pageX = parseInt(el.style.left);
+    data.pageY = parseInt(el.style.top);
+
+    if (hasGroup({ group: getGroup(el) })) {
+      data.containerX = el.parentNode.offsetLeft;
+      data.containerY = el.parentNode.offsetTop;
+    }
+
+    return data;
   },
 
   isMobile() {
@@ -318,14 +442,6 @@ const Utils = {
   getElementsInGroupByElement(groupedElement) {
     const groupId = this.getGroupIdByElement(groupedElement);
     return Array.from(document.querySelectorAll(`[data-group='${groupId}']`));
-  },
-
-  getGroupContainer(arg) {
-    if (typeof arg === "number" || typeof arg === "string") {
-      return document.getElementById(`group-container-${arg}`);
-    } else {
-      return arg.parentNode;
-    }
   },
 
   getTopLeftCornerBoundingBox() {

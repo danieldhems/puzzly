@@ -1,6 +1,8 @@
 import BaseMovable from "./BaseMovable.js";
 import { checkConnections } from "./checkConnections.js";
 import { EVENT_TYPES } from "./constants.js";
+import Events from "./events.js";
+import { addToGroup, group } from "./Group.js";
 import Utils from "./utils.js";
 
 export class SingleMovable extends BaseMovable {
@@ -22,7 +24,7 @@ export class SingleMovable extends BaseMovable {
   }
 
   addToStage() {
-    this.stageElement.prepend(this.element);
+    this.piecesContainer.prepend(this.element);
   }
 
   addToPocket(pocket) {
@@ -43,6 +45,32 @@ export class SingleMovable extends BaseMovable {
     } else {
       const connection = checkConnections.call(this);
       console.log("connection", connection);
+
+      if (connection) {
+        const { targetEl } = connection;
+        Events.notify(EVENT_TYPES.CONNECTION_MADE, connection);
+
+        let connectionType =
+          typeof connection == "string" ? connection : connection.type;
+        const isSolvedConnection =
+          Utils.isCornerConnection(connectionType) ||
+          connectionType === "float";
+
+        if (isSolvedConnection) {
+          addToGroup(this.element, 1111);
+        } else {
+          const { groupId, groupContainer } = group.call(this, targetEl);
+          console.log("group made?", groupId, groupContainer);
+
+          this.addToStage(groupContainer);
+          Utils.updateConnections(groupId);
+
+          // Emit an event for this
+          // this.save([sourceEl, targetElement]);
+        }
+
+        Utils.updateConnections(this.element);
+      }
     }
 
     this.clean();

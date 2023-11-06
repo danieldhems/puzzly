@@ -14,6 +14,9 @@ export default class BaseMovable {
   // Used by PocketMovable to know which pocket the movable originated from, and which the movable's child nodes will be returned to if out-of-bounds.
   activePocket = null;
 
+  boardWidth = null;
+  boardHeight = null;
+
   diffX = null;
   diffY = null;
 
@@ -34,6 +37,9 @@ export default class BaseMovable {
     this.connectorDistanceFromCorner = puzzly.connectorDistanceFromCorner;
     this.connectorSize = puzzly.connectorSize;
     this.shadowOffset = puzzly.shadowOffset;
+
+    this.boardWidth = puzzly.boardWidth;
+    this.boardHeight = puzzly.boardHeight;
 
     window.addEventListener(
       EVENT_TYPES.CHANGE_SCALE,

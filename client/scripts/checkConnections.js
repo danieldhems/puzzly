@@ -1,3 +1,4 @@
+import { hasGroup } from "./Group.js";
 import Utils from "./utils.js";
 
 export const getOppositeSide = (connection) => {
@@ -37,7 +38,7 @@ export function checkConnections() {
   if (Utils.isCornerPiece(piece)) {
     let container;
 
-    if (Utils.hasGroup(piece)) {
+    if (hasGroup(piece)) {
       container = Utils.getGroupContainer(element);
     }
 
@@ -121,7 +122,7 @@ export function checkConnections() {
       let thisPieceConnectorBoundingBoxRight;
 
       if (shouldCompare(targetPiece)) {
-        if (Utils.hasGroup(piece)) {
+        if (hasGroup(piece)) {
           const container = Utils.getGroupTopContainer(element);
           const containerBoundingBox = container.getBoundingClientRect();
           thisPieceConnectorBoundingBoxRight =
@@ -138,7 +139,7 @@ export function checkConnections() {
         let targetPieceConnectorBoundingBox;
 
         const oppositeConnection = getOppositeSide(key);
-        if (Utils.hasGroup(targetPiece)) {
+        if (hasGroup(targetPiece)) {
           const targetContainer = Utils.getGroupTopContainer(targetElement);
           const targetContainerBoundingBox =
             Utils.getBoundingBox(targetContainer);
