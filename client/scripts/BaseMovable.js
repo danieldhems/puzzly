@@ -6,6 +6,8 @@ export default class BaseMovable {
   lastPosition;
   active = false;
 
+  puzzleImage;
+
   groupIdPattern = /^group-container-/;
 
   // Element containing all pieces in-play
@@ -23,8 +25,12 @@ export default class BaseMovable {
   zoomLevel = 1;
 
   connectorTolerance = null;
+  shadowOffset = null;
 
   constructor(puzzly) {
+    console.log("puzzzly", puzzly);
+    this.puzzleImage = puzzly.puzzleImage;
+
     this.piecesContainer = document.querySelector(
       `#${ELEMENT_IDS.PIECES_CONTAINER}`
     );
@@ -114,6 +120,7 @@ export default class BaseMovable {
   }
 
   addToStage(element = undefined) {
+    console.log("addToStage", element);
     const elementToAdd = element || this.element;
     this.piecesContainer.prepend(elementToAdd);
   }

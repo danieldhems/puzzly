@@ -58,3 +58,5 @@ export const SIDES = {
   BOTTOM: "BOTTOM",
   LEFT: "LEFT",
 };
+
+export const SHADOW_OFFSET_RATIO = 0.01;

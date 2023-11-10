@@ -1,5 +1,5 @@
 import { ELEMENT_IDS, PUZZLE_PIECE_CLASSES } from "./constants.js";
-import { getGroup, hasGroup, getPiecesInGroup } from "./Group.js";
+import GroupOperations from "./GroupOperations.js";
 
 const Utils = {
   hasCollision(source, target) {
@@ -69,11 +69,9 @@ const Utils = {
 
   getConnectionsForPiece(piece) {
     const connections = [];
-    const p = this.getPieceFromElement(piece, [
-      "piece-id",
-      "jigsaw-type",
-      "group",
-    ]);
+    const p = {
+      type: Utils.getPieceType(piece),
+    };
 
     const pieceTop =
       !Utils.isTopEdgePiece(p) &&
@@ -86,10 +84,18 @@ const Utils = {
     const pieceLeft =
       !Utils.isLeftEdgePiece(p) && Utils.getElementByPieceId(p.id - 1);
 
-    const pieceTopGroup = pieceTop ? getGroup(pieceTop) : null;
-    const pieceRightGroup = pieceRight ? getGroup(pieceRight) : null;
-    const pieceBottomGroup = pieceBottom ? getGroup(pieceBottom) : null;
-    const pieceLeftGroup = pieceLeft ? getGroup(pieceLeft) : null;
+    const pieceTopGroup = pieceTop
+      ? GroupOperations.GroupOperations.getGroup(pieceTop)
+      : null;
+    const pieceRightGroup = pieceRight
+      ? GroupOperations.GroupOperations.getGroup(pieceRight)
+      : null;
+    const pieceBottomGroup = pieceBottom
+      ? GroupOperations.GroupOperations.getGroup(pieceBottom)
+      : null;
+    const pieceLeftGroup = pieceLeft
+      ? GroupOperations.GroupOperations.getGroup(pieceLeft)
+      : null;
 
     if (
       pieceTopGroup &&
@@ -122,10 +128,9 @@ const Utils = {
     return connections;
   },
 
-  updateConnections(group) {
-    const pieces = getPiecesInGroup(group);
+  updateConnections(pieces) {
     pieces.forEach((p) => {
-      const connections = getConnectionsForPiece(p);
+      const connections = Utils.getConnectionsForPiece(p);
       p.setAttribute("data-connections", connections.join(", "));
     });
   },
@@ -322,22 +327,24 @@ const Utils = {
     data.isInnerPiece = isInnerPiece == "true" ? true : false;
 
     let groupIsSolved;
-    if (getGroup(el)) {
-      const container = getGroupContainer(parseInt(el.dataset.group));
+    if (GroupOperations.getGroup(el)) {
+      const container = GroupOperations.getGroupContainer(
+        parseInt(el.parentNode.dataset.group)
+      );
       if (container.dataset["isSolved"]) {
         groupIsSolved = true;
       }
     }
     //stout
     data.isSolved = el.dataset.isSolved === "true" || groupIsSolved;
-    data.group = getGroup(el);
+    data.group = GroupOperations.getGroup(el);
     data.imageUri = el.dataset["imageUri"];
     data.pocketId = parseInt(el.dataset["pocketId"]);
 
     data.pageX = parseInt(el.style.left);
     data.pageY = parseInt(el.style.top);
 
-    if (hasGroup({ group: getGroup(el) })) {
+    if (GroupOperations.hasGroup({ group: GroupOperations.getGroup(el) })) {
       data.containerX = el.parentNode.offsetLeft;
       data.containerY = el.parentNode.offsetTop;
     }
@@ -440,7 +447,7 @@ const Utils = {
   },
 
   getElementsInGroupByElement(groupedElement) {
-    const groupId = this.getGroupIdByElement(groupedElement);
+    const groupId = this.GroupOperations.getGroupIdByElement(groupedElement);
     return Array.from(document.querySelectorAll(`[data-group='${groupId}']`));
   },
 
@@ -560,9 +567,11 @@ const Utils = {
     return box;
   },
 
-  getConnectorBoundingBoxInGroup(connector, containerBoundingBox) {
+  getConnectorBoundingBoxInGroup(element, connector, containerBoundingBox) {
     // console.log("getting connector bounding box in group", element, connector, containerBoundingBox)
-    const piece = element.dataset;
+    const piece = {
+      type: Utils.getPieceType(element),
+    };
 
     const hasLeftPlug = Utils.has(piece.type, "plug", "left");
     const hasTopPlug = Utils.has(piece.type, "plug", "top");

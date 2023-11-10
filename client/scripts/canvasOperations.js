@@ -1,21 +1,34 @@
+import { EVENT_TYPES, SHADOW_OFFSET_RATIO } from "./constants.js";
+import Utils from "./utils.js";
+
 export default class CanvasOperations {
   shadowOffset;
+  puzzleImage;
+  width;
+  height;
 
-  constructor(puzzly) {
-    shadowOffset = puzzly.shadowOffset;
+  constructor() {
+    window.addEventListener(
+      EVENT_TYPES.PUZZLE_LOADED,
+      this.onPuzzleLoaded.bind(this)
+    );
   }
 
-  setShadowOffset(value) {
-    this.shadowOffset = value;
+  onPuzzleLoaded(event) {
+    const config = event.detail;
+    this.puzzleImage = config.puzzleImage;
+    this.shadowOffset = config.pieceSize * SHADOW_OFFSET_RATIO;
+    this.width = config.boardWidth;
+    this.height = config.boardHeight;
   }
 
-  makeCanvas(id, width, height) {
+  makeCanvas(id) {
     // console.log(this.boardWidth, this.boardHeight);
     const el = document.createElement("canvas");
     el.id = id;
 
-    const widthWithShadowOffset = width + this.shadowOffset;
-    const heightWithShadowOffset = height + this.shadowOffset;
+    const widthWithShadowOffset = this.width + this.shadowOffset;
+    const heightWithShadowOffset = this.height + this.shadowOffset;
 
     // Include the shadow offset in the canvas' width and height, else its drawing coordinates won't match the alignment of the pieces
     el.width = widthWithShadowOffset;
@@ -30,14 +43,11 @@ export default class CanvasOperations {
     return el;
   }
 
-  drawPiecesIntoGroup(groupId, pieces) {
-    const cnv = document.querySelector(`#group-canvas-${groupId}`);
-    const ctx = cnv.getContext("2d");
+  drawPiecesIntoGroup(canvas, pieces) {
+    const ctx = canvas.getContext("2d");
     // ctx.imageSmoothingEnabled = false;
-
     pieces.forEach((p) => {
       const data = p.dataset;
-
       ctx.drawImage(
         this.puzzleImage,
         data.spriteshadowx,

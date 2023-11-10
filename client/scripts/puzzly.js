@@ -8,15 +8,8 @@ import { GroupMovable } from "./GroupMovable.js";
 import { PocketMovable } from "./PocketMovable.js";
 import { DragAndSelectMovable } from "./DragAndSelectMovable.js";
 import { checkConnections } from "./checkConnections.js";
-import {
-  getGroup,
-  hasGroup,
-  getPiecesInGroup,
-  getGroupContainer,
-  getGroupTopContainer,
-  isGroupSolved,
-  getCollisionCandidatesInGroup,
-} from "./Group.js";
+import GroupOperations from "./GroupOperations.js";
+import CanvasOperations from "./canvasOperations.js";
 
 /**
  * Puzzly
@@ -258,6 +251,7 @@ class Puzzly {
     this.GroupMovable = new GroupMovable(this);
     this.PocketMovable = new PocketMovable(this);
     this.DragAndSelectMovable = new DragAndSelectMovable(this);
+    this.CanvasOperations = new CanvasOperations(this);
 
     const storage = this.getApplicablePersistence(
       this.pieces,
@@ -276,8 +270,8 @@ class Puzzly {
 
       if (Object.keys(this.groups).length) {
         for (let g in this.groups) {
-          const elements = getPiecesInGroup(g);
-          this.drawPiecesIntoGroup(g, elements);
+          const elements = GroupOperations.getPiecesInGroup(g);
+          CanvasOperations.drawPiecesIntoGroup(g, elements);
         }
       }
 
@@ -786,7 +780,7 @@ class Puzzly {
     if (Number.isInteger(piece.pocketId)) {
       // fish
       this.Pockets.addToPocket(piece.pocketId, el);
-    } else if (!hasGroup(piece) && !piece.isSolved) {
+    } else if (!GroupOperations.hasGroup(piece) && !piece.isSolved) {
       this.addToPlayBoundary(el);
     } else {
       if (piece.isSolved === undefined) {
@@ -957,7 +951,7 @@ class Puzzly {
         return;
       }
 
-      if (hasGroup(thisPiece)) {
+      if (GroupOperations.hasGroup(thisPiece)) {
         const isGroupSolved = element.parentNode.dataset.isSolved === "true";
         if (isGroupSolved) {
           return;

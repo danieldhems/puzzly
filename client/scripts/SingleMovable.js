@@ -2,12 +2,13 @@ import BaseMovable from "./BaseMovable.js";
 import { checkConnections } from "./checkConnections.js";
 import { EVENT_TYPES } from "./constants.js";
 import Events from "./events.js";
-import { addToGroup, group } from "./Group.js";
+import GroupOperations from "./GroupOperations.js";
 import Utils from "./utils.js";
 
 export class SingleMovable extends BaseMovable {
   constructor(...args) {
     super(...args);
+    this.groupOperations = new GroupOperations(...args);
 
     window.addEventListener(EVENT_TYPES.PIECE_PICKUP, this.onPickup.bind(this));
   }
@@ -21,10 +22,6 @@ export class SingleMovable extends BaseMovable {
 
       super.onPickup(position);
     }
-  }
-
-  addToStage() {
-    this.piecesContainer.prepend(this.element);
   }
 
   addToPocket(pocket) {
@@ -52,24 +49,24 @@ export class SingleMovable extends BaseMovable {
 
         let connectionType =
           typeof connection == "string" ? connection : connection.type;
+
         const isSolvedConnection =
           Utils.isCornerConnection(connectionType) ||
           connectionType === "float";
 
         if (isSolvedConnection) {
-          addToGroup(this.element, 1111);
+          this.groupOperations.addToGroup(this.element, 1111);
         } else {
-          const { groupId, groupContainer } = group.call(this, targetEl);
-          console.log("group made?", groupId, groupContainer);
+          const { groupId, groupContainer } = this.groupOperations.group(
+            this.element,
+            targetEl
+          );
+          console.log(groupContainer);
 
           this.addToStage(groupContainer);
-          Utils.updateConnections(groupId);
-
           // Emit an event for this
           // this.save([sourceEl, targetElement]);
         }
-
-        Utils.updateConnections(this.element);
       }
     }
 
