@@ -67,74 +67,6 @@ const Utils = {
     return el.dataset.isSolved === "true";
   },
 
-  getConnectionsForPiece(piece) {
-    const connections = [];
-    const p = {
-      type: Utils.getPieceType(piece),
-    };
-
-    const pieceTop =
-      !Utils.isTopEdgePiece(p) &&
-      Utils.getElementByPieceId(p.id - this.piecesPerSideHorizontal);
-    const pieceRight =
-      !Utils.isRightEdgePiece(p) && Utils.getElementByPieceId(p.id + 1);
-    const pieceBottom =
-      !Utils.isBottomEdgePiece(p) &&
-      Utils.getElementByPieceId(p.id + this.piecesPerSideHorizontal);
-    const pieceLeft =
-      !Utils.isLeftEdgePiece(p) && Utils.getElementByPieceId(p.id - 1);
-
-    const pieceTopGroup = pieceTop
-      ? GroupOperations.GroupOperations.getGroup(pieceTop)
-      : null;
-    const pieceRightGroup = pieceRight
-      ? GroupOperations.GroupOperations.getGroup(pieceRight)
-      : null;
-    const pieceBottomGroup = pieceBottom
-      ? GroupOperations.GroupOperations.getGroup(pieceBottom)
-      : null;
-    const pieceLeftGroup = pieceLeft
-      ? GroupOperations.GroupOperations.getGroup(pieceLeft)
-      : null;
-
-    if (
-      pieceTopGroup &&
-      pieceTopGroup === p.group &&
-      !connections.includes("top")
-    ) {
-      connections.push("top");
-    }
-    if (
-      pieceRightGroup &&
-      pieceRightGroup === p.group &&
-      !connections.includes("right")
-    ) {
-      connections.push("right");
-    }
-    if (
-      pieceBottomGroup &&
-      pieceBottomGroup === p.group &&
-      !connections.includes("bottom")
-    ) {
-      connections.push("bottom");
-    }
-    if (
-      pieceLeftGroup &&
-      pieceLeftGroup === p.group &&
-      !connections.includes("left")
-    ) {
-      connections.push("left");
-    }
-    return connections;
-  },
-
-  updateConnections(pieces) {
-    pieces.forEach((p) => {
-      const connections = Utils.getConnectionsForPiece(p);
-      p.setAttribute("data-connections", connections.join(", "));
-    });
-  },
-
   isTopSide(piece) {
     return (
       piece && piece.type[0] === 0 && piece.type[1] !== 0 && piece.type[3] !== 0
@@ -245,6 +177,10 @@ const Utils = {
 
   getPieceType(element) {
     return element.dataset.jigsawType.split(",").map((t) => parseInt(t));
+  },
+
+  getPuzzlePiecesInContainer(element) {
+    return element.querySelectorAll(".puzzle-piece");
   },
 
   isAdjacent(pieceAId, pieceBId, numPiecesHorizontal) {

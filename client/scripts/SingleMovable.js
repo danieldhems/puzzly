@@ -66,6 +66,7 @@ export class SingleMovable extends BaseMovable {
           this.addToStage(groupContainer);
           // Emit an event for this
           // this.save([sourceEl, targetElement]);
+          Events.notify(EVENT_TYPES.SAVE, [this.element, targetEl]);
         }
       }
     }

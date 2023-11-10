@@ -328,6 +328,10 @@ class Puzzly {
       this.onConnectionMade.bind(this)
     );
 
+    window.addEventListener(EVENT_TYPES.SAVE, (event) => {
+      this.save.call(this, event.detail);
+    });
+
     Events.notify(EVENT_TYPES.PUZZLE_LOADED, this);
   }
 
@@ -2209,7 +2213,7 @@ class Puzzly {
   }
 
   async save(pieces) {
-    // console.log("Saving", pieces);
+    console.log("Saving", pieces);
 
     if (pieces.length === 0) {
       console.warn("Nothing to save");

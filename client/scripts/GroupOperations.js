@@ -2,15 +2,19 @@ import CanvasOperations from "./canvasOperations.js";
 import Utils from "./utils.js";
 
 export default class GroupOperations {
-  groupWidth = null;
-  groupHeight = null;
+  groupWidth;
+  groupHeight;
   canvasOperations;
+  piecesPerSideHorizontal;
+  piecesPerSideHorizontal;
 
   constructor(config) {
     this.groupWidth = config.boardWidth;
     this.groupHeight = config.boardHeight;
 
     this.canvasOperations = new CanvasOperations(config);
+    this.piecesPerSideHorizontal = config.piecesPerSideHorizontal;
+    this.piecesPerSideHorizontal = config.piecesPerSideHorizontal;
   }
 
   static isGroupSolved(group) {
@@ -43,8 +47,7 @@ export default class GroupOperations {
   }
 
   static getGroup(element) {
-    const group = element.dataset.group;
-    return group ? parseInt(group) : undefined;
+    return parseInt(element.dataset.group);
   }
 
   static getPiecesInGroup(group) {
@@ -182,6 +185,7 @@ export default class GroupOperations {
     const container = document.createElement("div");
     container.id = `group-container-${groupId}`;
     container.classList.add("group-container");
+    container.dataset.group = groupId;
 
     container.style.width = Utils.getPxString(this.groupWidth);
     container.style.height = Utils.getPxString(this.groupHeight);
@@ -208,12 +212,6 @@ export default class GroupOperations {
       targetElement.offsetLeft - parseInt(targetElement.dataset.solvedx);
     const topPos =
       targetElement.offsetTop - parseInt(targetElement.dataset.solvedy);
-
-    container.appendChild(newCanvas);
-    container.append(sourceElement);
-    container.appendChild(targetElement);
-
-    this.setGroupContainerPosition(container, { top: topPos, left: leftPos });
 
     sourceElement.style.left = Utils.getPxString(
       parseInt(sourceElement.dataset.solvedX)
@@ -249,8 +247,76 @@ export default class GroupOperations {
       this.setElementAttribute(container, "data-is-solved", true);
     }
 
-    Utils.updateConnections([sourceElement, targetElement]);
+    this.updateConnections([sourceElement, targetElement]);
+    this.setGroupContainerPosition(container, { top: topPos, left: leftPos });
+
+    container.appendChild(newCanvas);
+    container.append(sourceElement);
+    container.appendChild(targetElement);
 
     return { groupId, groupContainer: container };
+  }
+
+  getConnectionsForPiece(piece) {
+    const connections = [];
+    const p = {
+      id: parseInt(piece.dataset.pieceId),
+      type: Utils.getPieceType(piece),
+      group: GroupOperations.getGroup(piece),
+    };
+
+    const pieceTop =
+      !Utils.isTopEdgePiece(p) &&
+      Utils.getElementByPieceId(p.id - this.piecesPerSideHorizontal);
+    const pieceRight =
+      !Utils.isRightEdgePiece(p) && Utils.getElementByPieceId(p.id + 1);
+    const pieceBottom =
+      !Utils.isBottomEdgePiece(p) &&
+      Utils.getElementByPieceId(p.id + this.piecesPerSideHorizontal);
+    const pieceLeft =
+      !Utils.isLeftEdgePiece(p) && Utils.getElementByPieceId(p.id - 1);
+
+    const pieceTopGroup = pieceTop && GroupOperations.getGroup(pieceTop);
+    const pieceRightGroup = pieceRight && GroupOperations.getGroup(pieceRight);
+    const pieceBottomGroup =
+      pieceBottom && GroupOperations.getGroup(pieceBottom);
+    const pieceLeftGroup = pieceLeft && GroupOperations.getGroup(pieceLeft);
+
+    if (
+      pieceTopGroup &&
+      pieceTopGroup === p.group &&
+      !connections.includes("top")
+    ) {
+      connections.push("top");
+    }
+    if (
+      pieceRightGroup &&
+      pieceRightGroup === p.group &&
+      !connections.includes("right")
+    ) {
+      connections.push("right");
+    }
+    if (
+      pieceBottomGroup &&
+      pieceBottomGroup === p.group &&
+      !connections.includes("bottom")
+    ) {
+      connections.push("bottom");
+    }
+    if (
+      pieceLeftGroup &&
+      pieceLeftGroup === p.group &&
+      !connections.includes("left")
+    ) {
+      connections.push("left");
+    }
+    return connections;
+  }
+
+  updateConnections(pieces) {
+    pieces.forEach((p) => {
+      const connections = this.getConnectionsForPiece(p);
+      p.setAttribute("data-connections", connections.join(", "));
+    });
   }
 }
