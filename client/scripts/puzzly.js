@@ -61,8 +61,6 @@ class Puzzly {
 
     this.currentZIndex = 3;
 
-    this.isMobile = Utils.isMobile();
-
     this.pieceSectors = [];
     this.usedPieceSectors = [];
     this.sectors = {};
@@ -95,9 +93,9 @@ class Puzzly {
       `#${ELEMENT_IDS.PIECES_CONTAINER}`
     );
 
-    this.interactionEventDown = Utils.isMobile() ? "touchstart" : "mousedown";
-    this.interactionEventUp = Utils.isMobile() ? "touchend" : "mouseup";
-    this.interactionEventMove = Utils.isMobile() ? "touchmove" : "mousemove";
+    this.interactionEventDown = "mousedown";
+    this.interactionEventUp = "mouseup";
+    this.interactionEventMove = "mousemove";
 
     this.clickSound = new Audio("./mixkit-plastic-bubble-click-1124.wav");
 
@@ -299,10 +297,10 @@ class Puzzly {
 
     this.innerPieces = document.querySelectorAll(".inner-piece");
 
-    window.addEventListener(
-      this.interactionEventDown,
-      this.onMouseDown.bind(this)
-    );
+    // window.addEventListener(
+    //   this.interactionEventDown,
+    //   this.onMouseDown.bind(this)
+    // );
 
     const newPuzzleBtn = document.getElementById("js-create-new-puzzle");
     newPuzzleBtn.addEventListener(this.interactionEventDown, () => {
@@ -862,15 +860,6 @@ class Puzzly {
   getType(el) {
     const attrValue = this.getDataAttributeValue(el, "jigsaw-type");
     return attrValue.split(",").map((n) => parseInt(n));
-  }
-
-  getConnections(el) {
-    const attrValue = this.getDataAttributeValue(el, "connections");
-    return attrValue
-      ? attrValue.indexOf(",") > -1
-        ? attrValue.split(",")
-        : [attrValue]
-      : [];
   }
 
   applyHighlightToConnectingPieces(connections) {
@@ -2223,7 +2212,7 @@ class Puzzly {
     const pieceArray = Array.isArray(pieces) ? pieces : Array.from(pieces);
 
     pieceArray.forEach((p) => {
-      payload.push(Utils.getPieceFromElement(p, this.DATA_ATTR_KEYS));
+      payload.push(Utils.getPieceFromElement(p));
     });
 
     fetch(`/api/pieces`, {

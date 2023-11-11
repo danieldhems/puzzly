@@ -1,13 +1,15 @@
 import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants.js";
 import Utils from "./utils.js";
+import Events from "./events.js";
 
 export default class BaseMovable {
   element;
   lastPosition;
   active = false;
 
-  puzzleImage;
+  connection;
 
+  puzzleImage;
   groupIdPattern = /^group-container-/;
 
   // Element containing all pieces in-play
@@ -55,6 +57,14 @@ export default class BaseMovable {
 
   onChangeScale(event) {
     this.zoomLevel = event.detail;
+  }
+
+  isPuzzlePiece(target) {
+    const classes = target.classList;
+    return (
+      PUZZLE_PIECE_CLASSES.some((c) => classes.contains(c)) &&
+      !classes.contains("in-pocket")
+    );
   }
 
   isSinglePiece(element) {
@@ -120,7 +130,6 @@ export default class BaseMovable {
   }
 
   addToStage(element = undefined) {
-    console.log("addToStage", element);
     const elementToAdd = element || this.element;
     this.piecesContainer.prepend(elementToAdd);
   }
@@ -129,9 +138,9 @@ export default class BaseMovable {
   addToPocket() {}
 
   // Lifecycle method called when a movable is picked up i.e. the user has begun interacting with it
-  onPickup(position) {
-    this.diffX = position.left - this.element.offsetLeft * this.zoomLevel;
-    this.diffY = position.top - this.element.offsetTop * this.zoomLevel;
+  onPickup(mousePosition) {
+    this.diffX = mousePosition.left - this.element.offsetLeft * this.zoomLevel;
+    this.diffY = mousePosition.top - this.element.offsetTop * this.zoomLevel;
 
     // Store a reference to our event handlers so we can remove them later
     // (They don't get removed if we don't use these)
@@ -148,6 +157,9 @@ export default class BaseMovable {
     this.clean();
   }
 
+  // Override
+  onMouseDown(event) {}
+
   onMouseMove(event) {
     const newPosTop =
       event.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
@@ -159,6 +171,29 @@ export default class BaseMovable {
   }
 
   onMouseUp() {
+    if (this.connection) {
+      const { targetEl } = this.connection;
+      Events.notify(EVENT_TYPES.CONNECTION_MADE, this.connection);
+
+      let connectionType =
+        typeof connection == "string" ? this.connection : this.connection.type;
+
+      const isSolvedConnection =
+        Utils.isCornerConnection(connectionType) || connectionType === "float";
+
+      if (isSolvedConnection) {
+        this.groupOperations.addToGroup(this.element, 1111);
+      } else {
+        const { groupContainer } = this.groupOperations.group(
+          this.element,
+          targetEl
+        );
+
+        this.addToStage(groupContainer);
+        Events.notify(EVENT_TYPES.SAVE, [this.element, targetEl]);
+      }
+    }
+
     this.clean();
   }
 

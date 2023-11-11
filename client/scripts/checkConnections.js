@@ -12,10 +12,9 @@ export const getOppositeSide = (connection) => {
   return map[connection];
 };
 
-export function checkConnections() {
+export function checkConnections(element) {
   let cornerConnectionFound;
 
-  const element = this.element;
   const connections = element.dataset.connections || [];
 
   const piece = {
@@ -39,7 +38,7 @@ export function checkConnections() {
     let container;
 
     if (GroupOperations.hasGroup(piece)) {
-      container = Utils.getGroupContainer(element);
+      container = GroupOperations.getGroupContainer(element);
     }
 
     elBBWithinTolerance.top = container
@@ -123,7 +122,7 @@ export function checkConnections() {
 
       if (shouldCompare(targetPiece)) {
         if (GroupOperations.hasGroup(piece)) {
-          const container = Utils.getGroupTopContainer(element);
+          const container = GroupOperations.getGroupTopContainer(element);
           const containerBoundingBox = container.getBoundingClientRect();
           thisPieceConnectorBoundingBoxRight =
             Utils.getConnectorBoundingBoxInGroup(

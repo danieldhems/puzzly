@@ -51,7 +51,7 @@ export default class GroupOperations {
   }
 
   static getPiecesInGroup(group) {
-    const container = getGroupContainer(group);
+    const container = this.getGroupContainer(group);
     return container.querySelectorAll(".puzzle-piece");
   }
 
@@ -60,6 +60,15 @@ export default class GroupOperations {
     return (
       obj.group !== undefined && obj.group !== null && !Number.isNaN(obj.group)
     );
+  }
+
+  static getConnections(el) {
+    const attrValue = el.dataset.connections;
+    return attrValue
+      ? attrValue.indexOf(",") > -1
+        ? attrValue.split(",")
+        : [attrValue]
+      : [];
   }
 
   static getCollisionCandidatesInGroup(group) {
@@ -71,7 +80,7 @@ export default class GroupOperations {
     }
 
     piecesInGroup.forEach((piece) => {
-      const p = this.getPieceFromElement(piece);
+      const p = Utils.getPieceFromElement(piece);
       const connections = this.getConnections(piece);
       if (Utils.isInnerPiece(p) && connections.length < 4) {
         candidates.push(piece);
@@ -189,7 +198,7 @@ export default class GroupOperations {
 
     container.style.width = Utils.getPxString(this.groupWidth);
     container.style.height = Utils.getPxString(this.groupHeight);
-    container.style.pointerEvents = "none";
+    // container.style.pointerEvents = "none";
     container.style.position = "absolute";
 
     return container;
@@ -214,16 +223,16 @@ export default class GroupOperations {
       targetElement.offsetTop - parseInt(targetElement.dataset.solvedy);
 
     sourceElement.style.left = Utils.getPxString(
-      parseInt(sourceElement.dataset.solvedX)
+      parseInt(sourceElement.dataset.solvedx)
     );
     sourceElement.style.top = Utils.getPxString(
-      parseInt(sourceElement.dataset.solvedY)
+      parseInt(sourceElement.dataset.solvedy)
     );
     targetElement.style.left = Utils.getPxString(
-      parseInt(sourceElement.dataset.solvedX)
+      parseInt(targetElement.dataset.solvedx)
     );
     targetElement.style.top = Utils.getPxString(
-      parseInt(sourceElement.dataset.solvedY)
+      parseInt(targetElement.dataset.solvedy)
     );
 
     sourceElement.setAttribute("data-group", groupId);

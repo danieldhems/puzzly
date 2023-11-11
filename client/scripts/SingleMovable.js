@@ -1,7 +1,5 @@
 import BaseMovable from "./BaseMovable.js";
 import { checkConnections } from "./checkConnections.js";
-import { EVENT_TYPES } from "./constants.js";
-import Events from "./events.js";
 import GroupOperations from "./GroupOperations.js";
 import Utils from "./utils.js";
 
@@ -10,18 +8,7 @@ export class SingleMovable extends BaseMovable {
     super(...args);
     this.groupOperations = new GroupOperations(...args);
 
-    window.addEventListener(EVENT_TYPES.PIECE_PICKUP, this.onPickup.bind(this));
-  }
-
-  onPickup(event) {
-    const { element, position } = event.detail;
-
-    if (this.isSinglePiece(element)) {
-      this.element = element;
-      this.active = true;
-
-      super.onPickup(position);
-    }
+    window.addEventListener("mousedown", this.onMouseDown.bind(this));
   }
 
   addToPocket(pocket) {
@@ -33,6 +20,23 @@ export class SingleMovable extends BaseMovable {
     return !this.isInsidePlayArea() && !this.isOverPockets(event);
   }
 
+  onMouseDown(event) {
+    if (event.which === 1) {
+      const mousePosition = {
+        top: event.clientY,
+        left: event.clientX,
+      };
+
+      const element = Utils.getPuzzlePieceElementFromEvent(event);
+      if (this.isPuzzlePiece(element) && this.isSinglePiece(element)) {
+        this.element = element;
+        this.active = true;
+
+        super.onPickup(mousePosition);
+      }
+    }
+  }
+
   onMouseUp(event) {
     if (this.isOutOfBounds(event)) {
       this.resetPosition();
@@ -40,35 +44,9 @@ export class SingleMovable extends BaseMovable {
       const pocket = this.getPocketByCollision(Utils.getEventBox(event));
       this.addToPocket(pocket);
     } else {
-      const connection = checkConnections.call(this);
-      console.log("connection", connection);
-
-      if (connection) {
-        const { targetEl } = connection;
-        Events.notify(EVENT_TYPES.CONNECTION_MADE, connection);
-
-        let connectionType =
-          typeof connection == "string" ? connection : connection.type;
-
-        const isSolvedConnection =
-          Utils.isCornerConnection(connectionType) ||
-          connectionType === "float";
-
-        if (isSolvedConnection) {
-          this.groupOperations.addToGroup(this.element, 1111);
-        } else {
-          const { groupId, groupContainer } = this.groupOperations.group(
-            this.element,
-            targetEl
-          );
-          console.log(groupContainer);
-
-          this.addToStage(groupContainer);
-          // Emit an event for this
-          // this.save([sourceEl, targetElement]);
-          Events.notify(EVENT_TYPES.SAVE, [this.element, targetEl]);
-        }
-      }
+      this.connection = checkConnections.call(this, this.element);
+      console.log("connection", this.connection);
+      super.onMouseUp();
     }
 
     this.clean();

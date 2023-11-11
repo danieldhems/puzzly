@@ -45,7 +45,7 @@ class Pockets {
 
     this.init(config);
 
-    window.addEventListener("mousedown", this.onMouseDown.bind(this));
+    // window.addEventListener("mousedown", this.onMouseDown.bind(this));
     window.addEventListener("mouseup", this.onMouseUp.bind(this));
     window.addEventListener("resize", this.onResize.bind(this));
     window.addEventListener(
