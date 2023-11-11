@@ -23,9 +23,8 @@ export default class CanvasOperations {
   }
 
   makeCanvas(id) {
-    // console.log(this.boardWidth, this.boardHeight);
     const el = document.createElement("canvas");
-    el.id = id;
+    el.id = `canvas-${id}`;
 
     const widthWithShadowOffset = this.width + this.shadowOffset;
     const heightWithShadowOffset = this.height + this.shadowOffset;
@@ -43,7 +42,11 @@ export default class CanvasOperations {
     return el;
   }
 
-  drawPiecesIntoGroup(canvas, pieces) {
+  getCanvas(id) {
+    return document.querySelector(`#canvas-${id}`);
+  }
+
+  drawPiecesOntoCanvas(canvas, pieces) {
     const ctx = canvas.getContext("2d");
     // ctx.imageSmoothingEnabled = false;
     pieces.forEach((p) => {

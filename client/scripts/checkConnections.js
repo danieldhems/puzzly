@@ -123,9 +123,10 @@ export function checkConnections(element) {
       if (shouldCompare(targetPiece)) {
         if (GroupOperations.hasGroup(piece)) {
           const container = GroupOperations.getGroupTopContainer(element);
-          const containerBoundingBox = container.getBoundingClientRect();
+          const containerBoundingBox = Utils.getStyleBoundingBox(container);
           thisPieceConnectorBoundingBoxRight =
-            Utils.getConnectorBoundingBoxInGroup(
+            Utils.getConnectorBoundingBoxInGroup.call(
+              this,
               element,
               key,
               containerBoundingBox
@@ -142,7 +143,7 @@ export function checkConnections(element) {
           const targetContainer =
             GroupOperations.getGroupTopContainer(targetElement);
           const targetContainerBoundingBox =
-            targetContainer.getBoundingClientRect();
+            Utils.getStyleBoundingBox(targetContainer);
           targetPieceConnectorBoundingBox =
             Utils.getConnectorBoundingBoxInGroup(
               targetElement,
@@ -158,9 +159,9 @@ export function checkConnections(element) {
         }
 
         // console.log(
-        // `checking ${key}`,
-        // thisPieceConnectorBoundingBoxRight,
-        // targetPieceConnectorBoundingBox
+        //   `checking ${key}`,
+        //   thisPieceConnectorBoundingBoxRight,
+        //   targetPieceConnectorBoundingBox
         // );
         if (
           Utils.hasCollision(
@@ -172,8 +173,8 @@ export function checkConnections(element) {
         ) {
           connection = {
             type: key,
-            sourceEl: element,
-            targetEl:
+            sourceElement: element,
+            targetElement:
               cornerConnectionFound !== "float" &&
               !Utils.isCornerConnection(cornerConnectionFound) &&
               targetElement,

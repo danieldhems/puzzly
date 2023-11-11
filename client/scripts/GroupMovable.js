@@ -30,9 +30,15 @@ export class GroupMovable extends BaseMovable {
     const collisionCandidates = GroupOperations.getCollisionCandidatesInGroup(
       GroupOperations.getGroup(this.element)
     );
-    return collisionCandidates.some((candidate) =>
-      checkConnections.call(this, candidate)
-    );
+
+    let connection;
+    let i = 0;
+
+    while (i < collisionCandidates.length && !connection) {
+      connection = checkConnections.call(this, collisionCandidates[i]);
+      if (connection) return connection;
+      i++;
+    }
   }
 
   onMouseUp() {
@@ -40,7 +46,6 @@ export class GroupMovable extends BaseMovable {
       this.resetPosition();
     } else {
       this.connection = this.getConnection();
-      console.log("connection", this.connection);
       super.onMouseUp();
     }
 

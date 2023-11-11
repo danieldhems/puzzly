@@ -55,6 +55,10 @@ export default class GroupOperations {
     return container.querySelectorAll(".puzzle-piece");
   }
 
+  static getPiecesInGroupContainer(container) {
+    return container.querySelectorAll(".puzzle-piece");
+  }
+
   static hasGroup(piece) {
     const obj = piece.dataset || piece;
     return (
@@ -96,22 +100,26 @@ export default class GroupOperations {
   }
 
   group(sourceElement, targetElement) {
+    console.log(sourceElement, targetElement);
     const pieceA = Utils.getPieceFromElement(sourceElement);
     const pieceB = Utils.getPieceFromElement(targetElement);
+
+    console.log("pieceA", pieceA);
+    console.log("pieceB", pieceB);
 
     if (!pieceA.group && !pieceB.group) {
       return this.createGroup(sourceElement, targetElement);
     } else if (pieceA.group > -1 && !pieceB.group) {
-      this.addToGroup(pieceBEl, pieceA.group);
+      return this.addToGroup(targetElement, pieceA.group);
     } else if (!pieceA.group && pieceB.group > -1) {
-      this.addToGroup(this.element, pieceB.group);
-    } else if (pieceAEl && pieceBEl) {
-      this.mergeGroups(this.element, targetElement);
+      return this.addToGroup(sourceElement, pieceB.group);
+    } else if (sourceElement && targetElement) {
+      return this.mergeGroups(sourceElement, targetElement);
     }
   }
 
-  addToGroup(element, group) {
-    console.log("addToGroup", element, group);
+  addToGroup(element, groupId) {
+    console.log("addToGroup", element, groupId);
     // console.log(element)
     console.log(element.dataset);
     // const piece = this.getPieceFromElement(element, ['solvedx', 'solvedy']);
@@ -119,20 +127,21 @@ export default class GroupOperations {
     const solvedX = parseInt(element.dataset.solvedx);
     const solvedY = parseInt(element.dataset.solvedy);
 
-    const targetGroupContainer = getGroupContainer(group);
-    const isTargetGroupSolved = Utils.isGroupSolved(group) || group === 1111;
+    const targetGroupContainer = GroupOperations.getGroupContainer(groupId);
+    const isTargetGroupSolved =
+      GroupOperations.isGroupSolved(groupId) || groupId === 1111;
 
     // Add element(s) to target group container
-    const oldGroup = getGroup(element);
+    const oldGroup = GroupOperations.getGroup(element);
     let followingEls = [];
 
     if (oldGroup) {
-      let container = getGroupContainer(oldGroup);
+      let container = GroupOperations.getGroupContainer(oldGroup);
       followingEls = container.querySelectorAll(".puzzle-piece");
 
       followingEls.forEach((el) => {
         targetGroupContainer.prepend(el);
-        el.setAttribute("data-group", group);
+        el.setAttribute("data-group", groupId);
         if (isTargetGroupSolved) {
           el.setAttribute("data-is-solved", true);
         }
@@ -140,7 +149,7 @@ export default class GroupOperations {
 
       container.remove();
     } else {
-      element.setAttribute("data-group", group);
+      element.setAttribute("data-group", groupId);
       element.classList.add("grouped");
 
       if (!this.isMovingSinglePiece) {
@@ -167,20 +176,26 @@ export default class GroupOperations {
     }
 
     // Re-draw group with new piece
-    const elementsInTargetGroup = this.getPiecesInGroup(group);
+    const elementsInTargetGroup = GroupOperations.getPiecesInGroup(groupId);
     const allPieces = [...elementsInTargetGroup, ...followingEls];
-    this.drawPiecesIntoGroup(group, allPieces);
+    const canvas = this.canvasOperations.getCanvas(groupId);
+    this.canvasOperations.drawPiecesOntoCanvas(canvas, allPieces);
 
     // Update all connections
-    this.updateConnections(group);
+    this.updateConnections(allPieces);
+
+    return { groupId, groupContainer: targetGroupContainer };
   }
 
   mergeGroups(elementA, elementB) {
-    const pieceAGroup = getGroup(elementA);
-    const pieceBGroup = getGroup(elementB);
-    const piecesInGroupA = getPiecesInGroup(pieceAGroup);
+    const pieceAGroup = this.getGroup(elementA);
+    const pieceBGroup = this.getGroup(elementB);
+    const piecesInGroupA = this.getPiecesInGroup(pieceAGroup);
 
-    if (isGroupSolved(pieceAGroup) || isGroupSolved(pieceAGroup)) {
+    if (
+      GroupOperations.isGroupSolved(pieceAGroup) ||
+      GroupOperations.isGroupSolved(pieceAGroup)
+    ) {
       const containerA = this.getGroupContainer(pieceAGroup);
       const containerB = this.getGroupContainer(pieceBGroup);
       this.setElementAttribute(containerA, "is-solved", true);
@@ -213,9 +228,7 @@ export default class GroupOperations {
     const groupId = new Date().getTime();
     const container = this.createGroupContainer(groupId);
 
-    const newCanvas = this.canvasOperations.makeCanvas(
-      `group-canvas-${groupId}`
-    );
+    const newCanvas = this.canvasOperations.makeCanvas(groupId);
 
     const leftPos =
       targetElement.offsetLeft - parseInt(targetElement.dataset.solvedx);
@@ -240,7 +253,7 @@ export default class GroupOperations {
     sourceElement.classList.add("grouped");
     targetElement.classList.add("grouped");
 
-    this.canvasOperations.drawPiecesIntoGroup(newCanvas, [
+    this.canvasOperations.drawPiecesOntoCanvas(newCanvas, [
       sourceElement,
       targetElement,
     ]);

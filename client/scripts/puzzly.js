@@ -269,7 +269,7 @@ class Puzzly {
       if (Object.keys(this.groups).length) {
         for (let g in this.groups) {
           const elements = GroupOperations.getPiecesInGroup(g);
-          CanvasOperations.drawPiecesIntoGroup(g, elements);
+          CanvasOperations.drawPiecesOntoCanvas(g, elements);
         }
       }
 

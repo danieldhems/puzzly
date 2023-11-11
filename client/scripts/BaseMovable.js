@@ -1,6 +1,7 @@
 import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants.js";
 import Utils from "./utils.js";
 import Events from "./events.js";
+import GroupOperations from "./GroupOperations.js";
 
 export default class BaseMovable {
   element;
@@ -49,6 +50,8 @@ export default class BaseMovable {
     this.boardWidth = puzzly.boardWidth;
     this.boardHeight = puzzly.boardHeight;
 
+    this.groupOperations = new GroupOperations(puzzly);
+
     window.addEventListener(
       EVENT_TYPES.CHANGE_SCALE,
       this.onChangeScale.bind(this)
@@ -60,7 +63,8 @@ export default class BaseMovable {
   }
 
   isPuzzlePiece(target) {
-    const classes = target.classList;
+    const classes = target?.classList;
+    if (!classes) return;
     return (
       PUZZLE_PIECE_CLASSES.some((c) => classes.contains(c)) &&
       !classes.contains("in-pocket")
@@ -170,9 +174,10 @@ export default class BaseMovable {
     this.element.style.left = newPosLeft + "px";
   }
 
-  onMouseUp() {
+  onMouseUp(event) {
     if (this.connection) {
-      const { targetEl } = this.connection;
+      console.log("connection", this.connection);
+      const { sourceElement, targetElement } = this.connection;
       Events.notify(EVENT_TYPES.CONNECTION_MADE, this.connection);
 
       let connectionType =
@@ -182,15 +187,19 @@ export default class BaseMovable {
         Utils.isCornerConnection(connectionType) || connectionType === "float";
 
       if (isSolvedConnection) {
-        this.groupOperations.addToGroup(this.element, 1111);
+        this.groupOperations.addToGroup(sourceElement, 1111);
       } else {
         const { groupContainer } = this.groupOperations.group(
-          this.element,
-          targetEl
+          sourceElement,
+          targetElement
         );
 
         this.addToStage(groupContainer);
-        Events.notify(EVENT_TYPES.SAVE, [this.element, targetEl]);
+        console.log("container?", groupContainer);
+        Events.notify(
+          EVENT_TYPES.SAVE,
+          GroupOperations.getPiecesInGroupContainer(groupContainer)
+        );
       }
     }
 

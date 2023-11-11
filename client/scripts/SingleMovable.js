@@ -1,12 +1,10 @@
 import BaseMovable from "./BaseMovable.js";
 import { checkConnections } from "./checkConnections.js";
-import GroupOperations from "./GroupOperations.js";
 import Utils from "./utils.js";
 
 export class SingleMovable extends BaseMovable {
   constructor(...args) {
     super(...args);
-    this.groupOperations = new GroupOperations(...args);
 
     window.addEventListener("mousedown", this.onMouseDown.bind(this));
   }
@@ -45,7 +43,6 @@ export class SingleMovable extends BaseMovable {
       this.addToPocket(pocket);
     } else {
       this.connection = checkConnections.call(this, this.element);
-      console.log("connection", this.connection);
       super.onMouseUp();
     }
 
