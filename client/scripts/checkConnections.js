@@ -145,7 +145,8 @@ export function checkConnections(element) {
           const targetContainerBoundingBox =
             Utils.getStyleBoundingBox(targetContainer);
           targetPieceConnectorBoundingBox =
-            Utils.getConnectorBoundingBoxInGroup(
+            Utils.getConnectorBoundingBoxInGroup.call(
+              this,
               targetElement,
               oppositeConnection,
               targetContainerBoundingBox

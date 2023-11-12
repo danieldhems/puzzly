@@ -1689,6 +1689,7 @@ class Puzzly {
     }
     if (Utils.isBottomSide(piece)) {
       return {
+        top: pieceAboveId,
         left: id - 1,
         right: id + 1,
       };

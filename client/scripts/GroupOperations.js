@@ -110,118 +110,13 @@ export default class GroupOperations {
     if (!pieceA.group && !pieceB.group) {
       return this.createGroup(sourceElement, targetElement);
     } else if (pieceA.group > -1 && !pieceB.group) {
-      return this.addToGroup(targetElement, pieceA.group);
+      const alignGroupToElement = true;
+      return this.addToGroup(targetElement, pieceA.group, alignGroupToElement);
     } else if (!pieceA.group && pieceB.group > -1) {
       return this.addToGroup(sourceElement, pieceB.group);
     } else if (sourceElement && targetElement) {
       return this.mergeGroups(sourceElement, targetElement);
     }
-  }
-
-  addToGroup(element, groupId) {
-    console.log("addToGroup", element, groupId);
-    // console.log(element)
-    console.log(element.dataset);
-    // const piece = this.getPieceFromElement(element, ['solvedx', 'solvedy']);
-
-    const solvedX = parseInt(element.dataset.solvedx);
-    const solvedY = parseInt(element.dataset.solvedy);
-
-    const targetGroupContainer = GroupOperations.getGroupContainer(groupId);
-    const isTargetGroupSolved =
-      GroupOperations.isGroupSolved(groupId) || groupId === 1111;
-
-    // Add element(s) to target group container
-    const oldGroup = GroupOperations.getGroup(element);
-    let followingEls = [];
-
-    if (oldGroup) {
-      let container = GroupOperations.getGroupContainer(oldGroup);
-      followingEls = container.querySelectorAll(".puzzle-piece");
-
-      followingEls.forEach((el) => {
-        targetGroupContainer.prepend(el);
-        el.setAttribute("data-group", groupId);
-        if (isTargetGroupSolved) {
-          el.setAttribute("data-is-solved", true);
-        }
-      });
-
-      container.remove();
-    } else {
-      element.setAttribute("data-group", groupId);
-      element.classList.add("grouped");
-
-      if (!this.isMovingSinglePiece) {
-        targetGroupContainer.style.top = Utils.getPxString(
-          element.offsetTop - solvedY
-        );
-        targetGroupContainer.style.left = Utils.getPxString(
-          element.offsetLeft - solvedX
-        );
-      }
-
-      // Add element to group and set its position
-      targetGroupContainer.prepend(element);
-      element.style.top = Utils.getPxString(solvedY);
-      element.style.left = Utils.getPxString(solvedX);
-
-      // Hide original canvas belonging to piece
-      const oldCnv = element.querySelector("canvas");
-      if (oldCnv) {
-        oldCnv.remove();
-      }
-
-      followingEls.push(element);
-    }
-
-    // Re-draw group with new piece
-    const elementsInTargetGroup = GroupOperations.getPiecesInGroup(groupId);
-    const allPieces = [...elementsInTargetGroup, ...followingEls];
-    const canvas = this.canvasOperations.getCanvas(groupId);
-    this.canvasOperations.drawPiecesOntoCanvas(canvas, allPieces);
-
-    // Update all connections
-    this.updateConnections(allPieces);
-
-    return { groupId, groupContainer: targetGroupContainer };
-  }
-
-  mergeGroups(elementA, elementB) {
-    const pieceAGroup = this.getGroup(elementA);
-    const pieceBGroup = this.getGroup(elementB);
-    const piecesInGroupA = this.getPiecesInGroup(pieceAGroup);
-
-    if (
-      GroupOperations.isGroupSolved(pieceAGroup) ||
-      GroupOperations.isGroupSolved(pieceAGroup)
-    ) {
-      const containerA = this.getGroupContainer(pieceAGroup);
-      const containerB = this.getGroupContainer(pieceBGroup);
-      this.setElementAttribute(containerA, "is-solved", true);
-      this.setElementAttribute(containerB, "is-solved", true);
-    }
-
-    addToGroup(piecesInGroupA[0], pieceBGroup);
-  }
-
-  createGroupContainer(groupId) {
-    const container = document.createElement("div");
-    container.id = `group-container-${groupId}`;
-    container.classList.add("group-container");
-    container.dataset.group = groupId;
-
-    container.style.width = Utils.getPxString(this.groupWidth);
-    container.style.height = Utils.getPxString(this.groupHeight);
-    // container.style.pointerEvents = "none";
-    container.style.position = "absolute";
-
-    return container;
-  }
-
-  setGroupContainerPosition(container, { top, left }) {
-    container.style.top = Utils.getPxString(top);
-    container.style.left = Utils.getPxString(left);
   }
 
   createGroup(sourceElement, targetElement) {
@@ -277,6 +172,114 @@ export default class GroupOperations {
     container.appendChild(targetElement);
 
     return { groupId, groupContainer: container };
+  }
+
+  createGroupContainer(groupId) {
+    const container = document.createElement("div");
+    container.id = `group-container-${groupId}`;
+    container.classList.add("group-container");
+    container.dataset.group = groupId;
+
+    container.style.width = Utils.getPxString(this.groupWidth);
+    container.style.height = Utils.getPxString(this.groupHeight);
+    // container.style.pointerEvents = "none";
+    container.style.position = "absolute";
+
+    return container;
+  }
+
+  // @param alignGroupToElement: Should the group align itself to the element being added to it?
+  // default: false
+  addToGroup(element, groupId, alignGroupToElement = false) {
+    console.log("addToGroup", element, groupId);
+    // console.log(element)
+    console.log(element.dataset);
+    // const piece = this.getPieceFromElement(element, ['solvedx', 'solvedy']);
+
+    const solvedX = parseInt(element.dataset.solvedx);
+    const solvedY = parseInt(element.dataset.solvedy);
+
+    const targetGroupContainer = GroupOperations.getGroupContainer(groupId);
+    const isTargetGroupSolved =
+      GroupOperations.isGroupSolved(groupId) || groupId === 1111;
+
+    // Add element(s) to target group container
+    const oldGroup = GroupOperations.getGroup(element);
+    let followingEls = [];
+
+    if (oldGroup) {
+      let container = GroupOperations.getGroupContainer(oldGroup);
+      followingEls = container.querySelectorAll(".puzzle-piece");
+
+      followingEls.forEach((el) => {
+        targetGroupContainer.prepend(el);
+        el.setAttribute("data-group", groupId);
+        if (isTargetGroupSolved) {
+          el.setAttribute("data-is-solved", true);
+        }
+      });
+
+      container.remove();
+    } else {
+      element.setAttribute("data-group", groupId);
+      element.classList.add("grouped");
+
+      if (alignGroupToElement) {
+        targetGroupContainer.style.top = Utils.getPxString(
+          element.offsetTop - solvedY
+        );
+        targetGroupContainer.style.left = Utils.getPxString(
+          element.offsetLeft - solvedX
+        );
+      }
+
+      // Add element to group and set its position
+      targetGroupContainer.prepend(element);
+      element.style.top = Utils.getPxString(solvedY);
+      element.style.left = Utils.getPxString(solvedX);
+
+      // Hide original canvas belonging to piece
+      const oldCnv = element.querySelector("canvas");
+      if (oldCnv) {
+        oldCnv.remove();
+      }
+
+      followingEls.push(element);
+    }
+
+    // Re-draw group with new piece
+    const elementsInTargetGroup = GroupOperations.getPiecesInGroup(groupId);
+    const allPieces = [...elementsInTargetGroup, ...followingEls];
+    const canvas = this.canvasOperations.getCanvas(groupId);
+    this.canvasOperations.drawPiecesOntoCanvas(canvas, allPieces);
+
+    // Update all connections
+    this.updateConnections(allPieces);
+
+    return { groupId, groupContainer: targetGroupContainer };
+  }
+
+  mergeGroups(elementA, elementB) {
+    const pieceAGroup = GroupOperations.getGroup(elementA);
+    const pieceBGroup = GroupOperations.getGroup(elementB);
+    const piecesInGroupA = GroupOperations.getPiecesInGroup(pieceAGroup);
+
+    if (
+      GroupOperations.isGroupSolved(pieceAGroup) ||
+      GroupOperations.isGroupSolved(pieceAGroup)
+    ) {
+      const containerA = GroupOperations.getGroupContainer(pieceAGroup);
+      const containerB = GroupOperations.getGroupContainer(pieceBGroup);
+      containerA.dataset.isSolved = true;
+      containerB.dataset.isSolved = true;
+    }
+
+    return this.addToGroup(piecesInGroupA[0], pieceBGroup);
+  }
+
+  setGroupContainerPosition(container, { top, left }) {
+    container.style.top = Utils.getPxString(top);
+    container.style.left = Utils.getPxString(left);
   }
 
   getConnectionsForPiece(piece) {
