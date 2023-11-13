@@ -84,7 +84,11 @@ var api = {
         spritePath,
       };
 
+      // FIX: We don't want to add these to the DB record, but we shouldn't be omitting them like this
       delete dbPayload.spriteEncodedString;
+      delete dbPayload.pieces;
+
+      console.log("creating puzzle", dbPayload);
 
       const puzzleDBResponse = await puzzleColl.insertOne(dbPayload);
       const puzzleId = puzzleDBResponse.ops[0]._id;
@@ -118,7 +122,7 @@ var api = {
       const pieces = db.collection(piecesCollection);
 
       const puzzleQuery = { _id: new ObjectID(puzzleId) };
-      const piecesQuery = { puzzleId: new ObjectID(puzzleId) };
+      const piecesQuery = { puzzleId: puzzleId };
 
       console.log("puzzle query", puzzleQuery);
       console.log("pieces query", piecesQuery);

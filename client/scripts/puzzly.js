@@ -10,6 +10,7 @@ import { DragAndSelectMovable } from "./DragAndSelectMovable.js";
 import { checkConnections } from "./checkConnections.js";
 import GroupOperations from "./GroupOperations.js";
 import CanvasOperations from "./canvasOperations.js";
+import PersistenceOperations from "./persistence.js";
 
 /**
  * Puzzly
@@ -43,10 +44,6 @@ class Puzzly {
     this.connectorSize = config.connectorSize;
 
     this.animationDuration = 200;
-
-    this.localStorageStringReplaceKey = "{}";
-    this.LOCAL_STORAGE_PUZZLY_PROGRESS_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_progress`;
-    this.LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_lastSave`;
 
     this.puzzleId = puzzleId;
     this.movingPiece = null;
@@ -181,27 +178,6 @@ class Puzzly {
       this.gatherPieces.bind(this)
     );
 
-    this.DATA_ATTR_KEYS = [
-      "piece-id",
-      "piece-id-in-persistence",
-      "puzzle-id",
-      "imgx",
-      "imgy",
-      "imgw",
-      "imgh",
-      "num-pieces-from-top-edge",
-      "num-pieces-from-left-edge",
-      "jigsaw-type",
-      "connections",
-      "connects-to",
-      "is-inner-piece",
-      "is-solved",
-      "group",
-      "solvedx",
-      "solvedy",
-      "pocket-id",
-    ];
-
     const assets = [this.previewImage, this.puzzleImage];
 
     this.loadAssets(assets).then(() => {
@@ -250,8 +226,9 @@ class Puzzly {
     this.PocketMovable = new PocketMovable(this);
     this.DragAndSelectMovable = new DragAndSelectMovable(this);
     this.CanvasOperations = new CanvasOperations(this);
+    this.PersistenceOperations = new PersistenceOperations(this);
 
-    const storage = this.getApplicablePersistence(
+    const storage = this.PersistenceOperations.getPersistence(
       this.pieces,
       this.lastSaveDate
     );
@@ -269,7 +246,12 @@ class Puzzly {
       if (Object.keys(this.groups).length) {
         for (let g in this.groups) {
           const elements = GroupOperations.getPiecesInGroup(g);
-          CanvasOperations.drawPiecesOntoCanvas(g, elements);
+          const canvas = this.CanvasOperations.getCanvas(g);
+          this.CanvasOperations.drawPiecesOntoCanvas.call(
+            this,
+            canvas,
+            elements
+          );
         }
       }
 
@@ -281,10 +263,8 @@ class Puzzly {
       this.renderPieces(this.pieces);
       this.arrangePieces();
       this.assignPieceConnections();
+      Events.notify(EVENT_TYPES.SAVE, this.allPieces());
     }
-
-    // this.wrapPiecesAroundBoard();
-    // this.arrangePieces()
 
     this.timeStarted = new Date().getTime();
 
@@ -326,10 +306,6 @@ class Puzzly {
       this.onConnectionMade.bind(this)
     );
 
-    window.addEventListener(EVENT_TYPES.SAVE, (event) => {
-      this.save.call(this, event.detail);
-    });
-
     Events.notify(EVENT_TYPES.PUZZLE_LOADED, this);
   }
 
@@ -369,60 +345,6 @@ class Puzzly {
       this.ControlsElPanel.classList.remove("is-hidden");
       this.ControlsElPanelIsOpen = true;
     }
-  }
-
-  getUniqueLocalStorageKeyForPuzzle(key) {
-    return this[key].replace(this.localStorageStringReplaceKey, this.puzzleId);
-  }
-
-  getApplicablePersistence(progressFromServer, lastSaveTimeFromServer) {
-    const progressKey = this.getUniqueLocalStorageKeyForPuzzle(
-      "LOCAL_STORAGE_PUZZLY_PROGRESS_KEY"
-    );
-    const lastSaveKey = this.getUniqueLocalStorageKeyForPuzzle(
-      "LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY"
-    );
-    const hasLocalStorageSupport = window.localStorage;
-    const progressInLocalStorage =
-      hasLocalStorageSupport && localStorage.getItem(progressKey);
-    const lastSaveInLocalStorage =
-      hasLocalStorageSupport && localStorage.getItem(lastSaveKey);
-
-    let availableStorage;
-    const storage = {};
-
-    if (!lastSaveTimeFromServer && !lastSaveInLocalStorage) {
-      console.info("Puzzly: No saved data found");
-      return;
-    }
-
-    if (progressFromServer && progressFromServer.length) {
-      if (
-        lastSaveInLocalStorage &&
-        lastSaveInLocalStorage > lastSaveTimeFromServer
-      ) {
-        availableStorage = "local";
-      } else {
-        availableStorage = "server";
-      }
-    } else if (lastSaveInLocalStorage && progressInLocalStorage.length) {
-      availableStorage = "local";
-    }
-
-    switch (availableStorage) {
-      case "server":
-        console.info(`[Puzzly] Restoring from server-side storage`);
-        storage.pieces = progressFromServer;
-        storage.latestSave = parseInt(lastSaveTimeFromServer);
-        break;
-      case "local":
-        console.info(`[Puzzly] Restoring from local storage`);
-        storage.pieces = JSON.parse(progressInLocalStorage);
-        storage.latestSave = parseInt(lastSaveInLocalStorage);
-        break;
-    }
-
-    return storage;
   }
 
   renderPieces(pieces) {
@@ -685,6 +607,7 @@ class Puzzly {
   }
 
   renderJigsawPiece(piece) {
+    console.log("rendering piece", piece);
     let el, fgEl, bgEl;
 
     const solvedCnvContainer = document.getElementById("group-container-1111");
@@ -723,6 +646,11 @@ class Puzzly {
     el.setAttribute("data-imgW", piece.imgW);
     el.setAttribute("data-imgH", piece.imgH);
     el.setAttribute("data-is-inner-piece", piece.isInnerPiece);
+    el.setAttribute(
+      "data-connects-to",
+      JSON.stringify(this.getConnectingPieceIds(el))
+    );
+    el.setAttribute("data-connections", GroupOperations.getConnections(el));
     el.setAttribute(
       "data-num-pieces-from-top-edge",
       piece.numPiecesFromTopEdge
@@ -780,7 +708,6 @@ class Puzzly {
     }
 
     if (Number.isInteger(piece.pocketId)) {
-      // fish
       this.Pockets.addToPocket(piece.pocketId, el);
     } else if (!GroupOperations.hasGroup(piece) && !piece.isSolved) {
       this.addToPlayBoundary(el);
@@ -793,6 +720,7 @@ class Puzzly {
         if (!groupContainer) {
           groupContainer = document.createElement("div");
           groupContainer.classList.add("group-container");
+          groupContainer.dataset.group = piece.group;
           groupContainer.style.pointerEvents = "none";
           groupContainer.setAttribute("id", `group-container-${piece.group}`);
           groupContainer.style.width = Utils.getPxString(this.boardSize);
@@ -1040,12 +968,14 @@ class Puzzly {
         }
 
         if (this.getGroup(element)) {
-          //salmon
-          this.save(Utils.getPiecesInGroup(Utils.getGroup(element)));
+          Events.notify(
+            EVENT_TYPES.SAVE,
+            Utils.getPiecesInGroup(Utils.getGroup(element))
+          );
         }
       }
 
-      this.save([element]);
+      Events.notify(EVENT_TYPES.SAVE, [element]);
     }
   }
 
@@ -1632,7 +1562,7 @@ class Puzzly {
   }
 
   getConnectingPieceIds(el) {
-    const id = parseInt(this.getDataAttributeValue(el, "piece-id"));
+    const id = parseInt(el.dataset.pieceId);
     const pieceAboveId = id - this.piecesPerSideHorizontal;
     const pieceBelowId = id + this.piecesPerSideHorizontal;
 
@@ -2013,7 +1943,7 @@ class Puzzly {
       i++;
     }
 
-    this.save(piecesInPlay);
+    Events.notify(EVENT_TYPES.SAVE, piecesInPlay);
   }
 
   randomisePiecePositions() {
@@ -2062,12 +1992,9 @@ class Puzzly {
   }
 
   assignPieceConnections() {
+    console.log("assigning piece connections");
     this.allPieces().forEach((p) => {
-      this.setElementAttribute(
-        p,
-        "data-connects-to",
-        JSON.stringify(this.getConnectingPieceIds(p))
-      );
+      p.dataset.connectsTo = JSON.stringify(this.getConnectingPieceIds(p));
     });
   }
 

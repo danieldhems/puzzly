@@ -27,6 +27,8 @@ export class GroupMovable extends BaseMovable {
   }
 
   getConnection() {
+    console.log(this.element);
+    console.log("group", GroupOperations.getGroup(this.element));
     const collisionCandidates = GroupOperations.getCollisionCandidatesInGroup(
       GroupOperations.getGroup(this.element)
     );
@@ -46,6 +48,8 @@ export class GroupMovable extends BaseMovable {
       this.resetPosition();
     } else {
       this.connection = this.getConnection();
+      this.elementsToSaveIfNoConnection =
+        GroupOperations.getPiecesInGroupContainer(this.element);
       super.onMouseUp();
     }
 

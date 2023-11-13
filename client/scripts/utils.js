@@ -223,11 +223,11 @@ const Utils = {
     if (!el) return;
 
     const data = {};
+    data._id = el.dataset.pieceIdInPersistence;
     data.id = parseInt(el.dataset.pieceId);
-    data._id = parseInt(el.dataset.pieceIdInPersistence);
-    data.puzzleId = parseInt(el.dataset.puzzleId);
-    data.imgX = parseFloat(el.dataset.imgx);
-    data.imgY = parseFloat(el.dataset.imgy);
+    data.puzzleId = el.dataset.puzzleId;
+    data.imgX = parseInt(el.dataset.imgx);
+    data.imgY = parseInt(el.dataset.imgy);
     data.solvedX = parseInt(el.dataset.solvedx);
     data.solvedY = parseInt(el.dataset.solvedy);
     data.imgW = parseInt(el.dataset.imgw);
@@ -310,7 +310,7 @@ const Utils = {
   },
 
   getElementByPieceId(id) {
-    return document.querySelectorAll(`[data-piece-id='${id}']`)[0];
+    return document.querySelector(`[data-piece-id='${id}']`);
   },
 
   isBoxOutOfBounds(box) {

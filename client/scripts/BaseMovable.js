@@ -9,6 +9,7 @@ export default class BaseMovable {
   active = false;
 
   connection;
+  elementsToSaveIfNoConnection;
 
   puzzleImage;
   groupIdPattern = /^group-container-/;
@@ -201,6 +202,8 @@ export default class BaseMovable {
           GroupOperations.getPiecesInGroupContainer(groupContainer)
         );
       }
+    } else {
+      Events.notify(EVENT_TYPES.SAVE, this.elementsToSaveIfNoConnection);
     }
 
     this.clean();

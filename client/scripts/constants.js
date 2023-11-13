@@ -18,6 +18,11 @@ export const PuzzleSizes = [
   { numPieces: 676, piecesPerSide: 26 },
 ];
 
+export const LOCAL_STORAGE_PUZZLY_PROGRESS_KEY =
+  "LOCAL_STORAGE_PUZZLY_PROGRESS_KEY";
+export const LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY =
+  "LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY";
+
 export const PUZZLE_PIECE_CLASSES = ["puzzle-piece", "puzzle-piece-fg"];
 
 export const PIECE_SIZE = 100;

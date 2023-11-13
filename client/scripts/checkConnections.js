@@ -105,11 +105,13 @@ export function checkConnections(element) {
     }
   }
 
+  console.log(element.dataset);
   const connectsTo = JSON.parse(element.dataset.connectsTo);
   let connection;
 
   const hasConnectionWithAnotherPiece = Object.keys(connectsTo).some(
     (key, i) => {
+      console.log("key", key);
       const targetElement = Utils.getElementByPieceId(connectsTo[key]);
       const { pieceId, group, isSolved } = targetElement.dataset;
       const targetPiece = {

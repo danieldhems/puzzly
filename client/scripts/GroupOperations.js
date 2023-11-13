@@ -47,7 +47,7 @@ export default class GroupOperations {
   }
 
   static getGroup(element) {
-    return parseInt(element.dataset.group);
+    return element.dataset.group ? parseInt(element.dataset.group) : null;
   }
 
   static getPiecesInGroup(group) {
@@ -100,12 +100,9 @@ export default class GroupOperations {
   }
 
   group(sourceElement, targetElement) {
-    console.log(sourceElement, targetElement);
+    // console.log(sourceElement, targetElement);
     const pieceA = Utils.getPieceFromElement(sourceElement);
     const pieceB = Utils.getPieceFromElement(targetElement);
-
-    console.log("pieceA", pieceA);
-    console.log("pieceB", pieceB);
 
     if (!pieceA.group && !pieceB.group) {
       return this.createGroup(sourceElement, targetElement);

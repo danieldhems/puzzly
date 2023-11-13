@@ -43,7 +43,7 @@ export default class CanvasOperations {
   }
 
   getCanvas(id) {
-    return document.querySelector(`#canvas-${id}`);
+    return document.querySelector(`#group-canvas-${id}`);
   }
 
   drawPiecesOntoCanvas(canvas, pieces) {

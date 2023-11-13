@@ -74,6 +74,7 @@ var api = {
   },
   update: function (req, res) {
     var data = req.body;
+    console.log("update request", req.body);
 
     client.connect().then(async (client, err) => {
       const response = {};
@@ -90,30 +91,32 @@ var api = {
           puzzleId = data[0].puzzleId;
 
           data.forEach(async (d) => {
-            // console.log("atempting to save piece", d)
+            console.log("saving piece", d);
             query = { _id: new ObjectID(d._id) };
             delete d._id;
-            delete d.puzzleId;
-            update = { $set: d };
-            console.log(query);
-            console.log(update);
-            const result = await pieces.updateOne(query, update);
-            // console.log("piece update result", result)
+            update = { $set: { ...d } };
+            try {
+              await pieces.updateOne(query, update);
+            } catch (error) {
+              console.error("Failed to update piece:", error);
+            }
           });
 
           const puzzleUpdateQuery = {
             _id: new ObjectID(puzzleId),
           };
 
+          const lastSaveDate = Date.now();
+
           const puzzleUpdateOp = {
             $set: {
-              lastSaveDate: Date.now(),
+              lastSaveDate,
             },
           };
 
           await puzzles.updateOne(puzzleUpdateQuery, puzzleUpdateOp);
 
-          response.lastSaveDate = Date.now();
+          response.lastSaveDate = lastSaveDate;
           res.status(200).send(response);
         } catch (e) {
           res.status(500).send(e);

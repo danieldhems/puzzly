@@ -43,6 +43,7 @@ export class SingleMovable extends BaseMovable {
       this.addToPocket(pocket);
     } else {
       this.connection = checkConnections.call(this, this.element);
+      this.elementsToSaveIfNoConnection = [this.element];
       super.onMouseUp();
     }
 
