@@ -18,6 +18,7 @@ export default class GroupOperations {
   }
 
   static isGroupSolved(group) {
+    if (!group) return;
     return Array.from(this.getPiecesInGroup(group)).some(
       (p) => p.dataset.isSolved === "true"
     );
@@ -25,6 +26,10 @@ export default class GroupOperations {
 
   static getGroupContainer(arg) {
     if (typeof arg === "number" || typeof arg === "string") {
+      // console.log(
+      //   "getGroupContainer(), getting container with selector",
+      //   `group-container-${arg}`
+      // );
       return document.getElementById(`group-container-${arg}`);
     } else {
       return arg.parentNode;
@@ -51,12 +56,17 @@ export default class GroupOperations {
   }
 
   static getPiecesInGroup(group) {
+    // console.log("getPiecesInGroup()", group);
     const container = this.getGroupContainer(group);
     return container.querySelectorAll(".puzzle-piece");
   }
 
   static getPiecesInGroupContainer(container) {
     return container.querySelectorAll(".puzzle-piece");
+  }
+
+  static getSolvedPieces() {
+    return document.querySelectorAll("#group-container-1111 .puzzle-piece");
   }
 
   static hasGroup(piece) {
@@ -152,8 +162,8 @@ export default class GroupOperations {
 
     // TODO: Refactor Util methods to expect type array only, not piece object containing it.
     // Not sure if this logic is entirely applicable...
-    const elementAIsSolved = Utils.getIsSolved(sourceElement);
-    const elementBIsSolved = Utils.getIsSolved(targetElement);
+    const elementAIsSolved = Utils.isSolved(sourceElement);
+    const elementBIsSolved = Utils.isSolved(targetElement);
 
     if (elementAIsSolved || elementBIsSolved) {
       this.setElementAttribute(sourceElement, "data-is-solved", true);
@@ -188,9 +198,9 @@ export default class GroupOperations {
   // @param alignGroupToElement: Should the group align itself to the element being added to it?
   // default: false
   addToGroup(element, groupId, alignGroupToElement = false) {
-    console.log("addToGroup", element, groupId);
+    // console.log("addToGroup", element, groupId);
     // console.log(element)
-    console.log(element.dataset);
+    // console.log(element.dataset);
     // const piece = this.getPieceFromElement(element, ['solvedx', 'solvedy']);
 
     const solvedX = parseInt(element.dataset.solvedx);

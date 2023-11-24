@@ -17,7 +17,11 @@ export class GroupMovable extends BaseMovable {
       };
 
       const element = Utils.getPuzzlePieceElementFromEvent(event);
-      if (this.isPuzzlePiece(element) && this.isGroupedPiece(element)) {
+      if (
+        this.isPuzzlePiece(element) &&
+        this.isGroupedPiece(element) &&
+        !Utils.isSolved(element)
+      ) {
         this.element = element.parentNode;
         this.active = true;
 

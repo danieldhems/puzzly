@@ -243,6 +243,7 @@ class Puzzly {
         }
       });
 
+      console.log("groups for persistence", this.groups);
       if (Object.keys(this.groups).length) {
         for (let g in this.groups) {
           const elements = GroupOperations.getPiecesInGroup(g);
@@ -760,6 +761,7 @@ class Puzzly {
         }
       } else {
         solvedCnvContainer.append(el);
+        el.dataset.isSolved = true;
       }
     }
   }
@@ -2085,7 +2087,7 @@ class Puzzly {
 
   isPuzzleComplete() {
     return (
-      Array.from(this.allPieces()).filter((p) => this.getIsSolved(p)).length ===
+      Array.from(this.allPieces()).filter((p) => this.isSolved(p)).length ===
       this.selectedNumPieces
     );
   }

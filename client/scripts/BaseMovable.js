@@ -142,6 +142,9 @@ export default class BaseMovable {
   // Override
   addToPocket() {}
 
+  // Override
+  markAsSolved() {}
+
   // Lifecycle method called when a movable is picked up i.e. the user has begun interacting with it
   onPickup(mousePosition) {
     this.diffX = mousePosition.left - this.element.offsetLeft * this.zoomLevel;
@@ -181,14 +184,10 @@ export default class BaseMovable {
       const { sourceElement, targetElement } = this.connection;
       Events.notify(EVENT_TYPES.CONNECTION_MADE, this.connection);
 
-      let connectionType =
-        typeof connection == "string" ? this.connection : this.connection.type;
-
-      const isSolvedConnection =
-        Utils.isCornerConnection(connectionType) || connectionType === "float";
-
-      if (isSolvedConnection) {
-        this.groupOperations.addToGroup(sourceElement, 1111);
+      if (this.connection.isSolving) {
+        this.groupOperations.addToGroup(this.element, 1111);
+        this.markAsSolved();
+        Events.notify(EVENT_TYPES.SAVE, GroupOperations.getSolvedPieces());
       } else {
         const { groupContainer } = this.groupOperations.group(
           sourceElement,

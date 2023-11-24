@@ -24,7 +24,7 @@ export default class CanvasOperations {
 
   makeCanvas(id) {
     const el = document.createElement("canvas");
-    el.id = `canvas-${id}`;
+    el.id = `group-canvas-${id}`;
 
     const widthWithShadowOffset = this.width + this.shadowOffset;
     const heightWithShadowOffset = this.height + this.shadowOffset;

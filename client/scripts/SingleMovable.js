@@ -18,6 +18,10 @@ export class SingleMovable extends BaseMovable {
     return !this.isInsidePlayArea() && !this.isOverPockets(event);
   }
 
+  markAsSolved() {
+    this.element.dataset.isSolved = true;
+  }
+
   onMouseDown(event) {
     if (event.which === 1) {
       const mousePosition = {
