@@ -18,7 +18,7 @@ export function checkConnections(element) {
 
   const piece = {
     id: parseInt(element.dataset.pieceId),
-    group: parseInt(element.dataset.group),
+    group: parseInt(element.dataset.groupId),
     isSolved: element.dataset.isSolved,
     type: Utils.getPieceType(element),
     connectsTo: element.dataset.connectsTo,
@@ -77,16 +77,16 @@ export function checkConnections(element) {
     }
   }
 
-  // console.log(element.dataset);
+  console.log(element.dataset);
   const connectsTo = JSON.parse(element.dataset.connectsTo);
 
   Object.keys(connectsTo).some((key, i) => {
     // console.log("key", key);
     const targetElement = Utils.getElementByPieceId(connectsTo[key]);
-    const { pieceId, group, isSolved } = targetElement.dataset;
+    const { pieceId, groupId, isSolved } = targetElement.dataset;
     const targetPiece = {
       pieceId: parseInt(pieceId),
-      group: parseInt(group) || undefined,
+      group: parseInt(groupId) || undefined,
       isSolved: isSolved === "true",
     };
 

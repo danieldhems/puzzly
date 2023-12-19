@@ -3,11 +3,23 @@ import {
   LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY,
   EVENT_TYPES,
 } from "./constants.js";
+import Events from "./events.js";
+import GroupMovable from "./GroupMovable.js";
+import { SingleMovable } from "./SingleMovable.js";
 import Utils from "./utils.js";
+
+const PIECES_ENDPOINT = "/api/pieces";
+const GROUPS_ENDPOINT = "/api/groups";
 
 export default class PersistenceOperations {
   puzzleId;
   localStorageStringReplaceKey = "{}";
+
+  saveQueue = [];
+  pendingRequests = [];
+
+  pollingInterval = 2000;
+  currentTime = Date.now();
 
   constructor(config) {
     console.log(config);
@@ -21,7 +33,7 @@ export default class PersistenceOperations {
     });
   }
 
-  getPersistence(progressFromServer, lastSaveTimeFromServer) {
+  getPersistence(piecesFromServer, groupsFromServer, lastSaveTimeFromServer) {
     const progressKey = this.getUniqueLocalStorageKeyForPuzzle(
       "LOCAL_STORAGE_PUZZLY_PROGRESS_KEY"
     );
@@ -42,7 +54,7 @@ export default class PersistenceOperations {
       return;
     }
 
-    if (progressFromServer && progressFromServer.length) {
+    if (piecesFromServer && piecesFromServer.length) {
       if (
         lastSaveInLocalStorage &&
         lastSaveInLocalStorage > lastSaveTimeFromServer
@@ -58,7 +70,8 @@ export default class PersistenceOperations {
     switch (availableStorage) {
       case "server":
         console.info(`[Puzzly] Restoring from server-side storage`);
-        storage.pieces = progressFromServer;
+        storage.pieces = piecesFromServer;
+        storage.groups - groupsFromServer;
         storage.latestSave = parseInt(lastSaveTimeFromServer);
         break;
       case "local":
@@ -75,7 +88,7 @@ export default class PersistenceOperations {
     return this[key].replace(this.localStorageStringReplaceKey, this.puzzleId);
   }
 
-  getApplicablePersistence(progressFromServer, lastSaveTimeFromServer) {
+  getApplicablePersistence(piecesFromServer, lastSaveTimeFromServer) {
     const progressKey = this.getUniqueLocalStorageKeyForPuzzle(
       LOCAL_STORAGE_PUZZLY_PROGRESS_KEY
     );
@@ -96,7 +109,7 @@ export default class PersistenceOperations {
       return;
     }
 
-    if (progressFromServer && progressFromServer.length) {
+    if (piecesFromServer && piecesFromServer.length) {
       if (
         lastSaveInLocalStorage &&
         lastSaveInLocalStorage > lastSaveTimeFromServer
@@ -112,7 +125,7 @@ export default class PersistenceOperations {
     switch (availableStorage) {
       case "server":
         console.info(`[Puzzly] Restoring from server-side storage`);
-        storage.pieces = progressFromServer;
+        storage.pieces = piecesFromServer;
         storage.latestSave = parseInt(lastSaveTimeFromServer);
         break;
       case "local":
@@ -177,20 +190,63 @@ export default class PersistenceOperations {
     return this[key].replace(this.localStorageStringReplaceKey, this.puzzleId);
   }
 
+  addToSaveQueue(piece) {
+    this.saveQueue.push(piece);
+    console.info("Added to save queue", piece, this.saveQueue);
+  }
+
+  async processSaveQueue() {
+    try {
+      if (this.saveQueue.length === 0) return;
+
+      // Take a cutting of the save queue by emptying it.
+      // Anything that gets added tot he queue after this
+      // will go in the next batch.
+      const queuedSaves = this.saveQueue.splice(0, this.saveQueue.length);
+
+      console.info("Processing queued saves", queuedSaves);
+      Events.notify(EVENT_TYPES.SAVE_IN_PROGRESS, true);
+
+      // Execute a new request for this save and add it to the pendingRequests array
+      const request = await this.save(queuedSaves);
+      this.pendingRequests.push(request);
+
+      Events.notify(EVENT_TYPES.SAVE_IN_PROGRESS, false);
+    } catch (error) {
+      console.warn(error);
+    }
+  }
+
   async save(data) {
     console.log("saving", data);
-    const payload = [];
     const useLocalStorage = false;
+
+    let payload;
+    let endpoint;
+    let requestMethod;
+
+    if (data instanceof SingleMovable) {
+      payload = data.pieceData;
+      requestMethod = data.pieceData._id ? "PUT" : "POST";
+      endpoint = PIECES_ENDPOINT;
+    } else if (data instanceof GroupMovable) {
+      payload = {
+        id: data.groupIdInDatabase ?? undefined,
+        pieceData: data.piecesInGroup,
+        puzzleId: data.puzzleId,
+      };
+
+      requestMethod = data.groupIdInDatabase ? "PUT" : "POST";
+      endpoint = GROUPS_ENDPOINT;
+    } else {
+      return;
+    }
 
     if (useLocalStorage) {
     } else {
-      data.forEach((p) => {
-        payload.push(Utils.getPieceFromElement(p));
-      });
-      console.log(payload);
       // const isFirstSave = !payload[0]?._id;
-      fetch(`/api/pieces`, {
-        method: "PUT",
+      fetch(endpoint, {
+        method: requestMethod,
         headers: {
           "Content-Type": "Application/json",
         },
@@ -198,8 +254,7 @@ export default class PersistenceOperations {
       })
         .then((response) => response.json())
         .then((response) => {
-          console.log(response);
-          // ...successful
+          Events.notify(EVENT_TYPES.SAVE_SUCCESSFUL, response);
         })
         .catch((error) => {
           console.error(error);

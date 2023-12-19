@@ -81,7 +81,8 @@ class PuzzlyCreator {
   }
 
   setDefaultNumPieces() {
-    const defaultPuzzleSize = PuzzleSizes[5];
+    this.puzzleSizeField.value = 0;
+    const defaultPuzzleSize = PuzzleSizes[0];
     this.puzzleSizeInputLabel.textContent = this.selectedNumPieces =
       defaultPuzzleSize.numPieces;
     this.piecesPerSide = defaultPuzzleSize.piecesPerSide;

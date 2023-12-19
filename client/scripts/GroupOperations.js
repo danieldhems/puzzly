@@ -30,7 +30,9 @@ export default class GroupOperations {
       //   "getGroupContainer(), getting container with selector",
       //   `group-container-${arg}`
       // );
-      return document.getElementById(`group-container-${arg}`);
+      return Array.from(document.querySelectorAll(`.group-container`)).find(
+        (container) => parseInt(container.dataset.groupId) === arg
+      );
     } else {
       return arg.parentNode;
     }
@@ -52,7 +54,7 @@ export default class GroupOperations {
   }
 
   static getGroup(element) {
-    return element.dataset.group ? parseInt(element.dataset.group) : null;
+    return element.dataset.groupId ? parseInt(element.dataset.groupId) : null;
   }
 
   static getPiecesInGroup(group) {
@@ -109,13 +111,16 @@ export default class GroupOperations {
     return candidates;
   }
 
-  group(sourceElement, targetElement) {
-    // console.log(sourceElement, targetElement);
+  static group(sourceElement, targetElement) {
     const pieceA = Utils.getPieceFromElement(sourceElement);
     const pieceB = Utils.getPieceFromElement(targetElement);
 
     if (!pieceA.group && !pieceB.group) {
-      return this.createGroup(sourceElement, targetElement);
+      return GroupOperations.createGroup.call(
+        this,
+        sourceElement,
+        targetElement
+      );
     } else if (pieceA.group > -1 && !pieceB.group) {
       const alignGroupToElement = true;
       return this.addToGroup(targetElement, pieceA.group, alignGroupToElement);
@@ -126,11 +131,22 @@ export default class GroupOperations {
     }
   }
 
-  createGroup(sourceElement, targetElement) {
-    const groupId = new Date().getTime();
-    const container = this.createGroupContainer(groupId);
+  static generateGroupId() {
+    return new Date().getTime();
+  }
 
-    const newCanvas = this.canvasOperations.makeCanvas(groupId);
+  static setIdForGroupElements(groupContainerElement, id) {
+    // set group ID on group container element, elements in group and on canvas element
+    groupContainerElement.dataset.groupId = id;
+    Array.from(groupContainerElement.querySelectorAll(".puzzle-piece")).forEach(
+      (element) => (element.dataset.groupId = id)
+    );
+    groupContainerElement.querySelector("canvas").dataset.groupId = id;
+  }
+
+  static createGroup(sourceElement, targetElement) {
+    const container = GroupOperations.createGroupContainer.call(this);
+    const newCanvas = CanvasOperations.makeCanvas.call(this);
 
     const leftPos =
       targetElement.offsetLeft - parseInt(targetElement.dataset.solvedx);
@@ -150,15 +166,14 @@ export default class GroupOperations {
       parseInt(targetElement.dataset.solvedy)
     );
 
-    sourceElement.setAttribute("data-group", groupId);
-    targetElement.setAttribute("data-group", groupId);
     sourceElement.classList.add("grouped");
     targetElement.classList.add("grouped");
 
-    this.canvasOperations.drawPiecesOntoCanvas(newCanvas, [
-      sourceElement,
-      targetElement,
-    ]);
+    CanvasOperations.drawPiecesOntoCanvas(
+      newCanvas,
+      [sourceElement, targetElement],
+      this.puzzleImage
+    );
 
     // TODO: Refactor Util methods to expect type array only, not piece object containing it.
     // Not sure if this logic is entirely applicable...
@@ -171,26 +186,57 @@ export default class GroupOperations {
       this.setElementAttribute(container, "data-is-solved", true);
     }
 
-    this.updateConnections([sourceElement, targetElement]);
-    this.setGroupContainerPosition(container, { top: topPos, left: leftPos });
+    GroupOperations.updateConnections([sourceElement, targetElement]);
+    GroupOperations.setGroupContainerPosition(container, {
+      top: topPos,
+      left: leftPos,
+    });
 
     container.appendChild(newCanvas);
     container.append(sourceElement);
     container.appendChild(targetElement);
 
-    return { groupId, groupContainer: container };
+    return container;
   }
 
-  createGroupContainer(groupId) {
-    const container = document.createElement("div");
-    container.id = `group-container-${groupId}`;
-    container.classList.add("group-container");
-    container.dataset.group = groupId;
+  static getElementsForGroup(groupId) {
+    const allElements = document.querySelectorAll(".puzzle-piece");
+    return Array.from(allElements).filter(
+      (element) => parseInt(element.dataset.groupId) === groupId
+    );
+  }
 
-    container.style.width = Utils.getPxString(this.groupWidth);
-    container.style.height = Utils.getPxString(this.groupHeight);
-    // container.style.pointerEvents = "none";
+  // Restore the elements for an existing group
+  static restoreGroup(groupId, puzzleImage) {
+    const container = GroupOperations.createGroupContainer.call(this);
+    const canvas = CanvasOperations.makeCanvas.call(this);
+    container.prepend(canvas);
+
+    const elementsForGroup = GroupOperations.getElementsForGroup(groupId);
+
+    elementsForGroup.forEach((element) => container.appendChild(element));
+
+    GroupOperations.setIdForGroupElements(container, groupId);
+    CanvasOperations.drawPiecesOntoCanvas(
+      canvas,
+      elementsForGroup,
+      puzzleImage
+    );
+
+    return container;
+  }
+
+  static createGroupContainer(groupId) {
+    const container = document.createElement("div");
+
+    container.classList.add("group-container");
+
+    container.style.width = Utils.getPxString(this.width);
+    container.style.height = Utils.getPxString(this.height);
+    container.style.pointerEvents = "none";
     container.style.position = "absolute";
+
+    container.dataset.groupId = groupId;
 
     return container;
   }
@@ -261,7 +307,7 @@ export default class GroupOperations {
     this.canvasOperations.drawPiecesOntoCanvas(canvas, allPieces);
 
     // Update all connections
-    this.updateConnections(allPieces);
+    Utils.updateConnections(allPieces);
 
     return { groupId, groupContainer: targetGroupContainer };
   }
@@ -284,12 +330,12 @@ export default class GroupOperations {
     return this.addToGroup(piecesInGroupA[0], pieceBGroup);
   }
 
-  setGroupContainerPosition(container, { top, left }) {
+  static setGroupContainerPosition(container, { top, left }) {
     container.style.top = Utils.getPxString(top);
     container.style.left = Utils.getPxString(left);
   }
 
-  getConnectionsForPiece(piece) {
+  static getConnectionsForPiece(piece) {
     const connections = [];
     const p = {
       id: parseInt(piece.dataset.pieceId),
@@ -345,9 +391,9 @@ export default class GroupOperations {
     return connections;
   }
 
-  updateConnections(pieces) {
+  static updateConnections(pieces) {
     pieces.forEach((p) => {
-      const connections = this.getConnectionsForPiece(p);
+      const connections = GroupOperations.getConnectionsForPiece(p);
       p.setAttribute("data-connections", connections.join(", "));
     });
   }

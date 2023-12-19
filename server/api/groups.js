@@ -11,7 +11,7 @@ const url = "mongodb://127.0.0.1:27017";
 // Database Name
 const dbName = "puzzly";
 
-const piecesCollection = "pieces";
+const groupsCollection = "groups";
 const puzzlesCollection = "puzzles";
 
 // Create a new MongoClient
@@ -37,19 +37,18 @@ var api = {
     client.connect().then((client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
-      collection = db.collection(piecesCollection);
+      collection = db.collection(groupsCollection);
 
       const data = req.body;
-      // console.log("attempting to save pieces for first time", data);
+      console.log("attempting to create group", data);
 
-      collection.insertMany(data, function (err, result) {
+      collection.insertOne(data, function (err, result) {
         if (err) throw new Error(err);
 
+        console.log("group creation response", result.ops);
         const response = {
           status: "success",
-          data: {
-            pieceData: result.ops,
-          },
+          data: result.ops[0],
         };
 
         res.status(200).send(response);
@@ -62,16 +61,12 @@ var api = {
     client.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
-      const puzzles = db.collection(puzzlesCollection);
-      const pieces = db.collection(piecesCollection);
+      const groups = db.collection(groupsCollection);
 
-      const puzzleQuery = { _id: new ObjectID(puzzleId) };
-      const piecesQuery = { puzzleId: new ObjectID(puzzleId) };
+      const query = { puzzleId: new ObjectID(puzzleId) };
+      const queryResult = await groups.find(query);
 
-      const puzzle = await puzzles.findOne(puzzleQuery);
-      const piecesResult = await pieces.find().toArray();
-
-      res.status(200).send(result);
+      res.status(200).send(queryResult);
     });
   },
   update: function (req, res) {
@@ -84,23 +79,27 @@ var api = {
       if (!err) {
         db = client.db(dbName);
 
-        let pieces = db.collection(piecesCollection);
+        let groups = db.collection(groupsCollection);
         let puzzles = db.collection(puzzlesCollection);
         let query, update;
+        let puzzleId;
 
         try {
-          console.log("saving piece", data);
+          puzzleId = data[0].puzzleId;
+
+          console.log("saving group", data);
           query = { _id: new ObjectID(data._id) };
-          delete data._id;
+          delete data.groupId;
           update = { $set: { ...data } };
+
           try {
-            await pieces.updateOne(query, update);
+            await groups.updateOne(query, update);
           } catch (error) {
-            console.error("Failed to update piece:", error);
+            console.error("Failed to update group:", error);
           }
 
           const puzzleUpdateQuery = {
-            _id: new ObjectID(data.puzzleId),
+            _id: new ObjectID(puzzleId),
           };
 
           const lastSaveDate = Date.now();
@@ -111,13 +110,10 @@ var api = {
             },
           };
 
-          const result = await puzzles.updateOne(
-            puzzleUpdateQuery,
-            puzzleUpdateOp
-          );
-          console.log("save result", result.ops);
+          await puzzles.updateOne(puzzleUpdateQuery, puzzleUpdateOp);
+
           response.lastSaveDate = lastSaveDate;
-          res.status(200).send(response);
+          response.groupId = res.status(200).send(response);
         } catch (e) {
           res.status(500).send(e);
         }
@@ -131,23 +127,6 @@ var api = {
       console.log(rows);
     });
   },
-};
-
-api.unsolvePiece = function (req, res) {
-  client.connect().then(async (client, err) => {
-    assert.strictEqual(err, undefined);
-    db = client.db(dbName);
-    const id = req.params.id;
-
-    let pieces = db.collection(piecesCollection);
-    console.log("attempt unsolve piece", id);
-
-    pieces.findOne({ _id: new ObjectID(id) }, function (err, result, a) {
-      if (err) throw new Error(err);
-      console.log("found piece", err, result);
-      res.status(200).send("ok");
-    });
-  });
 };
 
 // Set API CRUD endpoints

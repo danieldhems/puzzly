@@ -14,6 +14,7 @@ const dbName = "puzzly";
 
 const puzzlesCollection = "puzzles";
 const piecesCollection = "pieces";
+const groupsCollection = "groups";
 
 // Create a new MongoClient
 const client = new MongoClient(url);
@@ -120,21 +121,27 @@ var api = {
       db = client.db(dbName);
       const puzzles = db.collection(puzzlesCollection);
       const pieces = db.collection(piecesCollection);
+      const groups = db.collection(groupsCollection);
 
       const puzzleQuery = { _id: new ObjectID(puzzleId) };
       const piecesQuery = { puzzleId: puzzleId };
+      const groupsQuery = { puzzleId: puzzleId };
 
       console.log("puzzle query", puzzleQuery);
       console.log("pieces query", piecesQuery);
+      console.log("groups query", groupsQuery);
 
       const puzzle = await puzzles.findOne(puzzleQuery);
       const piecesResult = await pieces.find(piecesQuery).toArray();
+      const groupsResult = await groups.find(groupsQuery).toArray();
       console.log("puzzle found", puzzle);
-      console.log("pieces found for puzzle", puzzleId, piecesResult);
+      // console.log("pieces found for puzzle", puzzleId, piecesResult);
+      console.log("groups found for puzzle", puzzleId, groupsResult);
 
       const result = {
         ...puzzle,
         pieces: piecesResult,
+        groups: groupsResult,
       };
 
       res.status(200).send(result);

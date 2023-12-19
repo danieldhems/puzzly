@@ -3,6 +3,7 @@ var express = require("express");
 var bodyParser = require("body-parser");
 var puzzleApi = require("./api/puzzle.js");
 var piecesApi = require("./api/pieces.js");
+var groupsApi = require("./api/groups.js");
 var upload = require("./api/upload.js");
 var uploadPuzzleSprite = require("./api/uploadPuzzleSprite.js");
 var makePuzzleImage = require("./api/makePuzzleImage.js");
@@ -27,6 +28,7 @@ app.use(bodyParser.json({ limit: "50mb" }));
 // Configure API endpoints
 app.use("/api/puzzle", puzzleApi.router);
 app.use("/api/pieces", piecesApi.router);
+app.use("/api/groups", groupsApi.router);
 app.use("/api/upload", upload);
 app.use("/api/uploadPuzzleSprite", uploadPuzzleSprite);
 app.use("/api/makePuzzleImage", makePuzzleImage);

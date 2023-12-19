@@ -255,7 +255,7 @@ const Utils = {
     data.isInnerPiece = isInnerPiece == "true" ? true : false;
 
     data.isSolved = el.dataset.isSolved === "true";
-    data.group = GroupOperations.getGroup(el);
+    data.groupId = GroupOperations.getGroup(el);
     data.pocketId = parseInt(el.dataset["pocketId"]);
 
     data.pageX = parseInt(el.style.left);
@@ -339,7 +339,7 @@ const Utils = {
   },
 
   getGroupIdFromElement(element) {
-    return element.dataset.group;
+    return element.dataset.groupId;
   },
 
   getElementsInGroupByElement(groupedElement) {
@@ -448,7 +448,6 @@ const Utils = {
   },
 
   getConnectorBoundingBox(element, side) {
-    console.log(element);
     const piece = {
       type: Utils.getPieceType(element),
     };
@@ -651,7 +650,7 @@ const Utils = {
   },
 
   getElementBoundingBoxForFloatDetection(element, drawBoundingBox = false) {
-    const hasGroup = !!element.dataset.group;
+    const hasGroup = !!element.dataset.groupId;
 
     const diffX = element.offsetWidth / 2 - this.floatTolerance / 2;
     const diffY = element.offsetHeight / 2 - this.floatTolerance / 2;
@@ -816,7 +815,7 @@ const Utils = {
     return Array.from(pieces).filter((el) => {
       return (
         !el.dataset.issolved &&
-        !el.dataset.group &&
+        !el.dataset.groupId &&
         !el.classList.contains("in-pocket")
       );
     });

@@ -14,17 +14,8 @@ export default class CanvasOperations {
     );
   }
 
-  onPuzzleLoaded(event) {
-    const config = event.detail;
-    this.puzzleImage = config.puzzleImage;
-    this.shadowOffset = config.pieceSize * SHADOW_OFFSET_RATIO;
-    this.width = config.boardWidth;
-    this.height = config.boardHeight;
-  }
-
-  makeCanvas(id) {
+  static makeCanvas() {
     const el = document.createElement("canvas");
-    el.id = `group-canvas-${id}`;
 
     const widthWithShadowOffset = this.width + this.shadowOffset;
     const heightWithShadowOffset = this.height + this.shadowOffset;
@@ -42,17 +33,13 @@ export default class CanvasOperations {
     return el;
   }
 
-  getCanvas(id) {
-    return document.querySelector(`#group-canvas-${id}`);
-  }
-
-  drawPiecesOntoCanvas(canvas, pieces) {
+  static drawPiecesOntoCanvas(canvas, pieces, puzzleImage) {
     const ctx = canvas.getContext("2d");
     // ctx.imageSmoothingEnabled = false;
     pieces.forEach((p) => {
       const data = p.dataset;
       ctx.drawImage(
-        this.puzzleImage,
+        puzzleImage,
         data.spriteshadowx,
         data.spriteshadowy,
         data.imgw,
@@ -74,7 +61,7 @@ export default class CanvasOperations {
     pieces.forEach((p) => {
       const data = p.dataset;
       ctx.drawImage(
-        this.puzzleImage,
+        puzzleImage,
         data.spritex,
         data.spritey,
         data.imgw,
@@ -85,5 +72,17 @@ export default class CanvasOperations {
         data.imgh
       );
     });
+  }
+
+  onPuzzleLoaded(event) {
+    const config = event.detail;
+    this.puzzleImage = config.puzzleImage;
+    this.shadowOffset = config.pieceSize * SHADOW_OFFSET_RATIO;
+    this.width = config.boardWidth;
+    this.height = config.boardHeight;
+  }
+
+  getCanvas(id) {
+    return document.querySelector(`#group-canvas-${id}`);
   }
 }

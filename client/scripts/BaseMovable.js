@@ -12,7 +12,6 @@ export default class BaseMovable {
   elementsToSaveIfNoConnection;
 
   puzzleImage;
-  groupIdPattern = /^group-container-/;
 
   // Element containing all pieces in-play
   piecesContainer;
@@ -32,7 +31,6 @@ export default class BaseMovable {
   shadowOffset = null;
 
   constructor(puzzly) {
-    console.log("puzzzly", puzzly);
     this.puzzleImage = puzzly.puzzleImage;
 
     this.piecesContainer = document.querySelector(
@@ -52,6 +50,8 @@ export default class BaseMovable {
     this.boardHeight = puzzly.boardHeight;
 
     this.groupOperations = new GroupOperations(puzzly);
+
+    this.solvedGroupId = puzzly.solvedGroupId;
 
     window.addEventListener(
       EVENT_TYPES.CHANGE_SCALE,
@@ -82,7 +82,9 @@ export default class BaseMovable {
   }
 
   isGroupedPiece(element) {
-    return this.groupIdPattern.test(element.parentNode.id);
+    return (
+      element.dataset.groupId !== undefined && element.dataset.groupId !== ""
+    );
   }
 
   isPocketPiece(element) {
@@ -143,10 +145,17 @@ export default class BaseMovable {
   addToPocket() {}
 
   // Override
+  addToSolved() {}
+
+  // Override
   markAsSolved() {}
 
   // Lifecycle method called when a movable is picked up i.e. the user has begun interacting with it
-  onPickup(mousePosition) {
+  onPickup(event) {
+    const mousePosition = {
+      top: event.clientY,
+      left: event.clientX,
+    };
     this.diffX = mousePosition.left - this.element.offsetLeft * this.zoomLevel;
     this.diffY = mousePosition.top - this.element.offsetTop * this.zoomLevel;
 
@@ -166,7 +175,7 @@ export default class BaseMovable {
   }
 
   // Override
-  onMouseDown(event) {}
+  onMouseDown() {}
 
   onMouseMove(event) {
     const newPosTop =
@@ -187,24 +196,12 @@ export default class BaseMovable {
       if (this.connection.isSolving) {
         this.groupOperations.addToGroup(this.element, 1111);
         this.markAsSolved();
-        Events.notify(EVENT_TYPES.SAVE, GroupOperations.getSolvedPieces());
       } else {
-        const { groupContainer } = this.groupOperations.group(
-          sourceElement,
-          targetElement
-        );
-
-        this.addToStage(groupContainer);
-        console.log("container?", groupContainer);
-        Events.notify(
-          EVENT_TYPES.SAVE,
-          GroupOperations.getPiecesInGroupContainer(groupContainer)
-        );
+        Events.notify(EVENT_TYPES.NEW_GROUP, [sourceElement, targetElement]);
       }
-    } else {
-      Events.notify(EVENT_TYPES.SAVE, this.elementsToSaveIfNoConnection);
     }
 
+    Events.notify(EVENT_TYPES.MOVE_FINISHED, event);
     this.clean();
   }
 
@@ -217,8 +214,6 @@ export default class BaseMovable {
 
   clean() {
     this.active = false;
-    this.element = null;
-    this.lastPosition = null;
 
     if (typeof this.onMouseMove === "function") {
       window.removeEventListener("mousemove", this.onMouseMove);
