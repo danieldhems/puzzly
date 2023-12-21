@@ -230,17 +230,14 @@ export default class PersistenceOperations {
       requestMethod = data.pieceData._id ? "PUT" : "POST";
       endpoint = PIECES_ENDPOINT;
     } else if (data instanceof GroupMovable) {
-      payload = {
-        id: data.groupIdInDatabase ?? undefined,
-        pieceData: data.piecesInGroup,
-        puzzleId: data.puzzleId,
-      };
-
-      requestMethod = data.groupIdInDatabase ? "PUT" : "POST";
+      payload = data.getDataForSave();
+      requestMethod = payload._id ? "PUT" : "POST";
       endpoint = GROUPS_ENDPOINT;
     } else {
       return;
     }
+
+    // console.log("payload for saving", payload, endpoint);
 
     if (useLocalStorage) {
     } else {

@@ -60,8 +60,6 @@ export class SingleMovable extends BaseMovable {
     this.pieceData = pieceData;
   }
 
-  setGroupId;
-
   static createElement(pieceData, puzzleData) {
     const {
       id,
@@ -312,6 +310,12 @@ export class SingleMovable extends BaseMovable {
         this.connection = checkConnections.call(this, this.element);
         this.elementsToSaveIfNoConnection = [this.element];
       }
+
+      this.setPiece({
+        ...this.pieceData,
+        pageX: this.element.offsetLeft,
+        pageY: this.element.offsetTop,
+      });
     }
 
     super.onMouseUp(event);
@@ -332,25 +336,32 @@ export class SingleMovable extends BaseMovable {
     if (this.active) {
       if (!this.isGroupedPiece(this.element)) {
         this.save();
+        this.setLastPosition({
+          x: this.element.offsetX,
+          y: this.element.offsetY,
+        });
+        this.active = false;
       }
-      this.setLastPosition({
-        x: this.element.offsetX,
-        y: this.element.offsetY,
-      });
     }
+  }
+
+  setGroupIdAcrossInstance(groupId) {
+    this.groupId = groupId;
+    this.element.dataset.groupId = groupId;
+    this.pieceData.groupId = groupId;
   }
 
   onGroupCreated(event) {
     const { groupId, elementIds } = event.detail;
     if (elementIds.includes(parseInt(this.element.dataset.pieceId))) {
-      this.groupId = groupId;
-      this.element.dataset.groupId = groupId;
-      this.pieceData.groupId = groupId;
+      this.setGroupIdAcrossInstance(groupId);
       this.save();
     }
   }
 
   save() {
-    Events.notify(EVENT_TYPES.SAVE, this);
+    if (this.active) {
+      Events.notify(EVENT_TYPES.SAVE, this);
+    }
   }
 }

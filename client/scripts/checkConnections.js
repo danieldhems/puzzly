@@ -77,7 +77,6 @@ export function checkConnections(element) {
     }
   }
 
-  console.log(element.dataset);
   const connectsTo = JSON.parse(element.dataset.connectsTo);
 
   Object.keys(connectsTo).some((key, i) => {
@@ -108,11 +107,11 @@ export function checkConnections(element) {
           oppositeConnection
         );
 
-      console.log(
-        `checking ${key}`,
-        thisPieceConnectorBoundingBox,
-        targetPieceConnectorBoundingBox
-      );
+      // console.log(
+      //   `checking ${key}`,
+      //   thisPieceConnectorBoundingBox,
+      //   targetPieceConnectorBoundingBox
+      // );
 
       // Utils.drawBox(thisPieceConnectorBoundingBox);
       // Utils.drawBox(targetPieceConnectorBoundingBox, null, "blue");

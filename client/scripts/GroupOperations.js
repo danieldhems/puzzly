@@ -111,23 +111,27 @@ export default class GroupOperations {
     return candidates;
   }
 
-  static group(sourceElement, targetElement) {
-    const pieceA = Utils.getPieceFromElement(sourceElement);
-    const pieceB = Utils.getPieceFromElement(targetElement);
+  static group(sourcePiece, targetPiece) {
+    const pieceA = Utils.getPieceFromElement(sourcePiece.element);
+    const pieceB = Utils.getPieceFromElement(targetPiece.element);
 
     if (!pieceA.group && !pieceB.group) {
       return GroupOperations.createGroup.call(
         this,
-        sourceElement,
-        targetElement
+        sourcePiece.element,
+        targetPiece.element
       );
     } else if (pieceA.group > -1 && !pieceB.group) {
       const alignGroupToElement = true;
-      return this.addToGroup(targetElement, pieceA.group, alignGroupToElement);
+      return this.addToGroup(
+        targetPiece.element,
+        pieceA.group,
+        alignGroupToElement
+      );
     } else if (!pieceA.group && pieceB.group > -1) {
-      return this.addToGroup(sourceElement, pieceB.group);
+      return this.addToGroup(sourcePiece.element, pieceB.group);
     } else if (sourceElement && targetElement) {
-      return this.mergeGroups(sourceElement, targetElement);
+      return this.mergeGroups(sourcePiece.element, targetPiece.element);
     }
   }
 
@@ -196,14 +200,14 @@ export default class GroupOperations {
     container.append(sourceElement);
     container.appendChild(targetElement);
 
-    return container;
+    return { container, position: { top: topPos, left: leftPos } };
   }
 
   static getElementsForGroup(groupId) {
     const allElements = document.querySelectorAll(".puzzle-piece");
-    return Array.from(allElements).filter(
-      (element) => parseInt(element.dataset.groupId) === groupId
-    );
+    return Array.from(allElements).filter((element) => {
+      return parseInt(element.dataset.groupId) === groupId;
+    });
   }
 
   // Restore the elements for an existing group
@@ -213,7 +217,6 @@ export default class GroupOperations {
     container.prepend(canvas);
 
     const elementsForGroup = GroupOperations.getElementsForGroup(groupId);
-
     elementsForGroup.forEach((element) => container.appendChild(element));
 
     GroupOperations.setIdForGroupElements(container, groupId);

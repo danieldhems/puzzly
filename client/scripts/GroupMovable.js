@@ -11,33 +11,39 @@ export default class GroupMovable extends BaseMovable {
   element = null;
   canvas = null;
 
+  groupId = null;
   piecesInGroup = [];
   elementsInGroup = [];
   puzzleId = null;
 
+  position = {
+    top: null,
+    left: null,
+  };
+
   constructor({
     puzzleData,
-    elements = undefined,
-    pieces = undefined,
+    pieces,
     groupId = undefined,
+    position = undefined,
   }) {
     super(puzzleData);
 
-    console.log(groupId, pieces);
+    // console.log("Group constructor", groupId, pieces);
 
-    this.width = puzzleData.boardWidth;
-    this.height = puzzleData.boardHeight;
+    this.piecesInGroup = pieces;
 
     this.puzzleId = puzzleData.puzzleId;
     this.puzzleImage = puzzleData.puzzleImage;
 
-    if (!groupId) {
-      this.initiateGroup(elements);
-    } else {
-      this.restoreGroupFromPersistence(groupId, pieces);
-    }
+    this.width = puzzleData.boardWidth;
+    this.height = puzzleData.boardHeight;
 
-    this.render();
+    if (!groupId) {
+      this.initiateGroup();
+    } else {
+      this.restoreGroupFromPersistence(groupId, pieces, position);
+    }
 
     window.addEventListener("mousedown", this.onMouseDown.bind(this));
     window.addEventListener(
@@ -62,10 +68,6 @@ export default class GroupMovable extends BaseMovable {
     return elements.map((element) => Utils.getPieceFromElement(element));
   }
 
-  createElementsFromPieceData(pieces) {
-    return pieces.map((piece) => SingleMovable.createElement(piece));
-  }
-
   setPiecesInGroup(pieces) {
     this.piecesInGroup = pieces;
   }
@@ -74,47 +76,43 @@ export default class GroupMovable extends BaseMovable {
     this.elementsInGroup = elements;
   }
 
-  initiateGroup(elements) {
-    const groupContainer = GroupOperations.group.call(
+  initiateGroup() {
+    const { container, position } = GroupOperations.group.call(
       this,
-      ...Array.from(elements)
+      ...this.piecesInGroup
     );
 
-    this.element = groupContainer;
-    this.canvas = groupContainer.querySelector("canvas");
+    this.element = container;
+    this.position = position;
+    this.canvas = container.querySelector("canvas");
 
-    this.setElementsInGroup(elements);
-    this.setPiecesInGroup(this.getPieceDataFromElements(elements));
     this.populate();
+    this.render();
   }
 
-  restoreGroupFromPersistence(groupId, pieces) {
-    this.element = GroupOperations.restoreGroup(groupId, this.puzzleImage);
+  restoreGroupFromPersistence(groupId, pieces, position) {
+    // console.log("restoring group", groupId, pieces, position);
     this.groupId = groupId;
+    this.position = position;
+    this.piecesInGroup = pieces;
 
-    this.setPiecesInGroup(pieces);
-    this.setElementsInGroup(GroupOperations.getElementsForGroup(groupId));
-    this.populate();
-
-    const { containerX, containerY } = this.piecesInGroup[0];
-    GroupOperations.setGroupContainerPosition(this.element, {
-      top: containerY,
-      left: containerX,
-    });
-
-    console.log(this.element);
+    this.element = GroupOperations.restoreGroup(groupId, this.puzzleImage);
+    this.element.style.top = position.top + "px";
+    this.element.style.left = position.left + "px";
+    this.element.style.width = this.width + "px";
+    this.element.style.height = this.height + "px";
 
     this.render();
   }
 
   render() {
-    this.addToStage(this.element);
     this.populate(this.pieces);
+    this.addToStage(this.element);
   }
 
   populate() {
-    Array.from(this.elementsInGroup).forEach((element) => {
-      this.element.appendChild(element);
+    Array.from(this.piecesInGroup).forEach((piece) => {
+      this.element.appendChild(piece.element);
     });
   }
 
@@ -150,14 +148,16 @@ export default class GroupMovable extends BaseMovable {
   }
 
   onMouseUp() {
-    if (this.isOutOfBounds()) {
-      this.resetPosition();
-    } else {
-      this.connection = this.getConnection();
-      super.onMouseUp();
-    }
+    if (this.active) {
+      if (this.isOutOfBounds()) {
+        this.resetPosition();
+      } else {
+        this.connection = this.getConnection();
+        super.onMouseUp();
+      }
 
-    this.clean();
+      this.clean();
+    }
   }
 
   onMoveFinished() {
@@ -171,37 +171,72 @@ export default class GroupMovable extends BaseMovable {
   }
 
   arePieceIdsInThisGroup(pieceIds) {
-    return Array.from(this.elementsInGroup).every((element) => {
-      return pieceIds.includes(parseInt(element.dataset.pieceId));
+    // console.log("arePieceIdsInThisGroup", pieceIds);
+    return this.piecesInGroup.every((piece) => {
+      return pieceIds.includes(piece.pieceData.id);
     });
   }
 
   isServerResponseForThisGroup(data) {
     if (!data) return;
-    const pieceIds = this.getPieceIdsFromServerResponse(data.pieceData);
+    const pieceIds = this.getPieceIdsFromServerResponse(data.pieces);
     return data._id === this.groupId || this.arePieceIdsInThisGroup(pieceIds);
+  }
+
+  setGroupIdAcrossInstance(id) {
+    this.groupId = id;
+    this.element.dataset.groupId = this.groupId;
+    this.canvas.dataset.groupId = this.groupId;
+    this.piecesInGroup.forEach((pieceInstance) => {
+      pieceInstance.setGroupIdAcrossInstance(this.groupId);
+    });
   }
 
   onSaveResponse(event) {
     const response = event.detail;
     if (this.isServerResponseForThisGroup(response.data)) {
       if (!this.groupId) {
-        this.groupId = response.data._id;
-        this.element.dataset.groupId = this.groupId;
-        this.canvas.dataset.groupId = this.groupId;
-
+        this.setGroupIdAcrossInstance(response.data._id);
         Events.notify(EVENT_TYPES.GROUP_CREATED, {
           groupId: this.groupId,
-          elementIds: this.elementsInGroup.map((element) =>
-            parseInt(element.dataset.pieceId)
+          elementIds: this.piecesInGroup.map((piece) =>
+            parseInt(piece.pieceData.id)
           ),
         });
       }
+
+      this.setPosition(this.element.getBoundingClientRect());
     }
   }
 
+  getAllPieceData() {
+    return this.piecesInGroup.map((piece) => piece.pieceData);
+  }
+
+  getDataForSave() {
+    const elementPosition = {
+      top: this.element.offsetTop,
+      left: this.element.offsetLeft,
+    };
+    return {
+      _id: this.groupId,
+      pieces: this.getAllPieceData(),
+      puzzleId: this.puzzleId,
+      position: elementPosition,
+    };
+  }
+
+  setPosition(box) {
+    this.position = {
+      top: box.top,
+      left: box.left,
+    };
+  }
+
   save() {
-    Events.notify(EVENT_TYPES.SAVE, this);
+    if (this.active) {
+      Events.notify(EVENT_TYPES.SAVE, this);
+    }
   }
 
   clean() {

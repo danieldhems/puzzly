@@ -31,6 +31,7 @@ export default class BaseMovable {
   shadowOffset = null;
 
   constructor(puzzly) {
+    this.puzzly = puzzly;
     this.puzzleImage = puzzly.puzzleImage;
 
     this.piecesContainer = document.querySelector(
@@ -197,7 +198,17 @@ export default class BaseMovable {
         this.groupOperations.addToGroup(this.element, 1111);
         this.markAsSolved();
       } else {
-        Events.notify(EVENT_TYPES.NEW_GROUP, [sourceElement, targetElement]);
+        const sourceElementInstance =
+          this.puzzly.getPieceInstanceByElement(sourceElement);
+        const targetElementInstance =
+          this.puzzly.getPieceInstanceByElement(targetElement);
+
+        console.log("instances", sourceElementInstance, targetElementInstance);
+
+        Events.notify(EVENT_TYPES.NEW_GROUP, [
+          sourceElementInstance,
+          targetElementInstance,
+        ]);
       }
     }
 

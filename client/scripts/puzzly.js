@@ -182,6 +182,8 @@ class Puzzly {
     this.loadAssets(assets).then(() => {
       this.init();
     });
+
+    return this;
   }
 
   init() {
@@ -242,21 +244,18 @@ class Puzzly {
       if (Object.keys(this.groups).length) {
         for (let g in this.groups) {
           const group = this.groups[g];
+          console.log("group data", group);
+          const pieceInstances = this.pieceInstances.filter((pieceInstance) => {
+            return pieceInstance.pieceData.groupId === group._id;
+          });
+          console.log("piece instances", pieceInstances);
           const groupInstance = new GroupMovable({
             puzzleData: this,
             groupId: group._id,
-            pieces: group.pieceData,
+            pieces: pieceInstances,
+            position: group.position,
           });
-          this.groups.push(groupInstance);
-
-          console.log(this.groups);
-          // const elements = GroupOperations.getPiecesInGroup(g);
-          // const canvas = this.CanvasOperations.getCanvas(g);
-          // this.CanvasOperations.drawPiecesOntoCanvas.call(
-          //   this,
-          //   canvas,
-          //   elements
-          // );
+          this.groupInstances.push(groupInstance);
         }
       }
 
@@ -271,7 +270,6 @@ class Puzzly {
         this.arrangePieces();
       }
       // this.assignPieceConnections();
-      Events.notify(EVENT_TYPES.PUZZLE_LOADED, this);
     }
 
     this.timeStarted = new Date().getTime();
@@ -297,10 +295,6 @@ class Puzzly {
 
     // window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
     window.addEventListener("keydown", this.onKeyDown.bind(this));
-    window.addEventListener("puzzly_save", (e) => {
-      // console.log("save requested", e.detail.pieces)
-      this.save(e.detail.pieces);
-    });
     window.addEventListener(EVENT_TYPES.RETURN_TO_CANVAS, (e) => {
       this.handleDrop(e.detail);
     });
@@ -322,6 +316,13 @@ class Puzzly {
     Events.notify(EVENT_TYPES.PUZZLE_LOADED, this);
   }
 
+  getPieceInstanceByElement(element) {
+    return this.pieceInstances.find(
+      (instance) =>
+        instance.pieceData._id === element.dataset.pieceIdInPersistence
+    );
+  }
+
   initiatePiece(pieceData) {
     const data = {
       ...pieceData,
@@ -336,10 +337,10 @@ class Puzzly {
   }
 
   initiateGroup(event) {
-    const elements = event.detail;
+    const pieces = event.detail;
     const groupInstance = new GroupMovable({
       puzzleData: this,
-      elements,
+      pieces,
     });
     this.groupInstances.push(groupInstance);
   }
@@ -1934,7 +1935,7 @@ class Puzzly {
       i++;
     }
 
-    this.save(this.allPieces());
+    // this.save(this.allPieces());
   }
 
   shuffleArray(array) {

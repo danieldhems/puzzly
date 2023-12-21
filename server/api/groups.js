@@ -40,6 +40,7 @@ var api = {
       collection = db.collection(groupsCollection);
 
       const data = req.body;
+      delete data._id;
       console.log("attempting to create group", data);
 
       collection.insertOne(data, function (err, result) {
@@ -71,7 +72,7 @@ var api = {
   },
   update: function (req, res) {
     var data = req.body;
-    console.log("update request", req.body);
+    console.log("update group request", req.body);
 
     client.connect().then(async (client, err) => {
       const response = {};
@@ -82,14 +83,11 @@ var api = {
         let groups = db.collection(groupsCollection);
         let puzzles = db.collection(puzzlesCollection);
         let query, update;
-        let puzzleId;
 
         try {
-          puzzleId = data[0].puzzleId;
-
-          console.log("saving group", data);
           query = { _id: new ObjectID(data._id) };
-          delete data.groupId;
+          delete data._id;
+          console.log("saving group", data);
           update = { $set: { ...data } };
 
           try {
@@ -99,7 +97,7 @@ var api = {
           }
 
           const puzzleUpdateQuery = {
-            _id: new ObjectID(puzzleId),
+            _id: new ObjectID(data.puzzleId),
           };
 
           const lastSaveDate = Date.now();
@@ -113,8 +111,10 @@ var api = {
           await puzzles.updateOne(puzzleUpdateQuery, puzzleUpdateOp);
 
           response.lastSaveDate = lastSaveDate;
-          response.groupId = res.status(200).send(response);
+
+          res.status(200).send(response);
         } catch (e) {
+          console.log("group update error", e);
           res.status(500).send(e);
         }
       }
