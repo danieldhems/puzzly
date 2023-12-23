@@ -68,14 +68,6 @@ export default class GroupMovable extends BaseMovable {
     return elements.map((element) => Utils.getPieceFromElement(element));
   }
 
-  setPiecesInGroup(pieces) {
-    this.piecesInGroup = pieces;
-  }
-
-  setElementsInGroup(elements) {
-    this.elementsInGroup = elements;
-  }
-
   initiateGroup() {
     const { container, position } = GroupOperations.group.call(
       this,
@@ -105,26 +97,28 @@ export default class GroupMovable extends BaseMovable {
     this.render();
   }
 
-  render() {
-    this.populate(this.pieces);
-    this.addToStage(this.element);
-  }
-
   populate() {
     Array.from(this.piecesInGroup).forEach((piece) => {
       this.element.appendChild(piece.element);
     });
   }
 
+  render() {
+    this.populate(this.pieces);
+    this.addToStage(this.element);
+  }
+
   onMouseDown(event) {
     if (event.which === 1) {
       const element = Utils.getPuzzlePieceElementFromEvent(event);
       if (
+        element &&
         this.isPuzzlePiece(element) &&
         this.isGroupedPiece(element) &&
         !Utils.isSolved(element)
       ) {
         this.element = element.parentNode;
+        console.log("group movable: element", this.element);
         this.active = true;
 
         super.onPickup.call(this, event);
@@ -171,8 +165,9 @@ export default class GroupMovable extends BaseMovable {
   }
 
   arePieceIdsInThisGroup(pieceIds) {
-    // console.log("arePieceIdsInThisGroup", pieceIds);
+    console.log("arePieceIdsInThisGroup", pieceIds);
     return this.piecesInGroup.every((piece) => {
+      console.log("piece instance", piece);
       return pieceIds.includes(piece.pieceData.id);
     });
   }
@@ -184,6 +179,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   setGroupIdAcrossInstance(id) {
+    console.log("setGroupIdAcrossInstance", id);
     this.groupId = id;
     this.element.dataset.groupId = this.groupId;
     this.canvas.dataset.groupId = this.groupId;
@@ -234,7 +230,8 @@ export default class GroupMovable extends BaseMovable {
   }
 
   save() {
-    if (this.active) {
+    console.log("group save called", this.active);
+    if (this.active || !this.groupId) {
       Events.notify(EVENT_TYPES.SAVE, this);
     }
   }

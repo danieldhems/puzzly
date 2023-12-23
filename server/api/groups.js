@@ -11,8 +11,9 @@ const url = "mongodb://127.0.0.1:27017";
 // Database Name
 const dbName = "puzzly";
 
-const groupsCollection = "groups";
-const puzzlesCollection = "puzzles";
+const groupsCollectionName = "groups";
+const puzzlesCollectionName = "puzzles";
+const piecesCollectionName = "pieces";
 
 // Create a new MongoClient
 const client = new MongoClient(url);
@@ -34,26 +35,44 @@ module.exports.clean = function () {
 
 var api = {
   create: function (req, res) {
-    client.connect().then((client, err) => {
+    client.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
-      collection = db.collection(groupsCollection);
+      const groupsCollection = db.collection(groupsCollectionName);
+      const piecesCollection = db.collection(piecesCollectionName);
 
       const data = req.body;
-      delete data._id;
+      // delete data._id;
+      // delete data.puzzleId;
       console.log("attempting to create group", data);
 
-      collection.insertOne(data, function (err, result) {
-        if (err) throw new Error(err);
+      const pieceUpdateResults = [];
 
-        console.log("group creation response", result.ops);
+      try {
+        const groupSaveResult = await groupsCollection.insertOne(data);
+        console.log("group creation response", groupSaveResult.ops);
+
+        for (let i = 0, l = data.pieces.length; i < l; i++) {
+          pieceUpdateResults.push(
+            await piecesCollection.findOneAndUpdate(
+              { _id: new ObjectID(data.pieces[i]._id) },
+              { $set: { groupId: data._id } }
+            )
+          );
+        }
+
         const response = {
           status: "success",
-          data: result.ops[0],
+          data: {
+            pieces: pieceUpdateResults.map((result) => result.value),
+            _id: groupSaveResult.ops[0]._id,
+          },
         };
 
         res.status(200).send(response);
-      });
+      } catch (error) {
+        console.error(error);
+      }
     });
   },
   read: function (req, res) {
@@ -62,10 +81,11 @@ var api = {
     client.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
-      const groups = db.collection(groupsCollection);
+      const groupsCollection = db.collection(groupsCollectionName);
 
-      const query = { puzzleId: new ObjectID(puzzleId) };
-      const queryResult = await groups.find(query);
+      const query = { puzzleId };
+      console.log("group read query", query);
+      const queryResult = await groupsCollection.find(query);
 
       res.status(200).send(queryResult);
     });
@@ -80,18 +100,24 @@ var api = {
       if (!err) {
         db = client.db(dbName);
 
-        let groups = db.collection(groupsCollection);
-        let puzzles = db.collection(puzzlesCollection);
+        let groups = db.collection(groupsCollectionName);
+        let puzzles = db.collection(puzzlesCollectionName);
         let query, update;
 
         try {
-          query = { _id: new ObjectID(data._id) };
-          delete data._id;
-          console.log("saving group", data);
-          update = { $set: { ...data } };
+          const groupId = new ObjectID(data._id);
+          query = { _id: groupId };
+          // console.log("saving group", data);
+          update = {
+            $set: {
+              position: { top: data.top, left: data.left },
+              isSolved: data.isSolved,
+            },
+          };
 
           try {
-            await groups.updateOne(query, update);
+            const result = await groups.findOneAndUpdate(query, update);
+            console.log("group update result", result.ops);
           } catch (error) {
             console.error("Failed to update group:", error);
           }
@@ -110,9 +136,7 @@ var api = {
 
           await puzzles.updateOne(puzzleUpdateQuery, puzzleUpdateOp);
 
-          response.lastSaveDate = lastSaveDate;
-
-          res.status(200).send(response);
+          res.status(200).send({});
         } catch (e) {
           console.log("group update error", e);
           res.status(500).send(e);

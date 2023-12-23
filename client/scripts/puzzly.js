@@ -246,6 +246,7 @@ class Puzzly {
           const group = this.groups[g];
           console.log("group data", group);
           const pieceInstances = this.pieceInstances.filter((pieceInstance) => {
+            console.log("piece data", pieceInstance.pieceData);
             return pieceInstance.pieceData.groupId === group._id;
           });
           console.log("piece instances", pieceInstances);
@@ -256,6 +257,7 @@ class Puzzly {
             position: group.position,
           });
           this.groupInstances.push(groupInstance);
+          console.log("group instances", this.groupInstances);
         }
       }
 

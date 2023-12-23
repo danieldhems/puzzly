@@ -9,10 +9,7 @@ export class SingleMovable extends BaseMovable {
   element = null;
   pieceData = null;
   active = false;
-  lastPosition = {
-    y: null,
-    x: null,
-  };
+  lastSaveState = null;
 
   constructor({ puzzleData, pieceData }) {
     super(puzzleData);
@@ -22,8 +19,9 @@ export class SingleMovable extends BaseMovable {
     this.shadowOffset = puzzleData.shadowOffset;
 
     this.setPiece(pieceData);
-    this.element = SingleMovable.createElement(pieceData, puzzleData);
+    this.element = SingleMovable.createElement.call(this, puzzleData);
     this.render();
+    this.save();
 
     window.addEventListener("mousedown", this.onMouseDown.bind(this));
     window.addEventListener(
@@ -58,9 +56,10 @@ export class SingleMovable extends BaseMovable {
 
   setPiece(pieceData) {
     this.pieceData = pieceData;
+    console.log(" setting piecedata", this.pieceData);
   }
 
-  static createElement(pieceData, puzzleData) {
+  static createElement(puzzleData) {
     const {
       id,
       _id,
@@ -85,7 +84,7 @@ export class SingleMovable extends BaseMovable {
       numPiecesFromLeftEdge,
       pocketId,
       type,
-    } = pieceData;
+    } = this.pieceData;
 
     const el = document.createElement("div");
     el.classList.add("puzzle-piece");
@@ -123,7 +122,9 @@ export class SingleMovable extends BaseMovable {
     el.setAttribute("data-is-inner-piece", isInnerPiece);
     el.setAttribute(
       "data-connects-to",
-      JSON.stringify(SingleMovable.getConnectingPieceIds(pieceData, puzzleData))
+      JSON.stringify(
+        SingleMovable.getConnectingPieceIds(this.pieceData, puzzleData)
+      )
     );
     el.setAttribute("data-connections", GroupOperations.getConnections(el));
     el.setAttribute("data-num-pieces-from-top-edge", numPiecesFromTopEdge);
@@ -133,6 +134,7 @@ export class SingleMovable extends BaseMovable {
     const fgEl = document.createElement("div");
     fgEl.classList.add("puzzle-piece-fg");
     fgEl.style.backgroundImage = `url(${spritePath}`;
+    console.log("background", `url(${spritePath}`);
     fgEl.style.backgroundPositionX = spriteX === 0 ? 0 : "-" + spriteX + "px";
     fgEl.style.backgroundPositionY = spriteY === 0 ? 0 : "-" + spriteY + "px";
     fgEl.style.position = "absolute";
@@ -187,7 +189,8 @@ export class SingleMovable extends BaseMovable {
     }
 
     if (!GroupOperations.hasGroup({ type }) && !isSolved) {
-      super.addToStage.call(this);
+      console.log("adding single piece to stage", this);
+      this.addToStage.call(this);
     }
 
     if (isSolved) {
@@ -289,6 +292,7 @@ export class SingleMovable extends BaseMovable {
     if (event.which === 1) {
       const element = Utils.getPuzzlePieceElementFromEvent(event);
       if (
+        element &&
         this.isPuzzlePiece(element) &&
         !this.isGroupedPiece(element) &&
         this.hasMouseDown(element)
@@ -335,11 +339,14 @@ export class SingleMovable extends BaseMovable {
   onMoveFinished() {
     if (this.active) {
       if (!this.isGroupedPiece(this.element)) {
-        this.save();
         this.setLastPosition({
           x: this.element.offsetX,
           y: this.element.offsetY,
         });
+
+        // Only save if this piece isn't in a group
+        // (If it is in a group, the group will notify this piece to save once group operations are complete)
+        this.save(true);
         this.active = false;
       }
     }
@@ -355,12 +362,11 @@ export class SingleMovable extends BaseMovable {
     const { groupId, elementIds } = event.detail;
     if (elementIds.includes(parseInt(this.element.dataset.pieceId))) {
       this.setGroupIdAcrossInstance(groupId);
-      this.save();
     }
   }
 
-  save() {
-    if (this.active) {
+  save(force = false) {
+    if (force || (this.active && !this.connection)) {
       Events.notify(EVENT_TYPES.SAVE, this);
     }
   }

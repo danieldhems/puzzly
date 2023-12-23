@@ -89,12 +89,17 @@ var api = {
         let query, update;
 
         try {
-          console.log("saving piece", data);
-          query = { _id: new ObjectID(data._id) };
+          const pieceid = new ObjectID(data._id);
+          query = { _id: pieceid };
           delete data._id;
-          update = { $set: { ...data } };
+          console.log("saving piece", data);
+
+          const { pageX, pageY, groupId, isSolved } = data;
+          update = { $set: { pageX, pageY, groupId, isSolved } };
+          console.log("piece update instruction", update);
           try {
-            await pieces.updateOne(query, update);
+            const result = await pieces.findOneAndUpdate(query, update);
+            console.log("piece update result", result.ops);
           } catch (error) {
             console.error("Failed to update piece:", error);
           }
@@ -115,7 +120,7 @@ var api = {
             puzzleUpdateQuery,
             puzzleUpdateOp
           );
-          console.log("save result", result.ops);
+          // console.log("piece save result", result.ops);
           response.lastSaveDate = lastSaveDate;
           res.status(200).send(response);
         } catch (e) {

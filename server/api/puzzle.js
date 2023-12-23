@@ -44,7 +44,7 @@ var api = {
 
       const data = req.body;
 
-      // console.log("create", data);
+      console.log("create puzzle with data", data);
       data.numberOfSolvedPieces = 0;
       data.dateCreated = new Date();
       data.elapsedTime = 0;
@@ -89,7 +89,7 @@ var api = {
       delete dbPayload.spriteEncodedString;
       delete dbPayload.pieces;
 
-      console.log("creating puzzle", dbPayload);
+      // console.log("creating puzzle", dbPayload);
 
       const puzzleDBResponse = await puzzleColl.insertOne(dbPayload);
       const puzzleId = puzzleDBResponse.ops[0]._id;
@@ -104,7 +104,7 @@ var api = {
       const piecesDBResponse = await piecesColl.insertMany(data.pieces);
 
       // console.log("puzzleDBResponse", puzzleDBResponse.ops[0]);
-      // console.log("piecesDBResponse", piecesDBResponse.ops[0]);
+      console.log("piecesDBResponse", piecesDBResponse.ops);
 
       res.status(200).send({
         ...puzzleDBResponse.ops[0],
@@ -124,7 +124,7 @@ var api = {
       const groups = db.collection(groupsCollection);
 
       const puzzleQuery = { _id: new ObjectID(puzzleId) };
-      const piecesQuery = { puzzleId: puzzleId };
+      const piecesQuery = { puzzleId: new ObjectID(puzzleId) };
       const groupsQuery = { puzzleId: puzzleId };
 
       console.log("puzzle query", puzzleQuery);
@@ -134,8 +134,8 @@ var api = {
       const puzzle = await puzzles.findOne(puzzleQuery);
       const piecesResult = await pieces.find(piecesQuery).toArray();
       const groupsResult = await groups.find(groupsQuery).toArray();
-      console.log("puzzle found", puzzle);
-      // console.log("pieces found for puzzle", puzzleId, piecesResult);
+      // console.log("puzzle found", puzzle);
+      console.log("pieces found for puzzle", puzzleId, piecesResult);
       console.log("groups found for puzzle", puzzleId, groupsResult);
 
       const result = {

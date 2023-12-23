@@ -84,7 +84,8 @@ export default class BaseMovable {
 
   isGroupedPiece(element) {
     return (
-      element.dataset.groupId !== undefined && element.dataset.groupId !== ""
+      element?.dataset?.groupId !== undefined &&
+      element?.dataset?.groupId !== ""
     );
   }
 
@@ -139,6 +140,7 @@ export default class BaseMovable {
 
   addToStage(element = undefined) {
     const elementToAdd = element || this.element;
+    console.log("element to add", this);
     this.piecesContainer.prepend(elementToAdd);
   }
 
@@ -183,7 +185,6 @@ export default class BaseMovable {
       event.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
     const newPosLeft =
       event.clientX / this.zoomLevel - this.diffX / this.zoomLevel;
-
     this.element.style.top = newPosTop + "px";
     this.element.style.left = newPosLeft + "px";
   }
