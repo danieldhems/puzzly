@@ -240,16 +240,16 @@ class Puzzly {
         this.initiatePiece.call(this, p);
       });
 
-      console.log("groups for persistence", this.groups);
+      // console.log("groups from persistence", this.groups);
       if (Object.keys(this.groups).length) {
         for (let g in this.groups) {
           const group = this.groups[g];
-          console.log("group data", group);
+          // console.log("group data", group);
           const pieceInstances = this.pieceInstances.filter((pieceInstance) => {
-            console.log("piece data", pieceInstance.pieceData);
+            // console.log("piece data", pieceInstance.pieceData);
             return pieceInstance.pieceData.groupId === group._id;
           });
-          console.log("piece instances", pieceInstances);
+          // console.log("piece instances", pieceInstances);
           const groupInstance = new GroupMovable({
             puzzleData: this,
             groupId: group._id,
@@ -257,7 +257,7 @@ class Puzzly {
             position: group.position,
           });
           this.groupInstances.push(groupInstance);
-          console.log("group instances", this.groupInstances);
+          // console.log("group instances", this.groupInstances);
         }
       }
 
@@ -266,7 +266,7 @@ class Puzzly {
       this.piecePositionMap = this.shuffleArray(
         this.getRandomCoordsFromSectorMap()
       );
-      console.log("pieces", this.pieces);
+      // console.log("pieces", this.pieces);
       this.renderPieces(this.pieces);
       if (!this.noDispersal) {
         this.arrangePieces();

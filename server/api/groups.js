@@ -107,13 +107,15 @@ var api = {
         try {
           const groupId = new ObjectID(data._id);
           query = { _id: groupId };
-          // console.log("saving group", data);
+          console.log("updating group", data);
           update = {
             $set: {
-              position: { top: data.top, left: data.left },
+              position: data.position,
               isSolved: data.isSolved,
             },
           };
+
+          console.log("update instruction", update);
 
           try {
             const result = await groups.findOneAndUpdate(query, update);

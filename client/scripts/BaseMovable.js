@@ -140,7 +140,7 @@ export default class BaseMovable {
 
   addToStage(element = undefined) {
     const elementToAdd = element || this.element;
-    console.log("element to add", this);
+    // console.log("element to add", this);
     this.piecesContainer.prepend(elementToAdd);
   }
 

@@ -86,6 +86,7 @@ class DragAndSelect {
   }
 
   activateDrawBox(e) {
+    console.log("activating drawbox");
     this.drawBox.style.display = "block";
     this.drawBox.style.top = e.clientY + "px";
     this.drawBox.style.left = e.clientX + "px";

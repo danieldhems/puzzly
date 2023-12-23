@@ -22,7 +22,6 @@ export default class PersistenceOperations {
   currentTime = Date.now();
 
   constructor(config) {
-    console.log(config);
     this.puzzleId = config.puzzleId;
 
     this.LOCAL_STORAGE_PUZZLY_PROGRESS_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_progress`;

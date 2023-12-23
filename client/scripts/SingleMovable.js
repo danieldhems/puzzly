@@ -56,7 +56,7 @@ export class SingleMovable extends BaseMovable {
 
   setPiece(pieceData) {
     this.pieceData = pieceData;
-    console.log(" setting piecedata", this.pieceData);
+    // console.log(" setting piecedata", this.pieceData);
   }
 
   static createElement(puzzleData) {
@@ -134,7 +134,6 @@ export class SingleMovable extends BaseMovable {
     const fgEl = document.createElement("div");
     fgEl.classList.add("puzzle-piece-fg");
     fgEl.style.backgroundImage = `url(${spritePath}`;
-    console.log("background", `url(${spritePath}`);
     fgEl.style.backgroundPositionX = spriteX === 0 ? 0 : "-" + spriteX + "px";
     fgEl.style.backgroundPositionY = spriteY === 0 ? 0 : "-" + spriteY + "px";
     fgEl.style.position = "absolute";
@@ -189,7 +188,6 @@ export class SingleMovable extends BaseMovable {
     }
 
     if (!GroupOperations.hasGroup({ type }) && !isSolved) {
-      console.log("adding single piece to stage", this);
       this.addToStage.call(this);
     }
 

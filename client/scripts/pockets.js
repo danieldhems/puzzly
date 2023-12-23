@@ -136,7 +136,6 @@ class Pockets {
   }
 
   onResize() {
-    console.log("resizing");
     this.setSizeAndPosition();
     this.currentOrientation = this.getOrientation();
   }

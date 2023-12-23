@@ -108,17 +108,21 @@ export default class GroupMovable extends BaseMovable {
     this.addToStage(this.element);
   }
 
+  isPuzzlePieceInThisGroup(element) {
+    return element.dataset.groupId === this.groupId;
+  }
+
   onMouseDown(event) {
     if (event.which === 1) {
       const element = Utils.getPuzzlePieceElementFromEvent(event);
       if (
         element &&
-        this.isPuzzlePiece(element) &&
         this.isGroupedPiece(element) &&
+        this.isPuzzlePieceInThisGroup(element) &&
         !Utils.isSolved(element)
       ) {
         this.element = element.parentNode;
-        console.log("group movable: element", this.element);
+        // console.log("group movable: element", this.element);
         this.active = true;
 
         super.onPickup.call(this, event);
