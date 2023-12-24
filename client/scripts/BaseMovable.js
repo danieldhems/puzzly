@@ -82,7 +82,7 @@ export default class BaseMovable {
     );
   }
 
-  isGroupedPiece(element) {
+  static isGroupedPiece(element) {
     return (
       element?.dataset?.groupId !== undefined &&
       element?.dataset?.groupId !== ""
@@ -192,29 +192,39 @@ export default class BaseMovable {
   onMouseUp(event) {
     if (this.connection) {
       console.log("connection", this.connection);
-      const { sourceElement, targetElement } = this.connection;
-      Events.notify(EVENT_TYPES.CONNECTION_MADE, this.connection);
 
       if (this.connection.isSolving) {
         this.groupOperations.addToGroup(this.element, 1111);
         this.markAsSolved();
       } else {
-        const sourceElementInstance =
-          this.puzzly.getPieceInstanceByElement(sourceElement);
-        const targetElementInstance =
-          this.puzzly.getPieceInstanceByElement(targetElement);
-
-        console.log("instances", sourceElementInstance, targetElementInstance);
-
-        Events.notify(EVENT_TYPES.NEW_GROUP, [
-          sourceElementInstance,
-          targetElementInstance,
-        ]);
+        this.handleConnection();
       }
     }
 
     Events.notify(EVENT_TYPES.MOVE_FINISHED, event);
     this.clean();
+  }
+
+  handleConnection() {
+    const { sourceElement, targetElement } = this.connection;
+
+    const sourceElementInstance =
+      this.puzzly.getMovableInstanceFromElement(sourceElement);
+    const targetElementInstance =
+      this.puzzly.getMovableInstanceFromElement(targetElement);
+
+    console.log("instances", sourceElementInstance, targetElementInstance);
+
+    GroupOperations.group.call(
+      this,
+      sourceElementInstance,
+      targetElementInstance
+    );
+
+    Events.notify(EVENT_TYPES.CONNECTION_MADE, [
+      sourceElementInstance,
+      targetElementInstance,
+    ]);
   }
 
   resetPosition() {

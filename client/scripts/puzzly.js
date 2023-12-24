@@ -10,6 +10,7 @@ import { DragAndSelectMovable } from "./DragAndSelectMovable.js";
 import { checkConnections } from "./checkConnections.js";
 import GroupOperations from "./GroupOperations.js";
 import PersistenceOperations from "./persistence.js";
+import BaseMovable from "./BaseMovable.js";
 
 /**
  * Puzzly
@@ -247,12 +248,13 @@ class Puzzly {
           // console.log("group data", group);
           const pieceInstances = this.pieceInstances.filter((pieceInstance) => {
             // console.log("piece data", pieceInstance.pieceData);
+            // console.log("ids", pieceInstance.pieceData.groupId, group._id);
             return pieceInstance.pieceData.groupId === group._id;
           });
-          // console.log("piece instances", pieceInstances);
+          // console.log("piece instances found for group", pieceInstances);
           const groupInstance = new GroupMovable({
             puzzleData: this,
-            groupId: group._id,
+            _id: group._id,
             pieces: pieceInstances,
             position: group.position,
           });
@@ -310,19 +312,17 @@ class Puzzly {
       this.onConnectionMade.bind(this)
     );
 
-    window.addEventListener(
-      EVENT_TYPES.NEW_GROUP,
-      this.initiateGroup.bind(this)
-    );
-
     Events.notify(EVENT_TYPES.PUZZLE_LOADED, this);
   }
 
-  getPieceInstanceByElement(element) {
-    return this.pieceInstances.find(
-      (instance) =>
-        instance.pieceData._id === element.dataset.pieceIdInPersistence
-    );
+  getMovableInstanceFromElement(element) {
+    let movables;
+    if (BaseMovable.isGroupedPiece(element)) {
+      movables = this.groupInstances;
+    } else {
+      movables = this.pieceInstances;
+    }
+    return movables.find((instance) => instance.isElementOwned(element));
   }
 
   initiatePiece(pieceData) {

@@ -31,7 +31,7 @@ export default class GroupOperations {
       //   `group-container-${arg}`
       // );
       return Array.from(document.querySelectorAll(`.group-container`)).find(
-        (container) => parseInt(container.dataset.groupId) === arg
+        (container) => container.dataset.groupId === arg
       );
     } else {
       return arg.parentNode;
@@ -54,11 +54,11 @@ export default class GroupOperations {
   }
 
   static getGroup(element) {
-    return element.dataset.groupId ? parseInt(element.dataset.groupId) : null;
+    return element.dataset.groupId ? element.dataset.groupId : null;
   }
 
   static getPiecesInGroup(group) {
-    // console.log("getPiecesInGroup()", group);
+    console.log("getPiecesInGroup()", group);
     const container = this.getGroupContainer(group);
     return container.querySelectorAll(".puzzle-piece");
   }
@@ -111,27 +111,39 @@ export default class GroupOperations {
     return candidates;
   }
 
-  static group(sourcePiece, targetPiece) {
-    const pieceA = Utils.getPieceFromElement(sourcePiece.element);
-    const pieceB = Utils.getPieceFromElement(targetPiece.element);
+  static group(sourceInstance, targetInstance) {
+    console.log("group", sourceInstance, targetInstance);
+    const pieceA = Utils.getPieceFromElement(sourceInstance.element);
+    const pieceB = Utils.getPieceFromElement(targetInstance.element);
 
-    if (!pieceA.group && !pieceB.group) {
+    console.log("source group", pieceA.groupId);
+    console.log("target group", pieceB.groupId);
+    if (!pieceA.groupId && !pieceB.groupId) {
       return GroupOperations.createGroup.call(
         this,
-        sourcePiece.element,
-        targetPiece.element
+        sourceInstance.element,
+        targetInstance.element
       );
-    } else if (pieceA.group > -1 && !pieceB.group) {
+    } else if (pieceA.groupId && !pieceB.groupId) {
       const alignGroupToElement = true;
-      return this.addToGroup(
-        targetPiece.element,
-        pieceA.group,
+      return GroupOperations.addToGroup.call(
+        this,
+        targetInstance,
+        pieceA.groupId,
         alignGroupToElement
       );
-    } else if (!pieceA.group && pieceB.group > -1) {
-      return this.addToGroup(sourcePiece.element, pieceB.group);
-    } else if (sourceElement && targetElement) {
-      return this.mergeGroups(sourcePiece.element, targetPiece.element);
+    } else if (!pieceA.groupId && pieceB.groupId) {
+      return GroupOperations.addToGroup.call(
+        this,
+        sourceInstance,
+        pieceB.groupId
+      );
+    } else if (sourceInstance.element && targetInstance.element) {
+      return GroupOperations.mergeGroups.call(
+        this,
+        sourceInstance,
+        targetInstance
+      );
     }
   }
 
@@ -246,11 +258,13 @@ export default class GroupOperations {
 
   // @param alignGroupToElement: Should the group align itself to the element being added to it?
   // default: false
-  addToGroup(element, groupId, alignGroupToElement = false) {
-    // console.log("addToGroup", element, groupId);
+  static addToGroup(sourceInstance, groupId, alignGroupToElement = false) {
+    console.log("addToGroup", groupId);
     // console.log(element)
     // console.log(element.dataset);
     // const piece = this.getPieceFromElement(element, ['solvedx', 'solvedy']);
+
+    const element = sourceInstance.element;
 
     const solvedX = parseInt(element.dataset.solvedx);
     const solvedY = parseInt(element.dataset.solvedy);
@@ -306,16 +320,16 @@ export default class GroupOperations {
     // Re-draw group with new piece
     const elementsInTargetGroup = GroupOperations.getPiecesInGroup(groupId);
     const allPieces = [...elementsInTargetGroup, ...followingEls];
-    const canvas = this.canvasOperations.getCanvas(groupId);
-    this.canvasOperations.drawPiecesOntoCanvas(canvas, allPieces);
+    const canvas = CanvasOperations.getCanvas(groupId);
+    CanvasOperations.drawPiecesOntoCanvas(canvas, allPieces, this.puzzleImage);
 
     // Update all connections
     Utils.updateConnections(allPieces);
 
-    return { groupId, groupContainer: targetGroupContainer };
+    sourceInstance.setGroupIdAcrossInstance(groupId);
   }
 
-  mergeGroups(elementA, elementB) {
+  static mergeGroups(elementA, elementB) {
     const pieceAGroup = GroupOperations.getGroup(elementA);
     const pieceBGroup = GroupOperations.getGroup(elementB);
     const piecesInGroupA = GroupOperations.getPiecesInGroup(pieceAGroup);

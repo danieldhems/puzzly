@@ -7,11 +7,10 @@ import { SingleMovable } from "./SingleMovable.js";
 import Utils from "./utils.js";
 
 export default class GroupMovable extends BaseMovable {
-  groupId = null;
+  _id = null;
   element = null;
   canvas = null;
 
-  groupId = null;
   piecesInGroup = [];
   elementsInGroup = [];
   puzzleId = null;
@@ -21,12 +20,7 @@ export default class GroupMovable extends BaseMovable {
     left: null,
   };
 
-  constructor({
-    puzzleData,
-    pieces,
-    groupId = undefined,
-    position = undefined,
-  }) {
+  constructor({ puzzleData, pieces, _id = undefined, position = undefined }) {
     super(puzzleData);
 
     // console.log("Group constructor", groupId, pieces);
@@ -39,10 +33,10 @@ export default class GroupMovable extends BaseMovable {
     this.width = puzzleData.boardWidth;
     this.height = puzzleData.boardHeight;
 
-    if (!groupId) {
+    if (!_id) {
       this.initiateGroup();
     } else {
-      this.restoreGroupFromPersistence(groupId, pieces, position);
+      this.restoreGroupFromPersistence(_id, pieces, position);
     }
 
     window.addEventListener("mousedown", this.onMouseDown.bind(this));
@@ -56,12 +50,18 @@ export default class GroupMovable extends BaseMovable {
     );
   }
 
-  set groupId(groupId) {
-    this.groupId = groupId;
+  set _id(id) {
+    this._id = id;
   }
 
-  get groupId() {
-    return this.groupId;
+  get _id() {
+    return this._id;
+  }
+
+  isElementOwned(element) {
+    return this.piecesInGroup.some(
+      (piece) => piece.pieceData.groupId === element.dataset.groupId
+    );
   }
 
   getPieceDataFromElements(elements) {
@@ -69,6 +69,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   initiateGroup() {
+    console.log("pieces in group", this.piecesInGroup);
     const { container, position } = GroupOperations.group.call(
       this,
       ...this.piecesInGroup
@@ -84,7 +85,7 @@ export default class GroupMovable extends BaseMovable {
 
   restoreGroupFromPersistence(groupId, pieces, position) {
     // console.log("restoring group", groupId, pieces, position);
-    this.groupId = groupId;
+    this._id = groupId;
     this.position = position;
     this.piecesInGroup = pieces;
 
@@ -109,7 +110,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   isPuzzlePieceInThisGroup(element) {
-    return element.dataset.groupId === this.groupId;
+    return element.dataset.groupId === this._id;
   }
 
   onMouseDown(event) {
@@ -117,7 +118,7 @@ export default class GroupMovable extends BaseMovable {
       const element = Utils.getPuzzlePieceElementFromEvent(event);
       if (
         element &&
-        this.isGroupedPiece(element) &&
+        BaseMovable.isGroupedPiece(element) &&
         this.isPuzzlePieceInThisGroup(element) &&
         !Utils.isSolved(element)
       ) {
@@ -179,26 +180,30 @@ export default class GroupMovable extends BaseMovable {
   isServerResponseForThisGroup(data) {
     if (!data) return;
     const pieceIds = this.getPieceIdsFromServerResponse(data.pieces);
-    return data._id === this.groupId || this.arePieceIdsInThisGroup(pieceIds);
+    return data._id === this._id || this.arePieceIdsInThisGroup(pieceIds);
   }
 
   setGroupIdAcrossInstance(id) {
     console.log("setGroupIdAcrossInstance", id);
-    this.groupId = id;
-    this.element.dataset.groupId = this.groupId;
-    this.canvas.dataset.groupId = this.groupId;
+    this._id = id;
+    this.element.dataset.groupId = this._id;
+    this.canvas.dataset.groupId = this._id;
     this.piecesInGroup.forEach((pieceInstance) => {
-      pieceInstance.setGroupIdAcrossInstance(this.groupId);
+      // We may not need to update ALL pieces with the group id.
+      // This depends on whether the group is new or being merged with another
+      if (pieceInstance.groupId !== id) {
+        pieceInstance.setGroupIdAcrossInstance(this._id);
+      }
     });
   }
 
   onSaveResponse(event) {
     const response = event.detail;
     if (this.isServerResponseForThisGroup(response.data)) {
-      if (!this.groupId) {
+      if (!this._id) {
         this.setGroupIdAcrossInstance(response.data._id);
         Events.notify(EVENT_TYPES.GROUP_CREATED, {
-          groupId: this.groupId,
+          groupId: this._id,
           elementIds: this.piecesInGroup.map((piece) =>
             parseInt(piece.pieceData.id)
           ),
@@ -219,7 +224,7 @@ export default class GroupMovable extends BaseMovable {
       left: this.element.offsetLeft,
     };
     return {
-      _id: this.groupId,
+      _id: this._id,
       pieces: this.getAllPieceData(),
       puzzleId: this.puzzleId,
       position: elementPosition,
@@ -235,7 +240,7 @@ export default class GroupMovable extends BaseMovable {
 
   save() {
     console.log("group save called", this.active);
-    if (this.active || !this.groupId) {
+    if (this.active || !this._id) {
       Events.notify(EVENT_TYPES.SAVE, this);
     }
   }

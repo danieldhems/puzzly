@@ -198,6 +198,10 @@ export class SingleMovable extends BaseMovable {
     this.setLastPosition(pageY, pageX);
   }
 
+  isElementOwned(element) {
+    return element.dataset.pieceIdInPersistence === this.pieceData._id;
+  }
+
   hasMouseDown(element) {
     return element.id === this.element.id;
   }
@@ -213,6 +217,11 @@ export class SingleMovable extends BaseMovable {
 
   isOutOfBounds(event) {
     return !this.isInsidePlayArea() && !this.isOverPockets(event);
+  }
+
+  setGroupId(id) {
+    this.pieceData.groupId = id;
+    this.element.dataset.groupId = id;
   }
 
   markAsSolved() {
@@ -292,7 +301,7 @@ export class SingleMovable extends BaseMovable {
       if (
         element &&
         this.isPuzzlePiece(element) &&
-        !this.isGroupedPiece(element) &&
+        !BaseMovable.isGroupedPiece(element) &&
         this.hasMouseDown(element)
       ) {
         this.active = true;
@@ -336,7 +345,7 @@ export class SingleMovable extends BaseMovable {
 
   onMoveFinished() {
     if (this.active) {
-      if (!this.isGroupedPiece(this.element)) {
+      if (!BaseMovable.isGroupedPiece(this.element)) {
         this.setLastPosition({
           x: this.element.offsetX,
           y: this.element.offsetY,

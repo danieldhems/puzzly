@@ -30,6 +30,7 @@ export default class CanvasOperations {
     el.style.top = 0;
     el.style.left = 0;
     el.style.pointerEvents = "none";
+
     return el;
   }
 
@@ -82,7 +83,15 @@ export default class CanvasOperations {
     this.height = config.boardHeight;
   }
 
-  getCanvas(id) {
-    return document.querySelector(`#group-canvas-${id}`);
+  static getCanvas(id) {
+    console.log("id", id);
+    const container = Array.from(
+      document.querySelectorAll(`.group-container`)
+    ).filter((el) => {
+      console.log(el.dataset);
+      return el.dataset?.groupId === id;
+    })[0];
+    console.log("found", container);
+    return container.querySelector("canvas");
   }
 }
