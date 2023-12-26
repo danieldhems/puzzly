@@ -325,6 +325,10 @@ class Puzzly {
     return movables.find((instance) => instance.isElementOwned(element));
   }
 
+  getGroupInstanceById(groupId) {
+    return this.groupInstances.find((group) => group._id === groupId);
+  }
+
   initiatePiece(pieceData) {
     const data = {
       ...pieceData,

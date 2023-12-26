@@ -219,11 +219,6 @@ export class SingleMovable extends BaseMovable {
     return !this.isInsidePlayArea() && !this.isOverPockets(event);
   }
 
-  setGroupId(id) {
-    this.pieceData.groupId = id;
-    this.element.dataset.groupId = id;
-  }
-
   markAsSolved() {
     this.element.dataset.isSolved = true;
   }
@@ -370,6 +365,11 @@ export class SingleMovable extends BaseMovable {
     if (elementIds.includes(parseInt(this.element.dataset.pieceId))) {
       this.setGroupIdAcrossInstance(groupId);
     }
+  }
+
+  addToGroup(groupInstance) {
+    groupInstance.addPieces([this]);
+    this.setGroupIdAcrossInstance(groupInstance.groupId);
   }
 
   save(force = false) {

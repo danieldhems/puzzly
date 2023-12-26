@@ -113,31 +113,29 @@ export default class GroupOperations {
 
   static group(sourceInstance, targetInstance) {
     console.log("group", sourceInstance, targetInstance);
-    const pieceA = Utils.getPieceFromElement(sourceInstance.element);
-    const pieceB = Utils.getPieceFromElement(targetInstance.element);
 
-    console.log("source group", pieceA.groupId);
-    console.log("target group", pieceB.groupId);
-    if (!pieceA.groupId && !pieceB.groupId) {
+    if (!sourceInstance.groupId && !targetInstance.groupId) {
       return GroupOperations.createGroup.call(
         this,
         sourceInstance.element,
         targetInstance.element
       );
-    } else if (pieceA.groupId && !pieceB.groupId) {
+    } else if (sourceInstance.groupId && !targetInstance.groupId) {
       const alignGroupToElement = true;
-      return GroupOperations.addToGroup.call(
-        this,
-        targetInstance,
-        pieceA.groupId,
-        alignGroupToElement
-      );
-    } else if (!pieceA.groupId && pieceB.groupId) {
-      return GroupOperations.addToGroup.call(
-        this,
-        sourceInstance,
-        pieceB.groupId
-      );
+      // return GroupOperations.addToGroup.call(
+      //   this,
+      //   targetInstance,
+      //   pieceA.groupId,
+      //   alignGroupToElement
+      // );
+      targetInstance.addToGroup(sourceInstance);
+    } else if (!sourceInstance.groupId && targetInstance.groupId) {
+      // return GroupOperations.addToGroup.call(
+      //   this,
+      //   sourceInstance,
+      //   pieceB.groupId
+      // );
+      sourceInstance.addToGroup(targetInstance);
     } else if (sourceInstance.element && targetInstance.element) {
       return GroupOperations.mergeGroups.call(
         this,
@@ -324,7 +322,7 @@ export default class GroupOperations {
     CanvasOperations.drawPiecesOntoCanvas(canvas, allPieces, this.puzzleImage);
 
     // Update all connections
-    Utils.updateConnections(allPieces);
+    GroupOperations.updateConnections(allPieces);
 
     sourceInstance.setGroupIdAcrossInstance(groupId);
   }

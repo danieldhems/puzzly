@@ -79,7 +79,7 @@ export default class GroupMovable extends BaseMovable {
     this.position = position;
     this.canvas = container.querySelector("canvas");
 
-    this.populate();
+    this.attachElements();
     this.render();
   }
 
@@ -98,14 +98,33 @@ export default class GroupMovable extends BaseMovable {
     this.render();
   }
 
-  populate() {
+  addPieces(pieceInstances) {
+    this.piecesInGroup.push(pieceInstances);
+    this.attachElements();
+  }
+
+  mergeIntoGroup(groupInstance) {
+    groupInstance.addPieces(this.piecesInGroup);
+    groupInstance.attachElements();
+    this.setGroupIdAcrossInstance(groupInstance.groupId);
+    this.removeCanvas();
+  }
+
+  removeCanvas() {
+    this.element.querySelector("canvas").remove();
+  }
+
+  attachElements() {
     Array.from(this.piecesInGroup).forEach((piece) => {
-      this.element.appendChild(piece.element);
+      if (!piece.element.parentNode !== this.element) {
+        this.element.appendChild(piece.element);
+      } else {
+        console.info(`Piece ${piece.pieceData.id} already attached to group`);
+      }
     });
   }
 
   render() {
-    this.populate(this.pieces);
     this.addToStage(this.element);
   }
 
