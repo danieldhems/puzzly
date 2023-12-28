@@ -209,9 +209,9 @@ export default class BaseMovable {
     const { sourceElement, targetElement } = this.connection;
 
     const sourceElementInstance =
-      this.puzzly.getMovableInstanceFromElement(sourceElement);
+      window.Puzzly.getMovableInstanceFromElement(sourceElement);
     const targetElementInstance =
-      this.puzzly.getMovableInstanceFromElement(targetElement);
+      window.Puzzly.getMovableInstanceFromElement(targetElement);
 
     console.log("instances", sourceElementInstance, targetElementInstance);
 
@@ -225,6 +225,13 @@ export default class BaseMovable {
       sourceElementInstance,
       targetElementInstance,
     ]);
+  }
+
+  getPosition() {
+    return {
+      top: this.element.offsetTop,
+      left: this.element.offsetLeft,
+    };
   }
 
   resetPosition() {

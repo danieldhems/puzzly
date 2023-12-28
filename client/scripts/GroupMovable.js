@@ -70,7 +70,7 @@ export default class GroupMovable extends BaseMovable {
 
   initiateGroup() {
     console.log("pieces in group", this.piecesInGroup);
-    const { container, position } = GroupOperations.group.call(
+    const { container, position } = GroupOperations.createGroup.call(
       this,
       ...this.piecesInGroup
     );
@@ -84,7 +84,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   restoreGroupFromPersistence(groupId, pieces, position) {
-    // console.log("restoring group", groupId, pieces, position);
+    console.log("restoring group", groupId, pieces, position);
     this._id = groupId;
     this.position = position;
     this.piecesInGroup = pieces;
@@ -95,16 +95,49 @@ export default class GroupMovable extends BaseMovable {
     this.element.style.width = this.width + "px";
     this.element.style.height = this.height + "px";
 
+    this.attachElements();
     this.render();
   }
 
-  addPieces(pieceInstances) {
-    this.piecesInGroup.push(pieceInstances);
+  add(movableInstance, options) {
+    console.log(
+      "movableInstance",
+      movableInstance,
+      movableInstance.getPosition()
+    );
+    const pieces = movableInstance.piecesInGroup
+      ? movableInstance.piecesInGroup
+      : movableInstance;
+    this.piecesInGroup.push(pieces);
+    if (options?.alignToTarget) {
+      this.alignTo(movableInstance);
+    }
     this.attachElements();
+    this.save(true);
+  }
+
+  alignTo(movableInstance) {
+    const position = {};
+
+    if (movableInstance instanceof SingleMovable) {
+      console.log("aligning to movable instance", movableInstance);
+      console.log("element position", movableInstance.getPosition());
+      const { top, left } = movableInstance.getPosition();
+      const { solvedX, solvedY } = movableInstance.pieceData;
+      const { top: thisTop, left: thisLeft } = this.getPosition();
+
+      console.log(top, solvedY, left, solvedX);
+      position.top = top - solvedY;
+      position.left = left - solvedX;
+    } else if (movableInstance instanceof GroupMovable) {
+    }
+
+    this.element.style.top = position.top + "px";
+    this.element.style.left = position.left + "px";
   }
 
   mergeIntoGroup(groupInstance) {
-    groupInstance.addPieces(this.piecesInGroup);
+    groupInstance.add(this);
     groupInstance.attachElements();
     this.setGroupIdAcrossInstance(groupInstance.groupId);
     this.removeCanvas();
@@ -115,7 +148,9 @@ export default class GroupMovable extends BaseMovable {
   }
 
   attachElements() {
+    console.log("attachElements", this.piecesInGroup);
     Array.from(this.piecesInGroup).forEach((piece) => {
+      console.log("attaching piece", piece);
       if (!piece.element.parentNode !== this.element) {
         this.element.appendChild(piece.element);
       } else {
@@ -257,9 +292,9 @@ export default class GroupMovable extends BaseMovable {
     };
   }
 
-  save() {
+  save(force = false) {
     console.log("group save called", this.active);
-    if (this.active || !this._id) {
+    if (force || this.active || !this._id) {
       Events.notify(EVENT_TYPES.SAVE, this);
     }
   }

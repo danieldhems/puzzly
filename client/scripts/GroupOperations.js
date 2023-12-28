@@ -1,4 +1,6 @@
 import CanvasOperations from "./canvasOperations.js";
+import GroupMovable from "./GroupMovable.js";
+import { SingleMovable } from "./SingleMovable.js";
 import Utils from "./utils.js";
 
 export default class GroupOperations {
@@ -112,31 +114,32 @@ export default class GroupOperations {
   }
 
   static group(sourceInstance, targetInstance) {
-    console.log("group", sourceInstance, targetInstance);
+    console.log("group", sourceInstance, targetInstance, this);
 
-    if (!sourceInstance.groupId && !targetInstance.groupId) {
-      return GroupOperations.createGroup.call(
-        this,
-        sourceInstance.element,
-        targetInstance.element
+    if (
+      sourceInstance instanceof SingleMovable &&
+      targetInstance instanceof SingleMovable
+    ) {
+      window.Puzzly.groupInstances.push(
+        new GroupMovable({
+          puzzleData: this,
+          pieces: [sourceInstance, targetInstance],
+        })
       );
-    } else if (sourceInstance.groupId && !targetInstance.groupId) {
-      const alignGroupToElement = true;
-      // return GroupOperations.addToGroup.call(
-      //   this,
-      //   targetInstance,
-      //   pieceA.groupId,
-      //   alignGroupToElement
-      // );
+    } else if (
+      sourceInstance instanceof GroupMovable &&
+      targetInstance instanceof SingleMovable
+    ) {
       targetInstance.addToGroup(sourceInstance);
-    } else if (!sourceInstance.groupId && targetInstance.groupId) {
-      // return GroupOperations.addToGroup.call(
-      //   this,
-      //   sourceInstance,
-      //   pieceB.groupId
-      // );
+    } else if (
+      sourceInstance instanceof SingleMovable &&
+      targetInstance instanceof GroupMovable
+    ) {
       sourceInstance.addToGroup(targetInstance);
-    } else if (sourceInstance.element && targetInstance.element) {
+    } else if (
+      sourceInstance instanceof GroupMovable &&
+      targetInstance instanceof GroupMovable
+    ) {
       return GroupOperations.mergeGroups.call(
         this,
         sourceInstance,
@@ -163,52 +166,55 @@ export default class GroupOperations {
     const newCanvas = CanvasOperations.makeCanvas.call(this);
 
     const leftPos =
-      targetElement.offsetLeft - parseInt(targetElement.dataset.solvedx);
+      targetElement.element.offsetLeft -
+      parseInt(targetElement.pieceData.solvedX);
     const topPos =
-      targetElement.offsetTop - parseInt(targetElement.dataset.solvedy);
+      targetElement.element.offsetTop -
+      parseInt(targetElement.pieceData.solvedY);
 
-    sourceElement.style.left = Utils.getPxString(
-      parseInt(sourceElement.dataset.solvedx)
+    sourceElement.element.style.left = Utils.getPxString(
+      parseInt(sourceElement.pieceData.solvedX)
     );
-    sourceElement.style.top = Utils.getPxString(
-      parseInt(sourceElement.dataset.solvedy)
+    sourceElement.element.style.top = Utils.getPxString(
+      parseInt(sourceElement.pieceData.solvedY)
     );
-    targetElement.style.left = Utils.getPxString(
-      parseInt(targetElement.dataset.solvedx)
+    targetElement.element.style.left = Utils.getPxString(
+      parseInt(targetElement.pieceData.solvedX)
     );
-    targetElement.style.top = Utils.getPxString(
-      parseInt(targetElement.dataset.solvedy)
+    targetElement.element.style.top = Utils.getPxString(
+      parseInt(targetElement.pieceData.solvedY)
     );
 
-    sourceElement.classList.add("grouped");
-    targetElement.classList.add("grouped");
+    sourceElement.element.classList.add("grouped");
+    targetElement.element.classList.add("grouped");
 
     CanvasOperations.drawPiecesOntoCanvas(
       newCanvas,
-      [sourceElement, targetElement],
+      [sourceElement.element, targetElement.element],
       this.puzzleImage
     );
 
     // TODO: Refactor Util methods to expect type array only, not piece object containing it.
     // Not sure if this logic is entirely applicable...
-    const elementAIsSolved = Utils.isSolved(sourceElement);
-    const elementBIsSolved = Utils.isSolved(targetElement);
+    const elementAIsSolved = Utils.isSolved(sourceElement.element);
+    const elementBIsSolved = Utils.isSolved(targetElement.element);
 
     if (elementAIsSolved || elementBIsSolved) {
-      this.setElementAttribute(sourceElement, "data-is-solved", true);
-      this.setElementAttribute(targetElement, "data-is-solved", true);
+      this.setElementAttribute(sourceElement.element, "data-is-solved", true);
+      this.setElementAttribute(targetElement.element, "data-is-solved", true);
       this.setElementAttribute(container, "data-is-solved", true);
     }
 
-    GroupOperations.updateConnections([sourceElement, targetElement]);
+    GroupOperations.updateConnections([
+      sourceElement.element,
+      targetElement.element,
+    ]);
     GroupOperations.setGroupContainerPosition(container, {
       top: topPos,
       left: leftPos,
     });
 
     container.appendChild(newCanvas);
-    container.append(sourceElement);
-    container.appendChild(targetElement);
 
     return { container, position: { top: topPos, left: leftPos } };
   }

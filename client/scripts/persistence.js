@@ -236,7 +236,7 @@ export default class PersistenceOperations {
       return;
     }
 
-    // console.log("payload for saving", payload, endpoint);
+    console.log("payload for saving", payload, endpoint);
 
     if (useLocalStorage) {
     } else {

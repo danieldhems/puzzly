@@ -10,13 +10,20 @@ export class SingleMovable extends BaseMovable {
   pieceData = null;
   active = false;
   lastSaveState = null;
+  puzzleId = null;
 
   constructor({ puzzleData, pieceData }) {
     super(puzzleData);
-    // console.log("piece data", pieceData);
+    console.log("SingleMovable constructor:", pieceData);
+
+    this.puzzleId = puzzleData.puzzleId;
 
     this.piecesPerSideHorizontal = puzzleData.piecesPerSideHorizontal;
     this.shadowOffset = puzzleData.shadowOffset;
+
+    if (pieceData.groupId) {
+      this.groupId = pieceData.groupId;
+    }
 
     this.setPiece(pieceData);
     this.element = SingleMovable.createElement.call(this, puzzleData);
@@ -316,12 +323,6 @@ export class SingleMovable extends BaseMovable {
         this.connection = checkConnections.call(this, this.element);
         this.elementsToSaveIfNoConnection = [this.element];
       }
-
-      this.setPiece({
-        ...this.pieceData,
-        pageX: this.element.offsetLeft,
-        pageY: this.element.offsetTop,
-      });
     }
 
     super.onMouseUp(event);
@@ -355,9 +356,11 @@ export class SingleMovable extends BaseMovable {
   }
 
   setGroupIdAcrossInstance(groupId) {
+    console.log("setGroupIdAcrossInstance", groupId);
     this.groupId = groupId;
     this.element.dataset.groupId = groupId;
     this.pieceData.groupId = groupId;
+    this.groupId = groupId;
   }
 
   onGroupCreated(event) {
@@ -367,9 +370,14 @@ export class SingleMovable extends BaseMovable {
     }
   }
 
+  setPositionAsGrouped() {
+    this.element.style.top = this.pieceData.solvedY + "px";
+    this.element.style.left = this.pieceData.solvedX + "px";
+  }
+
   addToGroup(groupInstance) {
-    groupInstance.addPieces([this]);
-    this.setGroupIdAcrossInstance(groupInstance.groupId);
+    groupInstance.add(this);
+    this.setGroupIdAcrossInstance(groupInstance._id);
   }
 
   save(force = false) {

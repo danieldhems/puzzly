@@ -102,7 +102,10 @@ var api = {
 
         let groups = db.collection(groupsCollectionName);
         let puzzles = db.collection(puzzlesCollectionName);
+        const piecesCollection = db.collection(piecesCollectionName);
         let query, update;
+
+        const pieceUpdateResults = [];
 
         try {
           const groupId = new ObjectID(data._id);
@@ -110,6 +113,7 @@ var api = {
           console.log("updating group", data);
           update = {
             $set: {
+              pieces: data.pieces,
               position: data.position,
               isSolved: data.isSolved,
             },
@@ -120,6 +124,15 @@ var api = {
           try {
             const result = await groups.findOneAndUpdate(query, update);
             console.log("group update result", result.ops);
+
+            for (let i = 0, l = data.pieces.length; i < l; i++) {
+              pieceUpdateResults.push(
+                await piecesCollection.findOneAndUpdate(
+                  { _id: new ObjectID(data.pieces[i]._id) },
+                  { $set: { groupId: data._id } }
+                )
+              );
+            }
           } catch (error) {
             console.error("Failed to update group:", error);
           }
@@ -138,7 +151,15 @@ var api = {
 
           await puzzles.updateOne(puzzleUpdateQuery, puzzleUpdateOp);
 
-          res.status(200).send({});
+          const response = {
+            status: "success",
+            data: {
+              pieces: pieceUpdateResults.map((result) => result.value),
+              _id: data._id,
+            },
+          };
+
+          res.status(200).send(response);
         } catch (e) {
           console.log("group update error", e);
           res.status(500).send(e);

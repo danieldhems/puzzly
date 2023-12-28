@@ -40,6 +40,8 @@ class Puzzly {
       drawSquares: false,
     });
 
+    window.Puzzly = this;
+
     this.pieces = config.pieces;
     this.connectorSize = config.connectorSize;
 
