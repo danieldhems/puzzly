@@ -28,7 +28,7 @@ export default class PersistenceOperations {
     this.LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY = `Puzzly_ID${this.localStorageStringReplaceKey}_lastSave`;
 
     window.addEventListener(EVENT_TYPES.SAVE, (event) => {
-      this.save.call(this, event.detail);
+      PersistenceOperations.save.call(this, event.detail);
     });
   }
 
@@ -216,7 +216,7 @@ export default class PersistenceOperations {
     }
   }
 
-  async save(data) {
+  static async save(data) {
     console.log("saving", data);
     const useLocalStorage = false;
 
@@ -227,18 +227,16 @@ export default class PersistenceOperations {
       requestMethod = data._id ? "PUT" : "POST";
       endpoint = PIECES_ENDPOINT;
     } else if (data.instanceType === "GroupMovable") {
-      requestMethod = data._id ? "PUT" : "POST";
+      requestMethod = data.remove ? "DELETE" : data._id ? "PUT" : "POST";
       endpoint = GROUPS_ENDPOINT;
     } else {
       return;
     }
 
-    // console.log("payload for saving", payload, endpoint);
-
     if (useLocalStorage) {
     } else {
       // const isFirstSave = !payload[0]?._id;
-      fetch(endpoint, {
+      return fetch(endpoint, {
         method: requestMethod,
         headers: {
           "Content-Type": "Application/json",

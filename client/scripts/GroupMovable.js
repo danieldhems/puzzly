@@ -6,6 +6,7 @@ import Utils from "./utils.js";
 import BaseMovable from "./BaseMovable.js";
 import SingleMovable from "./SingleMovable.js";
 import CanvasOperations from "./canvasOperations.js";
+import PersistenceOperations from "./persistence.js";
 
 export default class GroupMovable extends BaseMovable {
   // Fucking awful - must solve "can't access before initialisation" error so we can interrogate instanceof instead of doing this...
@@ -106,24 +107,18 @@ export default class GroupMovable extends BaseMovable {
     this.render();
   }
 
-  joinTo(movableInstance) {
-    console.log(
-      "GroupMovable joining to",
-      movableInstance,
-      movableInstance.getPosition()
-    );
+  async joinTo(movableInstance) {
+    console.log("GroupMovable joining to", movableInstance);
 
-    if (movableInstance instanceof SingleMovable) {
+    if (movableInstance.instanceType === "SingleMovable") {
       this.alignWith(movableInstance);
       this.addPieces([movableInstance]);
       movableInstance.setPositionAsGrouped();
       movableInstance.setGroupIdAcrossInstance(this._id);
       this.save(true);
-    } else if (movableInstance instanceof GroupMovable) {
-      movableInstance.addPieces(this.piecesInGroup);
-      this.setGroupIdAcrossInstance(movableInstance._id);
-      this.removeCanvas();
-      movableInstance.save();
+    } else if (movableInstance.instanceType === "GroupMovable") {
+      await movableInstance.addPieces(this.piecesInGroup);
+      this.destroy();
     }
   }
 
@@ -151,14 +146,16 @@ export default class GroupMovable extends BaseMovable {
     this.element.style.left = position.left + "px";
   }
 
-  addPieces(pieceInstances) {
+  async addPieces(pieceInstances) {
+    console.log("addPieces", pieceInstances);
     this.piecesInGroup.push(...pieceInstances);
+    console.log("pieces in group after add", this.piecesInGroup);
     this.attachElements();
     this.redrawCanvas();
+    await this.save(true);
   }
 
   redrawCanvas() {
-    console.log("redrawCanvas", this);
     const canvas = this.canvas;
     CanvasOperations.drawPiecesOntoCanvas(
       canvas,
@@ -249,9 +246,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   arePieceIdsInThisGroup(pieceIds) {
-    console.log("arePieceIdsInThisGroup", pieceIds);
     return this.piecesInGroup.every((piece) => {
-      console.log("piece instance", piece);
       return pieceIds.includes(piece.pieceData.id);
     });
   }
@@ -263,7 +258,6 @@ export default class GroupMovable extends BaseMovable {
   }
 
   setGroupIdAcrossInstance(id) {
-    console.log("setGroupIdAcrossInstance", id);
     this._id = id;
     this.element.dataset.groupId = this._id;
 
@@ -298,6 +292,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   getAllPieceData() {
+    console.log("this group", this);
     return this.piecesInGroup.map((piece) => piece.getDataForSave());
   }
 
@@ -322,11 +317,35 @@ export default class GroupMovable extends BaseMovable {
     };
   }
 
-  save(force = false) {
+  async save(force = false) {
     // console.log("group save called", this);
     if (force || this.active || !this._id) {
-      Events.notify(EVENT_TYPES.SAVE, this.getDataForSave());
+      return await PersistenceOperations.save(this.getDataForSave());
     }
+  }
+
+  onSaveSuccess(event) {
+    const data = event.detail;
+  }
+
+  delete() {
+    Events.notify(EVENT_TYPES.SAVE, {
+      _id: this._id,
+      instanceType: this.instanceType,
+      remove: true,
+    });
+  }
+
+  detachElements() {
+    this.canvas.remove();
+    this.element.remove();
+  }
+
+  destroy() {
+    console.log("GroupMovable destroy", this);
+    this.detachElements();
+    window.Puzzly.removeGroupInstance(this);
+    this.delete();
   }
 
   clean() {

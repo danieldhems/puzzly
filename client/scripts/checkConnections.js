@@ -107,8 +107,8 @@ export function checkConnections(element) {
           oppositeConnection
         );
 
-      console.log("source element", element);
-      console.log("target element", targetElement);
+      // console.log("source element", element);
+      // console.log("target element", targetElement);
 
       console.log(
         `checking ${key}`,

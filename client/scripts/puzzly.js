@@ -331,6 +331,12 @@ class Puzzly {
     return this.groupInstances.find((group) => group._id === groupId);
   }
 
+  removeGroupInstance(groupInstance) {
+    this.groupInstances = this.groupInstances.filter(
+      (instance) => instance._id !== groupInstance._id
+    );
+  }
+
   initiatePiece(pieceData) {
     const data = {
       ...pieceData,

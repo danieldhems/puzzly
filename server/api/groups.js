@@ -168,10 +168,25 @@ var api = {
     });
   },
   destroy: function (req, res) {
-    var id = req.params.id;
-    db.query("DROP * FROM `agents` WHERE `id` = ?", [id], function (err, rows) {
-      if (err) throw new Error(err);
-      console.log(rows);
+    client.connect().then(async (client, err) => {
+      assert.strictEqual(err, undefined);
+      db = client.db(dbName);
+      const groupsCollection = db.collection(groupsCollectionName);
+      const data = req.body;
+
+      const groupId = new ObjectID(data._id);
+      const query = { _id: groupId };
+
+      try {
+        const result = await groupsCollection.deleteOne(query);
+        console.log("Successfully delete group with ID", groupId);
+        console.log(result.ops);
+
+        res.status(200).send({});
+      } catch (error) {
+        console.log("Failed to delete group with ID", groupId);
+        console.log(error);
+      }
     });
   },
 };
@@ -180,5 +195,6 @@ var api = {
 router.get("/:puzzleId", api.read);
 router.post("/", api.create);
 router.put("/", api.update);
+router.delete("/", api.destroy);
 
 module.exports.router = router;

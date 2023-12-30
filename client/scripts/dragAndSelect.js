@@ -341,7 +341,6 @@ class DragAndSelect {
     }
 
     if (this.drawBoxActive) {
-      console.log("here");
       // Selection box has been drawn
       this.selectedPieces = this.getCollidingPieces();
 
