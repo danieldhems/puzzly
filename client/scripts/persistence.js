@@ -5,7 +5,7 @@ import {
 } from "./constants.js";
 import Events from "./events.js";
 import GroupMovable from "./GroupMovable.js";
-import { SingleMovable } from "./SingleMovable.js";
+import SingleMovable from "./SingleMovable.js";
 import Utils from "./utils.js";
 
 const PIECES_ENDPOINT = "/api/pieces";
@@ -220,23 +220,20 @@ export default class PersistenceOperations {
     console.log("saving", data);
     const useLocalStorage = false;
 
-    let payload;
     let endpoint;
     let requestMethod;
 
-    if (data instanceof SingleMovable) {
-      payload = data.pieceData;
-      requestMethod = data.pieceData._id ? "PUT" : "POST";
+    if (data.instanceType === "SingleMovable") {
+      requestMethod = data._id ? "PUT" : "POST";
       endpoint = PIECES_ENDPOINT;
-    } else if (data instanceof GroupMovable) {
-      payload = data.getDataForSave();
-      requestMethod = payload._id ? "PUT" : "POST";
+    } else if (data.instanceType === "GroupMovable") {
+      requestMethod = data._id ? "PUT" : "POST";
       endpoint = GROUPS_ENDPOINT;
     } else {
       return;
     }
 
-    console.log("payload for saving", payload, endpoint);
+    // console.log("payload for saving", payload, endpoint);
 
     if (useLocalStorage) {
     } else {
@@ -246,7 +243,7 @@ export default class PersistenceOperations {
         headers: {
           "Content-Type": "Application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(data),
       })
         .then((response) => response.json())
         .then((response) => {

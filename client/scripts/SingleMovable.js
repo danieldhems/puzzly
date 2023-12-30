@@ -5,16 +5,20 @@ import Events from "./events.js";
 import GroupOperations from "./GroupOperations.js";
 import Utils from "./utils.js";
 
-export class SingleMovable extends BaseMovable {
+export default class SingleMovable extends BaseMovable {
+  // Fucking awful - must solve "can't access before initialisation" error so we can interrogate instanceof instead of doing this...
+  instanceType = "SingleMovable";
+
   element = null;
   pieceData = null;
   active = false;
   lastSaveState = null;
   puzzleId = null;
+  groupId = null;
 
   constructor({ puzzleData, pieceData }) {
     super(puzzleData);
-    console.log("SingleMovable constructor:", pieceData);
+    // console.log("SingleMovable constructor:", pieceData);
 
     this.puzzleId = puzzleData.puzzleId;
 
@@ -375,14 +379,31 @@ export class SingleMovable extends BaseMovable {
     this.element.style.left = this.pieceData.solvedX + "px";
   }
 
-  addToGroup(groupInstance) {
-    groupInstance.add(this);
+  joinTo(groupInstance) {
+    // console.log("SingleMovable joining to", groupInstance);
     this.setGroupIdAcrossInstance(groupInstance._id);
+    groupInstance.addPieces([this]);
+    groupInstance.redrawCanvas();
+    this.setPositionAsGrouped();
+    groupInstance.save(true);
+  }
+
+  getDataForSave() {
+    return {
+      pageX: this.element.offsetLeft,
+      pageY: this.element.offsetTop,
+      isSolved: this.element.isSolved,
+      groupId: this.pieceData.groupId,
+      puzzleId: this.puzzleId,
+      _id: this.pieceData._id,
+      instanceType: this.instanceType,
+    };
   }
 
   save(force = false) {
+    // console.log("Save single piece", this.getDataForSave());
     if (force || (this.active && !this.connection)) {
-      Events.notify(EVENT_TYPES.SAVE, this);
+      Events.notify(EVENT_TYPES.SAVE, this.getDataForSave());
     }
   }
 }

@@ -1,16 +1,16 @@
+import BaseMovable from "./BaseMovable.js";
+import SingleMovable from "./SingleMovable.js";
+import GroupMovable from "./GroupMovable.js";
 import Pockets from "./pockets.js";
 import DragAndSelect from "./dragAndSelect.js";
 import Utils from "./utils.js";
 import Events from "./events.js";
 import { ELEMENT_IDS, EVENT_TYPES, SIDES } from "./constants.js";
-import { SingleMovable } from "./SingleMovable.js";
-import GroupMovable from "./GroupMovable.js";
 import { PocketMovable } from "./PocketMovable.js";
 import { DragAndSelectMovable } from "./DragAndSelectMovable.js";
 import { checkConnections } from "./checkConnections.js";
 import GroupOperations from "./GroupOperations.js";
 import PersistenceOperations from "./persistence.js";
-import BaseMovable from "./BaseMovable.js";
 
 /**
  * Puzzly
@@ -247,11 +247,11 @@ class Puzzly {
       if (Object.keys(this.groups).length) {
         for (let g in this.groups) {
           const group = this.groups[g];
-          // console.log("group data", group);
+          console.log("group data", group);
           const pieceInstances = this.pieceInstances.filter((pieceInstance) => {
-            // console.log("piece data", pieceInstance.pieceData);
-            // console.log("ids", pieceInstance.pieceData.groupId, group._id);
-            return pieceInstance.pieceData.groupId === group._id;
+            console.log("piece instance data", pieceInstance);
+            console.log("ids", pieceInstance.groupId, group._id);
+            return pieceInstance.groupId === group._id;
           });
           // console.log("piece instances found for group", pieceInstances);
           const groupInstance = new GroupMovable({
@@ -354,9 +354,22 @@ class Puzzly {
   }
 
   onConnectionMade(event) {
-    const connection = event.detail;
+    const [sourceInstance, targetInstance] = event.detail;
+
     if (this.soundsEnabled) {
       this.clickSound.play();
+    }
+
+    if (
+      sourceInstance instanceof SingleMovable &&
+      targetInstance instanceof SingleMovable
+    ) {
+      this.groupInstances.push(
+        new GroupMovable({
+          puzzleData: this,
+          pieces: [sourceInstance, targetInstance],
+        })
+      );
     }
   }
 

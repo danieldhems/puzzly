@@ -32,6 +32,7 @@ export default class BaseMovable {
 
   constructor(puzzly) {
     this.puzzly = puzzly;
+    // console.log("puzzly", puzzly);
     this.puzzleImage = puzzly.puzzleImage;
 
     this.piecesContainer = document.querySelector(
@@ -208,23 +209,42 @@ export default class BaseMovable {
   handleConnection() {
     const { sourceElement, targetElement } = this.connection;
 
-    const sourceElementInstance =
+    const sourceInstance =
       window.Puzzly.getMovableInstanceFromElement(sourceElement);
-    const targetElementInstance =
+    const targetInstance =
       window.Puzzly.getMovableInstanceFromElement(targetElement);
 
-    console.log("instances", sourceElementInstance, targetElementInstance);
+    console.log("instances", sourceInstance, targetInstance);
 
-    GroupOperations.group.call(
-      this,
-      sourceElementInstance,
-      targetElementInstance
-    );
+    if (
+      this.isConnectionBetweenSingleAndGroup(sourceInstance, targetInstance) ||
+      this.isConnectionBetweenTwoGroups(sourceInstance, targetInstance)
+    ) {
+      sourceInstance.joinTo(targetInstance);
+    }
 
     Events.notify(EVENT_TYPES.CONNECTION_MADE, [
-      sourceElementInstance,
-      targetElementInstance,
+      sourceInstance,
+      targetInstance,
     ]);
+  }
+
+  isConnectionBetweenSingleAndGroup(sourceInstance, targetInstance) {
+    return (
+      (sourceInstance.instanceType === "SingleMovable" &&
+        targetInstance.instanceType === "GroupMovable") ||
+      (targetInstance.instanceType === "SingleMovable" &&
+        sourceInstance.instanceType === "GroupMovable")
+    );
+  }
+
+  isConnectionBetweenTwoGroups(sourceInstance, targetInstance) {
+    return (
+      (sourceInstance.instanceType === "GroupMovable" &&
+        targetInstance.instanceType === "GroupMovable") ||
+      (targetInstance.instanceType === "GroupMovable" &&
+        sourceInstance.instanceType === "GroupMovable")
+    );
   }
 
   getPosition() {

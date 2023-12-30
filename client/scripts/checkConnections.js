@@ -107,11 +107,14 @@ export function checkConnections(element) {
           oppositeConnection
         );
 
-      // console.log(
-      //   `checking ${key}`,
-      //   thisPieceConnectorBoundingBox,
-      //   targetPieceConnectorBoundingBox
-      // );
+      console.log("source element", element);
+      console.log("target element", targetElement);
+
+      console.log(
+        `checking ${key}`,
+        thisPieceConnectorBoundingBox,
+        targetPieceConnectorBoundingBox
+      );
 
       // Utils.drawBox(thisPieceConnectorBoundingBox);
       // Utils.drawBox(targetPieceConnectorBoundingBox, null, "blue");

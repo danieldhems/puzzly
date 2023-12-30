@@ -35,10 +35,11 @@ export default class CanvasOperations {
   }
 
   static drawPiecesOntoCanvas(canvas, pieces, puzzleImage) {
+    console.log("drawPiecesOntoCanvas", canvas, pieces);
     const ctx = canvas.getContext("2d");
     // ctx.imageSmoothingEnabled = false;
     pieces.forEach((p) => {
-      const data = p.dataset;
+      const data = p.element.dataset;
       ctx.drawImage(
         puzzleImage,
         data.spriteshadowx,
@@ -52,15 +53,14 @@ export default class CanvasOperations {
       );
 
       if (p instanceof HTMLDivElement) {
-        p.childNodes.forEach((n) => (n.style.visibility = "hidden"));
+        p.element.childNodes.forEach((n) => (n.style.visibility = "hidden"));
       } else {
-        const el = Utils.getElementByPieceId(p.id);
-        el.childNodes.forEach((n) => (n.style.visibility = "hidden"));
+        p.element.childNodes.forEach((n) => (n.style.visibility = "hidden"));
       }
     });
 
     pieces.forEach((p) => {
-      const data = p.dataset;
+      const data = p.element.dataset;
       ctx.drawImage(
         puzzleImage,
         data.spritex,

@@ -1,6 +1,4 @@
 import CanvasOperations from "./canvasOperations.js";
-import GroupMovable from "./GroupMovable.js";
-import { SingleMovable } from "./SingleMovable.js";
 import Utils from "./utils.js";
 
 export default class GroupOperations {
@@ -60,7 +58,6 @@ export default class GroupOperations {
   }
 
   static getPiecesInGroup(group) {
-    console.log("getPiecesInGroup()", group);
     const container = this.getGroupContainer(group);
     return container.querySelectorAll(".puzzle-piece");
   }
@@ -113,41 +110,6 @@ export default class GroupOperations {
     return candidates;
   }
 
-  static group(sourceInstance, targetInstance) {
-    console.log("group", sourceInstance, targetInstance, this);
-
-    if (
-      sourceInstance instanceof SingleMovable &&
-      targetInstance instanceof SingleMovable
-    ) {
-      window.Puzzly.groupInstances.push(
-        new GroupMovable({
-          puzzleData: this,
-          pieces: [sourceInstance, targetInstance],
-        })
-      );
-    } else if (
-      sourceInstance instanceof GroupMovable &&
-      targetInstance instanceof SingleMovable
-    ) {
-      targetInstance.addToGroup(sourceInstance);
-    } else if (
-      sourceInstance instanceof SingleMovable &&
-      targetInstance instanceof GroupMovable
-    ) {
-      sourceInstance.addToGroup(targetInstance);
-    } else if (
-      sourceInstance instanceof GroupMovable &&
-      targetInstance instanceof GroupMovable
-    ) {
-      return GroupOperations.mergeGroups.call(
-        this,
-        sourceInstance,
-        targetInstance
-      );
-    }
-  }
-
   static generateGroupId() {
     return new Date().getTime();
   }
@@ -190,7 +152,7 @@ export default class GroupOperations {
 
     CanvasOperations.drawPiecesOntoCanvas(
       newCanvas,
-      [sourceElement.element, targetElement.element],
+      [sourceElement, targetElement],
       this.puzzleImage
     );
 
@@ -227,7 +189,8 @@ export default class GroupOperations {
   }
 
   // Restore the elements for an existing group
-  static restoreGroup(groupId, puzzleImage) {
+  static restoreGroup(groupId, pieces) {
+    console.log("restoreGroup", this, pieces);
     const container = GroupOperations.createGroupContainer.call(this);
     const canvas = CanvasOperations.makeCanvas.call(this);
     container.prepend(canvas);
@@ -236,11 +199,7 @@ export default class GroupOperations {
     elementsForGroup.forEach((element) => container.appendChild(element));
 
     GroupOperations.setIdForGroupElements(container, groupId);
-    CanvasOperations.drawPiecesOntoCanvas(
-      canvas,
-      elementsForGroup,
-      puzzleImage
-    );
+    CanvasOperations.drawPiecesOntoCanvas(canvas, pieces, this.puzzleImage);
 
     return container;
   }
