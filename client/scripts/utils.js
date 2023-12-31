@@ -348,7 +348,7 @@ const Utils = {
   },
 
   getCornerBoundingBox(key) {
-    const box = this.solvingArea.getBoundingClientRect();
+    const box = this.solvedContainer.getBoundingClientRect();
     switch (key) {
       case "top-right":
         return {
@@ -408,7 +408,7 @@ const Utils = {
   },
 
   getTopLeftCornerBoundingBox() {
-    const box = this.solvingArea.getBoundingClientRect();
+    const box = this.solvedContainer.getBoundingClientRect();
     return {
       top: box.top,
       right: box.left + this.connectorTolerance,
@@ -418,7 +418,7 @@ const Utils = {
   },
 
   getTopRightCornerBoundingBox() {
-    const box = this.solvingArea.getBoundingClientRect();
+    const box = this.solvedContainer.getBoundingClientRect();
     return {
       top: box.top,
       right: box.right,
@@ -428,7 +428,7 @@ const Utils = {
   },
 
   getBottomRightCornerBoundingBox() {
-    const box = this.solvingArea.getBoundingClientRect();
+    const box = this.solvedContainer.getBoundingClientRect();
     return {
       top: box.bottom - this.connectorTolerance,
       right: box.right,
@@ -438,7 +438,7 @@ const Utils = {
   },
 
   getBottomLeftCornerBoundingBox() {
-    const box = this.solvingArea.getBoundingClientRect();
+    const box = this.solvedContainer.getBoundingClientRect();
     return {
       top: box.bottom - this.connectorTolerance,
       right: box.left + this.connectorTolerance,
@@ -695,7 +695,7 @@ const Utils = {
     // const bottom = this.boardTop + solvedY + el.offsetTop + this.collisionBoxWidth;
     // const left = this.boardLeft + solvedX;
 
-    const boardBox = Utils.getStyleBoundingBox(this.solvingArea);
+    const boardBox = Utils.getStyleBoundingBox(this.solvedContainer);
 
     const diffX = el.offsetWidth / 2 - this.floatTolerance / 2;
     const diffY = el.offsetHeight / 2 - this.floatTolerance / 2;

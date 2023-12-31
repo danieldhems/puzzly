@@ -18,6 +18,7 @@ export default class GroupOperations {
   }
 
   static isGroupSolved(group) {
+    console.log("isGroupSolved", group, this);
     if (!group) return;
     return Array.from(this.getPiecesInGroup(group)).some(
       (p) => p.dataset.isSolved === "true"

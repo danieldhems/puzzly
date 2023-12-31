@@ -29,6 +29,8 @@ export const PIECE_SIZE = 100;
 
 export const ELEMENT_IDS = {
   SOLVED_PUZZLE_AREA: "solved-puzzle-area",
+  SOLVED_CONTAINER: "group-container-1111",
+  SOLVED_CANVAS: "group-canvas-1111",
   PLAY_BOUNDARY: "play-boundary",
   STAGE: "stage",
   PIECES_CONTAINER: "pieces-container",

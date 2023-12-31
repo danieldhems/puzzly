@@ -69,6 +69,7 @@ export function checkConnections(element) {
       if (Utils.hasCollision(elBBWithinTolerance, cornerBoundingBox)) {
         connection = {
           type: connectionToCheck,
+          sourceElement: element,
           isSolving: true,
         };
       }

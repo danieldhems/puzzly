@@ -195,7 +195,8 @@ export default class GroupMovable extends BaseMovable {
         element &&
         BaseMovable.isGroupedPiece(element) &&
         this.isPuzzlePieceInThisGroup(element) &&
-        !Utils.isSolved(element)
+        !Utils.isSolved(element) &&
+        !this.isSolved
       ) {
         this.element = element.parentNode;
         // console.log("group movable: element", this.element);
@@ -237,6 +238,21 @@ export default class GroupMovable extends BaseMovable {
 
   onMoveFinished() {
     this.save();
+  }
+
+  solve() {
+    CanvasOperations.drawPiecesOntoCanvas(
+      this.solvedCanvas,
+      this.piecesInGroup,
+      this.puzzleImage
+    );
+    this.piecesInGroup.forEach((instance) => {
+      this.solvedContainer.appendChild(instance.element);
+      instance.element.style.visibility = "hidden";
+      instance.element.style.pointerEvents = "none";
+    });
+    this.isSolved = true;
+    this.save(true);
   }
 
   getPieceIdsFromServerResponse(pieceData) {
@@ -307,6 +323,7 @@ export default class GroupMovable extends BaseMovable {
       puzzleId: this.puzzleId,
       position: elementPosition,
       instanceType: this.instanceType,
+      isSolved: this.isSolved,
     };
   }
 

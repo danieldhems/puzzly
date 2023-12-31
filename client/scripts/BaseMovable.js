@@ -38,7 +38,10 @@ export default class BaseMovable {
     this.piecesContainer = document.querySelector(
       `#${ELEMENT_IDS.PIECES_CONTAINER}`
     );
-    this.solvingArea = document.getElementById(ELEMENT_IDS.SOLVED_PUZZLE_AREA);
+    this.solvedContainer = document.getElementById(
+      ELEMENT_IDS.SOLVED_CONTAINER
+    );
+    this.solvedCanvas = document.getElementById(ELEMENT_IDS.SOLVED_CANVAS);
     this.pocketsContainer = document.querySelector(`#${ELEMENT_IDS.POCKETS}`);
     this.pockets = this.pocketsContainer.querySelectorAll(`.pocket`);
 
@@ -193,13 +196,7 @@ export default class BaseMovable {
   onMouseUp(event) {
     if (this.connection) {
       console.log("connection", this.connection);
-
-      if (this.connection.isSolving) {
-        this.groupOperations.addToGroup(this.element, 1111);
-        this.markAsSolved();
-      } else {
-        this.handleConnection();
-      }
+      this.handleConnection();
     }
 
     Events.notify(EVENT_TYPES.MOVE_FINISHED, event);
@@ -216,7 +213,9 @@ export default class BaseMovable {
 
     console.log("instances", sourceInstance, targetInstance);
 
-    if (
+    if (this.connection.isSolving) {
+      sourceInstance.solve();
+    } else if (
       this.isConnectionBetweenSingleAndGroup(sourceInstance, targetInstance) ||
       this.isConnectionBetweenTwoGroups(sourceInstance, targetInstance)
     ) {

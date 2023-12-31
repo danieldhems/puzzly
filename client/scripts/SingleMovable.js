@@ -1,4 +1,5 @@
 import BaseMovable from "./BaseMovable.js";
+import CanvasOperations from "./canvasOperations.js";
 import { checkConnections } from "./checkConnections.js";
 import { EVENT_TYPES } from "./constants.js";
 import Events from "./events.js";
@@ -210,6 +211,8 @@ export default class SingleMovable extends BaseMovable {
   }
 
   isElementOwned(element) {
+    console.log("isElementOwned", element);
+    if (!element) return;
     return element.dataset.pieceIdInPersistence === this.pieceData._id;
   }
 
@@ -308,7 +311,8 @@ export default class SingleMovable extends BaseMovable {
         element &&
         this.isPuzzlePiece(element) &&
         !BaseMovable.isGroupedPiece(element) &&
-        this.hasMouseDown(element)
+        this.hasMouseDown(element) &&
+        !this.isSolved
       ) {
         this.active = true;
         super.onPickup(event);
@@ -359,6 +363,21 @@ export default class SingleMovable extends BaseMovable {
     }
   }
 
+  solve() {
+    this.solvedContainer.appendChild(this.element);
+    CanvasOperations.drawPiecesOntoCanvas(
+      this.solvedCanvas,
+      [this],
+      this.puzzleImage
+    );
+    this.element.dataset.isSolved = true;
+    this.setPositionAsGrouped();
+    this.element.style.visibility = "hidden";
+    this.element.style.pointerEvents = "none";
+    this.isSolved = true;
+    this.save(true);
+  }
+
   setGroupIdAcrossInstance(groupId) {
     console.log("setGroupIdAcrossInstance", groupId);
     this.groupId = groupId;
@@ -392,7 +411,7 @@ export default class SingleMovable extends BaseMovable {
     return {
       pageX: this.element.offsetLeft,
       pageY: this.element.offsetTop,
-      isSolved: this.element.isSolved,
+      isSolved: this.isSolved,
       groupId: this.pieceData.groupId,
       puzzleId: this.puzzleId,
       _id: this.pieceData._id,
