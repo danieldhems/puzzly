@@ -15,6 +15,7 @@ export default class SingleMovable extends BaseMovable {
   active = false;
   lastSaveState = null;
   puzzleId = null;
+  _id = null;
   groupId = null;
 
   constructor({ puzzleData, pieceData }) {
@@ -22,6 +23,7 @@ export default class SingleMovable extends BaseMovable {
     // console.log("SingleMovable constructor:", pieceData);
 
     this.puzzleId = puzzleData.puzzleId;
+    this._id = pieceData._id;
 
     this.piecesPerSideHorizontal = puzzleData.piecesPerSideHorizontal;
     this.shadowOffset = puzzleData.shadowOffset;
@@ -116,6 +118,7 @@ export default class SingleMovable extends BaseMovable {
     el.style.zIndex = 1;
 
     el.setAttribute("data-jigsaw-type", type.join(","));
+    el.setAttribute("data-element-identifier", _id);
     el.setAttribute("data-piece-id", id);
     el.setAttribute("data-piece-id-in-persistence", _id);
     el.setAttribute("data-puzzle-id", puzzleId);
@@ -386,7 +389,6 @@ export default class SingleMovable extends BaseMovable {
     this.groupId = groupId;
     this.element.dataset.groupId = groupId;
     this.pieceData.groupId = groupId;
-    this.groupId = groupId;
   }
 
   onGroupCreated(event) {
@@ -404,6 +406,7 @@ export default class SingleMovable extends BaseMovable {
   joinTo(groupInstance) {
     // console.log("SingleMovable joining to", groupInstance);
     this.setGroupIdAcrossInstance(groupInstance._id);
+    this.element.classList.add("grouped");
     groupInstance.addPieces([this]);
     groupInstance.redrawCanvas();
     this.setPositionAsGrouped();

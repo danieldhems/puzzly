@@ -28,8 +28,6 @@ export default class GroupMovable extends BaseMovable {
   constructor({ puzzleData, pieces, _id = undefined, position = undefined }) {
     super(puzzleData);
 
-    console.log("Group constructor", puzzleData, pieces, _id);
-
     this.piecesInGroup = pieces;
 
     this.puzzleId = puzzleData.puzzleId;
@@ -75,7 +73,6 @@ export default class GroupMovable extends BaseMovable {
   }
 
   initiateGroup() {
-    console.log("pieces in group", this.piecesInGroup);
     const { container, position } = GroupOperations.createGroup.call(
       this,
       ...this.piecesInGroup
@@ -90,7 +87,6 @@ export default class GroupMovable extends BaseMovable {
   }
 
   restoreGroupFromPersistence(groupId, pieces, position) {
-    console.log("restoring group", groupId, pieces, position);
     this._id = groupId;
     this.position = position;
     this.piecesInGroup = pieces;
@@ -115,6 +111,8 @@ export default class GroupMovable extends BaseMovable {
       this.addPieces([movableInstance]);
       movableInstance.setPositionAsGrouped();
       movableInstance.setGroupIdAcrossInstance(this._id);
+      // This should be done by the movable instance
+      movableInstance.element.classList.add("grouped");
       this.save(true);
     } else if (movableInstance.instanceType === "GroupMovable") {
       if (movableInstance.isSolved) {
@@ -130,15 +128,8 @@ export default class GroupMovable extends BaseMovable {
     const position = {};
 
     if (movableInstance instanceof SingleMovable) {
-      console.log("aligning to movable instance", movableInstance);
-      console.log(
-        "element offsets",
-        movableInstance.element.offsetTop,
-        movableInstance.element.offsetLeft
-      );
       const { top, left } = movableInstance.getPosition();
       const { solvedX, solvedY } = movableInstance.pieceData;
-      const { top: thisTop, left: thisLeft } = this.getPosition();
 
       // console.log(top, solvedY, left, solvedX);
       position.top = top - solvedY;
@@ -151,9 +142,12 @@ export default class GroupMovable extends BaseMovable {
   }
 
   async addPieces(pieceInstances) {
-    console.log("addPieces", pieceInstances);
+    console.log("pieces currently in group", this.piecesInGroup);
     this.piecesInGroup.push(...pieceInstances);
     console.log("pieces in group after add", this.piecesInGroup);
+    this.piecesInGroup.forEach((instance) =>
+      instance.setGroupIdAcrossInstance(this._id)
+    );
     this.attachElements();
     this.redrawCanvas();
     await this.save(true);
@@ -212,10 +206,10 @@ export default class GroupMovable extends BaseMovable {
   }
 
   getConnection() {
-    console.log("getConnection GroupMovable");
     const collisionCandidates = GroupOperations.getCollisionCandidatesInGroup(
       GroupOperations.getGroup(this.element)
     );
+    console.log("collision candidates found", collisionCandidates);
 
     let connection;
     let i = 0;
@@ -244,7 +238,7 @@ export default class GroupMovable extends BaseMovable {
     this.save();
   }
 
-  solve(options) {
+  solve() {
     CanvasOperations.drawPiecesOntoCanvas(
       this.solvedCanvas,
       this.piecesInGroup,
@@ -252,6 +246,7 @@ export default class GroupMovable extends BaseMovable {
     );
     this.piecesInGroup.forEach((instance) => {
       this.solvedContainer.appendChild(instance.element);
+      instance.element.dataset.isSolved = true;
       instance.element.style.visibility = "hidden";
       instance.element.style.pointerEvents = "none";
     });
@@ -315,7 +310,6 @@ export default class GroupMovable extends BaseMovable {
   }
 
   getAllPieceData() {
-    console.log("this group", this);
     return this.piecesInGroup.map((piece) => piece.getDataForSave());
   }
 
@@ -366,7 +360,6 @@ export default class GroupMovable extends BaseMovable {
   }
 
   destroy() {
-    console.log("GroupMovable destroy", this);
     this.detachElements();
     if (!this.isSolved) {
       window.Puzzly.removeGroupInstance(this);

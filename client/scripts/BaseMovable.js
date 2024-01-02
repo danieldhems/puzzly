@@ -87,10 +87,7 @@ export default class BaseMovable {
   }
 
   static isGroupedPiece(element) {
-    return (
-      element?.dataset?.groupId !== undefined &&
-      element?.dataset?.groupId !== ""
-    );
+    return element.dataset.groupId?.length > 0;
   }
 
   isPocketPiece(element) {

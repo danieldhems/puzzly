@@ -247,10 +247,7 @@ class Puzzly {
       if (Object.keys(this.groups).length) {
         for (let g in this.groups) {
           const group = this.groups[g];
-          console.log("group data", group);
           const pieceInstances = this.pieceInstances.filter((pieceInstance) => {
-            console.log("piece instance data", pieceInstance);
-            console.log("ids", pieceInstance.groupId, group._id);
             return pieceInstance.groupId === group._id;
           });
           // console.log("piece instances found for group", pieceInstances);
@@ -318,13 +315,21 @@ class Puzzly {
   }
 
   getMovableInstanceFromElement(element) {
-    let movables;
-    if (BaseMovable.isGroupedPiece(element)) {
-      movables = this.groupInstances;
+    if (!element) return;
+    console.log("getMovableInstanceFromElement", element);
+    if (element.dataset.groupId) {
+      console.log("element is in group");
+      return this.groupInstances.find((instance) =>
+        instance.piecesInGroup.some(
+          (piece) => piece.groupId === element.dataset.groupId
+        )
+      );
     } else {
-      movables = this.pieceInstances;
+      console.log("element is NOT in group");
+      return this.pieceInstances.find(
+        (instance) => instance._id === element.dataset.pieceIdInPersistence
+      );
     }
-    return movables.find((instance) => instance.isElementOwned(element));
   }
 
   getGroupInstanceById(groupId) {
@@ -360,7 +365,6 @@ class Puzzly {
   }
 
   onConnectionMade(event) {
-    console.log("event", event.detail);
     const { sourceInstance, targetInstance, isSolving } = event.detail;
 
     if (this.soundsEnabled) {

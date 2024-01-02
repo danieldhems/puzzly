@@ -25,8 +25,7 @@ export function checkConnections(element) {
   };
 
   const shouldCompare = (targetPiece) =>
-    piece.group === undefined ||
-    piece.group === null ||
+    (piece.group === undefined && targetPiece.group === undefined) ||
     piece.group !== targetPiece.group;
 
   if (Utils.isCornerPiece(piece)) {
@@ -86,9 +85,15 @@ export function checkConnections(element) {
     const { pieceId, groupId, isSolved } = targetElement.dataset;
     const targetPiece = {
       pieceId: parseInt(pieceId),
-      group: groupId || undefined,
+      group: groupId,
       isSolved: isSolved === "true",
     };
+
+    console.log("source piece", piece);
+    console.log("source element", element);
+
+    console.log("target piece", targetPiece);
+    console.log("target elmment", targetElement);
 
     let thisPieceConnectorBoundingBox;
 
@@ -111,11 +116,11 @@ export function checkConnections(element) {
       // console.log("source element", element);
       // console.log("target element", targetElement);
 
-      console.log(
-        `checking ${key}`,
-        thisPieceConnectorBoundingBox,
-        targetPieceConnectorBoundingBox
-      );
+      // console.log(
+      //   `checking ${key}`,
+      //   thisPieceConnectorBoundingBox,
+      //   targetPieceConnectorBoundingBox
+      // );
 
       // Utils.drawBox(thisPieceConnectorBoundingBox);
       // Utils.drawBox(targetPieceConnectorBoundingBox, null, "blue");

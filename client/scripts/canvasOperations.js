@@ -35,7 +35,6 @@ export default class CanvasOperations {
   }
 
   static drawPiecesOntoCanvas(canvas, pieces, puzzleImage) {
-    console.log("drawPiecesOntoCanvas", canvas, pieces);
     const ctx = canvas.getContext("2d");
     // ctx.imageSmoothingEnabled = false;
     pieces.forEach((p) => {

@@ -18,7 +18,6 @@ export default class GroupOperations {
   }
 
   static isGroupSolved(group) {
-    console.log("isGroupSolved", group, this);
     if (!group) return;
     return Array.from(this.getPiecesInGroup(group)).some(
       (p) => p.dataset.isSolved === "true"
@@ -89,6 +88,11 @@ export default class GroupOperations {
 
   static getCollisionCandidatesInGroup(group) {
     const piecesInGroup = this.getPiecesInGroup(group);
+    console.log(
+      "getCollisionCandidatesInGroup: piecesInGroup",
+      group,
+      piecesInGroup
+    );
     const candidates = [];
 
     if (piecesInGroup.length === this.selectedNumPieces) {
@@ -191,7 +195,6 @@ export default class GroupOperations {
 
   // Restore the elements for an existing group
   static restoreGroup(groupId, pieces) {
-    console.log("restoreGroup", this, pieces);
     const container = GroupOperations.createGroupContainer.call(this);
     const canvas = CanvasOperations.makeCanvas.call(this);
     container.prepend(canvas);
