@@ -360,15 +360,17 @@ class Puzzly {
   }
 
   onConnectionMade(event) {
-    const [sourceInstance, targetInstance] = event.detail;
+    console.log("event", event.detail);
+    const { sourceInstance, targetInstance, isSolving } = event.detail;
 
     if (this.soundsEnabled) {
       this.clickSound.play();
     }
 
     if (
-      sourceInstance instanceof SingleMovable &&
-      targetInstance instanceof SingleMovable
+      sourceInstance.instanceType === "SingleMovable" &&
+      targetInstance?.instanceType === "SingleMovable" &&
+      !isSolving
     ) {
       this.groupInstances.push(
         new GroupMovable({

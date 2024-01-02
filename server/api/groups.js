@@ -129,7 +129,7 @@ var api = {
               pieceUpdateResults.push(
                 await piecesCollection.findOneAndUpdate(
                   { _id: new ObjectID(data.pieces[i]._id) },
-                  { $set: { groupId: data._id } }
+                  { $set: { groupId: data._id, isSolved: data.isSolved } }
                 )
               );
             }

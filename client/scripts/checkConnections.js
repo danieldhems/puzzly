@@ -135,9 +135,7 @@ export function checkConnections(element) {
             cornerConnectionFound !== "float" &&
             !Utils.isCornerConnection(cornerConnectionFound) &&
             targetElement,
-          isSolving: GroupOperations.isGroupSolved(
-            GroupOperations.getGroup(targetElement)
-          ),
+          isSolving: targetElement.dataset.isSolved === "true",
         };
         return true;
       }

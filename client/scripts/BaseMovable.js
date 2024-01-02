@@ -204,7 +204,7 @@ export default class BaseMovable {
   }
 
   handleConnection() {
-    const { sourceElement, targetElement } = this.connection;
+    const { sourceElement, targetElement, isSolving } = this.connection;
 
     const sourceInstance =
       window.Puzzly.getMovableInstanceFromElement(sourceElement);
@@ -212,9 +212,10 @@ export default class BaseMovable {
       window.Puzzly.getMovableInstanceFromElement(targetElement);
 
     console.log("instances", sourceInstance, targetInstance);
+    console.log("is solving?", isSolving);
 
-    if (this.connection.isSolving) {
-      sourceInstance.solve();
+    if (isSolving) {
+      sourceInstance.solve({ save: true });
     } else if (
       this.isConnectionBetweenSingleAndGroup(sourceInstance, targetInstance) ||
       this.isConnectionBetweenTwoGroups(sourceInstance, targetInstance)
@@ -222,10 +223,11 @@ export default class BaseMovable {
       sourceInstance.joinTo(targetInstance);
     }
 
-    Events.notify(EVENT_TYPES.CONNECTION_MADE, [
+    Events.notify(EVENT_TYPES.CONNECTION_MADE, {
       sourceInstance,
       targetInstance,
-    ]);
+      isSolving,
+    });
   }
 
   isConnectionBetweenSingleAndGroup(sourceInstance, targetInstance) {

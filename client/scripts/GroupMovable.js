@@ -117,7 +117,11 @@ export default class GroupMovable extends BaseMovable {
       movableInstance.setGroupIdAcrossInstance(this._id);
       this.save(true);
     } else if (movableInstance.instanceType === "GroupMovable") {
-      await movableInstance.addPieces(this.piecesInGroup);
+      if (movableInstance.isSolved) {
+        this.solve();
+      } else {
+        await movableInstance.addPieces(this.piecesInGroup);
+      }
       this.destroy();
     }
   }
@@ -240,7 +244,7 @@ export default class GroupMovable extends BaseMovable {
     this.save();
   }
 
-  solve() {
+  solve(options) {
     CanvasOperations.drawPiecesOntoCanvas(
       this.solvedCanvas,
       this.piecesInGroup,
@@ -251,8 +255,11 @@ export default class GroupMovable extends BaseMovable {
       instance.element.style.visibility = "hidden";
       instance.element.style.pointerEvents = "none";
     });
+
     this.isSolved = true;
+
     this.save(true);
+    this.destroy();
   }
 
   getPieceIdsFromServerResponse(pieceData) {
@@ -361,7 +368,9 @@ export default class GroupMovable extends BaseMovable {
   destroy() {
     console.log("GroupMovable destroy", this);
     this.detachElements();
-    window.Puzzly.removeGroupInstance(this);
+    if (!this.isSolved) {
+      window.Puzzly.removeGroupInstance(this);
+    }
     this.delete();
   }
 

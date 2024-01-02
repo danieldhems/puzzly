@@ -204,7 +204,7 @@ export default class SingleMovable extends BaseMovable {
     }
 
     if (isSolved) {
-      this.addToSolved();
+      this.solve();
     }
 
     this.setLastPosition(pageY, pageX);
@@ -363,7 +363,7 @@ export default class SingleMovable extends BaseMovable {
     }
   }
 
-  solve() {
+  solve(options) {
     this.solvedContainer.appendChild(this.element);
     CanvasOperations.drawPiecesOntoCanvas(
       this.solvedCanvas,
@@ -375,7 +375,10 @@ export default class SingleMovable extends BaseMovable {
     this.element.style.visibility = "hidden";
     this.element.style.pointerEvents = "none";
     this.isSolved = true;
-    this.save(true);
+
+    if (options?.save) {
+      this.save(true);
+    }
   }
 
   setGroupIdAcrossInstance(groupId) {
