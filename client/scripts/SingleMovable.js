@@ -374,7 +374,8 @@ export default class SingleMovable extends BaseMovable {
     CanvasOperations.drawPiecesOntoCanvas(
       this.solvedCanvas,
       [this],
-      this.puzzleImage
+      this.puzzleImage,
+      this.shadowOffset
     );
     this.element.dataset.isSolved = true;
     this.setPositionAsGrouped();
@@ -382,6 +383,7 @@ export default class SingleMovable extends BaseMovable {
     this.element.style.pointerEvents = "none";
     this.isSolved = true;
 
+    // Are we using this?
     if (options?.save) {
       this.save(true);
     }

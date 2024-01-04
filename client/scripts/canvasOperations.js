@@ -34,19 +34,20 @@ export default class CanvasOperations {
     return el;
   }
 
-  static drawPiecesOntoCanvas(canvas, pieces, puzzleImage) {
+  static drawPiecesOntoCanvas(canvas, pieces, puzzleImage, shadowOffset) {
     const ctx = canvas.getContext("2d");
     // ctx.imageSmoothingEnabled = false;
     pieces.forEach((p) => {
       const data = p.element.dataset;
+      // console.log("drawPiecesOntoCanvas", data, shadowOffset);
       ctx.drawImage(
         puzzleImage,
         data.spriteshadowx,
         data.spriteshadowy,
         data.imgw,
         data.imgh,
-        parseInt(data.solvedx) + this.shadowOffset,
-        parseInt(data.solvedy) + this.shadowOffset,
+        parseInt(data.solvedx) + shadowOffset,
+        parseInt(data.solvedy) + shadowOffset,
         data.imgw,
         data.imgh
       );

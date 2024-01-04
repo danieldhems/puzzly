@@ -192,7 +192,7 @@ class Puzzly {
   init() {
     this.zoomLevel = 1;
 
-    this.shadowOffsetRatio = 0.01;
+    this.shadowOffsetRatio = 0.025;
     this.shadowOffset = this.pieceSize * this.shadowOffsetRatio;
 
     this.connectorToleranceAmount = 40;
@@ -243,7 +243,7 @@ class Puzzly {
         this.initiatePiece.call(this, p);
       });
 
-      // console.log("groups from persistence", this.groups);
+      console.log("groups from persistence", this.groups);
       if (Object.keys(this.groups).length) {
         for (let g in this.groups) {
           const group = this.groups[g];
@@ -256,6 +256,7 @@ class Puzzly {
             _id: group._id,
             pieces: pieceInstances,
             position: group.position,
+            isSolved: group.isSolved,
           });
           this.groupInstances.push(groupInstance);
           // console.log("group instances", this.groupInstances);

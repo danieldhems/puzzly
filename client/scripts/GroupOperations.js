@@ -158,7 +158,8 @@ export default class GroupOperations {
     CanvasOperations.drawPiecesOntoCanvas(
       newCanvas,
       [sourceElement, targetElement],
-      this.puzzleImage
+      this.puzzleImage,
+      this.shadowOffset
     );
 
     // TODO: Refactor Util methods to expect type array only, not piece object containing it.
@@ -203,7 +204,12 @@ export default class GroupOperations {
     elementsForGroup.forEach((element) => container.appendChild(element));
 
     GroupOperations.setIdForGroupElements(container, groupId);
-    CanvasOperations.drawPiecesOntoCanvas(canvas, pieces, this.puzzleImage);
+    CanvasOperations.drawPiecesOntoCanvas(
+      canvas,
+      pieces,
+      this.puzzleImage,
+      this.shadowOffset
+    );
 
     return container;
   }
@@ -288,7 +294,12 @@ export default class GroupOperations {
     const elementsInTargetGroup = GroupOperations.getPiecesInGroup(groupId);
     const allPieces = [...elementsInTargetGroup, ...followingEls];
     const canvas = CanvasOperations.getCanvas(groupId);
-    CanvasOperations.drawPiecesOntoCanvas(canvas, allPieces, this.puzzleImage);
+    CanvasOperations.drawPiecesOntoCanvas(
+      canvas,
+      allPieces,
+      this.puzzleImage,
+      this.shadowOffset
+    );
 
     // Update all connections
     GroupOperations.updateConnections(allPieces);

@@ -25,7 +25,13 @@ export default class GroupMovable extends BaseMovable {
     left: null,
   };
 
-  constructor({ puzzleData, pieces, _id = undefined, position = undefined }) {
+  constructor({
+    puzzleData,
+    pieces,
+    _id = undefined,
+    position = undefined,
+    isSolved = false,
+  }) {
     super(puzzleData);
 
     this.piecesInGroup = pieces;
@@ -37,10 +43,16 @@ export default class GroupMovable extends BaseMovable {
     this.height = puzzleData.boardHeight;
     this.shadowOffset = puzzleData.shadowOffset;
 
+    this.isSolved = isSolved;
+
     if (!_id) {
       this.initiateGroup();
     } else {
-      this.restoreGroupFromPersistence(_id, pieces, position);
+      if (this.isSolved) {
+        this.solve();
+      } else {
+        this.restoreGroupFromPersistence(_id, pieces, position);
+      }
     }
 
     window.addEventListener("mousedown", this.onMouseDown.bind(this));
@@ -158,7 +170,8 @@ export default class GroupMovable extends BaseMovable {
     CanvasOperations.drawPiecesOntoCanvas(
       canvas,
       this.piecesInGroup,
-      this.puzzleImage
+      this.puzzleImage,
+      this.shadowOffset
     );
   }
 
@@ -255,7 +268,8 @@ export default class GroupMovable extends BaseMovable {
     CanvasOperations.drawPiecesOntoCanvas(
       this.solvedCanvas,
       this.piecesInGroup,
-      this.puzzleImage
+      this.puzzleImage,
+      this.shadowOffset
     );
     this.piecesInGroup.forEach((instance) => {
       this.solvedContainer.appendChild(instance.element);
