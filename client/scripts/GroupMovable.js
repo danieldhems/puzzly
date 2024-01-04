@@ -20,7 +20,7 @@ export default class GroupMovable extends BaseMovable {
   elementsInGroup = [];
   puzzleId = null;
 
-  position = {
+  lastPosition = {
     top: null,
     left: null,
   };
@@ -221,9 +221,9 @@ export default class GroupMovable extends BaseMovable {
     }
   }
 
-  onMouseUp() {
+  onMouseUp(event) {
     if (this.active) {
-      if (this.isOutOfBounds()) {
+      if (this.isOutOfBounds(event)) {
         this.resetPosition();
       } else {
         this.connection = this.getConnection();
@@ -235,7 +235,20 @@ export default class GroupMovable extends BaseMovable {
   }
 
   onMoveFinished() {
+    console.log("onMoveFinished");
+    this.setLastPosition();
     this.save();
+  }
+
+  isOutOfBounds(event) {
+    const playAreaBox = this.piecesContainer.getBoundingClientRect();
+    return (
+      this.piecesInGroup.some(
+        (instance) =>
+          !Utils.isInside(instance.element.getBoundingClientRect(), playAreaBox)
+      ) && !this.isOverPockets(event)
+    );
+    // return !this.isInsidePlayArea() && !this.isOverPockets(event);
   }
 
   solve() {
@@ -332,6 +345,18 @@ export default class GroupMovable extends BaseMovable {
     this.position = {
       top: box.top,
       left: box.left,
+    };
+  }
+
+  setLastPosition() {
+    console.log(
+      "setLastPosition",
+      this.element.offsetLeft,
+      this.element.offsetTop
+    );
+    this.lastPosition = {
+      top: this.element.offsetTop,
+      left: this.element.offsetLeft,
     };
   }
 

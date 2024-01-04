@@ -13,7 +13,10 @@ export default class SingleMovable extends BaseMovable {
   element = null;
   pieceData = null;
   active = false;
-  lastSaveState = null;
+  lastPosition = {
+    top: null,
+    left: null,
+  };
   puzzleId = null;
   _id = null;
   groupId = null;
@@ -339,10 +342,10 @@ export default class SingleMovable extends BaseMovable {
     super.onMouseUp(event);
   }
 
-  setLastPosition(y, x) {
+  setLastPosition() {
     this.lastPosition = {
-      y,
-      x,
+      top: this.element.offsetTop,
+      left: this.element.offsetLeft,
     };
   }
 
@@ -354,8 +357,8 @@ export default class SingleMovable extends BaseMovable {
     if (this.active) {
       if (!BaseMovable.isGroupedPiece(this.element)) {
         this.setLastPosition({
-          x: this.element.offsetX,
-          y: this.element.offsetY,
+          left: this.element.offsetX,
+          top: this.element.offsetY,
         });
 
         // Only save if this piece isn't in a group
