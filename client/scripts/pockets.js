@@ -509,8 +509,9 @@ class Pockets {
     }
   }
 
-  addToPocket(pocket, element) {
-    if (!element) return;
+  addToPocket(pocket, pieceInstance) {
+    if (!pieceInstance) return;
+    console.log;
 
     let pocketId, pocketEl;
 
@@ -522,13 +523,13 @@ class Pockets {
       pocketId = this.getIdForPocket(pocket);
     }
 
+    const element = pieceInstance.element;
+
     element.setAttribute("data-pocket-id", pocketId);
     element.classList.add("in-pocket");
 
     pocketEl?.querySelector(".pocket-inner").appendChild(element);
     this.setElementPositionInPocket(element, pocketEl);
-
-    Utils.requestSave([element]);
   }
 
   returnToCanvas(els) {

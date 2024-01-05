@@ -107,11 +107,11 @@ export default class BaseMovable {
     return this.hasCollision(eventBox, pocketsBox);
   }
 
-  getPocketByCollision() {
+  getPocketByCollision(box) {
     let i = 0;
     while (i <= this.pockets.length) {
       const pocket = this.pockets[i];
-      if (this.hasCollision(pocket)) {
+      if (this.hasCollision(pocket, box)) {
         return pocket;
       }
       i++;
@@ -121,7 +121,6 @@ export default class BaseMovable {
   hasCollision(targetElement, source = null) {
     const targetBoundingBox = targetElement.getBoundingClientRect();
     const thisBoundingBox = source || this.element.getBoundingClientRect();
-
     return Utils.hasCollision(thisBoundingBox, targetBoundingBox);
   }
 

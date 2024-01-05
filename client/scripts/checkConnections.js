@@ -89,12 +89,6 @@ export function checkConnections(element) {
       isSolved: isSolved === "true",
     };
 
-    console.log("source piece", piece);
-    console.log("source element", element);
-
-    console.log("target piece", targetPiece);
-    console.log("target elmment", targetElement);
-
     let thisPieceConnectorBoundingBox;
 
     if (shouldCompare(targetPiece)) {

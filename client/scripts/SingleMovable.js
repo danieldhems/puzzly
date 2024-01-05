@@ -4,6 +4,7 @@ import { checkConnections } from "./checkConnections.js";
 import { EVENT_TYPES } from "./constants.js";
 import Events from "./events.js";
 import GroupOperations from "./GroupOperations.js";
+import Pockets from "./pockets.js";
 import Utils from "./utils.js";
 
 export default class SingleMovable extends BaseMovable {
@@ -30,13 +31,18 @@ export default class SingleMovable extends BaseMovable {
 
     this.piecesPerSideHorizontal = puzzleData.piecesPerSideHorizontal;
     this.shadowOffset = puzzleData.shadowOffset;
+    this.pocket = pieceData.pocket;
 
     if (pieceData.groupId) {
       this.groupId = pieceData.groupId;
     }
 
+    this.Pockets = new Pockets(puzzleData);
+
     this.setPiece(pieceData);
     this.element = SingleMovable.createElement.call(this, puzzleData);
+
+    this.setLastPosition(pieceData.pageY, pieceData.pageX);
 
     if (!puzzleData.complete) {
       this.render();
@@ -200,23 +206,27 @@ export default class SingleMovable extends BaseMovable {
   }
 
   render() {
-    // console.log("rendering piece", this.pieceData);
-    const { type, pageX, pageY, pocketId, isSolved } = this.pieceData;
+    console.log("rendering piece", this.pieceData);
+    const { type, pageX, pageY, isSolved, pocket } = this.pieceData;
 
-    if (Number.isInteger(pocketId)) {
-      const pocket = this.pockets.querySelector(`#${pocketId}`);
-      this.addToPocket(pocket);
+    if (Number.isInteger(pocket)) {
+      const pocketElement = this.pocketsContainer.querySelector(
+        `#pocket-${pocket}`
+      );
+
+      this.Pockets.addToPocket(pocketElement, this);
+      return;
     }
 
     if (!GroupOperations.hasGroup({ type }) && !isSolved) {
       this.addToStage.call(this);
+      return;
     }
 
     if (isSolved) {
       this.solve();
+      return;
     }
-
-    this.setLastPosition(pageY, pageX);
   }
 
   isElementOwned(element) {
@@ -335,7 +345,8 @@ export default class SingleMovable extends BaseMovable {
         this.resetPosition();
       } else if (this.isOverPockets(event)) {
         const pocket = this.getPocketByCollision(Utils.getEventBox(event));
-        this.addToPocket(pocket);
+        this.Pockets.addToPocket(pocket, this);
+        this.pocket = parseInt(pocket.id.split("-")[1]);
       } else {
         this.connection = checkConnections.call(this, this.element);
         this.elementsToSaveIfNoConnection = [this.element];
@@ -429,6 +440,7 @@ export default class SingleMovable extends BaseMovable {
       groupId: this.pieceData.groupId,
       puzzleId: this.puzzleId,
       _id: this.pieceData._id,
+      pocket: this.pocket,
       instanceType: this.instanceType,
       isPuzzleComplete: this.isPuzzleComplete(),
     };

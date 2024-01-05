@@ -94,13 +94,15 @@ var api = {
           delete data._id;
           console.log("saving piece", data);
 
-          const { pageX, pageY, groupId, isSolved, isPuzzleComplete } = data;
+          const { pageX, pageY, groupId, isSolved, pocket, isPuzzleComplete } =
+            data;
           update = {
             $set: {
               pageX,
               pageY,
               groupId,
               isSolved,
+              pocket,
             },
           };
           console.log("piece update instruction", update);
