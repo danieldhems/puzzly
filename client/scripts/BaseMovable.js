@@ -154,6 +154,12 @@ export default class BaseMovable {
   // Override
   markAsSolved() {}
 
+  isPuzzleComplete() {
+    const numbrOfSolvedPieces =
+      this.solvedContainer.querySelectorAll(".puzzle-piece").length;
+    return this.puzzly.selectedNumPieces === numbrOfSolvedPieces;
+  }
+
   // Lifecycle method called when a movable is picked up i.e. the user has begun interacting with it
   onPickup(event) {
     const mousePosition = {

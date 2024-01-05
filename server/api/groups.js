@@ -146,8 +146,11 @@ var api = {
           const puzzleUpdateOp = {
             $set: {
               lastSaveDate,
+              complete: data.isPuzzleComplete,
             },
           };
+
+          console.log("Groups: Updating puzzle with query", puzzleUpdateOp);
 
           await puzzles.updateOne(puzzleUpdateQuery, puzzleUpdateOp);
 

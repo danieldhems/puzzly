@@ -37,8 +37,11 @@ export default class SingleMovable extends BaseMovable {
 
     this.setPiece(pieceData);
     this.element = SingleMovable.createElement.call(this, puzzleData);
-    this.render();
-    this.save();
+
+    if (!puzzleData.complete) {
+      this.render();
+      this.save();
+    }
 
     window.addEventListener("mousedown", this.onMouseDown.bind(this));
     window.addEventListener(
@@ -427,6 +430,7 @@ export default class SingleMovable extends BaseMovable {
       puzzleId: this.puzzleId,
       _id: this.pieceData._id,
       instanceType: this.instanceType,
+      isPuzzleComplete: this.isPuzzleComplete(),
     };
   }
 

@@ -352,6 +352,7 @@ export default class GroupMovable extends BaseMovable {
       position: elementPosition,
       instanceType: this.instanceType,
       isSolved: this.isSolved,
+      isPuzzleComplete: this.isPuzzleComplete(),
     };
   }
 

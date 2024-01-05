@@ -94,8 +94,15 @@ var api = {
           delete data._id;
           console.log("saving piece", data);
 
-          const { pageX, pageY, groupId, isSolved } = data;
-          update = { $set: { pageX, pageY, groupId, isSolved } };
+          const { pageX, pageY, groupId, isSolved, isPuzzleComplete } = data;
+          update = {
+            $set: {
+              pageX,
+              pageY,
+              groupId,
+              isSolved,
+            },
+          };
           console.log("piece update instruction", update);
           try {
             const result = await pieces.findOneAndUpdate(query, update);
@@ -113,8 +120,11 @@ var api = {
           const puzzleUpdateOp = {
             $set: {
               lastSaveDate,
+              complete: isPuzzleComplete,
             },
           };
+
+          console.log("Pieces: Updating puzzle with query", puzzleUpdateOp);
 
           const result = await puzzles.updateOne(
             puzzleUpdateQuery,

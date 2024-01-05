@@ -11,6 +11,7 @@ import { DragAndSelectMovable } from "./DragAndSelectMovable.js";
 import { checkConnections } from "./checkConnections.js";
 import GroupOperations from "./GroupOperations.js";
 import PersistenceOperations from "./persistence.js";
+import CanvasOperations from "./canvasOperations.js";
 
 /**
  * Puzzly
@@ -44,6 +45,8 @@ class Puzzly {
 
     this.pieces = config.pieces;
     this.connectorSize = config.connectorSize;
+
+    this.complete = config.complete;
 
     this.animationDuration = 200;
 
@@ -261,6 +264,15 @@ class Puzzly {
           this.groupInstances.push(groupInstance);
           // console.log("group instances", this.groupInstances);
         }
+      }
+
+      if (this.complete) {
+        CanvasOperations.drawPiecesOntoCanvas(
+          this.solvedCnv,
+          this.pieceInstances,
+          this.puzzleImage,
+          this.shadowOffset
+        );
       }
 
       // this.initGroupContainerPositions(storage.pieces);
@@ -526,17 +538,17 @@ class Puzzly {
       this.boardHeight + this.shadowOffset
     );
 
-    const solvedCnv = document.getElementById(
+    this.solvedCnv = document.getElementById(
       `group-canvas-${this.solvedGroupId}`
     );
     // solvedCnv.style.pointerEvents = 'none';
     const solvingAreaBox = Utils.getStyleBoundingBox(this.solvingArea);
-    solvedCnv.width = solvingAreaBox.width + this.shadowOffset;
-    solvedCnv.height = solvingAreaBox.height + this.shadowOffset;
-    solvedCnv.style.width = Utils.getPxString(
+    this.solvedCnv.width = solvingAreaBox.width + this.shadowOffset;
+    this.solvedCnv.height = solvingAreaBox.height + this.shadowOffset;
+    this.solvedCnv.style.width = Utils.getPxString(
       solvingAreaBox.width + this.shadowOffset
     );
-    solvedCnv.style.height = Utils.getPxString(
+    this.solvedCnv.style.height = Utils.getPxString(
       solvingAreaBox.height + this.shadowOffset
     );
   }
