@@ -1,12 +1,14 @@
 import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
 import Events from "./events.js";
 import GroupOperations from "./GroupOperations.js";
+import { PocketMovable } from "./PocketMovable.js";
 import Utils from "./utils.js";
 
 const POCKET_DEPTH = 110;
 
 class Pockets {
   constructor(config) {
+    this.Puzzly = config;
     this.playBoundary = config.playBoundary;
     this.playBoundaryPieceContainer =
       this.playBoundary.querySelector("#pieces-container");
@@ -46,7 +48,7 @@ class Pockets {
     this.init(config);
 
     // window.addEventListener("mousedown", this.onMouseDown.bind(this));
-    window.addEventListener("mouseup", this.onMouseUp.bind(this));
+    // window.addEventListener("mouseup", this.onMouseUp.bind(this));
     window.addEventListener("resize", this.onResize.bind(this));
     window.addEventListener(
       EVENT_TYPES.ADD_TO_POCKET,
@@ -207,25 +209,18 @@ class Pockets {
   }
 
   onMouseDown(e) {
-    e.stopPropagation();
-    let el = e.target;
-    let shouldTrackPiece;
-
-    if (!el) return;
+    let el;
 
     // If the empty space inside a pocket is clicked, do nothing
-    if (el?.classList?.contains("pocket")) {
+    if (e.target.classList?.contains("in-pocket")) {
       return;
     }
 
-    if (Utils.isPuzzlePiece(el)) {
+    if (Utils.isPuzzlePiece(e.target)) {
       el = Utils.getPuzzlePieceElementFromEvent(e);
-      shouldTrackPiece = !GroupOperations.hasGroup(el);
     }
 
-    this.isDragActive = el.classList
-      ? el.classList.contains("selected")
-      : false;
+    this.isDragActive = el.classList?.contains("selected");
 
     const isMainCanvas =
       el.id === ELEMENT_IDS.PLAY_BOUNDARY ||
@@ -235,7 +230,10 @@ class Pockets {
     if (this.isFromPocket(el)) {
       Events.notify(EVENT_TYPES.POCKET_PICKUP);
       // Piece is being picked up from a pocket
-      this.lastPosition = el.getBoundingClientRect();
+      this.lastPosition = {
+        top: el.offsetTop,
+        left: el.offsetLeft,
+      };
       this.activePocket = this.pockets[this.getPocketIdFromPiece(el)];
 
       this.movingElement = this.getMovingElementForActivePocket(e);
@@ -247,10 +245,6 @@ class Pockets {
       this.diffY = e.clientY - this.movingElement.offsetTop;
 
       this.activePocket.appendChild(this.movingElement);
-    } else {
-      // Picking up a single piece from the canvas
-      this.movingElement = el;
-      this.disablePointerEvents();
     }
 
     if (isMainCanvas) {
@@ -263,7 +257,7 @@ class Pockets {
     }
 
     if (this.movingElement) {
-      window.addEventListener("mousemove", (e) => this.onMouseMove(e));
+      // window.addEventListener("mousemove", (e) => this.onMouseMove(e));
     }
   }
 
@@ -363,107 +357,12 @@ class Pockets {
     return e.target.id === ELEMENT_IDS.PLAY_BOUNDARY;
   }
 
-  getPiecesInActivePocket() {
-    return Array.from(
-      this.activePocket.querySelectorAll(".pocket-inner .puzzle-piece")
-    );
-  }
-
   getPiecesInTransit() {
     if (this.movingElement.id === "active-pieces-container") {
       return Array.from(this.movingElement.childNodes);
     } else {
       return [this.movingElement];
     }
-  }
-
-  // Create a container for all the pieces in a given pocket with the pieces arranged in a grid.
-  // This container will be set as the movingElement.
-  getMovingElementForActivePocket(e) {
-    const activePieces = Array.from(this.getPiecesInActivePocket());
-
-    this.activePocketHasMultiplePieces = true;
-
-    const container = document.createElement("div");
-    container.id = "active-pieces-container";
-    // container.style.border = "1px solid white";
-    container.style.position = "absolute";
-
-    const rowLength =
-      activePieces.length > 2 ? Math.ceil(Math.sqrt(activePieces.length)) : 2;
-
-    let currX = 0,
-      currY = 0;
-    let colNumber = 1;
-    let numRows = 0;
-    let maxX = 0,
-      maxY = 0,
-      nextRowY = 0;
-
-    let firstPieceOnRow = activePieces[0];
-
-    for (let i = 0, l = activePieces.length; i < l; i++) {
-      const el = activePieces[i];
-
-      //   // move(el).x(currX * this.zoomLevel).y(currY * this.zoomLevel).duration(this.animationDuration).end();
-      el.style.top = currY + "px";
-      el.style.left = currX + "px";
-
-      // const box = el.getBoundingClientRect();
-      // const box = Utils.getStyleBoundingBox(el);
-      const box = {
-        top: el.offsetTop,
-        right: el.offsetLeft + el.offsetWidth,
-        bottom: el.offsetTop + el.offsetHeight,
-        left: el.offsetLeft,
-        width: el.offsetWidth,
-        height: el.offsetHeight,
-      };
-
-      if (currX + box.width > maxX) {
-        maxX = currX + box.width;
-      }
-
-      if (maxY === 0) {
-        maxY = box.height;
-      }
-
-      if (currY + box.height > maxY) {
-        maxY = currY + box.height;
-      }
-
-      currX += box.width + (box.width / 100) * 2;
-
-      if (currY + box.height > nextRowY) {
-        nextRowY = currY + box.height + (box.height / 100) * 2;
-      }
-
-      if (colNumber === rowLength) {
-        currY = nextRowY;
-        currX = 0;
-        colNumber = 1;
-        numRows++;
-
-        firstPieceOnRow = el;
-      } else {
-        colNumber++;
-      }
-
-      container.appendChild(el);
-    }
-
-    container.style.width = maxX + "px";
-    container.style.height = maxY + "px";
-
-    const pocketBox = this.activePocket.getBoundingClientRect();
-
-    const x = e.clientX - pocketBox.left - maxX / 2;
-    const y = e.clientY - pocketBox.top - maxY / 2;
-
-    container.style.top = y + "px";
-    container.style.left = x + "px";
-
-    return container;
   }
 
   addPiecesToPocket(pocket, pieces) {
@@ -509,9 +408,9 @@ class Pockets {
     }
   }
 
-  addToPocket(pocket, pieceInstance) {
+  addSingleToPocket(pocket, pieceInstance) {
     if (!pieceInstance) return;
-    console.log;
+    console.log("adding to pocket", pocket, pieceInstance);
 
     let pocketId, pocketEl;
 
@@ -530,6 +429,34 @@ class Pockets {
 
     pocketEl?.querySelector(".pocket-inner").appendChild(element);
     this.setElementPositionInPocket(element, pocketEl);
+  }
+
+  addManyToPocket(pocket, movable) {
+    if (!movable) return;
+
+    let pocketId, pocketEl;
+
+    if (Number.isInteger(pocket)) {
+      pocketEl = this.pockets[pocket];
+      pocketId = pocket;
+    } else {
+      pocketEl = pocket;
+      pocketId = this.getIdForPocket(pocket);
+    }
+
+    // salmon
+    Array.from(movable.element.childNodes).forEach((element) => {
+      const pieceInstance = this.Puzzly.getMovableInstanceFromElement(element);
+      element.setAttribute("data-pocket-id", pocketId);
+      element.classList.add("in-pocket");
+
+      // TODO: Need better way to set the instance's new pocket:
+      // probably a method on the instance itself, either public or private.
+      pieceInstance.pocket = parseInt(pocketId);
+
+      pocketEl?.querySelector(".pocket-inner").appendChild(element);
+      this.setElementPositionInPocket(element, pocketEl);
+    });
   }
 
   returnToCanvas(els) {

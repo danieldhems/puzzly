@@ -32,12 +32,11 @@ export default class SingleMovable extends BaseMovable {
     this.piecesPerSideHorizontal = puzzleData.piecesPerSideHorizontal;
     this.shadowOffset = puzzleData.shadowOffset;
     this.pocket = pieceData.pocket;
+    this.Pockets = puzzleData.Pockets;
 
     if (pieceData.groupId) {
       this.groupId = pieceData.groupId;
     }
-
-    this.Pockets = new Pockets(puzzleData);
 
     this.setPiece(pieceData);
     this.element = SingleMovable.createElement.call(this, puzzleData);
@@ -206,7 +205,7 @@ export default class SingleMovable extends BaseMovable {
   }
 
   render() {
-    console.log("rendering piece", this.pieceData);
+    // console.log("rendering piece", this.pieceData);
     const { type, pageX, pageY, isSolved, pocket } = this.pieceData;
 
     if (Number.isInteger(pocket)) {
@@ -214,7 +213,7 @@ export default class SingleMovable extends BaseMovable {
         `#pocket-${pocket}`
       );
 
-      this.Pockets.addToPocket(pocketElement, this);
+      this.Pockets.addSingleToPocket(pocketElement, this);
       return;
     }
 
@@ -331,6 +330,7 @@ export default class SingleMovable extends BaseMovable {
         this.isPuzzlePiece(element) &&
         !BaseMovable.isGroupedPiece(element) &&
         this.hasMouseDown(element) &&
+        !this.isPocketPiece(element) &&
         !this.isSolved
       ) {
         this.active = true;
@@ -345,7 +345,7 @@ export default class SingleMovable extends BaseMovable {
         this.resetPosition();
       } else if (this.isOverPockets(event)) {
         const pocket = this.getPocketByCollision(Utils.getEventBox(event));
-        this.Pockets.addToPocket(pocket, this);
+        this.Pockets.addSingleToPocket(pocket, this);
         this.pocket = parseInt(pocket.id.split("-")[1]);
       } else {
         this.connection = checkConnections.call(this, this.element);

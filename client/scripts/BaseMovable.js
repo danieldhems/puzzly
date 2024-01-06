@@ -71,10 +71,7 @@ export default class BaseMovable {
   isPuzzlePiece(target) {
     const classes = target?.classList;
     if (!classes) return;
-    return (
-      PUZZLE_PIECE_CLASSES.some((c) => classes.contains(c)) &&
-      !classes.contains("in-pocket")
-    );
+    return PUZZLE_PIECE_CLASSES.some((c) => classes.contains(c));
   }
 
   isSinglePiece(element) {
@@ -187,12 +184,14 @@ export default class BaseMovable {
   onMouseDown() {}
 
   onMouseMove(event) {
-    const newPosTop =
-      event.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
-    const newPosLeft =
-      event.clientX / this.zoomLevel - this.diffX / this.zoomLevel;
-    this.element.style.top = newPosTop + "px";
-    this.element.style.left = newPosLeft + "px";
+    if (this.active) {
+      const newPosTop =
+        event.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
+      const newPosLeft =
+        event.clientX / this.zoomLevel - this.diffX / this.zoomLevel;
+      this.element.style.top = newPosTop + "px";
+      this.element.style.left = newPosLeft + "px";
+    }
   }
 
   onMouseUp(event) {

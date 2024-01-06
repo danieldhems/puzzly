@@ -329,16 +329,13 @@ class Puzzly {
 
   getMovableInstanceFromElement(element) {
     if (!element) return;
-    console.log("getMovableInstanceFromElement", element);
     if (element.dataset.groupId) {
-      console.log("element is in group");
       return this.groupInstances.find((instance) =>
         instance.piecesInGroup.some(
           (piece) => piece.groupId === element.dataset.groupId
         )
       );
     } else {
-      console.log("element is NOT in group");
       return this.pieceInstances.find(
         (instance) => instance._id === element.dataset.pieceIdInPersistence
       );

@@ -229,6 +229,9 @@ export default class PersistenceOperations {
     } else if (data.instanceType === "GroupMovable") {
       requestMethod = data.remove ? "DELETE" : data._id ? "PUT" : "POST";
       endpoint = GROUPS_ENDPOINT;
+    } else if (Array.isArray(data)) {
+      requestMethod = "PUT";
+      endpoint = PIECES_ENDPOINT;
     } else {
       return;
     }

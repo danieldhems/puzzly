@@ -79,8 +79,6 @@ var api = {
     console.log("update request", req.body);
 
     client.connect().then(async (client, err) => {
-      const response = {};
-
       if (!err) {
         db = client.db(dbName);
 
@@ -88,42 +86,57 @@ var api = {
         let puzzles = db.collection(puzzlesCollection);
         let query, update;
 
-        try {
-          const pieceid = new ObjectID(data._id);
-          query = { _id: pieceid };
-          delete data._id;
-          console.log("saving piece", data);
+        const response = {};
 
-          const { pageX, pageY, groupId, isSolved, pocket, isPuzzleComplete } =
-            data;
-          update = {
-            $set: {
-              pageX,
-              pageY,
-              groupId,
-              isSolved,
-              pocket,
-            },
-          };
-          console.log("piece update instruction", update);
-          try {
+        const lastSaveDate = Date.now();
+
+        try {
+          console.log("data", data);
+          if (Array.isArray(data)) {
+            for (let i = 0, l = data.length; i < l; i++) {
+              const { _id, pageX, pageY, pocket } = data[i];
+              await pieces.findOneAndUpdate(
+                { _id: new ObjectID(_id) },
+                {
+                  $set: {
+                    pageX: pageX,
+                    pageY: pageY,
+                    pocket: pocket,
+                  },
+                }
+              );
+            }
+          } else {
+            const pieceid = new ObjectID(data._id);
+            query = { _id: pieceid };
+            console.log("saving piece", data);
+
+            const { pageX, pageY, groupId, isSolved, pocket } = data;
+
+            update = {
+              $set: {
+                pageX,
+                pageY,
+                groupId,
+                isSolved,
+                pocket,
+              },
+            };
+
+            console.log("Single piece: update instruction", update);
             const result = await pieces.findOneAndUpdate(query, update);
             console.log("piece update result", result.ops);
-          } catch (error) {
-            console.error("Failed to update piece:", error);
           }
-
-          const puzzleUpdateQuery = {
-            _id: new ObjectID(data.puzzleId),
-          };
-
-          const lastSaveDate = Date.now();
 
           const puzzleUpdateOp = {
             $set: {
               lastSaveDate,
-              complete: isPuzzleComplete,
+              complete: data.isPuzzleComplete,
             },
+          };
+
+          const puzzleUpdateQuery = {
+            _id: new ObjectID(data.puzzleId),
           };
 
           console.log("Pieces: Updating puzzle with query", puzzleUpdateOp);
@@ -134,8 +147,10 @@ var api = {
           );
           // console.log("piece save result", result.ops);
           response.lastSaveDate = lastSaveDate;
+
           res.status(200).send(response);
         } catch (e) {
+          console.log("e", e);
           res.status(500).send(e);
         }
       }
