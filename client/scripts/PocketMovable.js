@@ -45,14 +45,11 @@ export class PocketMovable extends BaseMovable {
   onMouseUp(event) {
     if (this.active) {
       if (this.isInsidePlayArea() && !this.isOverPockets(event)) {
-        console.log(1);
         this.addToStage();
       } else if (this.isOverPockets(event)) {
-        console.log(2);
         const pocket = this.getPocketByCollision(Utils.getEventBox(event));
         this.Pockets.addManyToPocket(pocket, this);
       } else if (!this.isInsidePlayArea() && !this.isOverPockets(event)) {
-        console.log(3);
         this.Pockets.addManyToPocket(this.activePocket, this);
       }
 
@@ -189,9 +186,7 @@ export class PocketMovable extends BaseMovable {
   }
 
   save() {
-    console.log("PocketMovable save", this);
     if (this.active) {
-      console.log("PocketMovable saving");
       Events.notify(EVENT_TYPES.SAVE, this.getDataForSave());
       this.destroy();
     }

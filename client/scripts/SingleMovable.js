@@ -229,7 +229,6 @@ export default class SingleMovable extends BaseMovable {
   }
 
   isElementOwned(element) {
-    console.log("isElementOwned", element);
     if (!element) return;
     return element.dataset.pieceIdInPersistence === this.pieceData._id;
   }
@@ -377,7 +376,6 @@ export default class SingleMovable extends BaseMovable {
 
         // Only save if this piece isn't in a group
         // (If it is in a group, the group will notify this piece to save once group operations are complete)
-        console.log("single movable saving");
         this.save(true);
         this.active = false;
       }
@@ -405,7 +403,6 @@ export default class SingleMovable extends BaseMovable {
   }
 
   setGroupIdAcrossInstance(groupId) {
-    console.log("setGroupIdAcrossInstance", groupId);
     this.groupId = groupId;
     this.element.dataset.groupId = groupId;
     this.pieceData.groupId = groupId;

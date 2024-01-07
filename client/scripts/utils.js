@@ -763,6 +763,18 @@ const Utils = {
       : null;
   },
 
+  getPocketByCollision(box) {
+    let i = 0;
+    const pockets = document.querySelectorAll(".pocket");
+    while (i < pockets.length) {
+      const pocket = pockets[i];
+      if (Utils.hasCollision(pocket.getBoundingClientRect(), box)) {
+        return pocket;
+      }
+      i++;
+    }
+  },
+
   getPositionRelativeToContainer(elementRect, containerRect, zoomLevel) {
     const pieceOffsetWithCanvasX = elementRect.left - containerRect.left;
     const pieceOffsetWithCanvasY = elementRect.top - containerRect.top;

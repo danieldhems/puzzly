@@ -425,6 +425,7 @@ class Pockets {
     const element = pieceInstance.element;
 
     element.setAttribute("data-pocket-id", pocketId);
+    pieceInstance.pocket = parseInt(pocketId);
     element.classList.add("in-pocket");
 
     pocketEl?.querySelector(".pocket-inner").appendChild(element);

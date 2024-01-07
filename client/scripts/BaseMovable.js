@@ -66,7 +66,6 @@ export default class BaseMovable {
     );
 
     window.addEventListener(EVENT_TYPES.DRAGANDSELECT_ACTIVE, (event) => {
-      console.log("drag and select message", event.detail);
       this.isDragAndSelectActive = event.detail;
     });
   }
@@ -193,7 +192,6 @@ export default class BaseMovable {
 
   onMouseMove(event) {
     if (this.active && !this.dragAndSelectActive) {
-      console.log("basemovable mouse move");
       const newPosTop =
         event.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
       const newPosLeft =
@@ -220,9 +218,6 @@ export default class BaseMovable {
       window.Puzzly.getMovableInstanceFromElement(sourceElement);
     const targetInstance =
       window.Puzzly.getMovableInstanceFromElement(targetElement);
-
-    console.log("instances", sourceInstance, targetInstance);
-    console.log("is solving?", isSolving);
 
     if (isSolving) {
       sourceInstance.solve({ save: true });

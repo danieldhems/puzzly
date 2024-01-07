@@ -5,6 +5,7 @@ import Utils from "./utils.js";
 class DragAndSelect {
   constructor(opts) {
     this.Puzzly = opts;
+    this.Pockets = opts.Pockets;
     this.playBoundary = opts.playBoundary;
     this.piecesContainer = opts.piecesContainer;
     this.zoomLevel = opts.zoomLevel;
@@ -151,7 +152,13 @@ class DragAndSelect {
 
   toggleHighlightPieces() {
     if (this.selectedPiecesContainer) {
-      this.selectedPiecesContainer.style.opacity = this.drawBoxActive ? 0.5 : 1;
+      Array.from(this.selectedPiecesContainer.childNodes).forEach((element) => {
+        element.style.opacity = this.drawBoxActive ? 0.5 : 1;
+      });
+    } else {
+      Array.from(this.selectedPiecesContainer.childNodes).forEach((element) => {
+        element.style.opacity = this.drawBoxActive ? 1 : 0.5;
+      });
     }
   }
 
@@ -354,7 +361,7 @@ class DragAndSelect {
         this.selectedPieces
       );
 
-      this.playBoundary.appendChild(this.selectedPiecesContainer);
+      this.piecesContainer.appendChild(this.selectedPiecesContainer);
       this.piecesSelected = true;
 
       this.toggleHighlightPieces(this.selectedPieces);
@@ -363,12 +370,8 @@ class DragAndSelect {
 
       Events.notify(EVENT_TYPES.PIECE_PICKUP, this.selectedPiecesContainer);
       Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, true);
-    } else if (
-      this.selectedPiecesContainer &&
-      droppedElementIsInSelectedGroup
-    ) {
+    } else if (this.selectedPiecesContainer) {
       // A group of selected pieces has been moved
-      console.log("checking out of bounds", this.selectedPiecesContainer);
 
       if (this.isDragOutOfBounds(e)) {
         this.selectedPiecesContainer.style.left =
@@ -381,20 +384,37 @@ class DragAndSelect {
         this.selectedPiecesContainerRectTop =
           this.selectedPiecesContainer.offsetTop;
       }
+
+      this.endDrag(e);
     } else if (this.touchEndTime - this.touchStartTime < 250) {
-      console.log("here");
+      // console.log("here");
       // Drag finished -> put pieces back
-      this.endDrag();
+      // this.endDrag();
     }
   }
 
-  endDrag() {
+  addPiecesToPocket(pocket) {
+    for (let i = 0, l = this.selectedPieces.length; i < l; i++) {
+      const pieceInstance = this.Puzzly.getMovableInstanceFromElement(
+        this.selectedPieces[i]
+      );
+      this.Pockets.addSingleToPocket(pocket, pieceInstance);
+    }
+  }
+
+  endDrag(e) {
     this.deactivateDrawBox();
     this.setDrawCursor(0);
 
     if (this.selectedPieces.length > 0) {
       this.toggleHighlightPieces(this.selectedPieces);
-      this.dropPieces(this.selectedPieces);
+      const eventBox = Utils.getEventBox(e);
+      const pocket = Utils.getPocketByCollision(eventBox);
+      if (pocket) {
+        this.addPiecesToPocket(pocket, this.selectedPieces);
+      } else {
+        this.dropPieces(this.selectedPieces);
+      }
       this.save();
     }
 
@@ -426,6 +446,7 @@ class DragAndSelect {
         _id: pieceInstance._id,
         pageX: pieceInstance.element.offsetLeft,
         pageY: pieceInstance.element.offsetTop,
+        pocket: pieceInstance.pocket,
       };
     });
     Events.notify(EVENT_TYPES.SAVE, data);
