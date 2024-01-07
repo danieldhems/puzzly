@@ -30,6 +30,8 @@ export default class BaseMovable {
   connectorTolerance = null;
   shadowOffset = null;
 
+  isDragAndSelectActive = false;
+
   constructor(puzzly) {
     this.puzzly = puzzly;
     // console.log("puzzly", puzzly);
@@ -62,6 +64,11 @@ export default class BaseMovable {
       EVENT_TYPES.CHANGE_SCALE,
       this.onChangeScale.bind(this)
     );
+
+    window.addEventListener(EVENT_TYPES.DRAGANDSELECT_ACTIVE, (event) => {
+      console.log("drag and select message", event.detail);
+      this.isDragAndSelectActive = event.detail;
+    });
   }
 
   onChangeScale(event) {
@@ -92,6 +99,7 @@ export default class BaseMovable {
   }
 
   isDragAndSelectPiece(element) {
+    if (!element) return;
     return element.parentNode.id === ELEMENT_IDS.DRAGANDSELECT_CONTAINER;
   }
 
@@ -184,7 +192,8 @@ export default class BaseMovable {
   onMouseDown() {}
 
   onMouseMove(event) {
-    if (this.active) {
+    if (this.active && !this.dragAndSelectActive) {
+      console.log("basemovable mouse move");
       const newPosTop =
         event.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
       const newPosLeft =

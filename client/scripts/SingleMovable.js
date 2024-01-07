@@ -327,10 +327,10 @@ export default class SingleMovable extends BaseMovable {
       const element = Utils.getPuzzlePieceElementFromEvent(event);
       if (
         element &&
-        this.isPuzzlePiece(element) &&
         !BaseMovable.isGroupedPiece(element) &&
         this.hasMouseDown(element) &&
         !this.isPocketPiece(element) &&
+        !this.isDragAndSelectActive &&
         !this.isSolved
       ) {
         this.active = true;
@@ -377,6 +377,7 @@ export default class SingleMovable extends BaseMovable {
 
         // Only save if this piece isn't in a group
         // (If it is in a group, the group will notify this piece to save once group operations are complete)
+        console.log("single movable saving");
         this.save(true);
         this.active = false;
       }

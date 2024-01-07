@@ -4,6 +4,7 @@ import Utils from "./utils.js";
 
 class DragAndSelect {
   constructor(opts) {
+    this.Puzzly = opts;
     this.playBoundary = opts.playBoundary;
     this.piecesContainer = opts.piecesContainer;
     this.zoomLevel = opts.zoomLevel;
@@ -150,7 +151,7 @@ class DragAndSelect {
 
   toggleHighlightPieces() {
     if (this.selectedPiecesContainer) {
-      this.selectedPiecesContainer.style.opacity = this.drawBoxActive ? 0.2 : 1;
+      this.selectedPiecesContainer.style.opacity = this.drawBoxActive ? 0.5 : 1;
     }
   }
 
@@ -394,12 +395,12 @@ class DragAndSelect {
     if (this.selectedPieces.length > 0) {
       this.toggleHighlightPieces(this.selectedPieces);
       this.dropPieces(this.selectedPieces);
+      this.save();
     }
 
     Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, false);
     Events.notify(EVENT_TYPES.CLEAR_BRIDGE);
 
-    Utils.requestSave(this.selectedPieces);
     this.selectedPiecesContainer?.remove();
     this.selectedPiecesContainer = null;
 
@@ -416,6 +417,18 @@ class DragAndSelect {
     const playBoundaryRect = this.playBoundary.getBoundingClientRect();
 
     return !Utils.isInside(selectedPiecesRect, playBoundaryRect);
+  }
+
+  save() {
+    const data = this.selectedPieces.map((element) => {
+      const pieceInstance = this.Puzzly.getMovableInstanceFromElement(element);
+      return {
+        _id: pieceInstance._id,
+        pageX: pieceInstance.element.offsetLeft,
+        pageY: pieceInstance.element.offsetTop,
+      };
+    });
+    Events.notify(EVENT_TYPES.SAVE, data);
   }
 }
 
