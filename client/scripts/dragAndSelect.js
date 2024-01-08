@@ -362,6 +362,8 @@ class DragAndSelect {
       );
 
       this.piecesContainer.appendChild(this.selectedPiecesContainer);
+      this.setLastPosition();
+
       this.piecesSelected = true;
 
       this.toggleHighlightPieces(this.selectedPieces);
@@ -373,23 +375,12 @@ class DragAndSelect {
     } else if (this.selectedPiecesContainer) {
       // A group of selected pieces has been moved
 
-      if (this.isDragOutOfBounds(e)) {
-        this.selectedPiecesContainer.style.left =
-          this.selectedPiecesContainerRectLeft + "px";
-        this.selectedPiecesContainer.style.top =
-          this.selectedPiecesContainerRectTop + "px";
-      } else {
-        this.selectedPiecesContainerRectLeft =
-          this.selectedPiecesContainer.offsetLeft;
-        this.selectedPiecesContainerRectTop =
-          this.selectedPiecesContainer.offsetTop;
+      if (this.isDragOutOfBounds()) {
+        this.selectedPiecesContainer.style.left = this.lastPosition.left + "px";
+        this.selectedPiecesContainer.style.top = this.lastPosition.top + "px";
       }
 
       this.endDrag(e);
-    } else if (this.touchEndTime - this.touchStartTime < 250) {
-      // console.log("here");
-      // Drag finished -> put pieces back
-      // this.endDrag();
     }
   }
 
@@ -439,7 +430,21 @@ class DragAndSelect {
     return !Utils.isInside(selectedPiecesRect, playBoundaryRect);
   }
 
+  setLastPosition() {
+    this.lastPosition = {
+      top: this.selectedPiecesContainer.offsetTop,
+      right:
+        this.selectedPiecesContainer.offsetLeft +
+        this.selectedPiecesContainer.offsetWidth,
+      bottom:
+        this.selectedPiecesContainer.offsetTop +
+        this.selectedPiecesContainer.offsetHeight,
+      left: this.selectedPiecesContainer.offsetLeft,
+    };
+  }
+
   save() {
+    // TODO: Still would prefer to handle saving in a cleaner way
     const data = this.selectedPieces.map((element) => {
       const pieceInstance = this.Puzzly.getMovableInstanceFromElement(element);
       return {
