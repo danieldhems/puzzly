@@ -30,10 +30,12 @@ export default class GroupMovable extends BaseMovable {
     pieces,
     _id = undefined,
     position = undefined,
+    zIndex = 1,
     isSolved = false,
   }) {
     super(puzzleData);
 
+    this.Puzzly = puzzleData;
     this.piecesInGroup = pieces;
 
     this.puzzleId = puzzleData.puzzleId;
@@ -43,6 +45,8 @@ export default class GroupMovable extends BaseMovable {
     this.height = puzzleData.boardHeight;
     this.shadowOffset = puzzleData.shadowOffset;
 
+    console.log("GroupMovable zIndex", zIndex);
+
     this.isSolved = isSolved;
 
     if (!_id) {
@@ -51,7 +55,7 @@ export default class GroupMovable extends BaseMovable {
       if (this.isSolved) {
         this.solve();
       } else {
-        this.restoreGroupFromPersistence(_id, pieces, position);
+        this.restoreGroupFromPersistence(_id, pieces, position, zIndex);
       }
     }
 
@@ -98,7 +102,7 @@ export default class GroupMovable extends BaseMovable {
     this.render();
   }
 
-  restoreGroupFromPersistence(groupId, pieces, position) {
+  restoreGroupFromPersistence(groupId, pieces, position, zIndex) {
     this._id = groupId;
     this.position = position;
     this.piecesInGroup = pieces;
@@ -108,6 +112,7 @@ export default class GroupMovable extends BaseMovable {
     this.element.style.left = position.left + "px";
     this.element.style.width = this.width + "px";
     this.element.style.height = this.height + "px";
+    this.element.style.zIndex = zIndex;
 
     this.canvas = this.element.querySelector("canvas");
 
@@ -212,6 +217,7 @@ export default class GroupMovable extends BaseMovable {
         this.element = element.parentNode;
         // console.log("group movable: element", this.element);
         this.active = true;
+        this.Puzzly.keepOnTop(this.element);
 
         super.onPickup.call(this, event);
       }
@@ -253,13 +259,11 @@ export default class GroupMovable extends BaseMovable {
     this.save();
   }
 
-  isOutOfBounds(event) {
+  isOutOfBounds() {
     const playAreaBox = this.piecesContainer.getBoundingClientRect();
-    return (
-      this.piecesInGroup.some(
-        (instance) =>
-          !Utils.isInside(instance.element.getBoundingClientRect(), playAreaBox)
-      ) && !this.isOverPockets(event)
+    return this.piecesInGroup.some(
+      (instance) =>
+        !Utils.isInside(instance.element.getBoundingClientRect(), playAreaBox)
     );
     // return !this.isInsidePlayArea() && !this.isOverPockets(event);
   }
@@ -350,6 +354,7 @@ export default class GroupMovable extends BaseMovable {
       pieces: this.getAllPieceData(),
       puzzleId: this.puzzleId,
       position: elementPosition,
+      zIndex: parseInt(this.element.style.zIndex),
       instanceType: this.instanceType,
       isSolved: this.isSolved,
       isPuzzleComplete: this.isPuzzleComplete(),

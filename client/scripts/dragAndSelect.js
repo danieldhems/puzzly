@@ -297,6 +297,7 @@ class DragAndSelect {
         this.diffY =
           e.clientY - this.selectedPiecesContainer.offsetTop * this.zoomLevel;
         this.selectedPiecesAreMoving = true;
+        this.Puzzly.keepOnTop(this.selectedPiecesContainer);
       }
     }
   }

@@ -111,12 +111,13 @@ var api = {
             query = { _id: pieceid };
             console.log("saving piece", data);
 
-            const { pageX, pageY, groupId, isSolved, pocket } = data;
+            const { pageX, pageY, groupId, isSolved, pocket, zIndex } = data;
 
             update = {
               $set: {
                 pageX,
                 pageY,
+                zIndex,
                 groupId,
                 isSolved,
                 pocket,
@@ -132,6 +133,7 @@ var api = {
             $set: {
               lastSaveDate,
               complete: data.isPuzzleComplete,
+              zIndex: data.zIndex,
             },
           };
 

@@ -114,6 +114,7 @@ var api = {
           update = {
             $set: {
               pieces: data.pieces,
+              zIndex: data.zIndex,
               position: data.position,
               isSolved: data.isSolved,
             },
@@ -147,6 +148,7 @@ var api = {
             $set: {
               lastSaveDate,
               complete: data.isPuzzleComplete,
+              zIndex: data.zIndex,
             },
           };
 

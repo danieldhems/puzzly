@@ -1,4 +1,3 @@
-import BaseMovable from "./BaseMovable.js";
 import SingleMovable from "./SingleMovable.js";
 import GroupMovable from "./GroupMovable.js";
 import Pockets from "./pockets.js";
@@ -12,14 +11,12 @@ import { checkConnections } from "./checkConnections.js";
 import GroupOperations from "./GroupOperations.js";
 import PersistenceOperations from "./persistence.js";
 import CanvasOperations from "./canvasOperations.js";
+import Zoom from "./zoom.js";
 
 /**
  * Puzzly
  *
  */
-
-const ZOOM_INTERVAL = 0.1;
-const INITIAL_ZOOM_LEVEL = 1;
 
 class Puzzly {
   constructor(canvasId, puzzleId, config) {
@@ -59,7 +56,8 @@ class Puzzly {
       config.debugOptions.highlightConnectingPieces;
     this.noDispersal = config.debugOptions.noDispersal;
 
-    this.currentZIndex = 3;
+    this.currentZIndex = config.zIndex || 3;
+    console.log("Puzzly zindex", this.currentZIndex);
 
     this.pieceSectors = [];
     this.usedPieceSectors = [];
@@ -147,8 +145,6 @@ class Puzzly {
       }
     );
 
-    window.addEventListener("resize", this.setPlayBoundaryPosition.bind(this));
-
     if (this.innerPiecesVisible) {
       this.filterBtnOnLabel.style.display = "block";
       this.filterBtnOffLabel.style.display = "none";
@@ -224,8 +220,8 @@ class Puzzly {
     this.Pockets = new Pockets(this);
     this.DragAndSelect = new DragAndSelect(this);
 
-    this.setPlayBoundaryPosition();
-    this.resetPlayBoundaryPosition();
+    // this.setPlayBoundaryPosition();
+    // this.resetPlayBoundaryPosition();
     this.generatePieceSectorMap();
 
     this.PocketMovable = new PocketMovable(this);
@@ -258,6 +254,7 @@ class Puzzly {
             puzzleData: this,
             _id: group._id,
             pieces: pieceInstances,
+            zIndex: group.zIndex,
             position: group.position,
             isSolved: group.isSolved,
           });
@@ -299,18 +296,11 @@ class Puzzly {
 
     this.innerPieces = document.querySelectorAll(".inner-piece");
 
-    // window.addEventListener(
-    //   this.interactionEventDown,
-    //   this.onMouseDown.bind(this)
-    // );
-
     const newPuzzleBtn = document.getElementById("js-create-new-puzzle");
     newPuzzleBtn.addEventListener(this.interactionEventDown, () => {
       window.location = "/";
     });
 
-    // window.addEventListener(this.interactionEventUp, this.onMouseUp.bind(this));
-    window.addEventListener("keydown", this.onKeyDown.bind(this));
     window.addEventListener(EVENT_TYPES.RETURN_TO_CANVAS, (e) => {
       this.handleDrop(e.detail);
     });
@@ -323,6 +313,8 @@ class Puzzly {
       EVENT_TYPES.CONNECTION_MADE,
       this.onConnectionMade.bind(this)
     );
+
+    new Zoom(this);
 
     Events.notify(EVENT_TYPES.PUZZLE_LOADED, this);
   }
@@ -393,27 +385,6 @@ class Puzzly {
         })
       );
     }
-  }
-
-  setPlayBoundaryPosition() {
-    const stageRect = this.stage.getBoundingClientRect();
-    const playBoundaryRect = this.playBoundary.getBoundingClientRect();
-
-    this.playBoundary.style.top = Utils.getPxString(
-      stageRect.height / 2 - playBoundaryRect.height / 2
-    );
-    this.playBoundary.style.left = Utils.getPxString(
-      stageRect.width / 2 - playBoundaryRect.width / 2
-    );
-
-    Events.notify(EVENT_TYPES.RESIZE);
-  }
-
-  resetPlayBoundaryPosition() {
-    this.playBoundary.style.left = this.initialPlayBoundaryPositionLeft;
-    this.playBoundary.style.top = Utils.getPxString(
-      this.initialPlayBoundaryPositionTop
-    );
   }
 
   onControlsHandleClick(e) {
@@ -550,85 +521,6 @@ class Puzzly {
     );
   }
 
-  onKeyDown(event) {
-    // https://stackoverflow.com/questions/995914/catch-browsers-zoom-event-in-javascript
-
-    if (
-      (event.ctrlKey || event.metaKey) &&
-      (event.which === 61 ||
-        event.which === 107 ||
-        event.which === 173 ||
-        event.which === 109 ||
-        event.which === 187 ||
-        event.which === 189 ||
-        event.which === 48)
-    ) {
-      event.preventDefault();
-
-      this.prevZoomLevel = this.zoomLevel;
-      const canZoomOut = this.zoomLevel > this.INITIAL_ZOOM_LEVEL;
-
-      // Plus key
-      if (event.which === 187) {
-        this.increaseZoomLevel(ZOOM_INTERVAL);
-      }
-
-      // Minus key
-      if (event.which === 189 && canZoomOut) {
-        this.decreaseZoomLevel(ZOOM_INTERVAL);
-        if (ZOOM_INTERVAL === INITIAL_ZOOM_LEVEL) {
-          this.resetPlayBoundaryPosition();
-        }
-      }
-
-      // "0" Number key
-      if (event.which === 48) {
-        this.resetZoomLevel();
-        this.resetPlayBoundaryPosition();
-      }
-    }
-  }
-
-  setInitialZoomLevel(zoomLevel) {
-    this.INITIAL_ZOOM_LEVEL = zoomLevel;
-    return this.INITIAL_ZOOM_LEVEL;
-  }
-
-  // Might want an observer of some kind for the scalePlayBoundary method calls here, instead of manually calling it in all of these helper methods.
-  resetZoomLevel() {
-    this.zoomLevel = this.INITIAL_ZOOM_LEVEL;
-    this.scalePlayBoundary(this.zoomLevel);
-  }
-
-  setZoomLevel(zoomLevel) {
-    this.zoomLevel = zoomLevel;
-    this.scalePlayBoundary(this.zoomLevel);
-  }
-
-  increaseZoomLevel(increment) {
-    this.zoomLevel += increment;
-    this.scalePlayBoundary(this.zoomLevel);
-  }
-
-  decreaseZoomLevel(increment) {
-    this.zoomLevel -= increment;
-    this.scalePlayBoundary(this.zoomLevel);
-  }
-
-  scalePlayBoundary(scale) {
-    this.playBoundary.style.transform = `scale(${scale})`;
-
-    if (this.zoomLevel !== this.prevZoomLevel) {
-      // this.Pockets.setScale(this.zoomLevel);
-      // this.DragAndSelect.setScale(this.zoomLevel);
-      Events.notify(EVENT_TYPES.CHANGE_SCALE, this.zoomLevel);
-    }
-
-    if (this.isPreviewActive) {
-      this.updatePreviewerSizeAndPosition();
-    }
-  }
-
   gatherPieces() {
     const pieces = this.allPieces();
     Events.notify(EVENT_TYPES.ADD_TO_POCKET, pieces);
@@ -689,167 +581,6 @@ class Puzzly {
     });
   }
 
-  renderJigsawPiece(piece) {
-    console.log("rendering piece", piece);
-    let el, fgEl, bgEl;
-
-    const solvedCnvContainer = document.getElementById(
-      `group-container-${this.solvedGroupId}`
-    );
-
-    el = document.createElement("div");
-    el.classList.add("puzzle-piece");
-    el.id = "piece-" + piece.id;
-
-    el.style.position = "absolute";
-    el.width = piece.imgW;
-    el.height = piece.imgH;
-    el.style.width = piece.imgW + "px";
-    el.style.height = piece.imgH + "px";
-
-    if (piece.pocketId === undefined || piece.pocketId === null) {
-      el.style.top = (!!piece.group ? piece.solvedY : piece.pageY) + "px";
-      el.style.left = (!!piece.group ? piece.solvedX : piece.pageX) + "px";
-    }
-    el.style.pointerEvents = "auto";
-    el.style.zIndex = 1;
-
-    el.setAttribute("data-jigsaw-type", piece.type.join(","));
-    el.setAttribute("data-piece-id", piece.id);
-    el.setAttribute("data-piece-id-in-persistence", piece._id);
-    el.setAttribute("data-puzzle-id", piece.puzzleId);
-    el.setAttribute("data-imgX", piece.imgX);
-    el.setAttribute("data-imgy", piece.imgY);
-    el.setAttribute("data-solvedX", piece.solvedX);
-    el.setAttribute("data-solvedY", piece.solvedY);
-    el.setAttribute("data-pageX", piece.pageX);
-    el.setAttribute("data-pageY", piece.pageY);
-    el.setAttribute("data-spriteX", piece.spriteX);
-    el.setAttribute("data-spriteY", piece.spriteY);
-    el.setAttribute("data-spriteshadowx", piece.spriteShadowX);
-    el.setAttribute("data-spriteshadowy", piece.spriteShadowY);
-    el.setAttribute("data-imgW", piece.imgW);
-    el.setAttribute("data-imgH", piece.imgH);
-    el.setAttribute("data-is-inner-piece", piece.isInnerPiece);
-    el.setAttribute(
-      "data-connects-to",
-      JSON.stringify(this.getConnectingPieceIds(el))
-    );
-    el.setAttribute("data-connections", GroupOperations.getConnections(el));
-    el.setAttribute(
-      "data-num-pieces-from-top-edge",
-      piece.numPiecesFromTopEdge
-    );
-    el.setAttribute(
-      "data-num-pieces-from-left-edge",
-      piece.numPiecesFromLeftEdge
-    );
-    el.setAttribute("data-is-solved", piece.isSolved);
-
-    fgEl = document.createElement("div");
-    fgEl.classList.add("puzzle-piece-fg");
-    fgEl.style.backgroundImage = `url(${this.spritePath}`;
-    fgEl.style.backgroundPositionX =
-      piece.spriteX === 0 ? 0 : "-" + piece.spriteX + "px";
-    fgEl.style.backgroundPositionY =
-      piece.spriteY === 0 ? 0 : "-" + piece.spriteY + "px";
-    fgEl.style.position = "absolute";
-    fgEl.width = piece.imgW;
-    fgEl.height = piece.imgH;
-    fgEl.style.width = piece.imgW + "px";
-    fgEl.style.height = piece.imgH + "px";
-    fgEl.style.top = 0;
-    fgEl.style.left = 0;
-    fgEl.style.zIndex = 2;
-    // fgEl.style.pointerEvents = "none";
-
-    bgEl = document.createElement("div");
-    bgEl.classList.add("puzzle-piece-bg");
-    bgEl.style.position = "absolute";
-    bgEl.width = piece.imgW;
-    bgEl.height = piece.imgH;
-    bgEl.style.width = piece.imgW + "px";
-    bgEl.style.height = piece.imgH + "px";
-    bgEl.style.top = this.shadowOffset + "px";
-    bgEl.style.left = this.shadowOffset + "px";
-    bgEl.style.backgroundImage = `url(${this.spritePath}`;
-    bgEl.style.backgroundPositionX =
-      piece.spriteShadowX === 0 ? 0 : "-" + piece.spriteShadowX + "px";
-    bgEl.style.backgroundPositionY =
-      piece.spriteShadowY === 0 ? 0 : "-" + piece.spriteShadowY + "px";
-    bgEl.style.zIndex = 1;
-    // bgEl.style.pointerEvents = "none";
-
-    el.appendChild(fgEl);
-    el.appendChild(bgEl);
-
-    if (!!piece.group) {
-      el.setAttribute("data-group", piece.group);
-      el.classList.add("grouped");
-    }
-
-    if (piece.pocketId) {
-      el.setAttribute("data-pocket-id", piece.pocketId);
-    }
-
-    if (Number.isInteger(piece.pocketId)) {
-      this.Pockets.addToPocket(piece.pocketId, el);
-    } else if (!GroupOperations.hasGroup(piece) && !piece.isSolved) {
-      this.addToPlayBoundary(el);
-    } else {
-      if (piece.isSolved === undefined) {
-        let groupContainer = document.querySelector(
-          `#group-container-${piece.group}`
-        );
-
-        if (!groupContainer) {
-          groupContainer = document.createElement("div");
-          groupContainer.classList.add("group-container");
-          groupContainer.dataset.groupId = piece.group;
-          groupContainer.style.pointerEvents = "none";
-          groupContainer.setAttribute("id", `group-container-${piece.group}`);
-          groupContainer.style.width = Utils.getPxString(this.boardSize);
-          groupContainer.style.height = Utils.getPxString(this.boardSize);
-          groupContainer.style.position = "absolute";
-          groupContainer.style.top = piece.containerY + "px";
-          groupContainer.style.left = piece.containerX + "px";
-          this.addToPlayBoundary(groupContainer);
-        }
-
-        groupContainer.appendChild(el);
-
-        let groupCanvas = groupContainer.querySelector(
-          `#group-canvas-${piece.group}`
-        );
-        if (!groupCanvas) {
-          groupCanvas = document.createElement("canvas");
-          groupCanvas.id = `group-canvas-${piece.group}`;
-          groupCanvas.style.pointerEvents = "none";
-          groupCanvas.classList.add("group-canvas");
-          groupCanvas.width = this.boardSize + this.shadowOffset;
-          groupCanvas.height = this.boardSize + this.shadowOffset;
-          groupCanvas.style.width = Utils.getPxString(
-            this.boardSize + this.shadowOffset
-          );
-          groupCanvas.style.height = Utils.getPxString(
-            this.boardSize + this.shadowOffset
-          );
-          groupContainer.appendChild(groupCanvas);
-        }
-
-        if (
-          piece.isSolved &&
-          !this.getDataAttributeValue(groupContainer, "data-is-solved")
-        ) {
-          this.setElementAttribute(groupContainer, "data-is-solved", true);
-        }
-      } else {
-        solvedCnvContainer.append(el);
-        el.dataset.isSolved = true;
-      }
-    }
-  }
-
   addToPlayBoundary(piece) {
     this.piecesContainer.prepend(piece);
   }
@@ -887,141 +618,6 @@ class Puzzly {
     for (let id in connections) {
       let el = Utils.getElementByPieceId(connections[id]);
       el.classList.remove("js-highlight");
-    }
-  }
-
-  onMouseDown(e) {
-    let element, thisPiece;
-    e.preventDefault();
-
-    if (e.which === 1) {
-      const clientPos = {
-        x: e.clientX,
-        y: e.clientY,
-      };
-
-      const isPuzzlePiece = Utils.isPuzzlePiece(e.target);
-      const isStage =
-        e.target.id === ELEMENT_IDS.SOLVED_PUZZLE_AREA ||
-        e.target.id === ELEMENT_IDS.PLAY_BOUNDARY ||
-        e.target.dataset.groupId === this.solvedGroupId ||
-        e.target.dataset.issolved;
-
-      if (isPuzzlePiece) {
-        element = Utils.getPuzzlePieceElementFromEvent(e);
-
-        Events.notify(EVENT_TYPES.PIECE_PICKUP, {
-          element,
-          position: { top: e.clientY, left: e.clientX },
-        });
-
-        // Remember last position of moving element / moving group
-        let elementBoundingBox;
-        if (element.classList.contains("grouped")) {
-          const container = getGroupContainer(element);
-          elementBoundingBox = {
-            y: container.offsetTop * this.zoomLevel,
-            x: container.offsetLeft * this.zoomLevel,
-          };
-
-          this.lastPosition = elementBoundingBox;
-        } else {
-          elementBoundingBox = element.getBoundingClientRect();
-          this.lastPosition = Utils.getPositionRelativeToContainer(
-            elementBoundingBox,
-            this.playBoundary.getBoundingClientRect(),
-            this.zoomLevel
-          );
-        }
-      }
-
-      if (isStage && this.zoomLevel > INITIAL_ZOOM_LEVEL) {
-        this.isMovingStage = true;
-        element = this.playBoundary;
-      }
-
-      if (!element) {
-        this.isMouseDown = false;
-        return;
-      } else {
-        this.movingPiece = element;
-      }
-
-      thisPiece = Utils.getPieceFromElement(element);
-
-      if (this.highlightConnectingPieces) {
-        // TODO: FIX
-        this.applyHighlightToConnectingPieces(JSON.parse(thisPiece.connectsTo));
-      }
-
-      if (thisPiece.isSolved) {
-        return;
-      }
-
-      if (GroupOperations.hasGroup(thisPiece)) {
-        const isGroupSolved = element.parentNode.dataset.isSolved === "true";
-        if (isGroupSolved) {
-          return;
-        }
-
-        this.isMovingSinglePiece = false;
-        this.movingElement = getGroupTopContainer(element);
-      } else {
-        this.isMovingSinglePiece = true;
-        this.movingElement = this.movingPiece = element;
-      }
-
-      if (isStage) {
-        this.diffX = clientPos.x - this.movingElement.offsetLeft;
-        this.diffY = clientPos.y - this.movingElement.offsetTop;
-      } else {
-        this.diffX =
-          clientPos.x - this.movingElement.offsetLeft * this.zoomLevel;
-        this.diffY =
-          clientPos.y - this.movingElement.offsetTop * this.zoomLevel;
-      }
-
-      this.isMouseDown = true;
-
-      // window.addEventListener(
-      //   this.interactionEventMove,
-      //   this.onMouseMove.bind(this)
-      // );
-    }
-  }
-
-  onMouseMove(e) {
-    e.preventDefault();
-    let eventX, eventY;
-
-    if (this.movingElement) {
-      eventX = e.clientX;
-      eventY = e.clientY;
-
-      if (!this.dragAndSelectActive) {
-        if (this.isMovingStage) {
-          const projectedPosition = {
-            top: eventY - this.diffY,
-            left: eventX - this.diffX,
-          };
-          const updatedPlayBoundaryPosition =
-            this.getUpdatedPlayBoundaryPosition(
-              this.playBoundary,
-              projectedPosition
-            );
-
-          this.movingElement.style.left =
-            updatedPlayBoundaryPosition.left + "px";
-          this.movingElement.style.top = updatedPlayBoundaryPosition.top + "px";
-        } else if (!this.movingElement.classList.contains("in-pocket")) {
-          const newPosTop =
-            eventY / this.zoomLevel - this.diffY / this.zoomLevel;
-          const newPosLeft =
-            eventX / this.zoomLevel - this.diffX / this.zoomLevel;
-          this.movingElement.style.top = newPosTop + "px";
-          this.movingElement.style.left = newPosLeft + "px";
-        }
-      }
     }
   }
 
@@ -1065,169 +661,6 @@ class Puzzly {
     }
   }
 
-  onMouseUp(e) {
-    // console.log("onmouseup", e)
-
-    if (this.isMovingStage) {
-      Events.notify(EVENT_TYPES.RESIZE);
-    }
-
-    if (!this.isMouseDown || this.isMovingStage) return;
-
-    const element = this.movingPiece;
-
-    const elementBox = element.getBoundingClientRect();
-    const playBoundaryBox = this.playBoundary.getBoundingClientRect();
-    const eventBox = Utils.getEventBox(e);
-
-    const dragContainer = Utils.getContainerFromEvent(e);
-
-    if (dragContainer && Utils.isPocketDragContainer(dragContainer)) {
-      // Dragging piece(s) out of pockets
-
-      if (Utils.isOverPockets(eventBox)) {
-        const pocket = this.Pockets.getPocketByCollision(eventBox);
-        // Put pieces in pocket
-        // Empty the current active pocket if we have one
-        //salmon
-        this.Pockets.reset();
-        this.Pockets.addPiecesToPocket(pocket, dragContainer.childNodes);
-      } else if (Utils.isOutOfBounds(dragContainer)) {
-        // Reset pieces back to active pocket
-        console.log("reset pieces back to pocket");
-
-        this.Pockets.reset();
-        this.Pockets.addPiecesToPocket(
-          this.Pockets.activePocket,
-          dragContainer.childNodes
-        );
-      } else {
-        this.Pockets.returnToCanvas(dragContainer.childNodes);
-      }
-    }
-
-    if (dragContainer && Utils.isDragAndSelectDragContainer(dragContainer)) {
-      if (Utils.isOutOfBounds(dragContainer)) {
-        this.resetPieceToLastPosition(dragContainer);
-      }
-      if (Utils.isOverPockets(dragContainer)) {
-        this.Pockets.addPiecesToPocket(
-          this.Pockets.activePocket,
-          dragContainer.childNodes
-        );
-      }
-    }
-
-    if (Utils.isInside(elementBox, playBoundaryBox)) {
-      // Mouse event is INSIDE play area
-
-      const thisPiece = this.getPieceFromElement(element, ["connects-to"]);
-
-      if (this.highlightConnectingPieces) {
-        this.removeHighlightFromConnectingPieces(
-          JSON.parse(thisPiece.connectsTo)
-        );
-      }
-
-      let hasConnection = false;
-
-      let group = getGroup(element);
-      if (group) {
-        const piecesToCheck = getCollisionCandidatesInGroup(group);
-
-        const connection = piecesToCheck
-          .map((p) => this.checkConnections(p))
-          .filter((e) => e)[0];
-        // console.log('connection', connection)
-
-        if (connection) {
-          let connectionType = connection.type || connection;
-
-          if (this.soundsEnabled) {
-            this.clickSound.play();
-          }
-
-          const isCornerConnection = Utils.isCornerConnection(connectionType);
-
-          if (isCornerConnection || connectionType === "float") {
-            addToGroup(connection.sourceEl, this.solvedGroupId);
-          } else {
-            group(connection.sourceEl, connection.targetEl);
-          }
-
-          const updatedGroup = getGroup(element);
-
-          if (!isCornerConnection) {
-            Utils.updateConnections(updatedGroup);
-          }
-
-          if (this.shouldMarkAsSolved(element, connectionType)) {
-            const piecesInGroup = this.getPiecesInGroup(updatedGroup);
-            this.markAsSolved(piecesInGroup);
-            if (this.isPuzzleComplete()) {
-              this.updateElapsedTime(true);
-            }
-          }
-
-          hasConnection = true;
-        }
-
-        const piecesInCurrentGroup = this.getPiecesInGroup(group);
-        const piecesInNewGroup = this.getPiecesInGroup(this.getGroup(element));
-
-        if (hasConnection) {
-          this.save(piecesInNewGroup);
-        } else {
-          this.save(piecesInCurrentGroup);
-        }
-      } else {
-        // single piece
-        if (Utils.isDragAndSelectDragContainer(dragContainer)) {
-          this.Pockets.returnToCanvas(dragContainer.childNodes);
-        } else {
-          this.handleDrop(element);
-        }
-      }
-
-      Events.notify(EVENT_TYPES.PIECE_DROP);
-    } else {
-      // outside play boundary
-      if (dragContainer) {
-        if (Utils.isPocketDragContainer(dragContainer)) {
-          if (Utils.isOutOfBounds(dragContainer.getBoundingClientRect())) {
-            this.resetPieceToLastPosition(dragContainer);
-          }
-        }
-        if (Utils.isDragAndSelectDragContainer(dragContainer)) {
-          if (Utils.isOutOfBounds(dragContainer.getBoundingClientRect())) {
-            this.resetPieceToLastPosition(dragContainer);
-          } else {
-            const pocket = this.Pockets.getPocketByCollision(
-              element.getBoundingClientRect()
-            );
-            this.Pockets.addPiecesToPocket(pocket, dragContainer.childNodes);
-          }
-        }
-      }
-
-      if (Utils.isOverPockets(element)) {
-        const pocket = this.Pockets.getPocketByCollision(
-          element.getBoundingClientRect()
-        );
-        this.Pockets.addToPocket(pocket, element);
-      }
-    }
-
-    this.isMouseDown = false;
-    this.movingElement = null;
-    this.movingPiece = null;
-    this.movingPieces = [];
-    this.isMovingStage = false;
-
-    window.removeEventListener(this.interactionEventMove, this.mouseMoveFunc);
-    // window.removeEventListener(this.interactionEventUp, this.onMouseUp);
-  }
-
   isViewportInsidePlayBoundary() {
     const box = this.playBoundary.getBoundingClientRect();
     const sbox = this.stage.getBoundingClientRect();
@@ -1258,19 +691,6 @@ class Puzzly {
     }
   }
 
-  resetPieceToLastPosition(element) {
-    console.log("resetPieceToLastPosition");
-    if (element.classList.contains("grouped")) {
-      const container = getGroupContainer(element);
-      container.style.top = this.lastPosition.y + "px";
-      container.style.left = this.lastPosition.x + "px";
-    } else {
-      element.style.top = this.lastPosition.y + "px";
-      element.style.left = this.lastPosition.x + "px";
-    }
-    Events.notify(EVENT_TYPES.CLEAR_BRIDGE);
-  }
-
   getDataAttributeRaw(el, key) {
     // console.log('getDataAttributeRaw', el)
     return el.getAttribute(`data-${key}`) || undefined;
@@ -1282,8 +702,7 @@ class Puzzly {
   }
 
   keepOnTop(el) {
-    console.log("keeping on top", el);
-    el.style.zIndex = this.currentZIndex++;
+    el.style.zIndex = this.currentZIndex = this.currentZIndex + 1;
   }
 
   getConnectingElement(el, connection) {
@@ -1357,47 +776,6 @@ class Puzzly {
 
   setElementAttribute(el, attr, value) {
     el.setAttribute(attr, value);
-  }
-
-  // deprecated
-  updatePiecePositionsByDiff(diff, pieces) {
-    const pieceIDs = pieces.map((p) => p.id);
-    this.pieces = this.pieces.map((p) => {
-      if (pieceIDs.includes(p.id)) {
-        const diffTopOperand = diff.top.charAt(0);
-        const diffTopValue =
-          diffTopOperand === "+"
-            ? Math.ceil(parseFloat(diff.top.substr(1)))
-            : Math.floor(parseFloat(diff.top.substr(1)));
-        const diffLeftOperand = diff.left.charAt(0);
-        const diffLeftValue =
-          diffLeftOperand === "+"
-            ? Math.ceil(parseFloat(diff.left.substr(1)))
-            : Math.floor(parseFloat(diff.left.substr(1)));
-
-        const element = Utils.getElementByPieceId(p.id);
-
-        const newPosTop =
-          diffTopOperand === "+"
-            ? parseInt(element.style.top) + diffTopValue
-            : parseInt(element.style.top) - diffTopValue;
-        const newPosLeft =
-          diffLeftOperand === "+"
-            ? parseInt(element.style.left) + diffLeftValue
-            : parseInt(element.style.left) - diffLeftValue;
-
-        element.style.top = newPosTop + "px";
-        element.style.left = newPosLeft + "px";
-        element.style.zIndex = 10;
-
-        return {
-          ...p,
-          pageY: newPosTop,
-          pageX: newPosLeft,
-        };
-      }
-      return p;
-    });
   }
 
   isCornerConnection(str) {

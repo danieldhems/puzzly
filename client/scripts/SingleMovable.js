@@ -31,9 +31,10 @@ export default class SingleMovable extends BaseMovable {
 
     this.piecesPerSideHorizontal = puzzleData.piecesPerSideHorizontal;
     this.shadowOffset = puzzleData.shadowOffset;
+    this.Puzzly = puzzleData;
     this.pocket = pieceData.pocket;
     this.Pockets = puzzleData.Pockets;
-
+    console.log("SingleMovable zindex", pieceData.zIndex);
     if (pieceData.groupId) {
       this.groupId = pieceData.groupId;
     }
@@ -98,6 +99,7 @@ export default class SingleMovable extends BaseMovable {
       pageX,
       solvedY,
       solvedX,
+      zIndex,
       spritePath,
       spriteY,
       spriteX,
@@ -126,7 +128,7 @@ export default class SingleMovable extends BaseMovable {
       el.style.left = (!!groupId ? solvedX : pageX) + "px";
     }
     el.style.pointerEvents = "auto";
-    el.style.zIndex = 1;
+    el.style.zIndex = zIndex || 1;
 
     el.setAttribute("data-jigsaw-type", type.join(","));
     el.setAttribute("data-element-identifier", _id);
@@ -333,6 +335,7 @@ export default class SingleMovable extends BaseMovable {
         !this.isSolved
       ) {
         this.active = true;
+        this.Puzzly.keepOnTop(this.element);
         super.onPickup(event);
       }
     }
@@ -434,6 +437,7 @@ export default class SingleMovable extends BaseMovable {
     return {
       pageX: this.element.offsetLeft,
       pageY: this.element.offsetTop,
+      zIndex: parseInt(this.element.style.zIndex),
       isSolved: this.isSolved,
       groupId: this.pieceData.groupId,
       puzzleId: this.puzzleId,

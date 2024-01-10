@@ -27,6 +27,8 @@ export const PUZZLE_PIECE_CLASSES = ["puzzle-piece", "puzzle-piece-fg"];
 
 export const PIECE_SIZE = 100;
 
+export const ZOOM_INTERVALS = [1, 1.5, 2.5];
+
 export const ELEMENT_IDS = {
   SOLVED_PUZZLE_AREA: "solved-puzzle-area",
   SOLVED_CONTAINER: "group-container-1111",
