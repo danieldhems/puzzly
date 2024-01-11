@@ -12,6 +12,7 @@ import GroupOperations from "./GroupOperations.js";
 import PersistenceOperations from "./persistence.js";
 import CanvasOperations from "./canvasOperations.js";
 import Zoom from "./zoom.js";
+import PlayBoundaryMovable from "./PlayBoundaryMovable.js";
 
 /**
  * Puzzly
@@ -314,7 +315,8 @@ class Puzzly {
       this.onConnectionMade.bind(this)
     );
 
-    new Zoom(this);
+    this.Zoom = new Zoom(this);
+    new PlayBoundaryMovable(this);
 
     Events.notify(EVENT_TYPES.PUZZLE_LOADED, this);
   }

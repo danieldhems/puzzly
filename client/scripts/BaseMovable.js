@@ -43,6 +43,7 @@ export default class BaseMovable {
     this.solvedContainer = document.getElementById(
       ELEMENT_IDS.SOLVED_CONTAINER
     );
+    this.playBoundary = document.getElementById(ELEMENT_IDS.PLAY_BOUNDARY);
     this.solvedCanvas = document.getElementById(ELEMENT_IDS.SOLVED_CANVAS);
     this.pocketsContainer = document.querySelector(`#${ELEMENT_IDS.POCKETS}`);
     this.pockets = this.pocketsContainer.querySelectorAll(`.pocket`);
@@ -86,6 +87,13 @@ export default class BaseMovable {
       PUZZLE_PIECE_CLASSES.some((c) => classes.contains(c)) &&
       !classes.contains("in-pocket") &&
       !classes.contains("grouped")
+    );
+  }
+
+  isPlayBoundary(element) {
+    return (
+      element.id === ELEMENT_IDS.PLAY_BOUNDARY ||
+      element.id === ELEMENT_IDS.SOLVED_PUZZLE_AREA
     );
   }
 

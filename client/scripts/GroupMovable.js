@@ -45,7 +45,7 @@ export default class GroupMovable extends BaseMovable {
     this.height = puzzleData.boardHeight;
     this.shadowOffset = puzzleData.shadowOffset;
 
-    console.log("GroupMovable zIndex", zIndex);
+    // console.log("GroupMovable zIndex", zIndex);
 
     this.isSolved = isSolved;
 
@@ -121,7 +121,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   async joinTo(movableInstance) {
-    console.log("GroupMovable joining to", movableInstance);
+    // console.log("GroupMovable joining to", movableInstance);
 
     if (movableInstance.instanceType === "SingleMovable") {
       this.alignWith(movableInstance);
@@ -159,9 +159,9 @@ export default class GroupMovable extends BaseMovable {
   }
 
   async addPieces(pieceInstances) {
-    console.log("pieces currently in group", this.piecesInGroup);
+    // console.log("pieces currently in group", this.piecesInGroup);
     this.piecesInGroup.push(...pieceInstances);
-    console.log("pieces in group after add", this.piecesInGroup);
+    // console.log("pieces in group after add", this.piecesInGroup);
     this.piecesInGroup.forEach((instance) =>
       instance.setGroupIdAcrossInstance(this._id)
     );
@@ -228,7 +228,7 @@ export default class GroupMovable extends BaseMovable {
     const collisionCandidates = GroupOperations.getCollisionCandidatesInGroup(
       GroupOperations.getGroup(this.element)
     );
-    console.log("collision candidates found", collisionCandidates);
+    // console.log("collision candidates found", collisionCandidates);
 
     let connection;
     let i = 0;
@@ -254,7 +254,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   onMoveFinished() {
-    console.log("onMoveFinished");
+    // console.log("onMoveFinished");
     this.setLastPosition();
     this.save();
   }
@@ -369,11 +369,11 @@ export default class GroupMovable extends BaseMovable {
   }
 
   setLastPosition() {
-    console.log(
-      "setLastPosition",
-      this.element.offsetLeft,
-      this.element.offsetTop
-    );
+    // console.log(
+    //   "setLastPosition",
+    //   this.element.offsetLeft,
+    //   this.element.offsetTop
+    // );
     this.lastPosition = {
       top: this.element.offsetTop,
       left: this.element.offsetLeft,

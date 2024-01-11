@@ -34,7 +34,7 @@ export default class SingleMovable extends BaseMovable {
     this.Puzzly = puzzleData;
     this.pocket = pieceData.pocket;
     this.Pockets = puzzleData.Pockets;
-    console.log("SingleMovable zindex", pieceData.zIndex);
+
     if (pieceData.groupId) {
       this.groupId = pieceData.groupId;
     }
