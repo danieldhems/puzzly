@@ -19,6 +19,8 @@ export default class Zoom {
     this.currentZoomInterval = 0;
     this.zoomLevel = ZOOM_INTERVALS[this.currentZoomInterval];
 
+    window.Zoom = this;
+
     this.centerPlayBoundary();
 
     window.addEventListener("keydown", this.handleNormalZoom.bind(this));

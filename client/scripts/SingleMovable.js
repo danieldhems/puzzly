@@ -360,8 +360,8 @@ export default class SingleMovable extends BaseMovable {
 
   setLastPosition() {
     this.lastPosition = {
-      top: this.element.offsetTop,
-      left: this.element.offsetLeft,
+      top: parseInt(this.element.style.top),
+      left: parseInt(this.element.style.left),
     };
   }
 

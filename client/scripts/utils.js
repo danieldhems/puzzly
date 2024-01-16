@@ -467,7 +467,31 @@ const Utils = {
       ? this.connectorDistanceFromCorner + this.connectorSize
       : this.connectorDistanceFromCorner;
 
-    const elementBoundingBox = element.getBoundingClientRect();
+    // const elementBoundingBox = element.getBoundingClientRect();
+    const elementBoundingBox = {};
+
+    if (element.dataset.groupId) {
+      const parent = element.parentNode;
+      elementBoundingBox.top =
+        parseInt(parent.style.top) + parseInt(element.style.top);
+      elementBoundingBox.right =
+        parseInt(parent.style.left) +
+        parseInt(element.style.left) +
+        element.offsetWidth;
+      elementBoundingBox.bottom =
+        parseInt(parent.style.top) +
+        parseInt(element.style.top) +
+        element.offsetHeight;
+      elementBoundingBox.left =
+        parseInt(parent.style.left) + parseInt(element.style.left);
+    } else {
+      elementBoundingBox.top = parseInt(element.style.top);
+      elementBoundingBox.right =
+        parseInt(element.style.left) + element.offsetWidth;
+      elementBoundingBox.bottom =
+        parseInt(element.style.top) + element.offsetHeight;
+      elementBoundingBox.left = parseInt(element.style.left);
+    }
 
     switch (side) {
       case "left":

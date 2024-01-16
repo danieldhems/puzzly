@@ -58,7 +58,6 @@ class Puzzly {
     this.noDispersal = config.debugOptions.noDispersal;
 
     this.currentZIndex = config.zIndex || 3;
-    console.log("Puzzly zindex", this.currentZIndex);
 
     this.pieceSectors = [];
     this.usedPieceSectors = [];

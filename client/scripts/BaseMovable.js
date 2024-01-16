@@ -177,8 +177,20 @@ export default class BaseMovable {
       top: event.clientY,
       left: event.clientX,
     };
-    this.diffX = mousePosition.left - this.element.offsetLeft * this.zoomLevel;
-    this.diffY = mousePosition.top - this.element.offsetTop * this.zoomLevel;
+
+    // Apply the zoomLevel to everything except for the play boundary (all other movables are children of this)
+    if (this.instanceType === "PlayBoundaryMovable") {
+      this.diffX = mousePosition.left - parseInt(this.element.style.left);
+      this.diffY = mousePosition.top - parseInt(this.element.style.top);
+    } else {
+      // TODO: Shouldn't be accessing the zoomLevel on a global like this.
+      this.diffX =
+        mousePosition.left -
+        parseInt(this.element.style.left) * window.Zoom.zoomLevel;
+      this.diffY =
+        mousePosition.top -
+        parseInt(this.element.style.top) * window.Zoom.zoomLevel;
+    }
 
     // Store a reference to our event handlers so we can remove them later
     // (They don't get removed if we don't use these)
@@ -200,10 +212,41 @@ export default class BaseMovable {
 
   onMouseMove(event) {
     if (this.active && !this.dragAndSelectActive) {
-      const newPosTop =
-        event.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
-      const newPosLeft =
-        event.clientX / this.zoomLevel - this.diffX / this.zoomLevel;
+      let newPosTop, newPosLeft;
+
+      if (this.instanceType === "PlayBoundaryMovable") {
+        const rect = this.element.getBoundingClientRect();
+
+        // console.log("rect height", rect.height);
+        console.log("viewport width", window.innerWidth);
+        const cutOffHeight =
+          Math.floor((rect.height - this.element.offsetHeight) / 2) + 10;
+        const cutOffWidth =
+          Math.floor((rect.width - this.element.offsetWidth) / 2) + 10;
+        // console.log("cut off height", cutOffHeight);
+        console.log("cut off width", cutOffWidth);
+
+        const target = cutOffWidth - window.innerWidth;
+        console.log("target", target);
+
+        newPosTop = event.clientY - this.diffY;
+        newPosLeft = event.clientX - this.diffX;
+        if (
+          newPosTop > cutOffHeight ||
+          newPosLeft > cutOffHeight ||
+          newPosLeft < cutOffWidth - window.innerWidth
+        ) {
+          return;
+        }
+      } else {
+        newPosTop =
+          event.clientY / window.Zoom.zoomLevel -
+          this.diffY / window.Zoom.zoomLevel;
+        newPosLeft =
+          event.clientX / window.Zoom.zoomLevel -
+          this.diffX / window.Zoom.zoomLevel;
+      }
+
       this.element.style.top = newPosTop + "px";
       this.element.style.left = newPosLeft + "px";
     }

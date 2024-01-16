@@ -45,6 +45,8 @@ export default class GroupMovable extends BaseMovable {
     this.height = puzzleData.boardHeight;
     this.shadowOffset = puzzleData.shadowOffset;
 
+    this.zoomLevel = puzzleData.zoomLevel;
+
     // console.log("GroupMovable zIndex", zIndex);
 
     this.isSolved = isSolved;
@@ -369,14 +371,9 @@ export default class GroupMovable extends BaseMovable {
   }
 
   setLastPosition() {
-    // console.log(
-    //   "setLastPosition",
-    //   this.element.offsetLeft,
-    //   this.element.offsetTop
-    // );
     this.lastPosition = {
-      top: this.element.offsetTop,
-      left: this.element.offsetLeft,
+      top: parseInt(this.element.style.top),
+      left: parseInt(this.element.style.left),
     };
   }
 
