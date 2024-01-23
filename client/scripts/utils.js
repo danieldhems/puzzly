@@ -470,8 +470,15 @@ const Utils = {
     // const elementBoundingBox = element.getBoundingClientRect();
     const elementBoundingBox = {};
 
+    let parent;
     if (element.dataset.groupId) {
-      const parent = element.parentNode;
+      parent = element.parentNode;
+    }
+    if (element.dataset.isSolved === "true") {
+      parent = document.querySelector("#solved-puzzle-area");
+    }
+
+    if (parent) {
       elementBoundingBox.top =
         parseInt(parent.style.top) + parseInt(element.style.top);
       elementBoundingBox.right =

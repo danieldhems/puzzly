@@ -271,20 +271,17 @@ export default class GroupMovable extends BaseMovable {
   }
 
   solve() {
-    CanvasOperations.drawPiecesOntoCanvas(
-      this.solvedCanvas,
-      this.piecesInGroup,
-      this.puzzleImage,
-      this.shadowOffset
-    );
     this.piecesInGroup.forEach((instance) => {
       this.solvedContainer.appendChild(instance.element);
       instance.element.dataset.isSolved = true;
+      instance.isSolved = true;
       instance.element.style.visibility = "hidden";
       instance.element.style.pointerEvents = "none";
     });
 
     this.isSolved = true;
+
+    this.Puzzly.updateSolvedCanvas();
 
     this.save(true);
     this.destroy();

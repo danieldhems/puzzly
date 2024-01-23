@@ -7,7 +7,7 @@ const CONNECTOR_SIZE_PERC = 30;
 // How far in from the corner the connector should be.
 // This may need to be re-addressed when we approach wild shapes as we may prefer to randomise this.
 const SHOULDER_SIZE_PERC = 35;
-const SHADOW_COLOR = "#000";
+const SHADOW_COLOR = "#353836";
 const STROKE_STYLE = "#000";
 
 const Generator = {
@@ -154,10 +154,10 @@ const generateDataForPuzzlePieces = async (puzzleId) => {
       i
     );
 
-    const { svgString } = drawJigsawShape(currentPiece);
-    currentPiece.svgPathString = svgString;
+    const { svgPath } = drawJigsawShape(currentPiece);
+    currentPiece.svgPath = svgPath;
 
-    // console.log("generated piece", currentPiece);
+    console.log("generated piece", currentPiece);
 
     pieces.push(currentPiece);
 
@@ -237,7 +237,7 @@ const createPuzzlePiece = async (data, ctxForSprite) => {
   shadowCnv.width = data.imgW;
   shadowCnv.height = data.imgH;
 
-  const { path: pathString } = drawJigsawShape(data);
+  const { svgPath: pathString } = drawJigsawShape(data);
 
   shdCtx.fillStyle = Generator.shadowColor;
   const path = new Path2D(pathString);
@@ -553,7 +553,7 @@ const drawJigsawShape = (piece) => {
 
   svgString += "z";
 
-  return { pieceType: piece.type, path: svgString };
+  return { pieceType: piece.type, svgPath: svgString };
 };
 
 // exports.drawJigsawShape = drawJigsawShape;

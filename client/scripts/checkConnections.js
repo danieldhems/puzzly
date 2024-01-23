@@ -111,9 +111,9 @@ export function checkConnections(element) {
       // console.log("target element", targetElement);
 
       // console.log(
-      //   `checking ${key}`,
-      //   thisPieceConnectorBoundingBox,
-      //   targetPieceConnectorBoundingBox
+      // `checking ${key}`,
+      // thisPieceConnectorBoundingBox,
+      // targetPieceConnectorBoundingBox
       // );
 
       // Utils.drawBox(thisPieceConnectorBoundingBox);

@@ -317,7 +317,20 @@ class Puzzly {
     this.Zoom = new Zoom(this);
     new PlayBoundaryMovable(this);
 
+    this.stage.classList.add("loaded");
     Events.notify(EVENT_TYPES.PUZZLE_LOADED, this);
+  }
+
+  updateSolvedCanvas() {
+    const solvedPieces = this.pieceInstances.filter(
+      (instance) => instance.isSolved
+    );
+    CanvasOperations.drawPiecesOntoCanvas(
+      this.solvedCnv,
+      solvedPieces,
+      this.puzzleImage,
+      this.shadowOffset
+    );
   }
 
   getMovableInstanceFromElement(element) {

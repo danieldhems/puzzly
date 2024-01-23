@@ -215,29 +215,10 @@ export default class BaseMovable {
       let newPosTop, newPosLeft;
 
       if (this.instanceType === "PlayBoundaryMovable") {
-        const rect = this.element.getBoundingClientRect();
-
-        // console.log("rect height", rect.height);
-        console.log("viewport width", window.innerWidth);
-        const cutOffHeight =
-          Math.floor((rect.height - this.element.offsetHeight) / 2) + 10;
-        const cutOffWidth =
-          Math.floor((rect.width - this.element.offsetWidth) / 2) + 10;
-        // console.log("cut off height", cutOffHeight);
-        console.log("cut off width", cutOffWidth);
-
-        const target = cutOffWidth - window.innerWidth;
-        console.log("target", target);
-
+        // this.shouldConstrainViewport()
+        // Viewport constraint not yet implemented so just ignore for now and move the play boundary around freely
         newPosTop = event.clientY - this.diffY;
         newPosLeft = event.clientX - this.diffX;
-        if (
-          newPosTop > cutOffHeight ||
-          newPosLeft > cutOffHeight ||
-          newPosLeft < cutOffWidth - window.innerWidth
-        ) {
-          return;
-        }
       } else {
         newPosTop =
           event.clientY / window.Zoom.zoomLevel -

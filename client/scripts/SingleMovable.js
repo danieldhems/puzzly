@@ -111,6 +111,7 @@ export default class SingleMovable extends BaseMovable {
       numPiecesFromLeftEdge,
       pocketId,
       type,
+      svgPath,
     } = this.pieceData;
 
     const el = document.createElement("div");
@@ -147,6 +148,7 @@ export default class SingleMovable extends BaseMovable {
     el.setAttribute("data-spriteshadowy", spriteShadowY);
     el.setAttribute("data-imgW", imgW);
     el.setAttribute("data-imgH", imgH);
+    el.setAttribute("data-svgPath", svgPath);
     el.setAttribute("data-is-inner-piece", isInnerPiece);
     el.setAttribute(
       "data-connects-to",
@@ -226,7 +228,6 @@ export default class SingleMovable extends BaseMovable {
 
     if (isSolved) {
       this.solve();
-      return;
     }
   }
 
@@ -387,17 +388,16 @@ export default class SingleMovable extends BaseMovable {
 
   solve(options) {
     this.solvedContainer.appendChild(this.element);
-    CanvasOperations.drawPiecesOntoCanvas(
-      this.solvedCanvas,
-      [this],
-      this.puzzleImage,
-      this.shadowOffset
-    );
+    this.element.classList.add("grouped");
     this.element.dataset.isSolved = true;
     this.setPositionAsGrouped();
     this.element.style.visibility = "hidden";
     this.element.style.pointerEvents = "none";
     this.isSolved = true;
+
+    setTimeout(() => {
+      this.Puzzly.updateSolvedCanvas();
+    }, 0);
 
     // Are we using this?
     if (options?.save) {
