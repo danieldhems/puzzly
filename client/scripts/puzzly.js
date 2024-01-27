@@ -325,6 +325,7 @@ class Puzzly {
     const solvedPieces = this.pieceInstances.filter(
       (instance) => instance.isSolved
     );
+    console.log("updateSolvedCanvas with solved pieces", solvedPieces);
     CanvasOperations.drawPiecesOntoCanvas(
       this.solvedCnv,
       solvedPieces,

@@ -74,3 +74,8 @@ export const SIDES = {
 };
 
 export const SHADOW_OFFSET_RATIO = 0.01;
+
+export const SHAPE_TYPES = {
+  PLAIN: 1,
+  NATURAL: 2,
+};

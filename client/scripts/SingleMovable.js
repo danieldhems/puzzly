@@ -1,15 +1,14 @@
 import BaseMovable from "./BaseMovable.js";
-import CanvasOperations from "./canvasOperations.js";
 import { checkConnections } from "./checkConnections.js";
-import { EVENT_TYPES } from "./constants.js";
+import { EVENT_TYPES, SHAPE_TYPES } from "./constants.js";
 import Events from "./events.js";
 import GroupOperations from "./GroupOperations.js";
-import Pockets from "./pockets.js";
+import PathOperations from "./pathOperations.js";
 import Utils from "./utils.js";
 
 export default class SingleMovable extends BaseMovable {
-  // Fucking awful - must solve "can't access before initialisation" error so we can interrogate instanceof instead of doing this...
   instanceType = "SingleMovable";
+  shapeType = SHAPE_TYPES.PLAIN;
 
   element = null;
   pieceData = null;
@@ -223,12 +222,20 @@ export default class SingleMovable extends BaseMovable {
 
     if (!GroupOperations.hasGroup({ type }) && !isSolved) {
       this.addToStage.call(this);
-      return;
     }
 
     if (isSolved) {
       this.solve();
     }
+
+    console.log(
+      "test",
+      PathOperations.getConnectorBoundingBoxFromPath.call(
+        this,
+        0,
+        this.pieceData.svgPath
+      )
+    );
   }
 
   isElementOwned(element) {

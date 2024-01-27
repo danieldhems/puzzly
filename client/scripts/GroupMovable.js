@@ -102,6 +102,7 @@ export default class GroupMovable extends BaseMovable {
 
     this.attachElements();
     this.render();
+    this.save();
   }
 
   restoreGroupFromPersistence(groupId, pieces, position, zIndex) {
@@ -130,7 +131,7 @@ export default class GroupMovable extends BaseMovable {
       this.addPieces([movableInstance]);
       movableInstance.setPositionAsGrouped();
       movableInstance.setGroupIdAcrossInstance(this._id);
-      // This should be done by the movable instance
+      // TODO: This should be done by the movable instance
       movableInstance.element.classList.add("grouped");
       this.save(true);
     } else if (movableInstance.instanceType === "GroupMovable") {
@@ -256,9 +257,11 @@ export default class GroupMovable extends BaseMovable {
   }
 
   onMoveFinished() {
-    // console.log("onMoveFinished");
-    this.setLastPosition();
-    this.save();
+    if (this.active) {
+      console.log("GroupMovable onMoveFinished");
+      this.setLastPosition();
+      this.save();
+    }
   }
 
   isOutOfBounds() {
@@ -283,7 +286,7 @@ export default class GroupMovable extends BaseMovable {
 
     this.Puzzly.updateSolvedCanvas();
 
-    this.save(true);
+    // this.save(true);
     this.destroy();
   }
 
@@ -375,6 +378,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   async save(force = false) {
+    // TODO: Still seeing duplicate saves
     // console.log("group save called", this);
     if (force || this.active || !this._id) {
       return await PersistenceOperations.save(this.getDataForSave());

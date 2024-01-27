@@ -36,7 +36,7 @@ class PuzzlyCreator {
     this.imagePreviewEl = document.querySelector(
       "#puzzle-setup--image_preview"
     );
-    this.imageUpload = document.querySelector("#upload");
+    this.imageUpload = document.querySelector("#upload-fld");
     this.newPuzzleForm = document.querySelector("#form-container");
     this.startBtn = document.querySelector("#start-btn");
     this.puzzleSizeField = document.getElementById("puzzle-size-input-field");
@@ -153,7 +153,7 @@ class PuzzlyCreator {
   }
 
   onImageUploadChange(e) {
-    e.preventDefault();
+    // e.preventDefault();
 
     this.upload()
       .then(
@@ -220,6 +220,7 @@ class PuzzlyCreator {
 
   onUploadFailure(response) {
     console.log("onUploadFailure", response);
+    this.imagePreviewEl.textContent = response;
   }
 
   setPuzzleImageOffsetAndWidth(noCrop = false) {
@@ -550,6 +551,7 @@ class PuzzlyCreator {
 
   upload() {
     this.image = document.querySelector("[type=file]").files[0];
+    console.log("image to upload", this.image);
 
     const fd = new FormData();
     fd.append("files[]", this.image);
@@ -605,7 +607,7 @@ class PuzzlyCreator {
         };
   }
 
-  async createPuzzle() {
+  async createPuzzle(options = null) {
     const piecesPerSideHorizontal = Math.sqrt(this.selectedNumPieces);
     const piecesPerSideVertical = Math.sqrt(this.selectedNumPieces);
 
@@ -625,16 +627,14 @@ class PuzzlyCreator {
     };
 
     const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {
-      body: JSON.stringify(puzzleData),
+      body: JSON.stringify(options || puzzleData),
       method: "POST",
       headers: {
-        "content-type": "application/json",
+        "Content-Type": "Application/json",
       },
     });
 
     const { puzzleImagePath } = await makePuzzleImageResponse.json();
-
-    console.log("puzzle image path result", puzzleImagePath);
 
     const generator = await puzzleGenerator(puzzleImagePath, puzzleData);
 

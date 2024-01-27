@@ -952,6 +952,82 @@ const Utils = {
     const height = stageElementBoundingBox.height;
     return width < height ? "portrait" : "landscape";
   },
+
+  getCurveBoundingBox(controlPoints) {
+    const P = controlPoints;
+    var a = 3 * P[3].x - 9 * P[2].x + 9 * P[1].x - 3 * P[0].x;
+    var b = 6 * P[0].x - 12 * P[1].x + 6 * P[2].x;
+    var c = 3 * P[1].x - 3 * P[0].x;
+    //alert("a "+a+" "+b+" "+c);
+    var disc = b * b - 4 * a * c;
+    var xl = P[0].x;
+    var xh = P[0].x;
+    if (P[3].x < xl) xl = P[3].x;
+    if (P[3].x > xh) xh = P[3].x;
+    if (disc >= 0) {
+      var t1 = (-b + Math.sqrt(disc)) / (2 * a);
+      // alert("t1 " + t1);
+      if (t1 > 0 && t1 < 1) {
+        var x1 = evalBez(PX, t1);
+        if (x1 < xl) xl = x1;
+        if (x1 > xh) xh = x1;
+      }
+
+      var t2 = (-b - Math.sqrt(disc)) / (2 * a);
+      // alert("t2 " + t2);
+      if (t2 > 0 && t2 < 1) {
+        var x2 = evalBez(PX, t2);
+        if (x2 < xl) xl = x2;
+        if (x2 > xh) xh = x2;
+      }
+    }
+
+    a = 3 * P[3].y - 9 * P[2].y + 9 * P[1].y - 3 * P[0].y;
+    b = 6 * P[0].y - 12 * P[1].y + 6 * P[2].y;
+    c = 3 * P[1].y - 3 * P[0].y;
+    disc = b * b - 4 * a * c;
+    var yl = P[0].y;
+    var yh = P[0].y;
+    if (P[3].y < yl) yl = P[3].y;
+    if (P[3].y > yh) yh = P[3].y;
+    if (disc >= 0) {
+      var t1 = (-b + Math.sqrt(disc)) / (2 * a);
+      // alert("t3 " + t1);
+
+      if (t1 > 0 && t1 < 1) {
+        var y1 = evalBez(PY, t1);
+        if (y1 < yl) yl = y1;
+        if (y1 > yh) yh = y1;
+      }
+
+      var t2 = (-b - Math.sqrt(disc)) / (2 * a);
+      // alert("t4 " + t2);
+
+      if (t2 > 0 && t2 < 1) {
+        var y2 = evalBez(PY, t2);
+        if (y2 < yl) yl = y2;
+        if (y2 > yh) yh = y2;
+      }
+    }
+
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(xl, yl);
+    ctx.lineTo(xl, yh);
+    ctx.lineTo(xh, yh);
+    ctx.lineTo(xh, yl);
+    ctx.lineTo(xl, yl);
+    ctx.stroke();
+
+    return {
+      top: yl,
+      right: xh,
+      bottom: yh,
+      left: xl,
+    };
+
+    // alert("" + xl + " " + xh + " " + yl + " " + yh);
+  },
 };
 
 export default Utils;
