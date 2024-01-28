@@ -157,7 +157,7 @@ const generateDataForPuzzlePieces = async (puzzleId) => {
     const { svgPath } = drawJigsawShape(currentPiece);
     currentPiece.svgPath = svgPath;
 
-    console.log("generated piece", currentPiece);
+    // console.log("generated piece", currentPiece);
 
     pieces.push(currentPiece);
 
@@ -230,7 +230,7 @@ const createCanvas = (width, height) => {
 };
 
 const createPuzzlePiece = async (data, ctxForSprite) => {
-  console.log("createPuzzlePiece", data);
+  // console.log("createPuzzlePiece", data);
 
   const shadowCnv = createCanvas(data.imgW, data.imgH);
   const shdCtx = shadowCnv.getContext("2d");

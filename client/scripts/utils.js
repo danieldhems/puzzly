@@ -953,8 +953,19 @@ const Utils = {
     return width < height ? "portrait" : "landscape";
   },
 
+  evalBez(poly, t) {
+    var x =
+      poly[0] * (1 - t) * (1 - t) * (1 - t) +
+      3 * poly[1] * t * (1 - t) * (1 - t) +
+      3 * poly[2] * t * t * (1 - t) +
+      poly[3] * t * t * t;
+    return x;
+  },
   getCurveBoundingBox(controlPoints) {
     const P = controlPoints;
+
+    var PX = [P[0].x, P[1].x, P[2].x, P[3].x];
+    var PY = [P[0].y, P[1].y, P[2].y, P[3].y];
     var a = 3 * P[3].x - 9 * P[2].x + 9 * P[1].x - 3 * P[0].x;
     var b = 6 * P[0].x - 12 * P[1].x + 6 * P[2].x;
     var c = 3 * P[1].x - 3 * P[0].x;
@@ -968,7 +979,7 @@ const Utils = {
       var t1 = (-b + Math.sqrt(disc)) / (2 * a);
       // alert("t1 " + t1);
       if (t1 > 0 && t1 < 1) {
-        var x1 = evalBez(PX, t1);
+        var x1 = Utils.evalBez(PX, t1);
         if (x1 < xl) xl = x1;
         if (x1 > xh) xh = x1;
       }
@@ -976,7 +987,7 @@ const Utils = {
       var t2 = (-b - Math.sqrt(disc)) / (2 * a);
       // alert("t2 " + t2);
       if (t2 > 0 && t2 < 1) {
-        var x2 = evalBez(PX, t2);
+        var x2 = Utils.evalBez(PX, t2);
         if (x2 < xl) xl = x2;
         if (x2 > xh) xh = x2;
       }
@@ -995,7 +1006,7 @@ const Utils = {
       // alert("t3 " + t1);
 
       if (t1 > 0 && t1 < 1) {
-        var y1 = evalBez(PY, t1);
+        var y1 = Utils.evalBez(PY, t1);
         if (y1 < yl) yl = y1;
         if (y1 > yh) yh = y1;
       }
@@ -1004,20 +1015,20 @@ const Utils = {
       // alert("t4 " + t2);
 
       if (t2 > 0 && t2 < 1) {
-        var y2 = evalBez(PY, t2);
+        var y2 = Utils.evalBez(PY, t2);
         if (y2 < yl) yl = y2;
         if (y2 > yh) yh = y2;
       }
     }
 
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(xl, yl);
-    ctx.lineTo(xl, yh);
-    ctx.lineTo(xh, yh);
-    ctx.lineTo(xh, yl);
-    ctx.lineTo(xl, yl);
-    ctx.stroke();
+    // ctx.lineWidth = 1;
+    // ctx.beginPath();
+    // ctx.moveTo(xl, yl);
+    // ctx.lineTo(xl, yh);
+    // ctx.lineTo(xh, yh);
+    // ctx.lineTo(xh, yl);
+    // ctx.lineTo(xl, yl);
+    // ctx.stroke();
 
     return {
       top: yl,

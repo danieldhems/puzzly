@@ -228,14 +228,15 @@ export default class SingleMovable extends BaseMovable {
       this.solve();
     }
 
-    console.log(
-      "test",
+    const connectorBoundingBox =
       PathOperations.getConnectorBoundingBoxFromPath.call(
         this,
         0,
-        this.pieceData.svgPath
-      )
-    );
+        this.pieceData.svgPath,
+        this.shapeType
+      );
+
+    Utils.drawBox(connectorBoundingBox, this.element);
   }
 
   isElementOwned(element) {
