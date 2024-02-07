@@ -454,18 +454,24 @@ const Utils = {
     const hasLeftPlug = Utils.has(piece.type, "plug", "left");
     const hasTopPlug = Utils.has(piece.type, "plug", "top");
 
-    const tolerance = this.connectorTolerance;
+    const tolerance = parseInt(element.dataset.connectorTolerance);
+    const connectorDistanceFromCorner = parseInt(
+      element.dataset.connectorDistanceFromCorner
+    );
+    const connectorSize = parseInt(element.dataset.connectorSize);
+    const shadowOffset = parseInt(element.dataset.shadowOffset);
+
     let box;
 
-    // console.log("connectorsize", this.connectorSize);
-    // console.log("tolerance setting", this.connectorTolerance);
+    // console.log("connectorsize", connectorSize);
+    // console.log("tolerance setting", connectorTolerance);
 
     const topBoundary = hasTopPlug
-      ? this.connectorDistanceFromCorner + this.connectorSize
-      : this.connectorDistanceFromCorner;
+      ? connectorDistanceFromCorner + connectorSize
+      : connectorDistanceFromCorner;
     const leftBoundary = hasLeftPlug
-      ? this.connectorDistanceFromCorner + this.connectorSize
-      : this.connectorDistanceFromCorner;
+      ? connectorDistanceFromCorner + connectorSize
+      : connectorDistanceFromCorner;
 
     // const elementBoundingBox = element.getBoundingClientRect();
     const elementBoundingBox = {};
@@ -504,12 +510,9 @@ const Utils = {
       case "left":
         box = {
           top: elementBoundingBox.top + topBoundary + tolerance,
-          right: elementBoundingBox.left + this.connectorSize - tolerance,
+          right: elementBoundingBox.left + connectorSize - tolerance,
           bottom:
-            elementBoundingBox.top +
-            topBoundary +
-            this.connectorSize -
-            tolerance,
+            elementBoundingBox.top + topBoundary + connectorSize - tolerance,
           left: elementBoundingBox.left + tolerance,
         };
         break;
@@ -518,26 +521,20 @@ const Utils = {
           top: elementBoundingBox.top + topBoundary + tolerance,
           right: elementBoundingBox.right - tolerance,
           bottom:
-            elementBoundingBox.top +
-            topBoundary +
-            this.connectorSize -
-            tolerance,
-          left: elementBoundingBox.right - this.connectorSize + tolerance,
+            elementBoundingBox.top + topBoundary + connectorSize - tolerance,
+          left: elementBoundingBox.right - connectorSize + tolerance,
         };
         break;
       case "bottom":
         box = {
           top:
             elementBoundingBox.bottom -
-            this.connectorSize +
+            connectorSize +
             tolerance -
-            this.shadowOffset,
+            shadowOffset,
           right:
-            elementBoundingBox.left +
-            leftBoundary +
-            this.connectorSize -
-            tolerance,
-          bottom: elementBoundingBox.bottom - tolerance - this.shadowOffset,
+            elementBoundingBox.left + leftBoundary + connectorSize - tolerance,
+          bottom: elementBoundingBox.bottom - tolerance - shadowOffset,
           left: elementBoundingBox.left + leftBoundary + tolerance,
         };
         break;
@@ -545,11 +542,8 @@ const Utils = {
         box = {
           top: elementBoundingBox.top + tolerance,
           right:
-            elementBoundingBox.left +
-            leftBoundary +
-            this.connectorSize -
-            tolerance,
-          bottom: elementBoundingBox.top + this.connectorSize - tolerance,
+            elementBoundingBox.left + leftBoundary + connectorSize - tolerance,
+          bottom: elementBoundingBox.top + connectorSize - tolerance,
           left: elementBoundingBox.left + leftBoundary + tolerance,
         };
         break;

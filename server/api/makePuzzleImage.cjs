@@ -2,6 +2,7 @@ var Sharp = require("sharp");
 var router = require("express").Router();
 
 async function makeImage(data, puzzleImgPath) {
+  console.log("makeImage", data, puzzleImgPath);
   // Create the resized and cropped puzzle preview image from the uploaded source image
   img = Sharp(data.fullSizePath);
 

@@ -1,13 +1,13 @@
 var path = require("path");
 var express = require("express");
 var bodyParser = require("body-parser");
-var puzzleApi = require("./api/puzzle.js");
-var piecesApi = require("./api/pieces.js");
-var groupsApi = require("./api/groups.js");
-var upload = require("./api/upload.js");
-var uploadPuzzleSprite = require("./api/uploadPuzzleSprite.js");
-var makePuzzleImage = require("./api/makePuzzleImage.js");
-var generatorTest = require("./api/generator-test.js");
+var puzzleApi = require("./api/puzzle.cjs");
+var piecesApi = require("./api/pieces.cjs");
+var groupsApi = require("./api/groups.cjs");
+var upload = require("./api/upload.cjs");
+var uploadPuzzleSprite = require("./api/uploadPuzzleSprite.cjs");
+var makePuzzleImage = require("./api/makePuzzleImage.cjs");
+var generatorTest = require("./api/generator-test.cjs");
 var app = express();
 
 app.use("/", express.static("./client"));
@@ -33,7 +33,7 @@ app.use("/api/upload", upload);
 app.use("/api/uploadPuzzleSprite", uploadPuzzleSprite);
 app.use("/api/makePuzzleImage", makePuzzleImage);
 app.use("/api/generator-test", generatorTest);
-app.use("/api/toggleVisibility", require("./api/pieceFiltering.js"));
+app.use("/api/toggleVisibility", require("./api/pieceFiltering.cjs"));
 
 // Configure base URL for home page
 app.get("/", function (req, res) {

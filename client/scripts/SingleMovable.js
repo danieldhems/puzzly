@@ -131,7 +131,17 @@ export default class SingleMovable extends BaseMovable {
     el.style.zIndex = zIndex || 1;
 
     el.setAttribute("data-jigsaw-type", type.join(","));
-    el.setAttribute("data-element-identifier", _id);
+    el.setAttribute(
+      "data-connector-distance-from-corner",
+      this.connectorDistanceFromCorner
+    );
+    el.setAttribute("data-connector-tolerance", this.connectorTolerance);
+    el.setAttribute(
+      "data-connector-distance-from-corner",
+      this.connectorDistanceFromCorner
+    );
+    el.setAttribute("data-connector-size", this.connectorSize);
+    el.setAttribute("data-shadow-offset", this.shadowOffset);
     el.setAttribute("data-piece-id", id);
     el.setAttribute("data-piece-id-in-persistence", _id);
     el.setAttribute("data-puzzle-id", puzzleId);
@@ -228,15 +238,25 @@ export default class SingleMovable extends BaseMovable {
       this.solve();
     }
 
-    const connectorBoundingBox =
-      PathOperations.getConnectorBoundingBoxFromPath.call(
-        this,
-        0,
-        this.pieceData.svgPath,
-        this.shapeType
-      );
+    // const connectorIndices = this.pieceData.type
+    //   .map((val, index) => val !== 0 && index)
+    //   .filter((val) => Number.isInteger(val));
 
-    Utils.drawBox(connectorBoundingBox, this.element);
+    // console.log("connectorIndices", connectorIndices);
+
+    // let i = 0;
+    // while (i < connectorIndices.length) {
+    //   const connectorBoundingBox =
+    //     PathOperations.getConnectorBoundingBoxFromPath(
+    //       i,
+    //       this.pieceData,
+    //       this.shapeType
+    //     );
+
+    //   console.log("bounding box for connector", connectorBoundingBox);
+    //   Utils.drawBox(connectorBoundingBox, this.element);
+    //   i++;
+    // }
   }
 
   isElementOwned(element) {

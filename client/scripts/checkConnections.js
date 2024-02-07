@@ -92,20 +92,17 @@ export function checkConnections(element) {
     let thisPieceConnectorBoundingBox;
 
     if (shouldCompare(targetPiece)) {
-      thisPieceConnectorBoundingBox = Utils.getConnectorBoundingBox.call(
-        this,
+      thisPieceConnectorBoundingBox = Utils.getConnectorBoundingBox(
         element,
         key
       );
 
       const oppositeConnection = getOppositeSide(key);
 
-      const targetPieceConnectorBoundingBox =
-        Utils.getConnectorBoundingBox.call(
-          this,
-          targetElement,
-          oppositeConnection
-        );
+      const targetPieceConnectorBoundingBox = Utils.getConnectorBoundingBox(
+        targetElement,
+        oppositeConnection
+      );
 
       // console.log("source element", element);
       // console.log("target element", targetElement);
