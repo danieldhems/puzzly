@@ -24,7 +24,47 @@ export async function makeConnection(element, side) {
     x: parseInt(dragReferenceFrame.left + sourceSolvedX - firstPieceLocation.x),
   };
 
-  element.dragAndDrop(dragDest);
+  const relativeDragDest = {
+    y: parseInt(dragReferenceFrame.top + sourceSolvedY),
+    x: parseInt(dragReferenceFrame.left + sourceSolvedX),
+  };
+
+  // element.dragAndDrop(dragDest);
+
+  // browser.performActions([
+  //   {
+  //     type: "pointer",
+  //     id: "finger1",
+  //     parameters: { pointerType: "mouse" },
+  //     actions: [
+  //       {
+  //         type: "pointerDown",
+  //         button: 0,
+  //         x: firstPieceLocation.x + 10,
+  //         y: firstPieceLocation.y + 10,
+  //       },
+  //       { type: "pointerMove", duration: 5000, origin: element, ...dragDest },
+  //       // { type: 'pause', duration: 10 },
+  //       // { type: 'pointerMove', duration, origin: $('#droppable'), x: 0, y: 0 },
+  //       { type: "pointerUp", button: 0 },
+  //     ],
+  //   },
+  // ]);
+
+  await browser.actions([
+    await browser
+      .action("pointer")
+      .move(
+        parseInt(firstPieceLocation.x + 10),
+        parseInt(firstPieceLocation.y + 10)
+      )
+      .down()
+      .move(
+        parseInt(relativeDragDest.x + 10),
+        parseInt(relativeDragDest.y + 10)
+      )
+      .up(),
+  ]);
 }
 
 export async function getAdjacentPieceBySide(element, sideIndex) {
