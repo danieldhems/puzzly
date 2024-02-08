@@ -1,5 +1,14 @@
+import { $, browser, expect } from "@wdio/globals";
+
 export async function getPiece(id) {
   return await $(`#piece-${id}`);
+}
+
+export async function getAdjacentPieceBySide(element, sideIndex) {
+  const connectsToString = await element.getAttribute("data-connects-to");
+  const connectsTo = JSON.parse(connectsToString);
+  const keys = Object.keys(connectsTo);
+  return await $(`#piece-${connectsTo[keys[sideIndex]]}`);
 }
 
 export async function makeConnection(element, side) {
@@ -9,19 +18,18 @@ export async function makeConnection(element, side) {
 
   const adjacentPiece = await getAdjacentPieceBySide(element, side);
 
-  const solvedX = parseInt(await adjacentPiece.getAttribute("data-solvedx"));
-  const solvedY = parseInt(await adjacentPiece.getAttribute("data-solvedy"));
+  const targetSolvedX = parseInt(
+    await adjacentPiece.getAttribute("data-solvedx")
+  );
+  const targetSolvedY = parseInt(
+    await adjacentPiece.getAttribute("data-solvedy")
+  );
 
   const { x, y } = await adjacentPiece.getLocation();
 
   const dragReferenceFrame = {
-    top: y - solvedY,
-    left: x - solvedX,
-  };
-
-  const dragDest = {
-    y: parseInt(dragReferenceFrame.top + sourceSolvedY - firstPieceLocation.y),
-    x: parseInt(dragReferenceFrame.left + sourceSolvedX - firstPieceLocation.x),
+    top: y - targetSolvedY,
+    left: x - targetSolvedX,
   };
 
   const relativeDragDest = {
@@ -29,47 +37,30 @@ export async function makeConnection(element, side) {
     x: parseInt(dragReferenceFrame.left + sourceSolvedX),
   };
 
-  // element.dragAndDrop(dragDest);
+  const selectionCoords = {
+    x: parseInt(firstPieceLocation.x),
+    y: parseInt(firstPieceLocation.y),
+  };
 
-  // browser.performActions([
-  //   {
-  //     type: "pointer",
-  //     id: "finger1",
-  //     parameters: { pointerType: "mouse" },
-  //     actions: [
-  //       {
-  //         type: "pointerDown",
-  //         button: 0,
-  //         x: firstPieceLocation.x + 10,
-  //         y: firstPieceLocation.y + 10,
-  //       },
-  //       { type: "pointerMove", duration: 5000, origin: element, ...dragDest },
-  //       // { type: 'pause', duration: 10 },
-  //       // { type: 'pointerMove', duration, origin: $('#droppable'), x: 0, y: 0 },
-  //       { type: "pointerUp", button: 0 },
-  //     ],
-  //   },
-  // ]);
+  const dragCoords = {
+    x: parseInt(relativeDragDest.x + 10),
+    y: parseInt(relativeDragDest.y + 10),
+  };
 
-  await browser.actions([
-    await browser
-      .action("pointer")
-      .move(
-        parseInt(firstPieceLocation.x + 10),
-        parseInt(firstPieceLocation.y + 10)
-      )
-      .down()
-      .move(
-        parseInt(relativeDragDest.x + 10),
-        parseInt(relativeDragDest.y + 10)
-      )
-      .up(),
-  ]);
-}
+  browser
+    .action("pointer")
+    .move(selectionCoords.x, selectionCoords.y)
+    .down({ button: 0 }, element)
+    .move(dragCoords.x, dragCoords.y)
+    .up({ button: 0 }, element)
+    .perform();
 
-export async function getAdjacentPieceBySide(element, sideIndex) {
-  const connectsToString = await element.getAttribute("data-connects-to");
-  const connectsTo = JSON.parse(connectsToString);
-  const keys = Object.keys(connectsTo);
-  return await $(`#piece-${connectsTo[keys[sideIndex]]}`);
+  await expect(element).toHaveElementClass("grouped");
+
+  const parentElement = await element.parentElement();
+  await expect(parentElement).toHaveElementClass("group-container");
+  await expect(await parentElement.getAttribute("id")).not.toBe(
+    "pieces-container"
+  );
+  return parentElement;
 }
