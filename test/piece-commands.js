@@ -62,65 +62,46 @@ export async function connectToSinglePiece(element, side) {
 
   element.dragAndDrop(dragCoords);
 
-  await expect(element).toHaveElementClass("grouped");
-
-  const parentElement = await element.parentElement();
-  await expect(parentElement).toHaveElementClass("group-container");
-  await expect(await parentElement.getAttribute("id")).not.toBe(
-    "pieces-container"
-  );
-
-  return {
-    container: parentElement,
-    children: [element, adjacentPiece],
-  };
+  await verifyElementHasConnected(element);
 }
 
-export async function connectToGroupedPiece(element, side) {
-  const firstPieceLocation = await element.getLocation();
-  const sourceSolvedX = parseInt(await element.getAttribute("data-solvedx"));
-  const sourceSolvedY = parseInt(await element.getAttribute("data-solvedy"));
-
-  const adjacentPiece = await getAdjacentPieceBySide(element, side);
-
-  const targetSolvedX = parseInt(
-    await adjacentPiece.getAttribute("data-solvedx")
+export async function connectSinglePieceToGroupedPiece(
+  sourceElement,
+  targetElement
+) {
+  const sourceElementLocation = await sourceElement.getLocation();
+  const sourceSolvedX = parseInt(
+    await sourceElement.getAttribute("data-solvedx")
   );
-  const targetSolvedY = parseInt(
-    await adjacentPiece.getAttribute("data-solvedy")
+  const sourceSolvedY = parseInt(
+    await sourceElement.getAttribute("data-solvedy")
   );
 
-  const { x, y } = await adjacentPiece.getLocation();
-
-  const dragReferenceFrame = {
-    top: y - targetSolvedY,
-    left: x - targetSolvedX,
-  };
-
-  const dragDest = {
-    y: parseInt(dragReferenceFrame.top + sourceSolvedY),
-    x: parseInt(dragReferenceFrame.left + sourceSolvedX),
-  };
+  const groupContainerLocation = await targetElement
+    .parentElement()
+    .getLocation();
 
   const dragCoords = {
-    x: parseInt(dragDest.x - firstPieceLocation.x + 10),
-    y: parseInt(dragDest.y - firstPieceLocation.y + 10),
+    x: parseInt(
+      groupContainerLocation.x + sourceSolvedX - sourceElementLocation.x + 5
+    ),
+    y: parseInt(
+      groupContainerLocation.y + sourceSolvedY - sourceElementLocation.y + 5
+    ),
   };
 
-  element.dragAndDrop(dragCoords);
+  sourceElement.dragAndDrop(dragCoords);
 
+  await verifyElementHasConnected(sourceElement);
+}
+
+export async function verifyElementHasConnected(element) {
   await expect(element).toHaveElementClass("grouped");
-
   const parentElement = await element.parentElement();
   await expect(parentElement).toHaveElementClass("group-container");
   await expect(await parentElement.getAttribute("id")).not.toBe(
     "pieces-container"
   );
-
-  return {
-    container: parentElement,
-    children: [element, adjacentPiece],
-  };
 }
 
 export async function solve(element) {

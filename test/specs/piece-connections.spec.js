@@ -3,6 +3,7 @@ import {
   getPiece,
   connectToSinglePiece,
   getAdjacentPieceNotInGroup,
+  connectSinglePieceToGroupedPiece,
   solve,
 } from "../piece-commands.js";
 
@@ -22,13 +23,15 @@ describe("Piece connections", () => {
     });
     it("should connect to groups", async () => {
       const sourcePiece = await getPiece(0);
-      const { children } = await connectToSinglePiece(sourcePiece, 0);
+      await connectToSinglePiece(sourcePiece, 0);
       const adjacentPieceNotInGroup = await getAdjacentPieceNotInGroup(
-        children[0]
+        sourcePiece
       );
-      await connectToSinglePiece(adjacentPieceNotInGroup, 0);
+      await connectSinglePieceToGroupedPiece(
+        adjacentPieceNotInGroup,
+        sourcePiece
+      );
     });
+    // it("should reset their position if dragged out of bounds", () => {});
   });
-
-  describe("Grouped pieces");
 });
