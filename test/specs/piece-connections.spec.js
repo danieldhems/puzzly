@@ -1,3 +1,4 @@
+import { cleanup } from "../cleanup.js";
 import { createPuzzle } from "../commands.js";
 import {
   getPiece,
@@ -10,6 +11,9 @@ import {
 describe("Piece connections", () => {
   beforeEach(async () => {
     await createPuzzle();
+  });
+  afterEach(() => {
+    cleanup();
   });
 
   describe("Single pieces", () => {

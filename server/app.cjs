@@ -12,6 +12,7 @@ var app = express();
 
 app.use("/", express.static("./client"));
 app.use("/uploads", express.static("./uploads"));
+app.use("/uploads_integration", express.static("./uploads_integration"));
 app.use("/common", express.static("./common"));
 
 app.use(
@@ -71,7 +72,5 @@ app.get("/generator", function (req, res) {
 app.get("/test", function (req, res) {
   res.sendFile(path.join(__dirname, "../client/path-test.html"));
 });
-
-// puzzleApi.clean();
 
 module.exports = app;

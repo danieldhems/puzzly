@@ -1,3 +1,5 @@
+import { UPLOADS_DIR_INTEGRATION, UPLOADS_DIR_PROD } from "../constants";
+
 var router = require("express").Router();
 // var { default: PuzzleGenerator } = require("../../common/puzzleGenerator");
 
@@ -12,9 +14,12 @@ const url = "mongodb://127.0.0.1:27017";
 // Database Name
 const dbName = "puzzly";
 
-const puzzlesCollection = "puzzles";
-const piecesCollection = "pieces";
-const groupsCollection = "groups";
+const puzzlesProdCollection = "puzzles_prod";
+const piecesProdCollection = "pieces_prod";
+const groupsProdCollection = "groups_prod";
+const puzzlesIntegrationCollection = "puzzles_integration";
+const piecesIntegrationCollection = "pieces_integration";
+const groupsIntegrationCollection = "groups_integration";
 
 // Create a new MongoClient
 const client = new MongoClient(url);
@@ -39,10 +44,20 @@ var api = {
     client.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
-      const puzzleColl = db.collection(puzzlesCollection);
-      const piecesColl = db.collection(piecesCollection);
 
       const data = req.body;
+
+      let isIntegration = false;
+      let puzzleColl, piecesColl;
+
+      if (data.integration) {
+        isIntegration = true;
+        puzzleColl = db.collection(puzzlesIntegrationCollection);
+        piecesColl = db.collection(piecesIntegrationCollection);
+      } else {
+        puzzleColl = db.collection(puzzlesProdCollection);
+        piecesColl = db.collection(piecesProdCollection);
+      }
 
       console.log("create puzzle with data", data);
       data.numberOfSolvedPieces = 0;
@@ -52,9 +67,14 @@ var api = {
       const timeStamp = new Date().getMilliseconds();
       const imageNameWithoutExt = data.imageName.split(".")[0];
 
+      const uploadDir = isIntegration
+        ? UPLOADS_DIR_INTEGRATION
+        : UPLOADS_DIR_PROD;
+
       // These are the paths we want the sprites to be created at - they're uploaded by the client in base64
       const spritePath =
-        "./uploads/sprite_" +
+        uploadDir +
+        "sprite_" +
         imageNameWithoutExt +
         "_" +
         data.selectedNumPieces +
@@ -119,9 +139,24 @@ var api = {
     client.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
-      const puzzles = db.collection(puzzlesCollection);
-      const pieces = db.collection(piecesCollection);
-      const groups = db.collection(groupsCollection);
+
+      let isIntegration = false;
+      let puzzleColl, piecesColl, groupsColl;
+
+      if (req.body.integration) {
+        isIntegration = true;
+        puzzleColl = db.collection(puzzlesIntegrationCollection);
+        piecesColl = db.collection(piecesIntegrationCollection);
+        groupsColl = db.collection(groupsIntegrationCollection);
+      } else {
+        puzzleColl = db.collection(puzzlesProdCollection);
+        piecesColl = db.collection(piecesProdCollection);
+        groupsColl = db.collection(groupsProdCollection);
+      }
+
+      const puzzles = db.collection(puzzleColl);
+      const pieces = db.collection(piecesColl);
+      const groups = db.collection(groupsColl);
 
       const puzzleQuery = { _id: new ObjectID(puzzleId) };
       const piecesQuery = { puzzleId: new ObjectID(puzzleId) };
@@ -148,11 +183,32 @@ var api = {
     });
   },
   update: function (req, res) {},
-  destroy: function (req, res) {
-    var id = req.params.id;
-    db.query("DROP * FROM `agents` WHERE `id` = ?", [id], function (err, rows) {
-      if (err) throw new Error(err);
-      console.log(rows);
+  destroy: async function (req, res) {
+    const args = req.params || req;
+    client.connect().then(async (client, err) => {
+      assert.strictEqual(err, undefined);
+      db = client.db(dbName);
+
+      let isIntegration = false;
+      let puzzleColl, piecesColl, groupsColl;
+
+      // TODO: Abstract to function
+      if (args.integration) {
+        isIntegration = true;
+        puzzleColl = db.collection(puzzlesIntegrationCollection);
+        piecesColl = db.collection(piecesIntegrationCollection);
+        groupsColl = db.collection(groupsIntegrationCollection);
+      } else {
+        puzzleColl = db.collection(puzzlesProdCollection);
+        piecesColl = db.collection(piecesProdCollection);
+        groupsColl = db.collection(groupsProdCollection);
+      }
+
+      try {
+        await puzzleColl.delete({ _id: new ObjectID(args.id) });
+        await piecesColl.deleteMany({ puzzleId: new ObjectID(args.id) });
+        await groupsColl.deleteMany({ puzzleId: args.id });
+      } catch (e) {}
     });
   },
 };

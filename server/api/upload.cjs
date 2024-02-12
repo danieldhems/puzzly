@@ -1,8 +1,8 @@
+import { UPLOADS_DIR_INTEGRATION, UPLOADS_DIR_PROD } from "../constants";
+
 var router = require("express").Router();
 var fileUpload = require("express-fileupload");
 var Sharp = require("sharp");
-
-const uploadDir = "./uploads/";
 
 router.use(
   fileUpload({
@@ -18,13 +18,22 @@ async function upload(req, res) {
       message: "No file uploaded",
     });
   } else {
+    console.log("upload: req object", req.body);
     //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
     let image = req.files["files[]"];
 
+    let isIntegration = false;
+
+    if (req.body.integration) {
+      isIntegration = true;
+    }
+
+    const uploadDir = isIntegration
+      ? UPLOADS_DIR_INTEGRATION
+      : UPLOADS_DIR_PROD;
+
     //Use the mv() method to place the file in upload directory (i.e. "uploads")
     const previewPath = uploadDir + "preview_" + image.name;
-    const puzzlePath = uploadDir + "puzzle_" + image.name;
-
     const fullSizePath = uploadDir + "fullsize_" + image.name;
     image.mv(fullSizePath);
 

@@ -74,6 +74,8 @@ class PuzzlyCreator {
     this.addEventListeners();
     this.setDefaultNumPieces();
     this.showForm();
+
+    this.integration = window.location.href.indexOf("integration=true") > -1;
   }
 
   showForm() {
@@ -558,6 +560,7 @@ class PuzzlyCreator {
     fd.append("previewWidth", this.imagePreviewEl.offsetWidth);
     fd.append("previewHeight", this.imagePreviewEl.offsetHeight);
     fd.append("boardSize", this.boardSize);
+    fd.append("integration", this.integration);
 
     return fetch("/api/upload", {
       body: fd,
@@ -624,6 +627,7 @@ class PuzzlyCreator {
       boardSize: this.boardSize,
       imageSize: this.imageSize,
       puzzleToImageRatio: this.puzzleToImageRatio,
+      integration: this.integration,
     };
 
     const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {

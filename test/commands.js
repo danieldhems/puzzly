@@ -2,7 +2,7 @@ import { URL } from "url";
 import { PuzzleSizes } from "../client/scripts/constants.js";
 import path from "path";
 
-const uploadsPathAndPrefix = "./uploads/preview_";
+const uploadsPathAndPrefix = "./uploads_integration/preview_";
 const testImagePath = "./puzzleImages/";
 
 const __dirname = new URL(".", import.meta.url).pathname;
