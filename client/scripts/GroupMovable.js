@@ -97,9 +97,9 @@ export default class GroupMovable extends BaseMovable {
     );
 
     this.element = container;
-    this.position = position;
     this.canvas = container.querySelector("canvas");
 
+    this.setLastPosition(position);
     this.attachElements();
     this.render();
     this.save();
@@ -339,7 +339,7 @@ export default class GroupMovable extends BaseMovable {
         });
       }
 
-      this.setPosition(this.element.getBoundingClientRect());
+      this.setLastPosition(this.element.getBoundingClientRect());
     }
   }
 
