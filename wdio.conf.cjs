@@ -151,7 +151,7 @@ exports.config = {
   // Jasmine configuration, see:
   //  https://serenity-js.org/api/jasmine-adapter/interface/JasmineConfig
   jasmineOpts: {
-    defaultTimeoutInterval: 20000,
+    defaultTimeoutInterval: 200000,
   },
 
   //

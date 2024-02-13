@@ -216,6 +216,11 @@ export default class PersistenceOperations {
     }
   }
 
+  static isIntegration() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("integration") === "true";
+  }
+
   static async save(data) {
     console.log("saving", data);
     const useLocalStorage = false;
@@ -235,6 +240,8 @@ export default class PersistenceOperations {
     } else {
       return;
     }
+
+    data.integration = PersistenceOperations.isIntegration();
 
     if (useLocalStorage) {
     } else {

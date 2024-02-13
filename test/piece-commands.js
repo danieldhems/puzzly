@@ -29,12 +29,10 @@ export async function getAdjacentPieceNotInGroup(element) {
   }
 }
 
-export async function connectToSinglePiece(element, side) {
+export async function joinPieces(element, adjacentPiece) {
   const firstPieceLocation = await element.getLocation();
   const sourceSolvedX = parseInt(await element.getAttribute("data-solvedx"));
   const sourceSolvedY = parseInt(await element.getAttribute("data-solvedy"));
-
-  const adjacentPiece = await getAdjacentPieceBySide(element, side);
 
   const targetSolvedX = parseInt(
     await adjacentPiece.getAttribute("data-solvedx")
@@ -65,10 +63,7 @@ export async function connectToSinglePiece(element, side) {
   await verifyElementHasConnected(element);
 }
 
-export async function connectSinglePieceToGroupedPiece(
-  sourceElement,
-  targetElement
-) {
+export async function connectToGroupedPiece(sourceElement, targetElement) {
   const sourceElementLocation = await sourceElement.getLocation();
   const sourceSolvedX = parseInt(
     await sourceElement.getAttribute("data-solvedx")

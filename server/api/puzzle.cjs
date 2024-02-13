@@ -1,36 +1,32 @@
-import { UPLOADS_DIR_INTEGRATION, UPLOADS_DIR_PROD } from "../constants";
-
 var router = require("express").Router();
 // var { default: PuzzleGenerator } = require("../../common/puzzleGenerator");
 
-const MongoClient = require("mongodb").MongoClient;
 const ObjectID = require("mongodb").ObjectID;
 const assert = require("assert");
 const fs = require("fs");
+const {
+  UPLOADS_DIR_INTEGRATION,
+  UPLOADS_DIR_PROD,
+  PUZZLES_PROD_COLLECTION,
+  PIECES_PROD_COLLECTION,
+} = require("../constants.cjs");
 
-// Connection URL
+const MongoClient = require("mongodb").MongoClient;
+
 const url = "mongodb://127.0.0.1:27017";
-
-// Database Name
+const client = new MongoClient(url);
 const dbName = "puzzly";
 
-const puzzlesProdCollection = "puzzles_prod";
-const piecesProdCollection = "pieces_prod";
-const groupsProdCollection = "groups_prod";
-const puzzlesIntegrationCollection = "puzzles_integration";
-const piecesIntegrationCollection = "pieces_integration";
-const groupsIntegrationCollection = "groups_integration";
+const getDatabaseCollections = require("./getDatabaseCollections.cjs").default;
 
-// Create a new MongoClient
-const client = new MongoClient(url);
-
-let db, collection;
+let db;
 
 module.exports.clean = function () {
   client.connect().then((client, err) => {
+    const db = client.db(dbName);
+
     assert.strictEqual(err, undefined);
-    db = client.db(dbName);
-    collection = db.collection(collectionName);
+    const collection = db.collection(collectionName);
 
     collection.remove({}, function (err, result) {
       if (err) throw new Error(err);
@@ -48,18 +44,10 @@ var api = {
       const data = req.body;
 
       let isIntegration = false;
-      let puzzleColl, piecesColl;
 
-      if (data.integration) {
-        isIntegration = true;
-        puzzleColl = db.collection(puzzlesIntegrationCollection);
-        piecesColl = db.collection(piecesIntegrationCollection);
-      } else {
-        puzzleColl = db.collection(puzzlesProdCollection);
-        piecesColl = db.collection(piecesProdCollection);
-      }
+      const { puzzles, pieces } = getDatabaseCollections(db, data);
 
-      console.log("create puzzle with data", data);
+      // console.log("create puzzle with data", data);
       data.numberOfSolvedPieces = 0;
       data.dateCreated = new Date();
       data.elapsedTime = 0;
@@ -111,7 +99,7 @@ var api = {
 
       // console.log("creating puzzle", dbPayload);
 
-      const puzzleDBResponse = await puzzleColl.insertOne(dbPayload);
+      const puzzleDBResponse = await puzzles.insertOne(dbPayload);
       const puzzleId = puzzleDBResponse.ops[0]._id;
       // console.log("puzzle DB result", puzzleDBResponse.ops[0]._id);
 
@@ -121,10 +109,10 @@ var api = {
 
       // console.log("data for pieces insertion", data.pieces);
 
-      const piecesDBResponse = await piecesColl.insertMany(data.pieces);
+      const piecesDBResponse = await pieces.insertMany(data.pieces);
 
       // console.log("puzzleDBResponse", puzzleDBResponse.ops[0]);
-      console.log("piecesDBResponse", piecesDBResponse.ops);
+      // console.log("piecesDBResponse", piecesDBResponse.ops);
 
       res.status(200).send({
         ...puzzleDBResponse.ops[0],
@@ -140,38 +128,22 @@ var api = {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
 
-      let isIntegration = false;
-      let puzzleColl, piecesColl, groupsColl;
-
-      if (req.body.integration) {
-        isIntegration = true;
-        puzzleColl = db.collection(puzzlesIntegrationCollection);
-        piecesColl = db.collection(piecesIntegrationCollection);
-        groupsColl = db.collection(groupsIntegrationCollection);
-      } else {
-        puzzleColl = db.collection(puzzlesProdCollection);
-        piecesColl = db.collection(piecesProdCollection);
-        groupsColl = db.collection(groupsProdCollection);
-      }
-
-      const puzzles = db.collection(puzzleColl);
-      const pieces = db.collection(piecesColl);
-      const groups = db.collection(groupsColl);
+      const { puzzles, pieces, groups } = getDatabaseCollections(db, req.body);
 
       const puzzleQuery = { _id: new ObjectID(puzzleId) };
       const piecesQuery = { puzzleId: new ObjectID(puzzleId) };
       const groupsQuery = { puzzleId: puzzleId };
 
-      console.log("puzzle query", puzzleQuery);
-      console.log("pieces query", piecesQuery);
-      console.log("groups query", groupsQuery);
+      // console.log("puzzle query", puzzleQuery);
+      // console.log("pieces query", piecesQuery);
+      // console.log("groups query", groupsQuery);
 
       const puzzle = await puzzles.findOne(puzzleQuery);
       const piecesResult = await pieces.find(piecesQuery).toArray();
       const groupsResult = await groups.find(groupsQuery).toArray();
       // console.log("puzzle found", puzzle);
-      console.log("pieces found for puzzle", puzzleId, piecesResult);
-      console.log("groups found for puzzle", puzzleId, groupsResult);
+      // console.log("pieces found for puzzle", puzzleId, piecesResult);
+      // console.log("groups found for puzzle", puzzleId, groupsResult);
 
       const result = {
         ...puzzle,
@@ -185,30 +157,39 @@ var api = {
   update: function (req, res) {},
   destroy: async function (req, res) {
     const args = req.params || req;
+
+    // console.log("Puzzle destroy() called with arg", args.id);
     client.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
 
-      let isIntegration = false;
-      let puzzleColl, piecesColl, groupsColl;
-
-      // TODO: Abstract to function
-      if (args.integration) {
-        isIntegration = true;
-        puzzleColl = db.collection(puzzlesIntegrationCollection);
-        piecesColl = db.collection(piecesIntegrationCollection);
-        groupsColl = db.collection(groupsIntegrationCollection);
-      } else {
-        puzzleColl = db.collection(puzzlesProdCollection);
-        piecesColl = db.collection(piecesProdCollection);
-        groupsColl = db.collection(groupsProdCollection);
-      }
+      const { puzzles, pieces, groups } = getDatabaseCollections(db, args);
 
       try {
-        await puzzleColl.delete({ _id: new ObjectID(args.id) });
-        await piecesColl.deleteMany({ puzzleId: new ObjectID(args.id) });
-        await groupsColl.deleteMany({ puzzleId: args.id });
-      } catch (e) {}
+        const { deletedCount: puzzleDeletedCount } = await puzzles.deleteOne({
+          _id: new ObjectID(args.id),
+        });
+        console.log(
+          "API: Puzzle -> destroy() Puzzle deletion result",
+          puzzleDeletedCount
+        );
+        const { deletedCount: piecesDeletedCount } = await pieces.deleteMany({
+          puzzleId: new ObjectID(args.id),
+        });
+        console.log(
+          "API: Puzzle -> destroy() Pieces deletion result",
+          piecesDeletedCount
+        );
+        const { deletedCount: groupsDeletedCount } = await groups.deleteMany({
+          puzzleId: args.id,
+        });
+        console.log(
+          "API: Puzzle -> destroy() Groups deletion result",
+          groupsDeletedCount
+        );
+      } catch (e) {
+        console.error("Database cleanup failed", e);
+      }
     });
   },
 };
@@ -220,8 +201,7 @@ api.fetchAll = function (req, res) {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
 
-      let puzzles = db.collection(puzzlesCollection);
-      let piecesDB = db.collection(piecesCollection);
+      const { puzzles, pieces } = getDatabaseCollections(db, req.body);
 
       let puzzleList = await puzzles.find().toArray();
       console.log("puzzles", puzzleList);
@@ -229,17 +209,17 @@ api.fetchAll = function (req, res) {
       const puzzlesToReturn = [];
 
       const query = puzzleList.map(async (p) => {
-        const pieces = await piecesDB
+        const piecesResult = await pieces
           .find({ puzzleId: new ObjectID(p._id) })
           .toArray();
         console.log(
-          `number of pieces found for puzzle ${p._id}: ${pieces.length}`
+          `number of pieces found for puzzle ${p._id}: ${piecesResult.length}`
         );
         const puzzle = {
           ...p,
-          pieces,
+          pieces: piecesResult,
           percentSolved:
-            (pieces.filter((piece) => piece.isSolved).length /
+            (piecesResult.filter((piece) => piece.isSolved).length /
               p.selectedNumPieces) *
             100,
         };
@@ -262,9 +242,9 @@ api.removeAll = function (req, res) {
     db = client.db(dbName);
     let coll;
     if (req.params.coll === "puzzles") {
-      coll = db.collection(puzzlesCollection);
+      coll = db.collection(PUZZLES_PROD_COLLECTION);
     } else if (req.params.coll === "pieces") {
-      coll = db.collection(piecesCollection);
+      coll = db.collection(PIECES_PROD_COLLECTION);
     }
 
     console.info("Deleting all from collection", coll);
@@ -280,7 +260,8 @@ api.updateTime = function (req, res) {
   client.connect().then(async (client, err) => {
     assert.strictEqual(err, undefined);
     db = client.db(dbName);
-    let puzzles = db.collection(puzzlesCollection);
+
+    const { puzzles } = getDatabaseCollections(db, req.body);
 
     const query = { _id: new ObjectID(req.params.id) };
 
@@ -320,6 +301,8 @@ api.unsolvePiece = function (req, res) {
     // })
   });
 };
+
+module.exports.api = api;
 
 // Set API CRUD endpoints
 router.get("/", api.read);

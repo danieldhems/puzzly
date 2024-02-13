@@ -4,16 +4,13 @@ var router = require("express").Router();
 const MongoClient = require("mongodb").MongoClient;
 const ObjectID = require("mongodb").ObjectID;
 const assert = require("assert");
+const getDatabaseCollections = require("./getDatabaseCollections.cjs").default;
 
 // Connection URL
 const url = "mongodb://127.0.0.1:27017";
 
 // Database Name
 const dbName = "puzzly";
-
-const groupsCollectionName = "groups";
-const puzzlesCollectionName = "puzzles";
-const piecesCollectionName = "pieces";
 
 // Create a new MongoClient
 const client = new MongoClient(url);
@@ -38,8 +35,7 @@ var api = {
     client.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
-      const groupsCollection = db.collection(groupsCollectionName);
-      const piecesCollection = db.collection(piecesCollectionName);
+      const { pieces, groups } = getDatabaseCollections(db, req.body);
 
       const data = req.body;
       // delete data._id;
@@ -49,12 +45,12 @@ var api = {
       const pieceUpdateResults = [];
 
       try {
-        const groupSaveResult = await groupsCollection.insertOne(data);
+        const groupSaveResult = await groups.insertOne(data);
         console.log("group creation response", groupSaveResult.ops);
 
         for (let i = 0, l = data.pieces.length; i < l; i++) {
           pieceUpdateResults.push(
-            await piecesCollection.findOneAndUpdate(
+            await pieces.findOneAndUpdate(
               { _id: new ObjectID(data.pieces[i]._id) },
               { $set: { groupId: data._id } }
             )
@@ -81,18 +77,18 @@ var api = {
     client.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
-      const groupsCollection = db.collection(groupsCollectionName);
+      const { groups } = getDatabaseCollections(db, req.body);
 
       const query = { puzzleId };
-      console.log("group read query", query);
-      const queryResult = await groupsCollection.find(query);
+      // console.log("group read query", query);
+      const queryResult = await groups.find(query);
 
       res.status(200).send(queryResult);
     });
   },
   update: function (req, res) {
     var data = req.body;
-    console.log("update group request", req.body);
+    // console.log("update group request", req.body);
 
     client.connect().then(async (client, err) => {
       const response = {};
@@ -100,9 +96,10 @@ var api = {
       if (!err) {
         db = client.db(dbName);
 
-        let groups = db.collection(groupsCollectionName);
-        let puzzles = db.collection(puzzlesCollectionName);
-        const piecesCollection = db.collection(piecesCollectionName);
+        const { pieces, groups, puzzles } = getDatabaseCollections(
+          db,
+          req.body
+        );
         let query, update;
 
         const pieceUpdateResults = [];
@@ -110,7 +107,7 @@ var api = {
         try {
           const groupId = new ObjectID(data._id);
           query = { _id: groupId };
-          console.log("updating group", data);
+          // console.log("updating group", data);
           update = {
             $set: {
               pieces: data.pieces,
@@ -120,15 +117,15 @@ var api = {
             },
           };
 
-          console.log("update instruction", update);
+          // console.log("update instruction", update);
 
           try {
             const result = await groups.findOneAndUpdate(query, update);
-            console.log("group update result", result.ops);
+            // console.log("group update result", result.ops);
 
             for (let i = 0, l = data.pieces.length; i < l; i++) {
               pieceUpdateResults.push(
-                await piecesCollection.findOneAndUpdate(
+                await pieces.findOneAndUpdate(
                   { _id: new ObjectID(data.pieces[i]._id) },
                   { $set: { groupId: data._id, isSolved: data.isSolved } }
                 )
@@ -152,7 +149,7 @@ var api = {
             },
           };
 
-          console.log("Groups: Updating puzzle with query", puzzleUpdateOp);
+          // console.log("Groups: Updating puzzle with query", puzzleUpdateOp);
 
           await puzzles.updateOne(puzzleUpdateQuery, puzzleUpdateOp);
 
@@ -176,20 +173,20 @@ var api = {
     client.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
-      const groupsCollection = db.collection(groupsCollectionName);
+      const { groups } = getDatabaseCollections(db, req.body);
       const data = req.body;
 
       const groupId = new ObjectID(data._id);
       const query = { _id: groupId };
 
       try {
-        const result = await groupsCollection.deleteOne(query);
-        console.log("Successfully delete group with ID", groupId);
+        const result = await groups.deleteOne(query);
+        // console.log("Successfully delete group with ID", groupId);
         console.log(result.ops);
 
         res.status(200).send({});
       } catch (error) {
-        console.log("Failed to delete group with ID", groupId);
+        // console.log("Failed to delete group with ID", groupId);
         console.log(error);
       }
     });

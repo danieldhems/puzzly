@@ -1,3 +1,4 @@
+import { createPuzzle } from "../commands.js";
 import { cleanup } from "../cleanup.js";
 
 describe("Puzzle creator form", () => {

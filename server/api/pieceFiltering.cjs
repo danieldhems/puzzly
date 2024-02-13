@@ -1,40 +1,42 @@
-var path = require('path');
-var router = require('express').Router();
+var router = require("express").Router();
 
-const MongoClient = require('mongodb').MongoClient;
-const assert = require('assert')
+const MongoClient = require("mongodb").MongoClient;
+const assert = require("assert");
 
-const url = 'mongodb://localhost:27017';
+const url = "mongodb://localhost:27017";
 const client = new MongoClient(url);
-const ObjectID = require('mongodb').ObjectID;
+const ObjectID = require("mongodb").ObjectID;
+const getDatabaseCollections = require("./getDatabaseCollections.cjs").default;
 
-const dbName = 'puzzly';
+const dbName = "puzzly";
 
-const puzzlesCollection = 'puzzles';
-const piecesCollection = 'pieces';
+async function toggleVisibility(req, res) {
+  var id = req.params.id;
+  try {
+    client.connect().then(async (client, err) => {
+      assert.strictEqual(err, undefined);
+      const db = client.db(dbName);
 
-async function toggleVisibility(req, res){
-    var id = req.params.id;
-    try {
-        client.connect().then(async (client, err) => {
-            assert.strictEqual(err, undefined);
-            const db = client.db(dbName);
+      const isVisible = req.body.piecesVisible;
+      const { puzzles } = getDatabaseCollections(db, req.body);
 
-            const isVisible = req.body.piecesVisible;
-            const puzzles = db.collection(puzzlesCollection);
+      puzzles.findOneAndUpdate(
+        { _id: new ObjectID(id) },
+        { $set: { innerPiecesVisible: isVisible } },
+        { upsert: true },
+        function (err, result) {
+          if (err) throw new Error(err);
+        }
+      );
 
-            puzzles.findOneAndUpdate({_id: new ObjectID(id)}, {$set: { innerPiecesVisible: isVisible }}, {upsert: true}, function(err, result) {
-                if(err) throw new Error(err);
-            })
-
-            res.send(200)
-        });
-    } catch (err) {
-        console.log(err)
-        res.status(500).send(err);
-    }
+      res.send(200);
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err);
+  }
 }
 
-router.put('/:id', toggleVisibility);
+router.put("/:id", toggleVisibility);
 
 module.exports = router;

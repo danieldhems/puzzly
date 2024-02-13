@@ -327,6 +327,7 @@ export default class GroupMovable extends BaseMovable {
 
   onSaveResponse(event) {
     const response = event.detail;
+    console.log("GroupMovable save response", response);
     if (this.isServerResponseForThisGroup(response.data)) {
       if (!this._id) {
         this.setGroupIdAcrossInstance(response.data._id);

@@ -4,15 +4,13 @@ var router = require("express").Router();
 const MongoClient = require("mongodb").MongoClient;
 const ObjectID = require("mongodb").ObjectID;
 const assert = require("assert");
+const getDatabaseCollections = require("./getDatabaseCollections.cjs").default;
 
 // Connection URL
 const url = "mongodb://127.0.0.1:27017";
 
 // Database Name
 const dbName = "puzzly";
-
-const piecesCollection = "pieces";
-const puzzlesCollection = "puzzles";
 
 // Create a new MongoClient
 const client = new MongoClient(url);
@@ -37,12 +35,13 @@ var api = {
     client.connect().then((client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
-      collection = db.collection(piecesCollection);
+
+      const { pieces } = getDatabaseCollections(db, req.body);
 
       const data = req.body;
       // console.log("attempting to save pieces for first time", data);
 
-      collection.insertMany(data, function (err, result) {
+      pieces.insertMany(data, function (err, result) {
         if (err) throw new Error(err);
 
         const response = {
@@ -76,14 +75,13 @@ var api = {
   },
   update: function (req, res) {
     var data = req.body;
-    console.log("update request", req.body);
+    // console.log("update request", req.body);
 
     client.connect().then(async (client, err) => {
       if (!err) {
         db = client.db(dbName);
 
-        let pieces = db.collection(piecesCollection);
-        let puzzles = db.collection(puzzlesCollection);
+        const { pieces, puzzles } = getDatabaseCollections(db, req.body);
         let query, update;
 
         const response = {};
@@ -91,7 +89,7 @@ var api = {
         const lastSaveDate = Date.now();
 
         try {
-          console.log("data", data);
+          // console.log("data", data);
           if (Array.isArray(data)) {
             for (let i = 0, l = data.length; i < l; i++) {
               const { _id, pageX, pageY, pocket } = data[i];
@@ -109,7 +107,7 @@ var api = {
           } else {
             const pieceid = new ObjectID(data._id);
             query = { _id: pieceid };
-            console.log("saving piece", data);
+            // console.log("saving piece", data);
 
             const { pageX, pageY, groupId, isSolved, pocket, zIndex } = data;
 
@@ -124,9 +122,9 @@ var api = {
               },
             };
 
-            console.log("Single piece: update instruction", update);
+            // console.log("Single piece: update instruction", update);
             const result = await pieces.findOneAndUpdate(query, update);
-            console.log("piece update result", result.ops);
+            // console.log("piece update result", result.ops);
           }
 
           const puzzleUpdateOp = {
@@ -141,7 +139,7 @@ var api = {
             _id: new ObjectID(data.puzzleId),
           };
 
-          console.log("Pieces: Updating puzzle with query", puzzleUpdateOp);
+          // console.log("Pieces: Updating puzzle with query", puzzleUpdateOp);
 
           const result = await puzzles.updateOne(
             puzzleUpdateQuery,

@@ -1,4 +1,7 @@
-import { UPLOADS_DIR_INTEGRATION, UPLOADS_DIR_PROD } from "../constants";
+const {
+  UPLOADS_DIR_INTEGRATION,
+  UPLOADS_DIR_PROD,
+} = require("../constants.cjs");
 
 var router = require("express").Router();
 var fileUpload = require("express-fileupload");
@@ -18,7 +21,7 @@ async function upload(req, res) {
       message: "No file uploaded",
     });
   } else {
-    console.log("upload: req object", req.body);
+    // console.log("upload: req object", req.body);
     //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
     let image = req.files["files[]"];
 

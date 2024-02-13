@@ -20,6 +20,8 @@ export const createPuzzle = async function () {
   const numPiecesFldValue = await numPiecesField.getValue();
   const selectNumberOfPieces = PuzzleSizes[numPiecesFldValue].numPieces;
 
+  await $("#chk-no-disperse").click();
+
   const previewEl = $("#puzzle-setup--image_preview-imgEl");
   await expect(previewEl).toHaveAttr("src", uploadsPathAndPrefix + imageName);
   const submitButton = await $("#start-btn");
