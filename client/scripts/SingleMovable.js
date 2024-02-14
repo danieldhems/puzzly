@@ -159,6 +159,7 @@ export default class SingleMovable extends BaseMovable {
     el.setAttribute("data-imgH", imgH);
     el.setAttribute("data-svgPath", svgPath);
     el.setAttribute("data-is-inner-piece", isInnerPiece);
+    el.setAttribute("data-connector-tolerance", this.Puzzly.connectorTolerance);
     el.setAttribute(
       "data-connects-to",
       JSON.stringify(
