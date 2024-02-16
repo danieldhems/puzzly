@@ -149,7 +149,7 @@ export async function dragOutOfBounds(element, opts) {
     x: parseInt(outOfBoundsCoords.x),
     y: parseInt(outOfBoundsCoords.y),
   };
-  await element.dragAndDrop(dragCoords, { duration: 2000 });
+  await element.dragAndDrop(dragCoords, { duration: opts?.duration || 0 });
 }
 
 // export async function verifyElementHasBeen
