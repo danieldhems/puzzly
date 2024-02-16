@@ -1,4 +1,3 @@
-import { WaitUntil } from "@serenity-js/core";
 import { cleanup } from "../cleanup.js";
 import { createPuzzle } from "../commands.js";
 import {
@@ -20,7 +19,7 @@ describe("Piece connections", () => {
     await cleanup();
   });
 
-  describe("Single pieces", () => {
+  describe("Connections for single pieces", () => {
     describe("when dragged and dropped near adjacent pieces", () => {
       describe("within the connector tolerance", () => {
         it("should connect to each other", async () => {

@@ -143,6 +143,48 @@ export async function dragNearGroupedPieceAndConnect(
   await verifyElementHasConnected(sourceElement);
 }
 
+export async function dragOutOfBounds(element, opts) {
+  const outOfBoundsCoords = await getOutOfBoundsCoords(element, opts);
+  const dragCoords = {
+    x: parseInt(outOfBoundsCoords.x),
+    y: parseInt(outOfBoundsCoords.y),
+  };
+  await element.dragAndDrop(dragCoords, { duration: 2000 });
+}
+
+// export async function verifyElementHasBeen
+export async function getOutOfBoundsCoords(element, opts = null) {
+  const playBoundary = $("#play-boundary");
+  const elementSize = await element.getSize();
+  const elementLocation = await element.getLocation();
+  const { width: windowWidth, height: windowHeight } =
+    await browser.getWindowSize();
+
+  const partial = opts?.partial;
+  const { x: playBoundaryX, y: playBoundaryY } =
+    await playBoundary.getLocation();
+
+  const dragCoords = {};
+
+  if (windowWidth > windowHeight) {
+    const elementOffset = partial
+      ? elementSize.width / 2
+      : elementSize.width + 10;
+
+    dragCoords.x = elementLocation.x - playBoundaryX - elementOffset;
+    dragCoords.y = elementLocation.y;
+  } else if (windowHeight > windowWidth) {
+    const elementOffset = partial
+      ? elementSize.height / 2
+      : elementSize.height + 10;
+
+    dragCoords.x = elementLocation.x;
+    dragCoords.y = elementLocation.y - playBoundaryY - elementOffset;
+  }
+
+  return dragCoords;
+}
+
 export async function verifyElementHasConnected(element) {
   await expect(element).toHaveElementClass("grouped");
   const parentElement = await element.parentElement();
