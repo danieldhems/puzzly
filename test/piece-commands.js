@@ -144,27 +144,33 @@ export async function dragNearGroupedPieceAndConnect(
 }
 
 export async function dragOutOfBounds(element, opts) {
-  const outOfBoundsCoords = await getOutOfBoundsCoords(element, opts);
-  const dragCoords = {
-    x: parseInt(outOfBoundsCoords.x),
-    y: parseInt(outOfBoundsCoords.y),
-  };
-  await element.dragAndDrop(dragCoords, { duration: opts?.duration || 0 });
+  const dragTarget = await $("#integration-test-drag-helper");
+  await element.dragAndDrop(dragTarget, {
+    duration: opts?.duration || 0,
+  });
 }
 
-// export async function verifyElementHasBeen
 export async function getOutOfBoundsCoords(element, opts = null) {
   const playBoundary = $("#play-boundary");
+
   const elementSize = await element.getSize();
   const elementLocation = await element.getLocation();
+  const elementParent = await element.parentElement();
+  const elementParentLocation = await elementParent.getLocation();
+
+  const elementClass = await element.getAttribute("class");
+  const isGrouped = elementClass.indexOf("grouped") > -1;
+  console.log("TEST isGrouped", isGrouped);
+
   const { width: windowWidth, height: windowHeight } =
     await browser.getWindowSize();
 
-  const partial = opts?.partial;
   const { x: playBoundaryX, y: playBoundaryY } =
     await playBoundary.getLocation();
 
   const dragCoords = {};
+
+  const partial = opts?.partial;
 
   if (windowWidth > windowHeight) {
     const elementOffset = partial

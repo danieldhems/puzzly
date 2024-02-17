@@ -319,6 +319,16 @@ class Puzzly {
 
     this.stage.classList.add("loaded");
     Events.notify(EVENT_TYPES.PUZZLE_LOADED, this);
+
+    const integrationTestDragHelper = document.querySelector(
+      "#integration-test-drag-helper"
+    );
+    integrationTestDragHelper.style.position = "absolute";
+    integrationTestDragHelper.style.top = window.innerHeight / 2 + "px";
+    integrationTestDragHelper.style.top =
+      parseInt(this.playBoundary.style.left) / 2 + "px";
+    integrationTestDragHelper.style.width = "100px";
+    integrationTestDragHelper.style.height = "100px";
   }
 
   updateSolvedCanvas() {
