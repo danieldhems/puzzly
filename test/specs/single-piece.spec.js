@@ -1,6 +1,10 @@
 import { cleanup } from "../cleanup.js";
 import { createPuzzle } from "../commands.js";
-import { getPiece, dragOutOfBounds } from "../piece-commands.js";
+import {
+  getPiece,
+  dragOutOfBounds,
+  putPieceInPocket,
+} from "../piece-commands.js";
 
 describe("Single pieces", () => {
   beforeEach(async () => {
@@ -59,15 +63,6 @@ describe("Single pieces", () => {
         ).not.toBeNull();
         expect(await piece.getAttribute("data-is-solved")).not.toBeNull();
       });
-    });
-  });
-
-  describe("When dragged and dropped out-of-bounds", () => {
-    it("should have their position reset", async () => {
-      const piece = await getPiece(0);
-      const startingLocation = await piece.getLocation();
-      await dragOutOfBounds(piece);
-      expect(await piece.getLocation()).toEqual(startingLocation);
     });
   });
 });

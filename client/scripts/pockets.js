@@ -432,8 +432,8 @@ class Pockets {
     this.setElementPositionInPocket(element, pocketEl);
   }
 
-  addManyToPocket(pocket, movable) {
-    if (!movable) return;
+  addManyToPocket(pocket, movableOrArrayOfElements) {
+    if (!movableOrArrayOfElements) return;
 
     let pocketId, pocketEl;
 
@@ -445,18 +445,14 @@ class Pockets {
       pocketId = this.getIdForPocket(pocket);
     }
 
-    // salmon
-    Array.from(movable.element.childNodes).forEach((element) => {
+    // Allow for either a movable instance or an array of elements to be added
+    const pieces = movableOrArrayOfElements.element
+      ? movableOrArrayOfElements.element.childNodes
+      : movableOrArrayOfElements;
+
+    Array.from(pieces).forEach((element) => {
       const pieceInstance = this.Puzzly.getMovableInstanceFromElement(element);
-      element.setAttribute("data-pocket-id", pocketId);
-      element.classList.add("in-pocket");
-
-      // TODO: Need better way to set the instance's new pocket:
-      // probably a method on the instance itself, either public or private.
-      pieceInstance.pocket = parseInt(pocketId);
-
-      pocketEl?.querySelector(".pocket-inner").appendChild(element);
-      this.setElementPositionInPocket(element, pocketEl);
+      this.addSingleToPocket(pocket, pieceInstance);
     });
   }
 

@@ -229,3 +229,21 @@ export async function solve(element) {
     "group-container-1111"
   );
 }
+
+export async function createGroupWithPieces(firstPieceId, secondPieceId) {
+  const sourcePiece = await getPiece(firstPieceId);
+  const targetPiece = await getPiece(secondPieceId);
+  await dragNearPieceAndConnect(sourcePiece, targetPiece);
+}
+
+export async function putPieceInPocket(element, pocketId) {
+  const pocket = $("¢pocket-0");
+  await dragAndDrop(element, pocket, { duration: 2000 });
+  await verifyElementIsInPocket(element, pocketId);
+}
+
+export async function verifyElementIsInPocket(element, pocketId) {
+  expect(element).toHaveElementClass("in-pocket");
+  const elementParent = await element.parentElement();
+  expect(elementParent.getAttribute("id")).toBe(`pocket-${pocketId}`);
+}

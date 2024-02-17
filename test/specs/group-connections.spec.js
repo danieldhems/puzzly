@@ -29,6 +29,21 @@ describe("Group connections", () => {
     await joinPieces(sourcePiece, adjacentPieceNotInGroup);
   });
 
+  it("should connect to other groups", async () => {
+    // Create a group
+    const sourcePieceA = await getPiece(0);
+    const adjacentPieceA = await getAdjacentPieceBySide(sourcePieceA, 0);
+    await joinPieces(sourcePieceA, adjacentPieceA);
+
+    // Create another group
+    const sourcePieceB = await getPiece(3);
+    const adjacentPieceB = await getAdjacentPieceBySide(sourcePieceB, 0);
+    await joinPieces(sourcePieceB, adjacentPieceB);
+
+    // Merge the groups
+    await joinPieces(sourcePieceA, sourcePieceB);
+  });
+
   describe("Group merge variations", () => {
     // This is for testing that two groups will merge no matter which piece either group is picked up by
 

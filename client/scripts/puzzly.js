@@ -538,7 +538,8 @@ class Puzzly {
 
   gatherPieces() {
     const pieces = this.allPieces();
-    Events.notify(EVENT_TYPES.ADD_TO_POCKET, pieces);
+    const pocket = document.querySelector("#pocket-0");
+    this.Pockets.addManyToPocket(pocket, pieces);
   }
 
   getRandomCoordsFromSectorMap() {

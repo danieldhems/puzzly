@@ -5,10 +5,10 @@ import {
   getAdjacentPieceBySide,
   getAdjacentPieceNotInGroup,
   dragNearPiece,
-  dragNearPieceAndConnect,
   dragNearGroupedPiece,
   dragNearGroupedPieceAndConnect,
   solve,
+  createGroupWithPieces,
 } from "../piece-commands.js";
 
 describe("Piece connections", () => {
@@ -23,18 +23,12 @@ describe("Piece connections", () => {
     describe("when dragged and dropped near adjacent pieces", () => {
       describe("within the connector tolerance", () => {
         it("should connect to each other", async () => {
-          const sourcePiece = await getPiece(0);
-          const adjacentPiece = await getAdjacentPieceBySide(sourcePiece, 0);
-          await dragNearPieceAndConnect(sourcePiece, adjacentPiece);
+          await createGroupWithPieces(0, 1);
         });
 
         it("should connect to groups", async () => {
           // Create a group
-          const sourcePiece = await getPiece(0);
-          const adjacentPiece = await getAdjacentPieceBySide(sourcePiece, 0);
-
-          await dragNearPieceAndConnect(sourcePiece, adjacentPiece);
-
+          await createGroupWithPieces(0, 1);
           const adjacentPieceNotInGroup = await getAdjacentPieceNotInGroup(
             sourcePiece
           );
@@ -56,10 +50,7 @@ describe("Piece connections", () => {
 
         it("should NOT connect to groups", async () => {
           // Create a group
-          const sourcePiece = await getPiece(0);
-          const adjacentPiece = await getAdjacentPieceBySide(sourcePiece, 0);
-
-          await dragNearPieceAndConnect(sourcePiece, adjacentPiece);
+          await createGroupWithPieces(0, 1);
 
           // Drag an adjacent single piece near the group, but not close enough to connect
           const adjacentPieceNotInGroup = await getAdjacentPieceNotInGroup(
