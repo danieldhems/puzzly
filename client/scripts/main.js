@@ -10,7 +10,7 @@ document.body.onload = function () {
       .then((response) => response.json())
       .then((response) => {
         console.log("puzzle fetched", response);
-        window.Puzzly = new Puzzly("canvas", puzzleId, response);
+        window.Puzzly = new Puzzly(puzzleId, response);
       });
   } else {
     new PuzzlyCreator();

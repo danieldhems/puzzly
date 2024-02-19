@@ -27,7 +27,7 @@ export const createPuzzle = async function () {
   const submitButton = await $("#start-btn");
   await submitButton.click();
 
-  await $(".puzzle-piece").waitForExist();
+  // await $(".puzzle-piece").waitForExist();
   const renderedPiecesCount = await $$(".puzzle-piece").length;
   await expect(renderedPiecesCount).toBe(selectNumberOfPieces);
 };

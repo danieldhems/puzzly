@@ -696,7 +696,7 @@ class PuzzlyCreator {
           puzzleData.spritePath = response.spritePath;
           puzzleData.previewPath = response.previewPath;
 
-          new Puzzly("canvas", puzzleId, puzzleData);
+          new Puzzly(puzzleId, puzzleData);
         }.bind(this)
       )
       .catch(function (err) {

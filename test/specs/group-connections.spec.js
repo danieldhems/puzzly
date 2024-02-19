@@ -2,10 +2,10 @@ import { cleanup } from "../cleanup.js";
 import { createPuzzle } from "../commands.js";
 import {
   getPiece,
-  joinPieces,
+  createGroupWithPieces,
   getAdjacentPieceBySide,
   getAdjacentPieceNotInGroup,
-  connectToGroupedPiece,
+  dragNearGroupedPieceAndConnect,
 } from "../piece-commands.js";
 
 describe("Group connections", () => {
@@ -18,70 +18,65 @@ describe("Group connections", () => {
 
   it("should connect to single pieces", async () => {
     // Create a group
-    const sourcePiece = await getPiece(0);
-    const adjacentPiece = await getAdjacentPieceBySide(sourcePiece, 0);
-    await joinPieces(sourcePiece, adjacentPiece);
+    await createGroupWithPieces(0, 1);
 
     // Using the original piece, connect the new group to a single piece
-    const adjacentPieceNotInGroup = await getAdjacentPieceNotInGroup(
-      sourcePiece
-    );
-    await joinPieces(sourcePiece, adjacentPieceNotInGroup);
+    const otherPiece = await getPiece(3);
+    await joinPieces(sourcePiece, otherPiece);
   });
 
   it("should connect to other groups", async () => {
     // Create a group
-    const sourcePieceA = await getPiece(0);
-    const adjacentPieceA = await getAdjacentPieceBySide(sourcePieceA, 0);
-    await joinPieces(sourcePieceA, adjacentPieceA);
+    await createGroupWithPieces(0, 1);
 
     // Create another group
-    const sourcePieceB = await getPiece(3);
-    const adjacentPieceB = await getAdjacentPieceBySide(sourcePieceB, 0);
-    await joinPieces(sourcePieceB, adjacentPieceB);
+    await createGroupWithPieces(3, 4);
 
     // Merge the groups
-    await joinPieces(sourcePieceA, sourcePieceB);
+    await joinPieces(await getPiece(0), await getPiece(3));
   });
 
   describe("Group merge variations", () => {
     // This is for testing that two groups will merge no matter which piece either group is picked up by
 
-    let firstSourcePiece,
-      firstTargetPiece,
-      secondSourcePiece,
-      secondTargetPiece;
-
     beforeEach(async () => {
       // Create a group
-      firstSourcePiece = await getPiece(0);
-      firstTargetPiece = await getPiece(1);
-      await joinPieces(firstSourcePiece, firstTargetPiece);
+      await createGroupWithPieces(0, 1);
 
       // Create another group
-      secondSourcePiece = await getPiece(3);
-      secondTargetPiece = await getPiece(4);
-      await joinPieces(secondSourcePiece, secondTargetPiece);
+      await createGroupWithPieces(3, 4);
     });
 
-    describe("FIrst piece from first group", () => {
+    describe("First piece from first group", () => {
       it("should merge the groups", async () => {
-        await connectToGroupedPiece(firstSourcePiece, secondSourcePiece);
+        await dragNearGroupedPieceAndConnect(
+          await getPiece(0),
+          await getPiece(3)
+        );
       });
     });
     describe("Second piece from first group", () => {
       it("should merge the groups", async () => {
-        await connectToGroupedPiece(firstTargetPiece, secondSourcePiece);
+        await dragNearGroupedPieceAndConnect(
+          await getPiece(1),
+          await getPiece(4)
+        );
       });
     });
     describe("First piece from second group", () => {
       it("should merge the groups", async () => {
-        await connectToGroupedPiece(secondSourcePiece, firstSourcePiece);
+        await dragNearGroupedPieceAndConnect(
+          await getPiece(3),
+          await getPiece(0)
+        );
       });
     });
     describe("Second piece from second group", () => {
       it("should merge the groups", async () => {
-        await connectToGroupedPiece(secondTargetPiece, firstSourcePiece);
+        await dragNearGroupedPieceAndConnect(
+          await getPiece(4),
+          await getPiece(2)
+        );
       });
     });
   });

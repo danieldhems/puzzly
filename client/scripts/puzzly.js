@@ -8,7 +8,6 @@ import { ELEMENT_IDS, EVENT_TYPES, SIDES } from "./constants.js";
 import { PocketMovable } from "./PocketMovable.js";
 import { DragAndSelectMovable } from "./DragAndSelectMovable.js";
 import { checkConnections } from "./checkConnections.js";
-import GroupOperations from "./GroupOperations.js";
 import PersistenceOperations from "./persistence.js";
 import CanvasOperations from "./canvasOperations.js";
 import Zoom from "./zoom.js";
@@ -20,7 +19,7 @@ import PlayBoundaryMovable from "./PlayBoundaryMovable.js";
  */
 
 class Puzzly {
-  constructor(canvasId, puzzleId, config) {
+  constructor(puzzleId, config) {
     Object.assign(this, {
       ...config,
       debug: true,

@@ -143,10 +143,10 @@ export async function dragNearGroupedPieceAndConnect(
   await verifyElementHasConnected(sourceElement);
 }
 
-export async function dragOutOfBounds(element, opts) {
+export async function dragOutOfBounds(element, duration) {
   const dragTarget = await $("#integration-test-drag-helper");
   await element.dragAndDrop(dragTarget, {
-    duration: opts?.duration || 0,
+    duration: duration || 0,
   });
 }
 

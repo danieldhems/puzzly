@@ -2,35 +2,41 @@ import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants.js";
 import Utils from "./utils.js";
 import Events from "./events.js";
 import GroupOperations from "./GroupOperations.js";
+import { Connection, InstanceTypes } from "./types.js";
 
 export default class BaseMovable {
-  element;
-  lastPosition;
-  active = false;
-
-  connection;
-  elementsToSaveIfNoConnection;
-
-  puzzleImage;
-
+  instanceType: InstanceTypes;
+  element: HTMLDivElement;
+  lastPosition: {
+    top: number;
+    left: number;
+  };
+  active: boolean = false;
+  connection: Connection;
+  puzzleImage: HTMLOrSVGImageElement;
   // Element containing all pieces in-play
-  piecesContainer;
-
+  piecesContainer: HTMLDivElement;
   // Used by PocketMovable to know which pocket the movable originated from, and which the movable's child nodes will be returned to if out-of-bounds.
-  activePocket = null;
-
-  boardWidth = null;
-  boardHeight = null;
-
-  diffX = null;
-  diffY = null;
-
+  activePocket: HTMLDivElement;
+  boardWidth: number;
+  boardHeight: number;
+  diffX: number;
+  diffY: number;
   zoomLevel = 1;
-
-  connectorTolerance = null;
-  shadowOffset = null;
-
+  connectorTolerance: number;
+  shadowOffset: number;
   isDragAndSelectActive = false;
+  puzzly: any;
+  solvedContainer: HTMLDivElement;
+  playBoundary: HTMLDivElement;
+  solvedCanvas: HTMLDivElement;
+  pocketsContainer: HTMLDivElement;
+  pockets: NodeListOf<HTMLDivElement>;
+  connectorDistanceFromCorner: number;
+  connectorSize: number;
+  groupOperations: any;
+  solvedGroupId: number;
+  dragAndSelectActive: boolean;
 
   constructor(puzzly) {
     this.puzzly = puzzly;
@@ -39,13 +45,19 @@ export default class BaseMovable {
 
     this.piecesContainer = document.querySelector(
       `#${ELEMENT_IDS.PIECES_CONTAINER}`
-    );
+    ) as HTMLDivElement;
     this.solvedContainer = document.getElementById(
       ELEMENT_IDS.SOLVED_CONTAINER
-    );
-    this.playBoundary = document.getElementById(ELEMENT_IDS.PLAY_BOUNDARY);
-    this.solvedCanvas = document.getElementById(ELEMENT_IDS.SOLVED_CANVAS);
-    this.pocketsContainer = document.querySelector(`#${ELEMENT_IDS.POCKETS}`);
+    ) as HTMLDivElement;
+    this.playBoundary = document.getElementById(
+      ELEMENT_IDS.PLAY_BOUNDARY
+    ) as HTMLDivElement;
+    this.solvedCanvas = document.getElementById(
+      ELEMENT_IDS.SOLVED_CANVAS
+    ) as HTMLDivElement;
+    this.pocketsContainer = document.querySelector(
+      `#${ELEMENT_IDS.POCKETS}`
+    ) as HTMLDivElement;
     this.pockets = this.pocketsContainer.querySelectorAll(`.pocket`);
 
     // Needed for collision detection
@@ -71,41 +83,41 @@ export default class BaseMovable {
     });
   }
 
-  onChangeScale(event) {
+  onChangeScale(event: MouseEvent) {
     this.zoomLevel = event.detail;
   }
 
-  isPuzzlePiece(target) {
+  isPuzzlePiece(target: HTMLDivElement) {
     const classes = target?.classList;
     if (!classes) return;
     return PUZZLE_PIECE_CLASSES.some((c) => classes.contains(c));
   }
 
-  isSinglePiece(element) {
+  isSinglePiece(element: HTMLDivElement) {
     const classes = element.classList;
     return (
-      PUZZLE_PIECE_CLASSES.some((c) => classes.contains(c)) &&
+      PUZZLE_PIECE_CLASSES.some((c: string) => classes.contains(c)) &&
       !classes.contains("in-pocket") &&
       !classes.contains("grouped")
     );
   }
 
-  isPlayBoundary(element) {
+  isPlayBoundary(element: HTMLDivElement) {
     return (
       element.id === ELEMENT_IDS.PLAY_BOUNDARY ||
       element.id === ELEMENT_IDS.SOLVED_PUZZLE_AREA
     );
   }
 
-  static isGroupedPiece(element) {
+  static isGroupedPiece(element: HTMLDivElement) {
     return element.dataset.groupId?.length > 0;
   }
 
-  isPocketPiece(element) {
+  isPocketPiece(element: HTMLDivElement) {
     return element.parentNode.id === ELEMENT_IDS.POCKET_DRAG_CONTAINER;
   }
 
-  isDragAndSelectPiece(element) {
+  isDragAndSelectPiece(element: HTMLDivElement) {
     if (!element) return;
     return element.parentNode.id === ELEMENT_IDS.DRAGANDSELECT_CONTAINER;
   }
@@ -119,7 +131,7 @@ export default class BaseMovable {
     return this.hasCollision(eventBox, pocketsBox);
   }
 
-  getPocketByCollision(box) {
+  getPocketByCollision(box: DOMRect) {
     let i = 0;
     while (i <= this.pockets.length) {
       const pocket = this.pockets[i];
@@ -130,7 +142,7 @@ export default class BaseMovable {
     }
   }
 
-  hasCollision(targetElement, source = null) {
+  hasCollision(targetElement: HTMLDivElement, source?: DOMRect) {
     const targetBoundingBox = targetElement.getBoundingClientRect();
     const thisBoundingBox = source || this.element.getBoundingClientRect();
     return Utils.hasCollision(thisBoundingBox, targetBoundingBox);
@@ -146,7 +158,7 @@ export default class BaseMovable {
   // Override
   isOutOfBounds() {}
 
-  isOverPockets(event) {
+  isOverPockets(event: MouseEvent) {
     return this.hasCollision(this.pocketsContainer, Utils.getEventBox(event));
   }
 
@@ -172,14 +184,14 @@ export default class BaseMovable {
   }
 
   // Lifecycle method called when a movable is picked up i.e. the user has begun interacting with it
-  onPickup(event) {
+  onPickup(event: MouseEvent) {
     const mousePosition = {
       top: event.clientY,
       left: event.clientX,
     };
 
     // Apply the zoomLevel to everything except for the play boundary (all other movables are children of this)
-    if (this.instanceType === "PlayBoundaryMovable") {
+    if (this.instanceType === InstanceTypes.PlayBoundaryMovable) {
       this.diffX = mousePosition.left - parseInt(this.element.style.left);
       this.diffY = mousePosition.top - parseInt(this.element.style.top);
     } else {
@@ -210,7 +222,7 @@ export default class BaseMovable {
   // Override
   onMouseDown() {}
 
-  onMouseMove(event) {
+  onMouseMove(event: MouseEvent) {
     if (this.active && !this.dragAndSelectActive) {
       let newPosTop, newPosLeft;
 
