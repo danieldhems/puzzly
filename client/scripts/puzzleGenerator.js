@@ -184,22 +184,19 @@ const generateDataForPuzzlePieces = async (puzzleId) => {
         const nextPieceAbove =
           pieces[pieces.length - Generator.piecesPerSideHorizontal];
 
-        if (
-          Utils.has(currentPiece.type, "plug", "top") &&
-          Utils.has(nextPieceAbove.type, "plug", "bottom")
-        ) {
+        if (currentPiece.type[0] === 1 && nextPieceAbove.type[2] === -1) {
           curImgY += Generator.connectorSize;
         } else if (
-          Utils.has(currentPiece.type, "socket", "top") &&
-          Utils.has(nextPieceAbove.type, "socket", "bottom")
+          currentPiece.type[0] === -1 &&
+          nextPieceAbove.type[2] === -1
         ) {
           curImgY -= Generator.connectorSize;
         }
       }
 
-      if (Utils.has(currentPiece.type, "socket", "right")) {
+      if (currentPiece.type[1] === -1) {
         curImgX += currentPiece.imgW - Generator.connectorSize;
-      } else if (Utils.has(currentPiece.type, "plug", "right")) {
+      } else if (currentPiece.type[1] === 1) {
         curImgX += currentPiece.imgW - Generator.connectorSize;
       }
 
@@ -282,17 +279,16 @@ const widthAndHeightWithConnectors = (piece) => {
   let width = Generator.pieceSize;
   let height = Generator.pieceSize;
 
-  if (Utils.has(piece.type, "plug", "left")) {
+  if (piece.type[3] === 1) {
     width += Generator.connectorSize;
   }
-  if (Utils.has(piece.type, "plug", "right")) {
+  if (piece.type[1] === 1) {
     width += Generator.connectorSize;
   }
-
-  if (Utils.has(piece.type, "plug", "top")) {
+  if (piece.type[0] === 1) {
     height += Generator.connectorSize;
   }
-  if (Utils.has(piece.type, "plug", "bottom")) {
+  if (piece.type[2] === 1) {
     height += Generator.connectorSize;
   }
 
@@ -477,8 +473,8 @@ const drawJigsawShape = (piece) => {
   let x = 0;
   let y = 0;
 
-  const hasTopPlug = Utils.has(piece.type, "plug", "top");
-  const hasLeftPlug = Utils.has(piece.type, "plug", "left");
+  const hasTopPlug = piece.type[0] === 1;
+  const hasLeftPlug = piece.type[3] === 1;
 
   let topBoundary = hasTopPlug ? y + Generator.connectorSize : y;
   let leftBoundary = hasLeftPlug ? x + Generator.connectorSize : x;
@@ -497,9 +493,9 @@ const drawJigsawShape = (piece) => {
 
   svgString += `M ${leftBoundary} ${topBoundary} `;
 
-  if (Utils.has(piece.type, "plug", "top")) {
+  if (piece.type[0] === 1) {
     topConnector = getRotatedConnector(jigsawShapes.getPlug(), 0);
-  } else if (Utils.has(piece.type, "socket", "top")) {
+  } else if (piece.type[0] === -1) {
     topConnector = getRotatedConnector(jigsawShapes.getSocket(), 0);
   }
   // console.log(Generator.connectorDistanceFromCorner);
@@ -512,9 +508,9 @@ const drawJigsawShape = (piece) => {
     svgString += `h ${Generator.pieceSize} `;
   }
 
-  if (Utils.has(piece.type, "plug", "right")) {
+  if (piece.type[1] === 1) {
     rightConnector = getRotatedConnector(jigsawShapes.getPlug(), 90);
-  } else if (Utils.has(piece.type, "socket", "right")) {
+  } else if (piece.type[1] === -1) {
     rightConnector = getRotatedConnector(jigsawShapes.getSocket(), 90);
   }
 
@@ -526,9 +522,9 @@ const drawJigsawShape = (piece) => {
     svgString += `v ${Generator.pieceSize} `;
   }
 
-  if (Utils.has(piece.type, "plug", "bottom")) {
+  if (piece.type[2] === -1) {
     bottomConnector = getRotatedConnector(jigsawShapes.getPlug(), 180);
-  } else if (Utils.has(piece.type, "socket", "bottom")) {
+  } else if (piece.type[2] === -1) {
     bottomConnector = getRotatedConnector(jigsawShapes.getSocket(), 180);
   }
 
@@ -540,9 +536,9 @@ const drawJigsawShape = (piece) => {
     svgString += `h -${Generator.pieceSize} `;
   }
 
-  if (Utils.has(piece.type, "plug", "left")) {
+  if (piece.type[3] === 1) {
     leftConnector = getRotatedConnector(jigsawShapes.getPlug(), 270);
-  } else if (Utils.has(piece.type, "socket", "left")) {
+  } else if (piece.type[3] === -1) {
     leftConnector = getRotatedConnector(jigsawShapes.getSocket(), 270);
   }
 

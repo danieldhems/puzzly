@@ -463,7 +463,7 @@ class Puzzly {
           "is-solved",
           "group",
         ]);
-        if (Utils.isInnerPiece(p) && !p.isSolved && !p.group) {
+        if (Utils.isInnerPiece(p.type) && !p.isSolved && !p.group) {
           this.hidePiece(piece);
         }
       });
@@ -473,7 +473,7 @@ class Puzzly {
     } else {
       this.allPieces().forEach((piece) => {
         const p = this.getPieceFromElement(piece, ["jigsaw-type"]);
-        if (Utils.isInnerPiece(p)) {
+        if (Utils.isInnerPiece(p.type)) {
           this.showPiece(piece);
         }
       });
@@ -610,23 +610,6 @@ class Puzzly {
     this.piecesContainer.prepend(piece);
   }
 
-  initGroupContainerPositions(piecesFromPersistence) {
-    let groupContainers = document.querySelectorAll("[id^=group-container-]");
-    groupContainers = Array.from(groupContainers).filter(
-      (c) => c.id !== `group-container-${this.solvedGroupId}`
-    );
-
-    if (groupContainers.length > 0) {
-      groupContainers.forEach((container) => {
-        let id = parseInt(container.getAttribute("id").split("-")[2]);
-        let piece = piecesFromPersistence.filter((p) => p.group === id)[0];
-
-        container.style.top = Utils.getPxString(piece.containerY);
-        container.style.left = Utils.getPxString(piece.containerX);
-      });
-    }
-  }
-
   getType(el) {
     const attrValue = this.getDataAttributeValue(el, "jigsaw-type");
     return attrValue.split(",").map((n) => parseInt(n));
@@ -730,75 +713,6 @@ class Puzzly {
     el.style.zIndex = this.currentZIndex = this.currentZIndex + 1;
   }
 
-  getConnectingElement(el, connection) {
-    const p = this.getPieceFromElement(el, ["piece-id"]);
-    switch (connection) {
-      case "right":
-        return Utils.getElementByPieceId(p.id + 1);
-      case "bottom":
-        return Utils.getElementByPieceId(p.id + this.piecesPerSideHorizontal);
-      case "left":
-        return Utils.getElementByPieceId(p.id - 1);
-      case "top":
-        return Utils.getElementByPieceId(p.id - this.piecesPerSideHorizontal);
-    }
-  }
-
-  getConnectingElements(el, asArray = false, unconnectedOnly = false) {
-    const p = this.getPieceFromElement(el, ["piece-id", "connections"]);
-
-    const arr = [];
-    const obj = {};
-
-    const rightPiece = p.id + 1;
-    const bottomPiece = p.id + this.piecesPerSideHorizontal;
-    const leftPiece = p.id - 1;
-    const topPiece = p.id - this.piecesPerSideHorizontal;
-
-    const right = Utils.getElementByPieceId(rightPiece);
-    if (right) {
-      if (
-        (unconnectedOnly && !p.connections.includes("right")) ||
-        !unconnectedOnly
-      ) {
-        arr.push(right);
-        obj["right"] = right;
-      }
-    }
-    const bottom = Utils.getElementByPieceId(bottomPiece);
-    if (bottom) {
-      if (
-        (unconnectedOnly && !p.connections.includes("bottom")) ||
-        !unconnectedOnly
-      ) {
-        arr.push(bottom);
-        obj["bottom"] = bottom;
-      }
-    }
-    const left = Utils.getElementByPieceId(leftPiece);
-    if (left) {
-      if (
-        (unconnectedOnly && !p.connections.includes("left")) ||
-        !unconnectedOnly
-      ) {
-        arr.push(left);
-        obj["left"] = left;
-      }
-    }
-    const top = Utils.getElementByPieceId(topPiece);
-    if (top) {
-      if (
-        (unconnectedOnly && !p.connections.includes("top")) ||
-        !unconnectedOnly
-      ) {
-        arr.push(top);
-        obj["top"] = top;
-      }
-    }
-
-    return asArray ? arr : obj;
-  }
-
   setElementAttribute(el, attr, value) {
     el.setAttribute(attr, value);
   }
@@ -875,13 +789,13 @@ class Puzzly {
       pieceBehindHasSocket;
 
     if (pieceAbove) {
-      pieceAboveHasSocket = Utils.has(pieceAbove.type, "socket", "bottom");
-      pieceAboveHasPlug = Utils.has(pieceAbove.type, "plug", "bottom");
+      pieceAboveHasSocket = pieceAbove.type[2] === -1;
+      pieceAboveHasPlug = pieceAbove.type[2] === 1;
     }
 
     if (pieceBehind) {
-      pieceBehindHasSocket = Utils.has(pieceBehind.type, "socket", "right");
-      pieceBehindHasPlug = Utils.has(pieceBehind.type, "plug", "right");
+      pieceBehindHasSocket = pieceBehind.type[2] === -1;
+      pieceBehindHasPlug = pieceBehind.type[2] === 1;
     }
 
     let thisPieceHasLeftSocket,
@@ -893,13 +807,13 @@ class Puzzly {
 
     for (let i = 0, l = pieces.length; i < l; i++) {
       if (pieceAbove) {
-        thisPieceHasTopSocket = Utils.has(pieces[i].type, "socket", "top");
-        thisPieceHasTopPlug = Utils.has(pieces[i].type, "plug", "top");
+        thisPieceHasTopSocket = pieces[i].type[0] === -1;
+        thisPieceHasTopPlug = pieces[i].type[0] === 1;
       }
 
       if (pieceBehind) {
-        thisPieceHasLeftSocket = Utils.has(pieces[i].type, "socket", "left");
-        thisPieceHasLeftPlug = Utils.has(pieces[i].type, "plug", "left");
+        thisPieceHasLeftSocket = pieces[i].type[3] === -1;
+        thisPieceHasLeftPlug = pieces[i].type[3] === 1;
       }
 
       if (pieceAbove && !pieceBehind) {
@@ -952,102 +866,6 @@ class Puzzly {
     }
 
     return candidatePieces;
-  }
-
-  getCandidatePieces(
-    adjacentPieceBehind,
-    adjacentPieceAbove,
-    endOfRow,
-    finalRow
-  ) {
-    let pieces = [];
-
-    // Top left corner piece
-    if (!adjacentPieceBehind && !adjacentPieceAbove) {
-      return SpriteMap.filter((piece) => Utils.isTopLeftCorner(piece));
-    }
-
-    // First row pieces
-    if (!adjacentPieceAbove) {
-      pieces = SpriteMap.filter((o) => {
-        if (endOfRow) {
-          return Utils.isTopRightCorner(o);
-        } else {
-          return Utils.isTopSide(o);
-        }
-      });
-
-      return this.getCompatiblePieces(false, adjacentPieceBehind, pieces);
-    }
-    // All pieces after top row
-    else {
-      // Last piece of each row, should be right side
-      if (
-        Utils.isTopRightCorner(adjacentPieceAbove) ||
-        (!finalRow && Utils.isRightSide(adjacentPieceAbove))
-      ) {
-        pieces = SpriteMap.filter((o) => Utils.isRightSide(o));
-        return this.getCompatiblePieces(
-          adjacentPieceAbove,
-          adjacentPieceBehind,
-          pieces
-        );
-      }
-
-      // First piece of each row, should be left side
-      if (
-        Utils.isTopLeftCorner(adjacentPieceAbove) ||
-        (!finalRow && Utils.isLeftSide(adjacentPieceAbove))
-      ) {
-        pieces = SpriteMap.filter((o) => Utils.isLeftSide(o));
-        return this.getCompatiblePieces(adjacentPieceAbove, null, pieces);
-      }
-
-      // All middle pieces
-      if (
-        (!finalRow && Utils.isInnerPiece(adjacentPieceAbove)) ||
-        Utils.isTopSide(adjacentPieceAbove)
-      ) {
-        pieces = SpriteMap.filter((o) => Utils.isInnerPiece(o));
-        return this.getCompatiblePieces(
-          adjacentPieceAbove,
-          adjacentPieceBehind,
-          pieces
-        );
-      }
-
-      if (finalRow && Utils.isLeftSide(adjacentPieceAbove)) {
-        pieces = SpriteMap.filter((o) => Utils.isBottomLeftCorner(o));
-        return this.getCompatiblePieces(adjacentPieceAbove, null, pieces);
-      }
-
-      if (
-        finalRow &&
-        Utils.isInnerPiece(adjacentPieceAbove) &&
-        (Utils.isBottomLeftCorner(adjacentPieceBehind) ||
-          Utils.isBottomSide(adjacentPieceBehind))
-      ) {
-        pieces = SpriteMap.filter((o) => Utils.isBottomSide(o));
-        return this.getCompatiblePieces(
-          adjacentPieceAbove,
-          adjacentPieceBehind,
-          pieces
-        );
-      }
-
-      // Very last piece, should be corner bottom right
-      if (
-        Utils.isRightSide(adjacentPieceAbove) &&
-        Utils.isBottomSide(adjacentPieceBehind)
-      ) {
-        pieces = SpriteMap.filter((o) => Utils.isBottomRightCorner(o));
-        return this.getCompatiblePieces(
-          adjacentPieceAbove,
-          adjacentPieceBehind,
-          pieces
-        );
-      }
-    }
   }
 
   getSectorBoundingBox(sector) {

@@ -456,32 +456,6 @@ class Pockets {
     });
   }
 
-  returnToCanvas(els) {
-    els.forEach((el) => {
-      console.log("returning to canvas", el);
-      const playboundaryRect = this.playBoundary.getBoundingClientRect();
-      const pocketsRect = this.ui.getBoundingClientRect();
-      const elRect = el.getBoundingClientRect();
-
-      const pos = {
-        x: elRect.left - playboundaryRect.left,
-        y: elRect.top - playboundaryRect.top,
-      };
-
-      el.style.top = pos.y + "px";
-      el.style.left = pos.x + "px";
-
-      this.playBoundaryPieceContainer.appendChild(el);
-      el.classList.remove("in-pocket");
-      el.setAttribute("data-pocket-id", null);
-      el.style.pointerEvents = "auto";
-
-      Events.notify(EVENT_TYPES.RETURN_TO_CANVAS, el);
-    });
-
-    Utils.requestSave(els);
-  }
-
   getTargetBoxForPlacementInsidePocket() {
     const box = Utils.getStyleBoundingBox(this.pockets[0]);
     const onePercentWidth = box.width / 100;

@@ -1,12 +1,12 @@
-import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants.js";
-import Utils from "./utils.js";
+import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants";
+import Utils from "./utils";
 import Events from "./events.js";
 import GroupOperations from "./GroupOperations.js";
-import { Connection, InstanceTypes } from "./types.js";
+import { Connection, DomBox, InstanceTypes, MovableElements } from "./types";
 
 export default class BaseMovable {
   instanceType: InstanceTypes;
-  element: HTMLDivElement;
+  element: MovableElements;
   lastPosition: {
     top: number;
     left: number;
@@ -78,9 +78,12 @@ export default class BaseMovable {
       this.onChangeScale.bind(this)
     );
 
-    window.addEventListener(EVENT_TYPES.DRAGANDSELECT_ACTIVE, (event) => {
-      this.isDragAndSelectActive = event.detail;
-    });
+    window.addEventListener(
+      EVENT_TYPES.DRAGANDSELECT_ACTIVE,
+      (event: CustomEvent) => {
+        this.isDragAndSelectActive = event.detail;
+      }
+    );
   }
 
   onChangeScale(event: MouseEvent) {
@@ -110,25 +113,26 @@ export default class BaseMovable {
   }
 
   static isGroupedPiece(element: HTMLDivElement) {
-    return element.dataset.groupId?.length > 0;
+    if (element.dataset.groupId) {
+      return element.dataset.groupId.length > 0;
+    }
+    return false;
   }
 
   isPocketPiece(element: HTMLDivElement) {
-    return element.parentNode.id === ELEMENT_IDS.POCKET_DRAG_CONTAINER;
+    const parentElement = element.parentNode as HTMLDivElement;
+    if (parentElement.id) {
+      return parentElement.id === ELEMENT_IDS.POCKET_DRAG_CONTAINER;
+    }
+    return false;
   }
 
   isDragAndSelectPiece(element: HTMLDivElement) {
-    if (!element) return;
-    return element.parentNode.id === ELEMENT_IDS.DRAGANDSELECT_CONTAINER;
-  }
-
-  isEventOverPockets(event) {
-    if (!event) return;
-
-    const eventBox = Utils.getEventBox(event);
-    const pocketsBox = this.pocketsContainer.getBoundingClientRect();
-
-    return this.hasCollision(eventBox, pocketsBox);
+    const parentElement = element.parentNode as HTMLDivElement;
+    if (parentElement.id) {
+      return parentElement.id === ELEMENT_IDS.DRAGANDSELECT_CONTAINER;
+    }
+    return false;
   }
 
   getPocketByCollision(box: DOMRect) {
@@ -142,7 +146,7 @@ export default class BaseMovable {
     }
   }
 
-  hasCollision(targetElement: HTMLDivElement, source?: DOMRect) {
+  hasCollision(targetElement: HTMLDivElement, source?: DOMRect | DomBox) {
     const targetBoundingBox = targetElement.getBoundingClientRect();
     const thisBoundingBox = source || this.element.getBoundingClientRect();
     return Utils.hasCollision(thisBoundingBox, targetBoundingBox);
@@ -245,7 +249,7 @@ export default class BaseMovable {
     }
   }
 
-  onMouseUp(event) {
+  onMouseUp(event: MouseEvent) {
     if (this.connection) {
       console.log("connection", this.connection);
       this.handleConnection();
@@ -266,8 +270,14 @@ export default class BaseMovable {
     if (isSolving) {
       sourceInstance.solve({ save: true });
     } else if (
-      this.isConnectionBetweenSingleAndGroup(sourceInstance, targetInstance) ||
-      this.isConnectionBetweenTwoGroups(sourceInstance, targetInstance)
+      this.isConnectionBetweenSingleAndGroup(
+        sourceInstance.instanceType,
+        targetInstance.instanceType
+      ) ||
+      this.isConnectionBetweenTwoGroups(
+        sourceInstance.instanceType,
+        targetInstance.instanceType
+      )
     ) {
       sourceInstance.joinTo(targetInstance);
     }
@@ -279,21 +289,27 @@ export default class BaseMovable {
     });
   }
 
-  isConnectionBetweenSingleAndGroup(sourceInstance, targetInstance) {
+  isConnectionBetweenSingleAndGroup(
+    sourceInstanceType: InstanceTypes,
+    targetInstanceType: InstanceTypes
+  ) {
     return (
-      (sourceInstance.instanceType === "SingleMovable" &&
-        targetInstance.instanceType === "GroupMovable") ||
-      (targetInstance.instanceType === "SingleMovable" &&
-        sourceInstance.instanceType === "GroupMovable")
+      (sourceInstanceType === InstanceTypes.SingleMovable &&
+        targetInstanceType === InstanceTypes.GroupMovable) ||
+      (targetInstanceType === InstanceTypes.SingleMovable &&
+        sourceInstanceType === InstanceTypes.GroupMovable)
     );
   }
 
-  isConnectionBetweenTwoGroups(sourceInstance, targetInstance) {
+  isConnectionBetweenTwoGroups(
+    sourceInstanceType: InstanceTypes,
+    targetInstanceType: InstanceTypes
+  ) {
     return (
-      (sourceInstance.instanceType === "GroupMovable" &&
-        targetInstance.instanceType === "GroupMovable") ||
-      (targetInstance.instanceType === "GroupMovable" &&
-        sourceInstance.instanceType === "GroupMovable")
+      (sourceInstanceType === "GroupMovable" &&
+        targetInstanceType === "GroupMovable") ||
+      (sourceInstanceType === "GroupMovable" &&
+        targetInstanceType === "GroupMovable")
     );
   }
 
