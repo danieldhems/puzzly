@@ -5,5 +5,8 @@
         "isolatedModules": true,
         "strictNullChecks": true,
         "noImplicitAny": true,
+        "allowJs": true,
+        "checkJs": true,
+        "outDir": "./client/scripts/dist"
     }
 }

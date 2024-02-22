@@ -11,7 +11,8 @@
     "serenity:update": "serenity-bdd update",
     "serenity:clean": "rimraf target",
     "wdio": "wdio run ./wdio.conf.cjs",
-    "serenity:report": "serenity-bdd run"
+    "serenity:report": "serenity-bdd run",
+    "ts": "npx tsc ./client/scripts/**.ts"
   },
   "author": "Dan Hems",
   "license": "ISC",

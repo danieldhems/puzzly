@@ -3,28 +3,12 @@ import GroupOperations from "./GroupOperations.js";
 import { ConnectorType, DomBox, JigsawPieceData, SideNames } from "./types";
 
 const Utils = {
-  hasCollision(source: DOMRect | DomBox, target: DOMRect): boolean {
-    if (
-      [
-        source.left,
-        source.right,
-        source.bottom,
-        source.top,
-        target.left,
-        target.top,
-        target.right,
-        target.bottom,
-      ].includes(NaN)
-    )
-      return false;
-
-    const sourceBB = source;
-    const targetBB = target;
+  hasCollision(source: DomBox, target: DomBox): boolean {
     return !(
-      sourceBB.left >= targetBB.right ||
-      sourceBB.top >= targetBB.bottom ||
-      sourceBB.right <= targetBB.left ||
-      sourceBB.bottom <= targetBB.top
+      source.left >= target.right ||
+      source.top >= target.bottom ||
+      source.right <= target.left ||
+      source.bottom <= target.top
     );
   },
 
@@ -196,7 +180,7 @@ const Utils = {
     data.isInnerPiece = isInnerPiece == "true" ? true : false;
 
     data.isSolved = el.dataset.isSolved === "true";
-    data.groupId = GroupOperations.getGroup(el);
+    data.groupId = GroupOperations.getGroup(el) as string;
     data.pocketId = parseInt(el.dataset["pocketId"] as string);
 
     data.pageX = parseInt(el.style.left);
@@ -296,7 +280,7 @@ const Utils = {
     return elementBoundingBox;
   },
 
-  getTopLeftCornerBoundingBox() {
+  getTopLeftCornerBoundingBox(): DomBox {
     const box = this.solvedContainer.getBoundingClientRect();
     return {
       top: box.top,
@@ -306,7 +290,7 @@ const Utils = {
     };
   },
 
-  getTopRightCornerBoundingBox() {
+  getTopRightCornerBoundingBox(): DomBox {
     const box = this.solvedContainer.getBoundingClientRect();
     return {
       top: box.top,
@@ -316,7 +300,7 @@ const Utils = {
     };
   },
 
-  getBottomRightCornerBoundingBox() {
+  getBottomRightCornerBoundingBox(): DomBox {
     const box = this.solvedContainer.getBoundingClientRect();
     return {
       top: box.bottom - this.connectorTolerance,
@@ -326,7 +310,7 @@ const Utils = {
     };
   },
 
-  getBottomLeftCornerBoundingBox() {
+  getBottomLeftCornerBoundingBox(): DomBox {
     const box = this.solvedContainer.getBoundingClientRect();
     return {
       top: box.bottom - this.connectorTolerance,

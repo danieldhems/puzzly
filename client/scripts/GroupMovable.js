@@ -36,6 +36,8 @@ export default class GroupMovable extends BaseMovable {
     super(puzzleData);
 
     this.Puzzly = puzzleData;
+    this._id = _id;
+    this.position = position;
     this.piecesInGroup = pieces;
 
     this.puzzleId = puzzleData.puzzleId;
@@ -51,13 +53,15 @@ export default class GroupMovable extends BaseMovable {
 
     this.isSolved = isSolved;
 
+    this.GroupOperations = new GroupOperations(this);
+
     if (!_id) {
       this.initiateGroup();
     } else {
       if (this.isSolved) {
         this.solve();
       } else {
-        this.restoreGroupFromPersistence(_id, pieces, position, zIndex);
+        this.restoreFromPersistence();
       }
     }
 
@@ -86,13 +90,8 @@ export default class GroupMovable extends BaseMovable {
     );
   }
 
-  getPieceDataFromElements(elements) {
-    return elements.map((element) => Utils.getPieceFromElement(element));
-  }
-
   initiateGroup() {
-    const { container, position } = GroupOperations.createGroup.call(
-      this,
+    const { container, position } = this.GroupOperations.createGroup(
       ...this.piecesInGroup
     );
 
@@ -105,20 +104,10 @@ export default class GroupMovable extends BaseMovable {
     this.save();
   }
 
-  restoreGroupFromPersistence(groupId, pieces, position, zIndex) {
-    this._id = groupId;
-    this.position = position;
-    this.piecesInGroup = pieces;
-
-    this.element = GroupOperations.restoreGroup.call(this, groupId, pieces);
-    this.element.style.top = position.top + "px";
-    this.element.style.left = position.left + "px";
-    this.element.style.width = this.width + "px";
-    this.element.style.height = this.height + "px";
-    this.element.style.zIndex = zIndex;
-
-    this.canvas = this.element.querySelector("canvas");
-
+  restoreFromPersistence() {
+    const container = this.GroupOperations.restoreGroup(this._id);
+    this.element = container;
+    this.canvas = canvas;
     this.attachElements();
     this.render();
   }
@@ -228,9 +217,10 @@ export default class GroupMovable extends BaseMovable {
   }
 
   getConnection() {
-    const collisionCandidates = GroupOperations.getCollisionCandidatesInGroup(
-      GroupOperations.getGroup(this.element)
-    );
+    const collisionCandidates =
+      this.GroupOperations.getCollisionCandidatesInGroup(
+        GroupOperations.getGroup(this.element)
+      );
     // console.log("collision candidates found", collisionCandidates);
 
     let connection;

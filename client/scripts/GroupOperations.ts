@@ -1,43 +1,55 @@
 import CanvasOperations from "./canvasOperations.js";
+import { ConnectorType, MovableElement } from "./types.js";
 import Utils from "./utils.js";
+import SingleMovable from "./SingleMovable.js";
 
+export type GroupOperationsConstructor = {
+  width: number;
+  height: number;
+  puzzleImage: ImageBitmap;
+  shadowOffset: number;
+  piecesPerSideHorizontal: number;
+  piecesPerSideVertical: number;
+  position?: {
+    top: number;
+    left: number;
+  };
+  zIndex?: number;
+};
 export default class GroupOperations {
-  groupWidth;
-  groupHeight;
-  canvasOperations;
-  piecesPerSideHorizontal;
+  width: number;
+  height: number;
+  puzzleImage: ImageBitmap;
+  shadowOffset: number;
+  canvasOperations: CanvasOperations;
+  piecesPerSideHorizontal: number;
+  piecesPerSideVertical: number;
+  position?: {
+    top: number;
+    left: number;
+  };
+  zIndex?: number;
 
-  constructor(config) {
-    this.groupWidth = config.boardWidth;
-    this.groupHeight = config.boardHeight;
-
+  constructor(config: GroupOperationsConstructor) {
+    this.width = config.width;
+    this.height = config.height;
+    this.puzzleImage = config.puzzleImage;
+    this.shadowOffset = config.shadowOffset;
+    this.position = config.position;
+    this.zIndex = config.zIndex;
+    this.piecesPerSideHorizontal = config.piecesPerSideHorizontal;
+    this.piecesPerSideVertical = config.piecesPerSideVertical;
     this.canvasOperations = new CanvasOperations(config);
-    this.piecesPerSideHorizontal = config.piecesPerSideHorizontal;
-    this.piecesPerSideHorizontal = config.piecesPerSideHorizontal;
   }
 
-  static isGroupSolved(groupId: number) {
+  isGroupSolved(groupId: string): boolean | void {
     if (!groupId) return;
     return Array.from(this.getPiecesInGroup(groupId)).some(
       (p: HTMLDivElement) => p.dataset.isSolved === "true"
     );
   }
 
-  static getGroupContainer(arg: number | string | HTMLDivElement) {
-    if (typeof arg === "number" || typeof arg === "string") {
-      // console.log(
-      //   "getGroupContainer(), getting container with selector",
-      //   `group-container-${arg}`
-      // );
-      return Array.from(document.querySelectorAll(`.group-container`)).find(
-        (container: HTMLDivElement) => container.dataset.groupId === arg
-      );
-    } else {
-      return arg.parentNode;
-    }
-  }
-
-  static getGroupTopContainer(el: HTMLDivElement) {
+  static getGroupTopContainer(el: HTMLDivElement): MovableElement {
     if (!el.classList.contains("grouped")) {
       // If this element isn't in a group just return itself.
       return el;
@@ -48,35 +60,30 @@ export default class GroupOperations {
     ) {
       return el;
     } else {
-      return this.getGroupTopContainer(el.parentNode);
+      return this.getGroupTopContainer(el.parentNode as MovableElement);
     }
   }
 
-  static getGroup(element) {
+  static getGroup(element: MovableElement) {
     return element.dataset.groupId ? element.dataset.groupId : null;
   }
 
-  static getPiecesInGroup(group) {
-    const container = this.getGroupContainer(group);
+  getPiecesInGroup(groupId: string): NodeListOf<MovableElement> {
+    const container = document.querySelector(
+      `#group-container-${groupId}`
+    ) as MovableElement;
     return container.querySelectorAll(".puzzle-piece");
   }
 
-  static getPiecesInGroupContainer(container) {
+  static getPiecesInGroupContainer(container: MovableElement) {
     return container.querySelectorAll(".puzzle-piece");
   }
 
-  static getSolvedPieces() {
+  static getSolvedPieces(): NodeListOf<MovableElement> {
     return document.querySelectorAll("#group-container-1111 .puzzle-piece");
   }
 
-  static hasGroup(piece) {
-    const obj = piece.dataset || piece;
-    return (
-      obj.group !== undefined && obj.group !== null && !Number.isNaN(obj.group)
-    );
-  }
-
-  static getConnections(el) {
+  getConnections(el: MovableElement) {
     const attrValue = el.dataset.connections;
     return attrValue
       ? attrValue.indexOf(",") > -1
@@ -85,22 +92,26 @@ export default class GroupOperations {
       : [];
   }
 
-  static getCollisionCandidatesInGroup(group) {
-    const piecesInGroup = this.getPiecesInGroup(group);
+  getCollisionCandidatesInGroup(groupId: string) {
+    const elementsInGroup = this.getPiecesInGroup(groupId);
     console.log(
       "getCollisionCandidatesInGroup: piecesInGroup",
-      group,
-      piecesInGroup
+      groupId,
+      elementsInGroup
     );
-    const candidates = [];
-
-    if (piecesInGroup.length === this.selectedNumPieces) {
+    const candidates: MovableElement[] = [];
+    const totalNumberOfPieces = parseInt(
+      elementsInGroup[0].dataset.numPuzzlePieces as string
+    );
+    if (elementsInGroup.length === totalNumberOfPieces) {
       return [Utils.getElementByPieceId(0)];
     }
 
-    piecesInGroup.forEach((element) => {
+    elementsInGroup.forEach((element: MovableElement) => {
       const connections = this.getConnections(element);
-      const pieceType = element.type.split(",").map((n) => parseInt(n));
+      const pieceType = (element.dataset.jigsawType as string)
+        .split(",")
+        .map((n) => parseInt(n)) as ConnectorType[];
       const isSolved = element.dataset.isSolved === "true";
       if (Utils.isInnerPiece(pieceType) && connections.length < 4) {
         candidates.push(element);
@@ -119,37 +130,41 @@ export default class GroupOperations {
     return new Date().getTime();
   }
 
-  static setIdForGroupElements(groupContainerElement, id) {
+  static setIdForGroupElements(
+    groupContainerElement: MovableElement,
+    id: number
+  ) {
     // set group ID on group container element, elements in group and on canvas element
-    groupContainerElement.dataset.groupId = id;
+    const idAsString = id + "";
+    groupContainerElement.dataset.groupId = idAsString;
     Array.from(groupContainerElement.querySelectorAll(".puzzle-piece")).forEach(
-      (element) => (element.dataset.groupId = id)
+      (element: MovableElement) => (element.dataset.groupId = idAsString)
     );
-    groupContainerElement.querySelector("canvas").dataset.groupId = id;
+    (
+      groupContainerElement.querySelector("canvas") as HTMLCanvasElement
+    ).dataset.groupId = idAsString;
   }
 
-  static createGroup(sourceElement, targetElement) {
-    const container = GroupOperations.createGroupContainer.call(this);
+  createGroup(sourceElement: SingleMovable, targetElement: SingleMovable) {
+    const container = this.createGroupContainer();
     const newCanvas = CanvasOperations.makeCanvas.call(this);
 
     const leftPos =
-      targetElement.element.offsetLeft -
-      parseInt(targetElement.pieceData.solvedX);
+      targetElement.element.offsetLeft - targetElement.pieceData.solvedX;
     const topPos =
-      targetElement.element.offsetTop -
-      parseInt(targetElement.pieceData.solvedY);
+      targetElement.element.offsetTop - targetElement.pieceData.solvedY;
 
     sourceElement.element.style.left = Utils.getPxString(
-      parseInt(sourceElement.pieceData.solvedX)
+      sourceElement.pieceData.solvedX
     );
     sourceElement.element.style.top = Utils.getPxString(
-      parseInt(sourceElement.pieceData.solvedY)
+      sourceElement.pieceData.solvedY
     );
     targetElement.element.style.left = Utils.getPxString(
-      parseInt(targetElement.pieceData.solvedX)
+      targetElement.pieceData.solvedX
     );
     targetElement.element.style.top = Utils.getPxString(
-      parseInt(targetElement.pieceData.solvedY)
+      targetElement.pieceData.solvedY
     );
 
     sourceElement.element.classList.add("grouped");
@@ -168,18 +183,15 @@ export default class GroupOperations {
     const elementBIsSolved = Utils.isSolved(targetElement.element);
 
     if (elementAIsSolved || elementBIsSolved) {
-      this.setElementAttribute(sourceElement.element, "data-is-solved", true);
-      this.setElementAttribute(targetElement.element, "data-is-solved", true);
-      this.setElementAttribute(container, "data-is-solved", true);
+      sourceElement.element.setAttribute("data-is-solved", "true");
+      targetElement.element.setAttribute("data-is-solved", "true");
+      container.setAttribute("data-is-solved", "true");
     }
 
-    GroupOperations.updateConnections([
-      sourceElement.element,
-      targetElement.element,
-    ]);
-    GroupOperations.setGroupContainerPosition(container, {
-      top: topPos,
-      left: leftPos,
+    this.updateConnections([sourceElement.element, targetElement.element]);
+    this.setGroupContainerPosition(container, {
+      y: topPos,
+      x: leftPos,
     });
 
     container.appendChild(newCanvas);
@@ -187,16 +199,9 @@ export default class GroupOperations {
     return { container, position: { top: topPos, left: leftPos } };
   }
 
-  static getElementsForGroup(groupId) {
-    const allElements = document.querySelectorAll(".puzzle-piece");
-    return Array.from(allElements).filter((element) => {
-      return parseInt(element.dataset.groupId) === groupId;
-    });
-  }
-
-  // Restore the elements for an existing group
-  static restoreGroup(groupId, pieces) {
-    const container = GroupOperations.createGroupContainer.call(this);
+  restoreGroup(groupId: number) {
+    const container = document.createElement("div");
+    container.id = `group-container-${groupId}`;
     const canvas = CanvasOperations.makeCanvas.call(this);
     container.prepend(canvas);
 
@@ -206,15 +211,32 @@ export default class GroupOperations {
     GroupOperations.setIdForGroupElements(container, groupId);
     CanvasOperations.drawPiecesOntoCanvas(
       canvas,
-      pieces,
+      elementsForGroup,
       this.puzzleImage,
       this.shadowOffset
     );
 
-    return container;
+    container.style.top = this.position.top + "px";
+    container.style.left = this.position.left + "px";
+    container.style.width = this.width + "px";
+    container.style.height = this.height + "px";
+    container.style.zIndex = this.zIndex + "";
   }
 
-  static createGroupContainer(groupId) {
+  static getElementsForGroup(groupId: number): MovableElement[] {
+    const allElements = document.querySelectorAll(".puzzle-piece");
+    const filtered: MovableElement[] = [];
+    for (let i = 0, l = allElements.length; i < l; i++) {
+      const element = allElements[i] as MovableElement;
+      const elementGroupId = parseInt(element.dataset.groupId as string);
+      if (elementGroupId === groupId) {
+        filtered.push(element);
+      }
+    }
+    return filtered;
+  }
+
+  createGroupContainer(): MovableElement {
     const container = document.createElement("div");
 
     container.classList.add("group-container");
@@ -224,14 +246,16 @@ export default class GroupOperations {
     container.style.pointerEvents = "none";
     container.style.position = "absolute";
 
-    container.dataset.groupId = groupId;
-
     return container;
   }
 
   // @param alignGroupToElement: Should the group align itself to the element being added to it?
   // default: false
-  static addToGroup(sourceInstance, groupId, alignGroupToElement = false) {
+  addToGroup(
+    sourceInstance: SingleMovable,
+    groupId: string,
+    alignGroupToElement = false
+  ) {
     console.log("addToGroup", groupId);
     // console.log(element)
     // console.log(element.dataset);
@@ -242,23 +266,27 @@ export default class GroupOperations {
     const solvedX = parseInt(element.dataset.solvedx);
     const solvedY = parseInt(element.dataset.solvedy);
 
-    const targetGroupContainer = GroupOperations.getGroupContainer(groupId);
+    const targetGroupContainer = document.querySelector(
+      `#group-container-${groupId}`
+    ) as MovableElement;
     const isTargetGroupSolved =
-      GroupOperations.isGroupSolved(groupId) || groupId === 1111;
+      this.isGroupSolved(groupId) || groupId === "1111";
 
     // Add element(s) to target group container
     const oldGroup = GroupOperations.getGroup(element);
-    let followingEls = [];
+    let followingEls: MovableElement[] = [];
 
     if (oldGroup) {
-      let container = GroupOperations.getGroupContainer(oldGroup);
-      followingEls = container.querySelectorAll(".puzzle-piece");
+      let container = document.querySelector(
+        `#group-container-${groupId}`
+      ) as MovableElement;
+      followingEls = Array.from(container.querySelectorAll(".puzzle-piece"));
 
       followingEls.forEach((el) => {
         targetGroupContainer.prepend(el);
-        el.setAttribute("data-group", groupId);
+        el.setAttribute("data-group", groupId + "");
         if (isTargetGroupSolved) {
-          el.setAttribute("data-is-solved", true);
+          el.setAttribute("data-is-solved", "true");
         }
       });
 
@@ -291,7 +319,7 @@ export default class GroupOperations {
     }
 
     // Re-draw group with new piece
-    const elementsInTargetGroup = GroupOperations.getPiecesInGroup(groupId);
+    const elementsInTargetGroup = Array.from(this.getPiecesInGroup(groupId));
     const allPieces = [...elementsInTargetGroup, ...followingEls];
     const canvas = CanvasOperations.getCanvas(groupId);
     CanvasOperations.drawPiecesOntoCanvas(
@@ -302,40 +330,25 @@ export default class GroupOperations {
     );
 
     // Update all connections
-    GroupOperations.updateConnections(allPieces);
+    this.updateConnections(allPieces);
 
     sourceInstance.setGroupIdAcrossInstance(groupId);
   }
 
-  static mergeGroups(elementA, elementB) {
-    const pieceAGroup = GroupOperations.getGroup(elementA);
-    const pieceBGroup = GroupOperations.getGroup(elementB);
-    const piecesInGroupA = GroupOperations.getPiecesInGroup(pieceAGroup);
-
-    if (
-      GroupOperations.isGroupSolved(pieceAGroup) ||
-      GroupOperations.isGroupSolved(pieceAGroup)
-    ) {
-      const containerA = GroupOperations.getGroupContainer(pieceAGroup);
-      const containerB = GroupOperations.getGroupContainer(pieceBGroup);
-      containerA.dataset.isSolved = true;
-      containerB.dataset.isSolved = true;
-    }
-
-    return this.addToGroup(piecesInGroupA[0], pieceBGroup);
+  setGroupContainerPosition(
+    container: MovableElement,
+    { top, left }: Partial<DOMRect>
+  ) {
+    container.style.top = Utils.getPxString(top as number);
+    container.style.left = Utils.getPxString(left as number);
   }
 
-  static setGroupContainerPosition(container, { top, left }) {
-    container.style.top = Utils.getPxString(top);
-    container.style.left = Utils.getPxString(left);
-  }
-
-  static getConnectionsForPiece(piece) {
-    const connections = [];
+  getConnectionsForPiece(element: MovableElement) {
+    const connections: string[] = [];
     const p = {
-      id: parseInt(piece.dataset.pieceId),
-      type: Utils.getPieceType(piece),
-      group: GroupOperations.getGroup(piece),
+      id: parseInt(element.dataset.pieceId as string),
+      type: Utils.getPieceType(element),
+      group: GroupOperations.getGroup(element),
     };
 
     const pieceTop =
@@ -386,9 +399,9 @@ export default class GroupOperations {
     return connections;
   }
 
-  static updateConnections(pieces) {
-    pieces.forEach((p) => {
-      const connections = GroupOperations.getConnectionsForPiece(p);
+  updateConnections(elements: MovableElement[]) {
+    Array.from(elements).forEach((p) => {
+      const connections = this.getConnectionsForPiece(p);
       p.setAttribute("data-connections", connections.join(", "));
     });
   }

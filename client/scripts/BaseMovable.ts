@@ -1,17 +1,18 @@
 import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants";
 import Utils from "./utils";
-import Events from "./events.js";
+import Events from "./events";
 import GroupOperations from "./GroupOperations.js";
-import { Connection, DomBox, InstanceTypes, MovableElements } from "./types";
+import { Connection, DomBox, InstanceTypes, MovableElement } from "./types";
 
 export default class BaseMovable {
   instanceType: InstanceTypes;
-  element: MovableElements;
+  element: MovableElement;
   lastPosition: {
     top: number;
     left: number;
   };
   active: boolean = false;
+  puzzleId: string;
   connection: Connection;
   puzzleImage: HTMLOrSVGImageElement;
   // Element containing all pieces in-play

@@ -1,7 +1,5 @@
 import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
 import Events from "./events.js";
-import GroupOperations from "./GroupOperations.js";
-import { PocketMovable } from "./PocketMovable.js";
 import Utils from "./utils.js";
 
 const POCKET_DEPTH = 110;

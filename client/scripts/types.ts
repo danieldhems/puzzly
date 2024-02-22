@@ -1,3 +1,5 @@
+import Pockets from "./Pockets.js";
+
 declare global {
   interface Window {
     Puzzly: any;
@@ -13,11 +15,23 @@ export enum InstanceTypes {
   PlayBoundaryMovable = "PlayBoundaryMovable",
 }
 
+export interface PuzzleData {
+  puzzleId: string;
+  piecesPerSideHorizontal: number;
+  piecesPerSideVertical: number;
+  shadowOffset: number;
+  Pockets: Pockets;
+  pocketId: number;
+  puzzleImage: ImageBitmap;
+  boardWidth: number;
+  boardHeight: number;
+}
+
 export type SingleMovableElement = HTMLDivElement;
 export type GroupMovableElement = HTMLDivElement;
 export type PocketMovableElement = HTMLDivElement;
 export type DragAndSelectMovableElement = HTMLDivElement;
-export type MovableElements =
+export type MovableElement =
   | SingleMovableElement
   | GroupMovableElement
   | PocketMovableElement
@@ -26,7 +40,7 @@ export type MovableElements =
 export interface Connection {
   type: string;
   sourceElement: HTMLDivElement;
-  targetElement: HTMLDivElement;
+  targetElement?: HTMLDivElement;
   isSolving: boolean;
 }
 
