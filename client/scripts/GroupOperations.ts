@@ -8,7 +8,6 @@ export interface GroupOperationsProperties {
   height: number;
   puzzleImage: ImageBitmap;
   shadowOffset: number;
-  CanvasOperations?: CanvasOperations;
   piecesPerSideHorizontal: number;
   piecesPerSideVertical: number;
   position?: {
@@ -18,7 +17,9 @@ export interface GroupOperationsProperties {
   zIndex?: number;
 }
 
-export default interface GroupOperations extends GroupOperationsProperties {}
+export default interface GroupOperations extends GroupOperationsProperties {
+  CanvasOperations: CanvasOperations;
+}
 
 export default class GroupOperations implements GroupOperationsProperties {
   constructor(config: GroupOperationsProperties) {
@@ -60,7 +61,7 @@ export default class GroupOperations implements GroupOperationsProperties {
     }
   }
 
-  static getGroup(element: MovableElement) {
+  getGroup(element: MovableElement) {
     return element.dataset.groupId ? element.dataset.groupId : null;
   }
 
@@ -141,50 +142,50 @@ export default class GroupOperations implements GroupOperationsProperties {
     ).dataset.groupId = idAsString;
   }
 
-  createGroup(sourceElement: SingleMovable, targetElement: SingleMovable) {
+  createGroup(sourceInstance: SingleMovable, targetInstance: SingleMovable) {
     const container = this.createGroupContainer();
     const newCanvas = this.CanvasOperations.makeCanvas();
 
     const leftPos =
-      targetElement.element.offsetLeft - targetElement.pieceData.solvedX;
+      targetInstance.element.offsetLeft - targetInstance.pieceData.solvedX;
     const topPos =
-      targetElement.element.offsetTop - targetElement.pieceData.solvedY;
+      targetInstance.element.offsetTop - targetInstance.pieceData.solvedY;
 
-    sourceElement.element.style.left = Utils.getPxString(
-      sourceElement.pieceData.solvedX
+    sourceInstance.element.style.left = Utils.getPxString(
+      sourceInstance.pieceData.solvedX
     );
-    sourceElement.element.style.top = Utils.getPxString(
-      sourceElement.pieceData.solvedY
+    sourceInstance.element.style.top = Utils.getPxString(
+      sourceInstance.pieceData.solvedY
     );
-    targetElement.element.style.left = Utils.getPxString(
-      targetElement.pieceData.solvedX
+    targetInstance.element.style.left = Utils.getPxString(
+      targetInstance.pieceData.solvedX
     );
-    targetElement.element.style.top = Utils.getPxString(
-      targetElement.pieceData.solvedY
+    targetInstance.element.style.top = Utils.getPxString(
+      targetInstance.pieceData.solvedY
     );
 
-    sourceElement.element.classList.add("grouped");
-    targetElement.element.classList.add("grouped");
+    sourceInstance.element.classList.add("grouped");
+    targetInstance.element.classList.add("grouped");
 
     this.CanvasOperations.drawPiecesOntoCanvas(
       newCanvas,
-      [sourceElement, targetElement],
+      [sourceInstance.element, targetInstance.element],
       this.puzzleImage,
       this.shadowOffset
     );
 
     // TODO: Refactor Util methods to expect type array only, not piece object containing it.
     // Not sure if this logic is entirely applicable...
-    const elementAIsSolved = Utils.isSolved(sourceElement.element);
-    const elementBIsSolved = Utils.isSolved(targetElement.element);
+    const elementAIsSolved = Utils.isSolved(sourceInstance.element);
+    const elementBIsSolved = Utils.isSolved(targetInstance.element);
 
     if (elementAIsSolved || elementBIsSolved) {
-      sourceElement.element.setAttribute("data-is-solved", "true");
-      targetElement.element.setAttribute("data-is-solved", "true");
+      sourceInstance.element.setAttribute("data-is-solved", "true");
+      targetInstance.element.setAttribute("data-is-solved", "true");
       container.setAttribute("data-is-solved", "true");
     }
 
-    this.updateConnections([sourceElement.element, targetElement.element]);
+    this.updateConnections([sourceInstance.element, targetInstance.element]);
     this.setGroupContainerPosition(container, {
       y: topPos,
       x: leftPos,
@@ -212,14 +213,14 @@ export default class GroupOperations implements GroupOperationsProperties {
     return container;
   }
 
-  static getElementsForGroup(groupId: number): SingleMovable[] {
+  getElementsForGroup(groupId: number): MovableElement[] {
     const allElements = document.querySelectorAll(".puzzle-piece");
     const filtered: MovableElement[] = [];
     for (let i = 0, l = allElements.length; i < l; i++) {
       const element = allElements[i] as MovableElement;
       const elementGroupId = parseInt(element.dataset.groupId as string);
       if (elementGroupId === groupId) {
-        filtered.push(this.Puzzly.getMovableInstanceFromElement(element));
+        filtered.push(element);
       }
     }
     return filtered;
@@ -239,8 +240,8 @@ export default class GroupOperations implements GroupOperationsProperties {
 
     const element = sourceInstance.element;
 
-    const solvedX = parseInt(element.dataset.solvedx);
-    const solvedY = parseInt(element.dataset.solvedy);
+    const solvedX = parseInt(element.dataset.solvedx as string);
+    const solvedY = parseInt(element.dataset.solvedy as string);
 
     const targetGroupContainer = document.querySelector(
       `#group-container-${groupId}`
@@ -249,7 +250,7 @@ export default class GroupOperations implements GroupOperationsProperties {
       this.isGroupSolved(groupId) || groupId === "1111";
 
     // Add element(s) to target group container
-    const oldGroup = GroupOperations.getGroup(element);
+    const oldGroup = this.getGroup(element);
     let followingEls: MovableElement[] = [];
 
     if (oldGroup) {
@@ -297,7 +298,9 @@ export default class GroupOperations implements GroupOperationsProperties {
     // Re-draw group with new piece
     const elementsInTargetGroup = Array.from(this.getPiecesInGroup(groupId));
     const allPieces = [...elementsInTargetGroup, ...followingEls];
-    const canvas = CanvasOperations.getCanvas(groupId);
+    const canvas = this.CanvasOperations.getCanvas(
+      groupId
+    ) as HTMLCanvasElement;
     this.CanvasOperations.drawPiecesOntoCanvas(
       canvas,
       allPieces,
@@ -324,7 +327,7 @@ export default class GroupOperations implements GroupOperationsProperties {
     const p = {
       id: parseInt(element.dataset.pieceId as string),
       type: Utils.getPieceType(element),
-      group: GroupOperations.getGroup(element),
+      group: this.getGroup(element),
     };
 
     const pieceTop =
@@ -338,11 +341,10 @@ export default class GroupOperations implements GroupOperationsProperties {
     const pieceLeft =
       !Utils.isLeftEdgePiece(p.type) && Utils.getElementByPieceId(p.id - 1);
 
-    const pieceTopGroup = pieceTop && GroupOperations.getGroup(pieceTop);
-    const pieceRightGroup = pieceRight && GroupOperations.getGroup(pieceRight);
-    const pieceBottomGroup =
-      pieceBottom && GroupOperations.getGroup(pieceBottom);
-    const pieceLeftGroup = pieceLeft && GroupOperations.getGroup(pieceLeft);
+    const pieceTopGroup = pieceTop && this.getGroup(pieceTop);
+    const pieceRightGroup = pieceRight && this.getGroup(pieceRight);
+    const pieceBottomGroup = pieceBottom && this.getGroup(pieceBottom);
+    const pieceLeftGroup = pieceLeft && this.getGroup(pieceLeft);
 
     if (
       pieceTopGroup &&

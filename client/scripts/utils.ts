@@ -180,7 +180,7 @@ const Utils = {
     data.isInnerPiece = isInnerPiece == "true" ? true : false;
 
     data.isSolved = el.dataset.isSolved === "true";
-    data.groupId = GroupOperations.getGroup(el) as string;
+    data.groupId = el.dataset.groupId as string;
     data.pocketId = parseInt(el.dataset["pocketId"] as string);
 
     data.pageX = parseInt(el.style.left);

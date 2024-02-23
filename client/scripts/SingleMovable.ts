@@ -1,6 +1,7 @@
 import BaseMovable from "./BaseMovable";
 import { checkConnections } from "./checkConnections";
 import { EVENT_TYPES, SHAPE_TYPES } from "./constants";
+import GroupMovable from "./GroupMovable";
 import GroupOperations from "./GroupOperations";
 import Pockets from "./Pockets";
 // import PathOperations from "./pathOperations.js";
@@ -23,6 +24,7 @@ export default class SingleMovable extends BaseMovable {
   GroupOperations: GroupOperations;
   piecesPerSideHorizontal: number;
   piecesPerSideVertical: number;
+  isSolved: boolean;
   Puzzly: Puzzly;
   pocketId: number;
   Pockets: Pockets;
@@ -52,7 +54,7 @@ export default class SingleMovable extends BaseMovable {
     this.piecesPerSideHorizontal = this.Puzzly.piecesPerSideHorizontal;
     this.shadowOffset = this.Puzzly.shadowOffset;
     this.Puzzly = puzzleData;
-    this.pocketId = pieceData.pocket;
+    this.pocketId = pieceData.pocketId;
     this.Pockets = this.Puzzly.Pockets;
 
     if (pieceData.groupId) {
@@ -60,7 +62,7 @@ export default class SingleMovable extends BaseMovable {
     }
 
     this.setPiece(pieceData);
-    this.element = this.createElement(pieceData);
+    this.element = this.createElement();
 
     this.setLastPosition({ top: pieceData.pageY, left: pieceData.pageX });
 
@@ -173,42 +175,41 @@ export default class SingleMovable extends BaseMovable {
     );
     el.setAttribute(
       "data-connections",
-      this.GroupOperations.getConnections(el)
+      JSON.stringify(this.GroupOperations.getConnections(el))
     );
-    el.setAttribute("data-num-pieces-from-top-edge", numPiecesFromTopEdge);
-    el.setAttribute("data-num-pieces-from-left-edge", numPiecesFromLeftEdge);
-    el.setAttribute("data-num-puzzle-pieces", selectedNumPieces);
-    el.setAttribute("data-is-solved", isSolved);
+    el.setAttribute("data-num-pieces-from-top-edge", numPiecesFromTopEdge + "");
+    el.setAttribute(
+      "data-num-pieces-from-left-edge",
+      numPiecesFromLeftEdge + ""
+    );
+    el.setAttribute("data-num-puzzle-pieces", selectedNumPieces + "");
+    el.setAttribute("data-is-solved", isSolved + "");
 
     const fgEl = document.createElement("div");
     fgEl.classList.add("puzzle-piece-fg");
     fgEl.style.backgroundImage = `url(${spritePath}`;
-    fgEl.style.backgroundPositionX = spriteX === 0 ? 0 : "-" + spriteX + "px";
-    fgEl.style.backgroundPositionY = spriteY === 0 ? 0 : "-" + spriteY + "px";
+    fgEl.style.backgroundPositionX = spriteX === 0 ? "0" : "-" + spriteX + "px";
+    fgEl.style.backgroundPositionY = spriteY === 0 ? "0" : "-" + spriteY + "px";
     fgEl.style.position = "absolute";
-    fgEl.width = imgW;
-    fgEl.height = imgH;
     fgEl.style.width = imgW + "px";
     fgEl.style.height = imgH + "px";
-    fgEl.style.top = 0;
-    fgEl.style.left = 0;
-    fgEl.style.zIndex = 2;
+    fgEl.style.top = 0 + "";
+    fgEl.style.left = 0 + "";
+    fgEl.style.zIndex = 2 + "";
 
     const bgEl = document.createElement("div");
     bgEl.classList.add("puzzle-piece-bg");
     bgEl.style.position = "absolute";
-    bgEl.width = imgW;
-    bgEl.height = imgH;
     bgEl.style.width = imgW + "px";
     bgEl.style.height = imgH + "px";
     bgEl.style.top = this.shadowOffset + "px";
     bgEl.style.left = this.shadowOffset + "px";
     bgEl.style.backgroundImage = `url(${spritePath}`;
     bgEl.style.backgroundPositionX =
-      spriteShadowX === 0 ? 0 : "-" + spriteShadowX + "px";
+      spriteShadowX === 0 ? "0" : "-" + spriteShadowX + "px";
     bgEl.style.backgroundPositionY =
-      spriteShadowY === 0 ? 0 : "-" + spriteShadowY + "px";
-    bgEl.style.zIndex = 1;
+      spriteShadowY === 0 ? "0" : "-" + spriteShadowY + "px";
+    bgEl.style.zIndex = 1 + "";
 
     el.appendChild(fgEl);
     el.appendChild(bgEl);
@@ -221,7 +222,7 @@ export default class SingleMovable extends BaseMovable {
     }
 
     if (pocketId) {
-      el.setAttribute("data-pocket-id", pocketId);
+      el.setAttribute("data-pocket-id", pocketId + "");
     }
 
     return el;
@@ -229,11 +230,11 @@ export default class SingleMovable extends BaseMovable {
 
   render() {
     // console.log("rendering piece", this.pieceData);
-    const { type, pageX, pageY, isSolved, pocket } = this.pieceData;
+    const { type, pageX, pageY, isSolved, pocketId } = this.pieceData;
 
-    if (Number.isInteger(pocket)) {
+    if (Number.isInteger(pocketId)) {
       const pocketElement = this.pocketsContainer.querySelector(
-        `#pocket-${pocket}`
+        `#pocket-${pocketId}`
       );
 
       this.Pockets.addSingleToPocket(pocketElement, this);
@@ -359,9 +360,11 @@ export default class SingleMovable extends BaseMovable {
     }
   }
 
-  onMouseDown(event) {
+  onMouseDown(event: MouseEvent) {
     if (event.which === 1) {
-      const element = Utils.getPuzzlePieceElementFromEvent(event);
+      const element = Utils.getPuzzlePieceElementFromEvent(
+        event
+      ) as MovableElement;
       if (
         element &&
         !BaseMovable.isGroupedPiece(element) &&
@@ -377,17 +380,18 @@ export default class SingleMovable extends BaseMovable {
     }
   }
 
-  onMouseUp(event) {
+  onMouseUp(event: MouseEvent) {
     if (this.active) {
       if (this.isOutOfBounds(event)) {
         this.resetPosition();
       } else if (this.isOverPockets(event)) {
         const pocket = this.getPocketByCollision(Utils.getEventBox(event));
-        this.Pockets.addSingleToPocket(pocket, this);
-        this.pocketId = parseInt(pocket.id.split("-")[1]);
+        if (pocket) {
+          this.Pockets.addSingleToPocket(pocket, this);
+          this.pocketId = parseInt(pocket.id.split("-")[1]);
+        }
       } else {
         this.connection = checkConnections.call(this, this.element);
-        this.elementsToSaveIfNoConnection = [this.element];
       }
     }
 
@@ -409,8 +413,8 @@ export default class SingleMovable extends BaseMovable {
     if (this.active) {
       if (!BaseMovable.isGroupedPiece(this.element)) {
         this.setLastPosition({
-          left: this.element.offsetX,
-          top: this.element.offsetY,
+          left: this.element.offsetLeft,
+          top: this.element.offsetTop,
         });
 
         // Only save if this piece isn't in a group
@@ -421,10 +425,10 @@ export default class SingleMovable extends BaseMovable {
     }
   }
 
-  solve(options) {
+  solve(options?: { save: boolean } | undefined) {
     this.solvedContainer.appendChild(this.element);
     this.element.classList.add("grouped");
-    this.element.dataset.isSolved = true;
+    this.element.dataset.isSolved = "true";
     this.setPositionAsGrouped();
     this.element.style.visibility = "hidden";
     this.element.style.pointerEvents = "none";
@@ -440,15 +444,15 @@ export default class SingleMovable extends BaseMovable {
     }
   }
 
-  setGroupIdAcrossInstance(groupId) {
+  setGroupIdAcrossInstance(groupId: string) {
     this.groupId = groupId;
     this.element.dataset.groupId = groupId;
     this.pieceData.groupId = groupId;
   }
 
-  onGroupCreated(event) {
+  onGroupCreated(event: CustomEvent) {
     const { groupId, elementIds } = event.detail;
-    if (elementIds.includes(parseInt(this.element.dataset.pieceId))) {
+    if (elementIds.includes(this.element.dataset.pieceId)) {
       this.setGroupIdAcrossInstance(groupId);
     }
   }
@@ -458,9 +462,9 @@ export default class SingleMovable extends BaseMovable {
     this.element.style.left = this.pieceData.solvedX + "px";
   }
 
-  joinTo(groupInstance) {
+  joinTo(groupInstance: GroupMovable) {
     // console.log("SingleMovable joining to", groupInstance);
-    this.setGroupIdAcrossInstance(groupInstance._id);
+    this.setGroupIdAcrossInstance(groupInstance._id + "");
     this.element.classList.add("grouped");
     groupInstance.addPieces([this]);
     groupInstance.redrawCanvas();
@@ -486,7 +490,9 @@ export default class SingleMovable extends BaseMovable {
   save(force = false) {
     // console.log("Save single piece", this.getDataForSave());
     if (force || (this.active && !this.connection)) {
-      Events.notify(EVENT_TYPES.SAVE, this.getDataForSave());
+      window.dispatchEvent(
+        new CustomEvent(EVENT_TYPES.SAVE, { detail: this.getDataForSave() })
+      );
     }
   }
 }

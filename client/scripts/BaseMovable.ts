@@ -46,8 +46,6 @@ export default class BaseMovable {
   groupOperations: any;
   solvedGroupId: number;
   dragAndSelectActive: boolean;
-  joinTo: (movableInstance: SingleMovable | GroupMovable) => void;
-  solve: (options?: { save: boolean }) => void;
 
   constructor(puzzly: Puzzly) {
     this.Puzzly = puzzly;
@@ -167,7 +165,7 @@ export default class BaseMovable {
     return false;
   }
 
-  getPocketByCollision(box: DOMRect) {
+  getPocketByCollision(box: DomBox) {
     let i = 0;
     while (i <= this.pockets.length) {
       const pocket = this.pockets[i];
@@ -195,7 +193,7 @@ export default class BaseMovable {
     return this.hasCollision(this.pocketsContainer, Utils.getEventBox(event));
   }
 
-  addToStage(element = undefined) {
+  addToStage(element?: MovableElement) {
     const elementToAdd = element || this.element;
     // console.log("element to add", this);
     this.piecesContainer.prepend(elementToAdd);
@@ -242,9 +240,6 @@ export default class BaseMovable {
   onDrop() {
     this.clean();
   }
-
-  // Override
-  onMouseDown() {}
 
   onMouseMove(event: MouseEvent) {
     if (this.active && !this.dragAndSelectActive) {

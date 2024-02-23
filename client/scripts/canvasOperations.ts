@@ -48,45 +48,63 @@ export default class CanvasOperations {
 
   drawPiecesOntoCanvas(
     canvas: HTMLCanvasElement,
-    elements: SingleMovable[],
+    elements: MovableElement[],
     puzzleImage: Puzzly["puzzleImage"],
     shadowOffset: Puzzly["shadowOffset"]
   ) {
     const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     // ctx.imageSmoothingEnabled = false;
-    elements.forEach((p) => {
-      const data = p.element.dataset;
+    elements.forEach((element) => {
+      const data = element.dataset;
       // console.log("drawPiecesOntoCanvas", data, shadowOffset);
-      ctx.drawImage(
-        puzzleImage,
-        data.spriteshadowx,
-        data.spriteshadowy,
-        data.imgw,
-        data.imgh,
-        parseInt(data.solvedx) + shadowOffset,
-        parseInt(data.solvedy) + shadowOffset,
-        data.imgw,
-        data.imgh
-      );
+      if (
+        data.spriteshadowx &&
+        data.spriteshadowy &&
+        data.imgw &&
+        data.imgh &&
+        data.solvedx &&
+        data.solvedy
+      ) {
+        ctx.drawImage(
+          puzzleImage,
+          parseInt(data.spriteshadowx),
+          parseInt(data.spriteshadowy),
+          parseInt(data.imgw),
+          parseInt(data.imgh),
+          parseInt(data.solvedx) + shadowOffset,
+          parseInt(data.solvedy) + shadowOffset,
+          parseInt(data.imgw),
+          parseInt(data.imgh)
+        );
+      }
 
-      p.element.childNodes.forEach(
+      element.childNodes.forEach(
         (element: HTMLDivElement) => (element.style.visibility = "hidden")
       );
     });
 
-    elements.forEach((p) => {
-      const data = p.element.dataset;
-      ctx.drawImage(
-        puzzleImage,
-        data.spritex,
-        data.spritey,
-        data.imgw,
-        data.imgh,
-        parseInt(data.solvedx),
-        parseInt(data.solvedy),
-        data.imgw,
-        data.imgh
-      );
+    elements.forEach((element) => {
+      const data = element.dataset;
+      if (
+        data.spritex &&
+        data.spritey &&
+        data.imgw &&
+        data.imgh &&
+        data.solvedx &&
+        data.solvedy
+      ) {
+        ctx.drawImage(
+          puzzleImage,
+          parseInt(data.spritex),
+          parseInt(data.spritey),
+          parseInt(data.imgw),
+          parseInt(data.imgh),
+          parseInt(data.solvedx),
+          parseInt(data.solvedy),
+          parseInt(data.imgw),
+          parseInt(data.imgh)
+        );
+      }
     });
   }
 

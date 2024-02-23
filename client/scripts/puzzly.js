@@ -343,21 +343,6 @@ class Puzzly {
     );
   }
 
-  getMovableInstanceFromElement(element) {
-    if (!element) return;
-    if (element.dataset.groupId) {
-      return this.groupInstances.find((instance) =>
-        instance.piecesInGroup.some(
-          (piece) => piece.groupId === element.dataset.groupId
-        )
-      );
-    } else {
-      return this.pieceInstances.find(
-        (instance) => instance._id === element.dataset.pieceIdInPersistence
-      );
-    }
-  }
-
   getGroupInstanceById(groupId) {
     return this.groupInstances.find((group) => group._id === groupId);
   }
