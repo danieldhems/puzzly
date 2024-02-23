@@ -3,11 +3,12 @@ import { ConnectorType, MovableElement } from "./types.js";
 import Utils from "./utils.js";
 import SingleMovable from "./SingleMovable.js";
 
-export type GroupOperationsConstructor = {
+export interface GroupOperationsProperties {
   width: number;
   height: number;
   puzzleImage: ImageBitmap;
   shadowOffset: number;
+  CanvasOperations?: CanvasOperations;
   piecesPerSideHorizontal: number;
   piecesPerSideVertical: number;
   position?: {
@@ -15,22 +16,12 @@ export type GroupOperationsConstructor = {
     left: number;
   };
   zIndex?: number;
-};
-export default class GroupOperations {
-  width: number;
-  height: number;
-  puzzleImage: ImageBitmap;
-  shadowOffset: number;
-  canvasOperations: CanvasOperations;
-  piecesPerSideHorizontal: number;
-  piecesPerSideVertical: number;
-  position?: {
-    top: number;
-    left: number;
-  };
-  zIndex?: number;
+}
 
-  constructor(config: GroupOperationsConstructor) {
+export default interface GroupOperations extends GroupOperationsProperties {}
+
+export default class GroupOperations implements GroupOperationsProperties {
+  constructor(config: GroupOperationsProperties) {
     this.width = config.width;
     this.height = config.height;
     this.puzzleImage = config.puzzleImage;
@@ -39,7 +30,12 @@ export default class GroupOperations {
     this.zIndex = config.zIndex;
     this.piecesPerSideHorizontal = config.piecesPerSideHorizontal;
     this.piecesPerSideVertical = config.piecesPerSideVertical;
-    this.canvasOperations = new CanvasOperations(config);
+    this.CanvasOperations = new CanvasOperations({
+      boardWidth: this.width,
+      boardHeight: this.height,
+      puzzleImage: this.puzzleImage,
+      shadowOffset: this.shadowOffset,
+    });
   }
 
   isGroupSolved(groupId: string): boolean | void {
@@ -147,7 +143,7 @@ export default class GroupOperations {
 
   createGroup(sourceElement: SingleMovable, targetElement: SingleMovable) {
     const container = this.createGroupContainer();
-    const newCanvas = CanvasOperations.makeCanvas.call(this);
+    const newCanvas = this.CanvasOperations.makeCanvas();
 
     const leftPos =
       targetElement.element.offsetLeft - targetElement.pieceData.solvedX;
@@ -170,7 +166,7 @@ export default class GroupOperations {
     sourceElement.element.classList.add("grouped");
     targetElement.element.classList.add("grouped");
 
-    CanvasOperations.drawPiecesOntoCanvas(
+    this.CanvasOperations.drawPiecesOntoCanvas(
       newCanvas,
       [sourceElement, targetElement],
       this.puzzleImage,
@@ -199,54 +195,34 @@ export default class GroupOperations {
     return { container, position: { top: topPos, left: leftPos } };
   }
 
-  restoreGroup(groupId: number) {
+  createGroupContainer(groupId?: number): MovableElement {
     const container = document.createElement("div");
-    container.id = `group-container-${groupId}`;
-    const canvas = CanvasOperations.makeCanvas.call(this);
-    container.prepend(canvas);
+    container.classList.add("group-container");
 
-    const elementsForGroup = GroupOperations.getElementsForGroup(groupId);
-    elementsForGroup.forEach((element) => container.appendChild(element));
+    if (groupId) {
+      container.id = `group-container-${groupId}`;
+    }
 
-    GroupOperations.setIdForGroupElements(container, groupId);
-    CanvasOperations.drawPiecesOntoCanvas(
-      canvas,
-      elementsForGroup,
-      this.puzzleImage,
-      this.shadowOffset
-    );
-
-    container.style.top = this.position.top + "px";
-    container.style.left = this.position.left + "px";
+    container.style.top = this.position?.top + "px";
+    container.style.left = this.position?.left + "px";
     container.style.width = this.width + "px";
     container.style.height = this.height + "px";
     container.style.zIndex = this.zIndex + "";
+    container.style.pointerEvents = "none";
+    return container;
   }
 
-  static getElementsForGroup(groupId: number): MovableElement[] {
+  static getElementsForGroup(groupId: number): SingleMovable[] {
     const allElements = document.querySelectorAll(".puzzle-piece");
     const filtered: MovableElement[] = [];
     for (let i = 0, l = allElements.length; i < l; i++) {
       const element = allElements[i] as MovableElement;
       const elementGroupId = parseInt(element.dataset.groupId as string);
       if (elementGroupId === groupId) {
-        filtered.push(element);
+        filtered.push(this.Puzzly.getMovableInstanceFromElement(element));
       }
     }
     return filtered;
-  }
-
-  createGroupContainer(): MovableElement {
-    const container = document.createElement("div");
-
-    container.classList.add("group-container");
-
-    container.style.width = Utils.getPxString(this.width);
-    container.style.height = Utils.getPxString(this.height);
-    container.style.pointerEvents = "none";
-    container.style.position = "absolute";
-
-    return container;
   }
 
   // @param alignGroupToElement: Should the group align itself to the element being added to it?
@@ -322,7 +298,7 @@ export default class GroupOperations {
     const elementsInTargetGroup = Array.from(this.getPiecesInGroup(groupId));
     const allPieces = [...elementsInTargetGroup, ...followingEls];
     const canvas = CanvasOperations.getCanvas(groupId);
-    CanvasOperations.drawPiecesOntoCanvas(
+    this.CanvasOperations.drawPiecesOntoCanvas(
       canvas,
       allPieces,
       this.puzzleImage,

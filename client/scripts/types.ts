@@ -1,4 +1,8 @@
+import { DragAndSelectMovable } from "./DragAndSelectMovable.js";
+import GroupMovable from "./GroupMovable.js";
+import { PocketMovable } from "./PocketMovable.js";
 import Pockets from "./Pockets.js";
+import SingleMovable from "./SingleMovable.js";
 
 declare global {
   interface Window {
@@ -15,18 +19,6 @@ export enum InstanceTypes {
   PlayBoundaryMovable = "PlayBoundaryMovable",
 }
 
-export interface PuzzleData {
-  puzzleId: string;
-  piecesPerSideHorizontal: number;
-  piecesPerSideVertical: number;
-  shadowOffset: number;
-  Pockets: Pockets;
-  pocketId: number;
-  puzzleImage: ImageBitmap;
-  boardWidth: number;
-  boardHeight: number;
-}
-
 export type SingleMovableElement = HTMLDivElement;
 export type GroupMovableElement = HTMLDivElement;
 export type PocketMovableElement = HTMLDivElement;
@@ -36,6 +28,12 @@ export type MovableElement =
   | GroupMovableElement
   | PocketMovableElement
   | DragAndSelectMovableElement;
+
+export type MovableInstance =
+  | SingleMovable
+  | GroupMovable
+  | DragAndSelectMovable
+  | PocketMovable;
 
 export interface Connection {
   type: string;
@@ -93,6 +91,9 @@ export interface JigsawPieceData {
   connectsTo: ConnectsTo;
   numPiecesFromTopEdge: number;
   numPiecesFromLeftEdge: number;
+  piecesPerSideHorizontal: number;
+  piecesPerSideVertical: number;
+  selectedNumPieces: number;
   svgPath: string;
 }
 
@@ -102,3 +103,24 @@ export type DomBox = {
   bottom: number;
   left: number;
 };
+
+export interface Puzzly {
+  puzzleId: string;
+  piecesPerSideHorizontal: number;
+  piecesPerSideVertical: number;
+  shadowOffset: number;
+  Pockets: Pockets;
+  pocketId: number;
+  puzzleImage: ImageBitmap;
+  boardWidth: number;
+  boardHeight: number;
+  zoomLevel: number;
+  connectorTolerance: number;
+  connectorDistanceFromCorner: number;
+  connectorSize: number;
+  pieceInstances: SingleMovable[];
+  groupInstances: GroupMovable[];
+  complete: boolean;
+  keepOnTop: (element: MovableElement) => void;
+  updateSolvedCanvas: () => void;
+}

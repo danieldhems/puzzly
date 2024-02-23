@@ -1,12 +1,20 @@
 import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants";
 import Utils from "./utils";
-import Events from "./events";
 import GroupOperations from "./GroupOperations.js";
-import { Connection, DomBox, InstanceTypes, MovableElement } from "./types";
+import {
+  Connection,
+  DomBox,
+  InstanceTypes,
+  MovableElement,
+  Puzzly,
+} from "./types";
+import SingleMovable from "./SingleMovable";
+import GroupMovable from "./GroupMovable";
 
 export default class BaseMovable {
   instanceType: InstanceTypes;
   element: MovableElement;
+  Puzzly: Puzzly;
   lastPosition: {
     top: number;
     left: number;
@@ -14,7 +22,7 @@ export default class BaseMovable {
   active: boolean = false;
   puzzleId: string;
   connection: Connection;
-  puzzleImage: HTMLOrSVGImageElement;
+  puzzleImage: ImageBitmap;
   // Element containing all pieces in-play
   piecesContainer: HTMLDivElement;
   // Used by PocketMovable to know which pocket the movable originated from, and which the movable's child nodes will be returned to if out-of-bounds.
@@ -38,9 +46,11 @@ export default class BaseMovable {
   groupOperations: any;
   solvedGroupId: number;
   dragAndSelectActive: boolean;
+  joinTo: (movableInstance: SingleMovable | GroupMovable) => void;
+  solve: (options?: { save: boolean }) => void;
 
-  constructor(puzzly) {
-    this.puzzly = puzzly;
+  constructor(puzzly: Puzzly) {
+    this.Puzzly = puzzly;
     // console.log("puzzly", puzzly);
     this.puzzleImage = puzzly.puzzleImage;
 
@@ -70,9 +80,14 @@ export default class BaseMovable {
     this.boardWidth = puzzly.boardWidth;
     this.boardHeight = puzzly.boardHeight;
 
-    this.groupOperations = new GroupOperations(puzzly);
-
-    this.solvedGroupId = puzzly.solvedGroupId;
+    this.groupOperations = new GroupOperations({
+      width: this.Puzzly.boardWidth,
+      height: this.Puzzly.boardHeight,
+      puzzleImage: this.Puzzly.puzzleImage,
+      shadowOffset: this.Puzzly.shadowOffset,
+      piecesPerSideHorizontal: this.Puzzly.piecesPerSideHorizontal,
+      piecesPerSideVertical: this.Puzzly.piecesPerSideVertical,
+    });
 
     window.addEventListener(
       EVENT_TYPES.CHANGE_SCALE,
@@ -85,6 +100,22 @@ export default class BaseMovable {
         this.isDragAndSelectActive = event.detail;
       }
     );
+  }
+
+  getMovableInstanceFromElement(
+    element: MovableElement
+  ): SingleMovable | GroupMovable {
+    if (element.dataset.groupId) {
+      return this.Puzzly.groupInstances.find((instance) =>
+        instance.piecesInGroup.some(
+          (piece) => piece.groupId === element.dataset.groupId
+        )
+      ) as GroupMovable;
+    } else {
+      return this.Puzzly.pieceInstances.find(
+        (instance) => instance._id === element.dataset.pieceIdInPersistence
+      ) as SingleMovable;
+    }
   }
 
   onChangeScale(event: MouseEvent) {
@@ -160,9 +191,6 @@ export default class BaseMovable {
     );
   }
 
-  // Override
-  isOutOfBounds() {}
-
   isOverPockets(event: MouseEvent) {
     return this.hasCollision(this.pocketsContainer, Utils.getEventBox(event));
   }
@@ -172,15 +200,6 @@ export default class BaseMovable {
     // console.log("element to add", this);
     this.piecesContainer.prepend(elementToAdd);
   }
-
-  // Override
-  addToPocket() {}
-
-  // Override
-  addToSolved() {}
-
-  // Override
-  markAsSolved() {}
 
   isPuzzleComplete() {
     const numbrOfSolvedPieces =
@@ -256,38 +275,48 @@ export default class BaseMovable {
       this.handleConnection();
     }
 
-    Events.notify(EVENT_TYPES.MOVE_FINISHED, event);
+    window.dispatchEvent(
+      new CustomEvent(EVENT_TYPES.MOVE_FINISHED, { detail: event })
+    );
     this.clean();
   }
 
   handleConnection() {
     const { sourceElement, targetElement, isSolving } = this.connection;
 
-    const sourceInstance =
-      window.Puzzly.getMovableInstanceFromElement(sourceElement);
-    const targetInstance =
-      window.Puzzly.getMovableInstanceFromElement(targetElement);
+    const sourceInstance = this.getMovableInstanceFromElement(sourceElement);
 
-    if (isSolving) {
-      sourceInstance.solve({ save: true });
-    } else if (
-      this.isConnectionBetweenSingleAndGroup(
-        sourceInstance.instanceType,
-        targetInstance.instanceType
-      ) ||
-      this.isConnectionBetweenTwoGroups(
-        sourceInstance.instanceType,
-        targetInstance.instanceType
-      )
-    ) {
-      sourceInstance.joinTo(targetInstance);
+    let targetInstance: SingleMovable | GroupMovable | undefined;
+    if (targetElement) {
+      targetInstance = this.getMovableInstanceFromElement(targetElement);
+
+      if (isSolving) {
+        if ("solve" in sourceInstance) {
+          sourceInstance.solve({ save: true });
+        }
+      } else if (targetInstance) {
+        this.isConnectionBetweenSingleAndGroup(
+          sourceInstance.instanceType,
+          targetInstance.instanceType
+        ) ||
+          this.isConnectionBetweenTwoGroups(
+            sourceInstance.instanceType,
+            targetInstance.instanceType
+          );
+      } else {
+        sourceInstance.joinTo(targetInstance);
+      }
     }
 
-    Events.notify(EVENT_TYPES.CONNECTION_MADE, {
-      sourceInstance,
-      targetInstance,
-      isSolving,
-    });
+    window.dispatchEvent(
+      new CustomEvent(EVENT_TYPES.CONNECTION_MADE, {
+        detail: {
+          sourceInstance,
+          targetInstance,
+          isSolving,
+        },
+      })
+    );
   }
 
   isConnectionBetweenSingleAndGroup(

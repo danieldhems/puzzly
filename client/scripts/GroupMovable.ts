@@ -1,59 +1,82 @@
 import GroupOperations from "./GroupOperations.js";
-import { checkConnections } from "./checkConnections.js";
+import { checkConnections } from "./checkConnections";
 import { EVENT_TYPES } from "./constants.js";
-import Events from "./events.js";
 import Utils from "./utils.js";
 import BaseMovable from "./BaseMovable.js";
 import SingleMovable from "./SingleMovable.js";
 import CanvasOperations from "./canvasOperations.js";
 import PersistenceOperations from "./persistence.js";
+import { DomBox, InstanceTypes, MovableElement, Puzzly } from "./types.js";
 
 export default class GroupMovable extends BaseMovable {
-  // Fucking awful - must solve "can't access before initialisation" error so we can interrogate instanceof instead of doing this...
-  instanceType = "GroupMovable";
-
-  _id = null;
-  element = null;
-  canvas = null;
-
-  piecesInGroup = [];
-  elementsInGroup = [];
-  puzzleId = null;
-
-  lastPosition = {
-    top: null,
-    left: null,
+  instanceType = InstanceTypes.GroupMovable;
+  _id: number;
+  canvas: HTMLCanvasElement;
+  piecesInGroup: SingleMovable[];
+  elementsInGroup: MovableElement[];
+  Puzzly: Puzzly;
+  GroupOperations: GroupOperations;
+  CanvasOperations: CanvasOperations;
+  position: {
+    top: number;
+    left: number;
   };
+  zIndex: number;
+  width: number;
+  height: number;
+  zoomLevel: number;
+  isSolved: boolean;
 
   constructor({
-    puzzleData,
+    Puzzly,
     pieces,
-    _id = undefined,
-    position = undefined,
-    zIndex = 1,
-    isSolved = false,
+    _id,
+    position,
+    zIndex,
+    isSolved,
+  }: {
+    Puzzly: Puzzly;
+    pieces: SingleMovable[];
+    _id: number;
+    position: {
+      top: number;
+      left: number;
+    };
+    zIndex: number;
+    isSolved: boolean;
   }) {
-    super(puzzleData);
+    super(Puzzly);
 
-    this.Puzzly = puzzleData;
+    this.Puzzly = Puzzly;
     this._id = _id;
     this.position = position;
     this.piecesInGroup = pieces;
 
-    this.puzzleId = puzzleData.puzzleId;
-    this.puzzleImage = puzzleData.puzzleImage;
+    this.puzzleId = Puzzly.puzzleId;
+    this.puzzleImage = Puzzly.puzzleImage;
 
-    this.width = puzzleData.boardWidth;
-    this.height = puzzleData.boardHeight;
-    this.shadowOffset = puzzleData.shadowOffset;
+    this.width = Puzzly.boardWidth;
+    this.height = Puzzly.boardHeight;
+    this.shadowOffset = Puzzly.shadowOffset;
 
-    this.zoomLevel = puzzleData.zoomLevel;
+    this.zoomLevel = Puzzly.zoomLevel;
 
     // console.log("GroupMovable zIndex", zIndex);
 
     this.isSolved = isSolved;
 
-    this.GroupOperations = new GroupOperations(this);
+    this.CanvasOperations = new CanvasOperations(this);
+    this.GroupOperations = new GroupOperations({
+      width: this.boardWidth,
+      height: this.boardHeight,
+      puzzleImage: this.puzzleImage,
+      shadowOffset: this.shadowOffset,
+      piecesPerSideHorizontal: Puzzly.piecesPerSideHorizontal,
+      piecesPerSideVertical: Puzzly.piecesPerSideVertical,
+      zIndex: this.zIndex,
+      position: this.position,
+      CanvasOperations: this.CanvasOperations,
+    });
 
     if (!_id) {
       this.initiateGroup();
@@ -76,15 +99,7 @@ export default class GroupMovable extends BaseMovable {
     );
   }
 
-  set _id(id) {
-    this._id = id;
-  }
-
-  get _id() {
-    return this._id;
-  }
-
-  isElementOwned(element) {
+  isElementOwned(element: MovableElement) {
     return this.piecesInGroup.some(
       (piece) => piece.pieceData.groupId === element.dataset.groupId
     );
@@ -92,11 +107,12 @@ export default class GroupMovable extends BaseMovable {
 
   initiateGroup() {
     const { container, position } = this.GroupOperations.createGroup(
-      ...this.piecesInGroup
+      this.piecesInGroup[0],
+      this.piecesInGroup[1]
     );
 
     this.element = container;
-    this.canvas = container.querySelector("canvas");
+    this.canvas = container.querySelector("canvas") as HTMLCanvasElement;
 
     this.setLastPosition(position);
     this.attachElements();
@@ -105,7 +121,20 @@ export default class GroupMovable extends BaseMovable {
   }
 
   restoreFromPersistence() {
-    const container = this.GroupOperations.restoreGroup(this._id);
+    const container = this.GroupOperations.createGroupContainer(this._id);
+    const canvas = this.CanvasOperations.makeCanvas();
+    container.prepend(canvas);
+
+    const elementsForGroup = GroupOperations.getElementsForGroup(groupId);
+    elementsForGroup.forEach((element) => container.appendChild(element));
+
+    GroupOperations.setIdForGroupElements(container, groupId);
+    this.CanvasOperations.drawPiecesOntoCanvas(
+      canvas,
+      elementsForGroup,
+      this.puzzleImage,
+      this.shadowOffset
+    );
     this.element = container;
     this.canvas = canvas;
     this.attachElements();
@@ -315,21 +344,23 @@ export default class GroupMovable extends BaseMovable {
     });
   }
 
-  onSaveResponse(event) {
+  onSaveResponse(event: CustomEvent) {
     const response = event.detail;
     console.log("GroupMovable save response", response);
     if (this.isServerResponseForThisGroup(response.data)) {
       if (!this._id) {
         this.setGroupIdAcrossInstance(response.data._id);
-        Events.notify(EVENT_TYPES.GROUP_CREATED, {
-          groupId: this._id,
-          elementIds: this.piecesInGroup.map((piece) =>
-            parseInt(piece.pieceData.id)
-          ),
-        });
+        window.dispatchEvent(
+          new CustomEvent(EVENT_TYPES.GROUP_CREATED, {
+            detail: {
+              groupId: this._id,
+              elementIds: this.piecesInGroup.map((piece) => piece.pieceData.id),
+            },
+          })
+        );
       }
 
-      this.setLastPosition(this.element.getBoundingClientRect());
+      this.setLastPosition();
     }
   }
 
@@ -361,10 +392,10 @@ export default class GroupMovable extends BaseMovable {
     };
   }
 
-  setLastPosition() {
+  setLastPosition(position: Pick<DomBox, "top" | "left">) {
     this.lastPosition = {
-      top: parseInt(this.element.style.top),
-      left: parseInt(this.element.style.left),
+      top: position.top || parseInt(this.element.style.top),
+      left: position.left || parseInt(this.element.style.left),
     };
   }
 
