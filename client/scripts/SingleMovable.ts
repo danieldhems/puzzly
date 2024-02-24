@@ -26,7 +26,7 @@ export default class SingleMovable extends BaseMovable {
   piecesPerSideVertical: number;
   isSolved: boolean;
   Puzzly: Puzzly;
-  pocketId: number;
+  pocketId?: number;
   Pockets: Pockets;
 
   constructor({

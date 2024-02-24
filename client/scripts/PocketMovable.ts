@@ -1,18 +1,26 @@
 import BaseMovable from "./BaseMovable.js";
 import { EVENT_TYPES } from "./constants.js";
-import Events from "./events.js";
+import Pockets from "./Pockets.js";
+import SingleMovable from "./SingleMovable.js";
+import {
+  InstanceTypes,
+  MovableElement,
+  MovableInstance,
+  Puzzly,
+} from "./types.js";
 import Utils from "./utils.js";
 
 export class PocketMovable extends BaseMovable {
-  instanceType = "PocketMovable";
-  piecesInPocket = null;
-  activePocket = null;
+  instanceType = InstanceTypes.PocketMovable;
+  piecesInPocket: MovableElement[];
+  activePocket?: HTMLDivElement;
   activePocketInnerElement = null;
+  Pockets: Pockets;
 
-  constructor(puzzleData) {
+  constructor(puzzleData: Puzzly) {
     super(puzzleData);
 
-    this.puzzly = puzzleData;
+    this.Puzzly = puzzleData;
     this.Pockets = puzzleData.Pockets;
 
     this.pocketsContainer.addEventListener(
@@ -21,28 +29,29 @@ export class PocketMovable extends BaseMovable {
     );
   }
 
-  onMouseDown(event) {
+  onMouseDown(event: MouseEvent) {
     if (event.which === 1) {
       const element = Utils.getPuzzlePieceElementFromEvent(event);
       if (element) {
         this.active = true;
         this.activePocket = this.getPocketByCollision(Utils.getEventBox(event));
-        this.activePocketInnerElement =
-          this.activePocket.querySelector(".pocket-inner");
+        if (this.activePocket) {
+          this.piecesInPocket =
+            this.getPiecesInActivePocket() as HTMLDivElement[];
+          if (this.piecesInPocket.length > 0) {
+            this.element = this.getMovingElementForActivePocket(event);
+            (
+              this.activePocket.querySelector(".pocket-inner") as HTMLDivElement
+            ).prepend(this.element);
+          }
+        }
 
-        const elementsInPocket = Array.from(this.getPiecesInActivePocket());
-        this.piecesInPocket = elementsInPocket.map((element) =>
-          this.puzzly.getMovableInstanceFromElement(element)
-        );
-
-        this.element = this.getMovingElementForActivePocket(event);
-        this.activePocketInnerElement.prepend(this.element);
         super.onPickup(event);
       }
     }
   }
 
-  onMouseUp(event) {
+  onMouseUp(event: MouseEvent) {
     if (this.active) {
       if (this.isInsidePlayArea() && !this.isOverPockets(event)) {
         this.addToStage();
@@ -59,7 +68,7 @@ export class PocketMovable extends BaseMovable {
 
   // Create a container for all the pieces in a given pocket with the pieces arranged in a grid.
   // This container will be set as the movingElement.
-  getMovingElementForActivePocket(e) {
+  getMovingElementForActivePocket(event: MouseEvent) {
     const container = document.createElement("div");
     container.id = "active-pieces-container";
     // container.style.border = "1px solid white";
@@ -81,7 +90,7 @@ export class PocketMovable extends BaseMovable {
     let firstPieceOnRow = this.piecesInPocket[0];
 
     for (let i = 0, l = this.piecesInPocket.length; i < l; i++) {
-      const el = this.piecesInPocket[i].element;
+      const el = this.piecesInPocket[i];
 
       //   // move(el).x(currX * this.zoomLevel).y(currY * this.zoomLevel).duration(this.animationDuration).end();
       el.style.top = currY + "px";
@@ -133,10 +142,12 @@ export class PocketMovable extends BaseMovable {
     container.style.width = maxX + "px";
     container.style.height = maxY + "px";
 
-    const pocketBox = this.activePocket.getBoundingClientRect();
+    const pocketBox = (
+      this.activePocket as HTMLDivElement
+    ).getBoundingClientRect();
 
-    const x = e.clientX - pocketBox.left - maxX / 2;
-    const y = e.clientY - pocketBox.top - maxY / 2;
+    const x = event.clientX - pocketBox.left - maxX / 2;
+    const y = event.clientY - pocketBox.top - maxY / 2;
 
     container.style.top = y + "px";
     container.style.left = x + "px";
@@ -146,13 +157,14 @@ export class PocketMovable extends BaseMovable {
 
   getPiecesInActivePocket() {
     return Array.from(
-      this.activePocket.querySelectorAll(".pocket-inner .puzzle-piece")
+      (this.activePocket as HTMLDivElement).querySelectorAll(
+        ".pocket-inner .puzzle-piece"
+      )
     );
   }
 
   addToStage() {
-    this.piecesInPocket.forEach((piece) => {
-      const element = piece.element;
+    this.piecesInPocket.forEach((element) => {
       const playboundaryRect = this.piecesContainer.getBoundingClientRect();
       const elRect = element.getBoundingClientRect();
 
@@ -166,35 +178,39 @@ export class PocketMovable extends BaseMovable {
 
       this.piecesContainer.appendChild(element);
       element.classList.remove("in-pocket");
-      element.setAttribute("data-pocket-id", null);
+      element.setAttribute("data-pocket-id", "");
       element.style.pointerEvents = "auto";
 
-      piece.pocket = undefined;
+      const instance = this.getMovableInstanceFromElement(
+        element
+      ) as SingleMovable;
+      instance.pocketId = undefined;
 
       // Events.notify(EVENT_TYPES.RETURN_TO_CANVAS, element);
     });
   }
 
   getDataForSave() {
-    return this.piecesInPocket.map((piece) => ({
-      pageX: piece.element.offsetLeft,
-      pageY: piece.element.offsetTop,
-      _id: piece.pieceData._id,
-      pocket: piece.pocket,
+    return this.piecesInPocket.map((element) => ({
+      pageX: element.offsetLeft,
+      pageY: element.offsetTop,
+      _id: element.dataset._id,
+      pocket: element.dataset.pocketId,
       instanceType: this.instanceType,
     }));
   }
 
   save() {
     if (this.active) {
-      Events.notify(EVENT_TYPES.SAVE, this.getDataForSave());
+      window.dispatchEvent(
+        new CustomEvent(EVENT_TYPES.SAVE, { detail: this.getDataForSave() })
+      );
       this.destroy();
     }
   }
 
   destroy() {
     this.element.remove();
-    this.element = null;
     this.active = false;
   }
 }

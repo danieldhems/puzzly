@@ -6,7 +6,6 @@ import Utils from "./utils.js";
 import Events from "./events.js";
 import { ELEMENT_IDS, EVENT_TYPES, SIDES } from "./constants.js";
 import { PocketMovable } from "./PocketMovable.js";
-import { DragAndSelectMovable } from "./DragAndSelectMovable.js";
 import { checkConnections } from "./checkConnections.js";
 import PersistenceOperations from "./persistence.js";
 import CanvasOperations from "./canvasOperations.js";
@@ -224,7 +223,6 @@ class Puzzly {
     this.generatePieceSectorMap();
 
     this.PocketMovable = new PocketMovable(this);
-    this.DragAndSelectMovable = new DragAndSelectMovable(this);
     this.PersistenceOperations = new PersistenceOperations(this);
 
     const storage = this.PersistenceOperations.getPersistence(

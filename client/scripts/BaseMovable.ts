@@ -26,7 +26,7 @@ export default class BaseMovable {
   // Element containing all pieces in-play
   piecesContainer: HTMLDivElement;
   // Used by PocketMovable to know which pocket the movable originated from, and which the movable's child nodes will be returned to if out-of-bounds.
-  activePocket: HTMLDivElement;
+  activePocket?: HTMLDivElement;
   boardWidth: number;
   boardHeight: number;
   diffX: number;
@@ -135,7 +135,7 @@ export default class BaseMovable {
     );
   }
 
-  isPlayBoundary(element: HTMLDivElement) {
+  isPlayBoundary(element: HTMLElement) {
     return (
       element.id === ELEMENT_IDS.PLAY_BOUNDARY ||
       element.id === ELEMENT_IDS.SOLVED_PUZZLE_AREA

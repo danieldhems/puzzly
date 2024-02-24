@@ -15,7 +15,6 @@ export enum InstanceTypes {
   SingleMovable = "SingleMovable",
   GroupMovable = "GroupMovable",
   PocketMovable = "PocketMovable",
-  DragAndSelectMovable = "DragAndSelectMovable",
   PlayBoundaryMovable = "PlayBoundaryMovable",
 }
 
@@ -121,6 +120,8 @@ export interface Puzzly {
   pieceInstances: SingleMovable[];
   groupInstances: GroupMovable[];
   complete: boolean;
+  playBoundary: HTMLDivElement;
+  piecesContainer: HTMLDivElement;
   keepOnTop: (element: MovableElement) => void;
   updateSolvedCanvas: () => void;
 }

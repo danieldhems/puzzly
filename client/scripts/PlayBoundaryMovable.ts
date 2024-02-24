@@ -1,18 +1,21 @@
 import BaseMovable from "./BaseMovable.js";
+import { InstanceTypes, Puzzly } from "./types.js";
 
 export default class PlayBoundaryMovable extends BaseMovable {
-  instanceType = "PlayBoundaryMovable";
-  active = false;
+  instanceType = InstanceTypes.PlayBoundaryMovable;
 
-  constructor(puzzly) {
+  constructor(puzzly: Puzzly) {
     super(puzzly);
 
     this.element = this.playBoundary;
     this.element.addEventListener("mousedown", this.onMouseDown.bind(this));
   }
 
-  onMouseDown(event) {
-    if (this.isPlayBoundary(event.target) && window.Zoom.isZoomed) {
+  onMouseDown(event: MouseEvent) {
+    if (
+      this.isPlayBoundary(event.target as HTMLElement) &&
+      window.Zoom.isZoomed
+    ) {
       // TODO: Is this needed?
       this.active = true;
       super.onPickup(event);
@@ -20,7 +23,7 @@ export default class PlayBoundaryMovable extends BaseMovable {
   }
 
   // Determine whether to allow the play boundary to be dragged any further based on its relation to the viewport
-  shouldConstrainViewport() {
+  shouldConstrainViewport(event: MouseEvent) {
     // TODO: Implement
     const rect = this.element.getBoundingClientRect();
 
@@ -42,8 +45,8 @@ export default class PlayBoundaryMovable extends BaseMovable {
     // console.log("target", target);
     // console.log(this.element.offsetLeft + this.element);
 
-    newPosTop = event.clientY - this.diffY;
-    newPosLeft = event.clientX - this.diffX;
+    const newPosTop = event.clientY - this.diffY;
+    const newPosLeft = event.clientX - this.diffX;
 
     // console.log("newPosLeft", newPosLeft);
     // console.log("element width", this.element.offsetWidth);

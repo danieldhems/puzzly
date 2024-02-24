@@ -1,9 +1,34 @@
 import { EVENT_TYPES } from "./constants.js";
-import Events from "./events.js";
+import Pockets from "./Pockets.js";
+import { Puzzly } from "./types.js";
 import Utils from "./utils.js";
 
 class DragAndSelect {
-  constructor(opts) {
+  Puzzly: Puzzly;
+  Pockets: Pockets;
+  playBoundary: HTMLDivElement;
+  piecesContainer: HTMLDivElement;
+  selectedPiecesContainer: HTMLDivElement | null;
+  zoomLevel: number;
+  selectedPieces: HTMLDivElement[];
+
+  isMouseDown: boolean;
+  isMouseDownHeld: boolean;
+  hasMouseReleased: boolean;
+  isRightClick: boolean;
+  isInterrogatingMouse: boolean;
+  piecesSelected: boolean;
+  selectedPiecesAreMoving: boolean;
+
+  mouseHoldDetectionTime: number;
+  mouseHoldDetectionMovementTolerance: number;
+
+  drawBox: HTMLDivElement;
+  timer: TimerHandler | null;
+  touchStartTime: Date;
+  touchEndTime: Date;
+
+  constructor(opts: Puzzly) {
     this.Puzzly = opts;
     this.Pockets = opts.Pockets;
     this.playBoundary = opts.playBoundary;
@@ -37,7 +62,7 @@ class DragAndSelect {
     window.addEventListener(EVENT_TYPES.CHANGE_SCALE, this.setScale.bind(this));
     window.addEventListener("puzzly_pockets_pieces_added", (e) => {
       this.toggleDrawCursor();
-      this.toggleHighlightPieces(this.selectedPieces);
+      this.toggleHighlightPieces();
       this.selectedPieces = [];
       this.selectedPiecesContainer?.remove();
       this.selectedPiecesContainer = null;
