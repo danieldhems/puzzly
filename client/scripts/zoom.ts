@@ -1,18 +1,27 @@
-import Events from "./events.js";
 import { EVENT_TYPES, ZOOM_INTERVALS } from "./constants.js";
 import Utils from "./utils.js";
+import BaseMovable from "./BaseMovable.js";
+import { Puzzly } from "./types.js";
 
-export default class Zoom {
-  stage;
-  playBoundary;
-  isPreviewActive;
-  currentZoomInterval;
-  zoomLevel;
-  zoomType;
+export enum ZoomTypes {
+  Normal = "normal",
+  Pointer = "pointer",
+}
+
+export default class Zoom extends BaseMovable {
+  stage: HTMLDivElement;
+  playBoundary: BaseMovable["playBoundary"];
+  isPreviewActive: boolean;
+  currentZoomInterval: number;
+  zoomLevel: BaseMovable["zoomLevel"];
+  prevZoomLevel: number;
+  zoomType: ZoomTypes;
+  isZoomed: boolean;
 
   keys = [187, 189, 48];
 
-  constructor(puzzly) {
+  constructor(puzzly: Puzzly) {
+    super(puzzly);
     this.playBoundary = puzzly.playBoundary;
     this.isPreviewActive = puzzly.isPreviewActive;
     this.stage = puzzly.stage;
@@ -28,23 +37,23 @@ export default class Zoom {
     window.addEventListener("resize", this.centerPlayBoundary.bind(this));
   }
 
-  handleNormalZoom(event) {
+  handleNormalZoom(event: KeyboardEvent) {
     this.prevZoomLevel = this.zoomLevel;
-    this.zoomType = "normal";
+    this.zoomType = ZoomTypes.Normal;
 
     if (this.keys.includes(event.which)) {
-      this.setTransformOrigin();
+      this.setTransformOrigin(event);
     }
 
     // Plus key
     if (event.which === 187) {
-      this.zoomType = "normal";
+      this.zoomType = ZoomTypes.Normal;
       this.increaseZoomLevel();
     }
 
     // Minus key
     if (event.which === 189) {
-      this.zoomType = "normal";
+      this.zoomType = ZoomTypes.Normal;
       this.decreaseZoomLevel();
     }
 
@@ -55,8 +64,8 @@ export default class Zoom {
     }
   }
 
-  handlePointerZoom(event) {
-    this.zoomType = "pointer";
+  handlePointerZoom(event: MouseEvent) {
+    this.zoomType = ZoomTypes.Pointer;
 
     this.setTransformOrigin(event);
 
@@ -67,22 +76,28 @@ export default class Zoom {
     }
   }
 
-  getTransformOrigin(event) {
-    if (this.zoomType === "normal") {
+  getTransformOrigin(
+    event: KeyboardEvent | MouseEvent
+  ): { top: number; left: number } | undefined {
+    if (this.zoomType === ZoomTypes.Normal) {
       return {
         top: window.innerHeight / 2 - this.playBoundary.offsetTop,
         left: window.innerWidth / 2 - this.playBoundary.offsetLeft,
       };
-    } else if (this.zoomType === "pointer") {
+    } else if (this.zoomType === ZoomTypes.Pointer) {
+      const pointerEvent = event as MouseEvent;
       return {
-        top: event.clientY,
-        left: event.clientX,
+        top: pointerEvent.clientY,
+        left: pointerEvent.clientX,
       };
     }
   }
 
-  setTransformOrigin(event) {
-    const { top, left } = this.getTransformOrigin(event);
+  setTransformOrigin(event: MouseEvent | KeyboardEvent) {
+    const { top, left } = this.getTransformOrigin(event) as {
+      top: number;
+      left: number;
+    };
     // console.log("transform origin", top, left);
     this.playBoundary.style.transformOrigin = `${top}px ${left}px`;
   }
@@ -125,15 +140,18 @@ export default class Zoom {
     }
   }
 
-  scalePlayBoundary(scale) {
+  scalePlayBoundary(scale: number) {
     this.playBoundary.style.transform = `scale(${scale})`;
 
     if (this.zoomLevel !== this.prevZoomLevel) {
-      Events.notify(EVENT_TYPES.CHANGE_SCALE, this.zoomLevel);
+      window.dispatchEvent(
+        new CustomEvent(EVENT_TYPES.CHANGE_SCALE, { detail: this.zoomLevel })
+      );
     }
 
     if (this.isPreviewActive) {
-      this.updatePreviewerSizeAndPosition();
+      // TODO: Reimplement
+      // this.updatePreviewerSizeAndPosition();
     }
   }
 
@@ -148,6 +166,6 @@ export default class Zoom {
       stageRect.width / 2 - playBoundaryRect.width / 2
     );
 
-    Events.notify(EVENT_TYPES.RESIZE);
+    window.dispatchEvent(new CustomEvent(EVENT_TYPES.RESIZE));
   }
 }

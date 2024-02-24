@@ -658,19 +658,19 @@ const Utils = {
     };
   },
 
-  getPocketByCollision(box: DOMRect) {
+  getPocketByCollision(box: DomBox): HTMLDivElement | undefined {
     let i = 0;
     const pockets = document.querySelectorAll(".pocket");
     while (i < pockets.length) {
       const pocket = pockets[i];
       if (Utils.hasCollision(pocket.getBoundingClientRect(), box)) {
-        return pocket;
+        return pocket as HTMLDivElement;
       }
       i++;
     }
   },
 
-  getEventBox(e: MouseEvent) {
+  getEventBox(e: MouseEvent): DomBox {
     return {
       top: e.clientY,
       right: e.clientX,
@@ -679,7 +679,7 @@ const Utils = {
     };
   },
 
-  getIndividualPiecesOnCanvas(): MovableElement {
+  getIndividualPiecesOnCanvas(): MovableElement[] {
     const pieces = document.querySelectorAll(".puzzle-piece");
     return Array.from(pieces).filter((el: HTMLDivElement) => {
       return (

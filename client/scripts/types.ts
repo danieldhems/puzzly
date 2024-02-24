@@ -121,7 +121,9 @@ export interface Puzzly {
   groupInstances: GroupMovable[];
   complete: boolean;
   playBoundary: HTMLDivElement;
+  stage: HTMLDivElement;
   piecesContainer: HTMLDivElement;
+  isPreviewActive: boolean;
   keepOnTop: (element: MovableElement) => void;
   updateSolvedCanvas: () => void;
 }

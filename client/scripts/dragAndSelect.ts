@@ -1,9 +1,11 @@
+import BaseMovable from "./BaseMovable.js";
 import { EVENT_TYPES } from "./constants.js";
 import Pockets from "./Pockets.js";
+import SingleMovable from "./SingleMovable.js";
 import { MovableElement, Puzzly } from "./types.js";
 import Utils from "./utils.js";
 
-class DragAndSelect {
+class DragAndSelect extends BaseMovable {
   Puzzly: Puzzly;
   Pockets: Pockets;
   playBoundary: HTMLDivElement;
@@ -11,6 +13,10 @@ class DragAndSelect {
   selectedPiecesContainer: HTMLDivElement | null;
   zoomLevel: number;
   selectedPieces: HTMLDivElement[];
+  lastPosition: {
+    top: number;
+    left: number;
+  };
 
   isMouseDown: boolean;
   isMouseDownHeld: boolean;
@@ -37,6 +43,7 @@ class DragAndSelect {
   diffY: number;
 
   constructor(opts: Puzzly) {
+    super(opts);
     this.Puzzly = opts;
     this.Pockets = opts.Pockets;
     this.playBoundary = opts.playBoundary;
@@ -183,7 +190,7 @@ class DragAndSelect {
     document.body.style.cursor = state === 1 ? "crosshair" : "default";
   }
 
-  getCollidingPieces(): MovableElement {
+  getCollidingPieces(): MovableElement[] {
     const dragBoxRect = this.drawBox.getBoundingClientRect();
     return Utils.getIndividualPiecesOnCanvas().filter((el) =>
       Utils.hasCollision(el.getBoundingClientRect(), dragBoxRect)
@@ -348,27 +355,27 @@ class DragAndSelect {
     }
   }
 
-  onMouseMove(e) {
-    e.preventDefault();
+  onMouseMove(event: MouseEvent) {
+    event.preventDefault();
 
     if (
       this.isMouseDown &&
       this.isInterrogatingMouse &&
-      !this.isMouseHoldWithinTolerance(e)
+      !this.isMouseHoldWithinTolerance(event)
     ) {
       this.hasMouseMoved = true;
       this.isInterrogatingMouse = false;
     }
 
     if (this.isMouseDown && this.drawBoxActive) {
-      this.updateDrawBox(e);
+      this.updateDrawBox(event);
     }
 
     if (this.selectedPiecesAreMoving && this.selectedPiecesContainer) {
       const newPosTop =
-        e.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
+        event.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
       const newPosLeft =
-        e.clientX / this.zoomLevel - this.diffX / this.zoomLevel;
+        event.clientX / this.zoomLevel - this.diffX / this.zoomLevel;
 
       this.selectedPiecesContainer.style.top = newPosTop + "px";
       this.selectedPiecesContainer.style.left = newPosLeft + "px";
@@ -398,7 +405,7 @@ class DragAndSelect {
       this.selectedPieces = this.getCollidingPieces();
 
       if (this.selectedPieces.length === 0) {
-        this.endDrag();
+        this.endDrag(event);
         return;
       }
 
@@ -415,91 +422,100 @@ class DragAndSelect {
       this.toggleDrawCursor();
       this.deactivateDrawBox();
 
-      Events.notify(EVENT_TYPES.PIECE_PICKUP, this.selectedPiecesContainer);
-      Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, true);
+      window.dispatchEvent(
+        new CustomEvent(EVENT_TYPES.PIECE_PICKUP, {
+          detail: this.selectedPiecesContainer,
+        })
+      );
+      window.dispatchEvent(
+        new CustomEvent(EVENT_TYPES.DRAGANDSELECT_ACTIVE, { detail: true })
+      );
     } else if (this.selectedPiecesContainer) {
       // A group of selected pieces has been moved
 
       if (this.isDragOutOfBounds()) {
-        this.selectedPiecesContainer.style.left = this.lastPosition.left + "px";
-        this.selectedPiecesContainer.style.top = this.lastPosition.top + "px";
+        this.reset();
       }
 
-      this.endDrag(e);
+      this.endDrag(event);
     }
   }
 
-  addPiecesToPocket(pocket) {
+  addPiecesToPocket(pocket: HTMLDivElement) {
     for (let i = 0, l = this.selectedPieces.length; i < l; i++) {
-      const pieceInstance = this.Puzzly.getMovableInstanceFromElement(
+      const pieceInstance = this.getMovableInstanceFromElement(
         this.selectedPieces[i]
       );
       this.Pockets.addSingleToPocket(pocket, pieceInstance);
     }
   }
 
-  endDrag(e) {
+  endDrag(event: MouseEvent) {
     this.deactivateDrawBox();
     this.setDrawCursor(0);
 
     if (this.selectedPieces.length > 0) {
       this.toggleHighlightPieces(this.selectedPieces);
-      const eventBox = Utils.getEventBox(e);
+      const eventBox = Utils.getEventBox(event);
       const pocket = Utils.getPocketByCollision(eventBox);
       if (pocket) {
-        this.addPiecesToPocket(pocket, this.selectedPieces);
+        this.addPiecesToPocket(pocket);
       } else {
         this.dropPieces(this.selectedPieces);
       }
       this.save();
     }
 
-    Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, false);
-    Events.notify(EVENT_TYPES.CLEAR_BRIDGE);
+    window.dispatchEvent(
+      new CustomEvent(EVENT_TYPES.DRAGANDSELECT_ACTIVE, { detail: false })
+    );
+    window.dispatchEvent(new CustomEvent(EVENT_TYPES.CLEAR_BRIDGE));
 
     this.selectedPiecesContainer?.remove();
     this.selectedPiecesContainer = null;
 
     this.selectedPieces = [];
     this.drawBoxActive = false;
-
-    this.touchStartTime = null;
-    this.touchEndTime = null;
   }
 
-  isDragOutOfBounds(e) {
-    const selectedPiecesRect =
-      this.selectedPiecesContainer.getBoundingClientRect();
+  isDragOutOfBounds() {
+    const selectedPiecesRect = (
+      this.selectedPiecesContainer as HTMLDivElement
+    ).getBoundingClientRect();
     const playBoundaryRect = this.playBoundary.getBoundingClientRect();
 
     return !Utils.isInside(selectedPiecesRect, playBoundaryRect);
   }
 
   setLastPosition() {
-    this.lastPosition = {
-      top: this.selectedPiecesContainer.offsetTop,
-      right:
-        this.selectedPiecesContainer.offsetLeft +
-        this.selectedPiecesContainer.offsetWidth,
-      bottom:
-        this.selectedPiecesContainer.offsetTop +
-        this.selectedPiecesContainer.offsetHeight,
-      left: this.selectedPiecesContainer.offsetLeft,
-    };
+    if (this.selectedPiecesContainer) {
+      this.lastPosition = {
+        top: this.selectedPiecesContainer.offsetTop,
+        left: this.selectedPiecesContainer.offsetLeft,
+      };
+    }
+  }
+
+  reset() {
+    const container = this.selectedPiecesContainer as HTMLDivElement;
+    container.style.left = this.lastPosition.left + "px";
+    container.style.top = this.lastPosition.top + "px";
   }
 
   save() {
     // TODO: Still would prefer to handle saving in a cleaner way
     const data = this.selectedPieces.map((element) => {
-      const pieceInstance = this.Puzzly.getMovableInstanceFromElement(element);
+      const pieceInstance = this.getMovableInstanceFromElement(
+        element
+      ) as SingleMovable;
       return {
         _id: pieceInstance._id,
         pageX: pieceInstance.element.offsetLeft,
         pageY: pieceInstance.element.offsetTop,
-        pocket: pieceInstance.pocket,
+        pocket: pieceInstance.pocketId,
       };
     });
-    Events.notify(EVENT_TYPES.SAVE, data);
+    window.dispatchEvent(new CustomEvent(EVENT_TYPES.SAVE, { detail: data }));
   }
 }
 
