@@ -3,10 +3,8 @@ import GroupMovable from "./GroupMovable.js";
 import Pockets from "./pockets.js";
 import DragAndSelect from "./dragAndSelect.js";
 import Utils from "./utils.js";
-import Events from "./events.js";
 import { ELEMENT_IDS, EVENT_TYPES, SIDES } from "./constants.js";
 import { PocketMovable } from "./PocketMovable.js";
-import { checkConnections } from "./checkConnections.js";
 import PersistenceOperations from "./persistence.js";
 import CanvasOperations from "./canvasOperations.js";
 import Zoom from "./zoom.js";
@@ -298,10 +296,6 @@ class Puzzly {
       window.location = "/";
     });
 
-    window.addEventListener(EVENT_TYPES.RETURN_TO_CANVAS, (e) => {
-      this.handleDrop(e.detail);
-    });
-
     window.addEventListener(EVENT_TYPES.DRAGANDSELECT_ACTIVE, (e) => {
       this.dragAndSelectActive = e.detail;
     });
@@ -589,15 +583,6 @@ class Puzzly {
     });
   }
 
-  addToPlayBoundary(piece) {
-    this.piecesContainer.prepend(piece);
-  }
-
-  getType(el) {
-    const attrValue = this.getDataAttributeValue(el, "jigsaw-type");
-    return attrValue.split(",").map((n) => parseInt(n));
-  }
-
   applyHighlightToConnectingPieces(connections) {
     for (let id in connections) {
       let el = Utils.getElementByPieceId(connections[id]);
@@ -612,133 +597,8 @@ class Puzzly {
     }
   }
 
-  handleDrop(element) {
-    if (!this.dragAndSelectActive) {
-      const connection = checkConnections(element);
-
-      if (connection) {
-        const { targetEl } = connection;
-
-        let connectionType =
-          typeof connection == "string" ? connection : connection.type;
-        const isSolvedConnection =
-          Utils.isCornerConnection(connectionType) ||
-          connectionType === "float";
-
-        if (isSolvedConnection) {
-          this.addToGroup(element, this.solvedGroupId);
-        } else {
-          this.group(element, targetEl);
-        }
-
-        Utils.updateConnections(element);
-
-        if (this.shouldMarkAsSolved(element, connectionType)) {
-          this.markAsSolved([element]);
-          if (this.isPuzzleComplete()) {
-            this.updateElapsedTime(true);
-          }
-        }
-
-        if (this.getGroup(element)) {
-          Events.notify(
-            EVENT_TYPES.SAVE,
-            Utils.getPiecesInGroup(Utils.getGroup(element))
-          );
-        }
-      }
-
-      Events.notify(EVENT_TYPES.SAVE, [element]);
-    }
-  }
-
-  isViewportInsidePlayBoundary() {
-    const box = this.playBoundary.getBoundingClientRect();
-    const sbox = this.stage.getBoundingClientRect();
-    return (
-      box.top < sbox.top &&
-      box.right > sbox.right &&
-      box.bottom > sbox.bottom &&
-      box.left < sbox.left
-    );
-  }
-
-  getUpdatedPlayBoundaryPosition(element, projectedPosition) {
-    const ebox = element.getBoundingClientRect();
-    const sbox = this.stage.getBoundingClientRect();
-    let top, left;
-    if (this.zoomLevel > this.INITIAL_ZOOM_LEVEL) {
-      top =
-        ebox.top < sbox.top && projectedPosition.top > sbox.top
-          ? sbox.top
-          : projectedPosition.top;
-      left =
-        ebox.left < sbox.left && projectedPosition.left > sbox.left
-          ? sbox.left
-          : projectedPosition.left;
-      return { top, left };
-    } else {
-      return false;
-    }
-  }
-
-  getDataAttributeRaw(el, key) {
-    // console.log('getDataAttributeRaw', el)
-    return el.getAttribute(`data-${key}`) || undefined;
-  }
-
-  getDataAttributeValue(el, key) {
-    const value = this.getDataAttributeRaw(el, key);
-    return value && value !== "undefined" ? value : undefined;
-  }
-
   keepOnTop(el) {
     el.style.zIndex = this.currentZIndex = this.currentZIndex + 1;
-  }
-
-  setElementAttribute(el, attr, value) {
-    el.setAttribute(attr, value);
-  }
-
-  isCornerConnection(str) {
-    return (
-      str === "top-left" ||
-      str === "top-right" ||
-      str === "bottom-right" ||
-      str === "bottom-left"
-    );
-  }
-
-  shouldMarkAsSolved(piece, connection) {
-    const isCornerConnection = Utils.isCornerConnection(connection);
-    const group = getGroup(piece);
-    let check;
-
-    if (group) {
-      check = Array.from(this.getPiecesInGroup(group)).some((p) => {
-        let piece = this.getPieceFromElement(p, ["jigsaw-type", "is-solved"]);
-        return (
-          piece.isSolved ||
-          (Utils.isCornerPiece(piece) && connection === "float")
-        );
-      });
-    } else {
-      check = isGroupSolved(group);
-    }
-    return isCornerConnection || check;
-  }
-
-  markAsSolved(els) {
-    let container;
-    if (getGroup(els[0])) {
-      container = getGroupTopContainer(els[0]);
-      this.setElementAttribute(container, "data-is-solved", true);
-      container.style.zIndex = 1;
-    }
-    els.forEach((piece) => {
-      this.setElementAttribute(piece, "data-is-solved", true);
-      piece.style.zIndex = 1;
-    });
   }
 
   loadAssets(assets) {
@@ -763,92 +623,6 @@ class Puzzly {
         reject(err);
       };
     });
-  }
-
-  getCompatiblePieces(pieceAbove, pieceBehind, pieces) {
-    let pieceAboveHasPlug,
-      pieceAboveHasSocket,
-      pieceBehindHasPlug,
-      pieceBehindHasSocket;
-
-    if (pieceAbove) {
-      pieceAboveHasSocket = pieceAbove.type[2] === -1;
-      pieceAboveHasPlug = pieceAbove.type[2] === 1;
-    }
-
-    if (pieceBehind) {
-      pieceBehindHasSocket = pieceBehind.type[2] === -1;
-      pieceBehindHasPlug = pieceBehind.type[2] === 1;
-    }
-
-    let thisPieceHasLeftSocket,
-      thisPieceHasLeftPlug,
-      thisPieceHasTopSocket,
-      thisPieceHasTopPlug;
-
-    const candidatePieces = [];
-
-    for (let i = 0, l = pieces.length; i < l; i++) {
-      if (pieceAbove) {
-        thisPieceHasTopSocket = pieces[i].type[0] === -1;
-        thisPieceHasTopPlug = pieces[i].type[0] === 1;
-      }
-
-      if (pieceBehind) {
-        thisPieceHasLeftSocket = pieces[i].type[3] === -1;
-        thisPieceHasLeftPlug = pieces[i].type[3] === 1;
-      }
-
-      if (pieceAbove && !pieceBehind) {
-        if (pieceAboveHasSocket && thisPieceHasTopPlug) {
-          candidatePieces.push(pieces[i]);
-        } else if (pieceAboveHasPlug && thisPieceHasTopSocket) {
-          candidatePieces.push(pieces[i]);
-        }
-      }
-
-      if (!pieceAbove && pieceBehind) {
-        if (pieceBehindHasPlug && thisPieceHasLeftSocket) {
-          candidatePieces.push(pieces[i]);
-        } else if (pieceBehindHasSocket && thisPieceHasLeftPlug) {
-          candidatePieces.push(pieces[i]);
-        }
-      }
-
-      if (pieceAbove && pieceBehind) {
-        if (
-          pieceBehindHasSocket &&
-          thisPieceHasLeftPlug &&
-          pieceAboveHasPlug &&
-          thisPieceHasTopSocket
-        ) {
-          candidatePieces.push(pieces[i]);
-        } else if (
-          pieceBehindHasPlug &&
-          thisPieceHasLeftSocket &&
-          pieceAboveHasSocket &&
-          thisPieceHasTopPlug
-        ) {
-          candidatePieces.push(pieces[i]);
-        } else if (
-          pieceBehindHasSocket &&
-          thisPieceHasLeftPlug &&
-          pieceAboveHasSocket &&
-          thisPieceHasTopPlug
-        ) {
-          candidatePieces.push(pieces[i]);
-        } else if (
-          pieceBehindHasPlug &&
-          thisPieceHasLeftSocket &&
-          pieceAboveHasPlug &&
-          thisPieceHasTopSocket
-        ) {
-          candidatePieces.push(pieces[i]);
-        }
-      }
-    }
-
-    return candidatePieces;
   }
 
   getSectorBoundingBox(sector) {
@@ -1217,79 +991,8 @@ class Puzzly {
     });
   }
 
-  drawBoundingBox(box, className) {
-    const div = document.createElement("div");
-    div.style.position = "absolute";
-    div.style.top = box.top + "px";
-    div.style.left = box.left + "px";
-    div.style.width = box.right - box.left + "px";
-    div.style.height = box.bottom - box.top + "px";
-    div.style.backgroundColor = "black";
-    if (className) {
-      div.classList.add(className);
-    }
-    document.body.appendChild(div);
-  }
-
-  getPieceBoundingBox(piece) {
-    return {
-      top: piece.pageY,
-      right: piece.pageX + piece.imgW,
-      left: piece.pageX,
-      bottom: piece.pageY + piece.imgH,
-    };
-  }
-
   allPieces() {
     return document.querySelectorAll(".puzzle-piece");
-  }
-
-  filterPiecesByDataAttribute(els, key, value) {
-    return els.map((el) => this.getDataAttributeValue(el, key) === value);
-  }
-
-  // stout
-  getElementBoundingBoxRelativeToTopContainer(el) {
-    let top = 0,
-      left = 0;
-    const recurse = (el) => {
-      if (
-        el.classList.contains("subgroup") ||
-        el.classList.contains("puzzle-piece")
-      ) {
-        left += el.offsetLeft;
-        top += el.offsetTop;
-        return recurse(el.parentNode);
-      } else {
-        return {
-          top,
-          left,
-        };
-      }
-    };
-
-    return recurse(el);
-  }
-
-  getBoundingBox(el) {
-    return {
-      top: el.offsetTop,
-      right: el.offsetLeft + el.offsetWidth,
-      bottom: el.offsetTop + el.offsetHeight,
-      left: el.offsetLeft,
-      width: el.offsetWidth,
-      height: el.offsetHeight,
-    };
-  }
-
-  getElementBoundingBox(el) {
-    let pos = this.getElementBoundingBoxRelativeToTopContainer(el);
-    return {
-      top: pos.top,
-      right: pos.left + el.offsetWidth,
-      bottom: pos.top + el.offsetHeight,
-      left: pos.left,
-    };
   }
 
   setupFullImagePreviewer() {
@@ -1300,13 +1003,6 @@ class Puzzly {
     } else {
       this.fullImageViewerEl.style.display = "none";
     }
-  }
-
-  isPuzzleComplete() {
-    return (
-      Array.from(this.allPieces()).filter((p) => this.isSolved(p)).length ===
-      this.selectedNumPieces
-    );
   }
 
   saveToLocalStorage() {
@@ -1332,61 +1028,6 @@ class Puzzly {
     localStorage.setItem(progressKey, JSON.stringify(payload));
     console.info(`[Puzzly] Saving to local storage, key ${lastSaveKey}:`, time);
     localStorage.setItem(lastSaveKey, time);
-  }
-
-  setElementIdsFromPersistence(pieces) {
-    const allPieces = this.allPieces();
-    pieces.forEach((p) => {
-      let { imgX, imgY, _id } = p;
-      imgX = "" + imgX;
-      imgY = "" + imgY;
-      const el = Utils.querySelectorFrom(
-        `[data-imgx='${imgX}'][data-imgy='${imgY}']`,
-        allPieces
-      )[0];
-      this.setElementAttribute(el, "data-piece-id-in-persistence", _id);
-    });
-  }
-
-  async save(pieces) {
-    console.log("Saving", pieces);
-
-    if (pieces.length === 0) {
-      console.warn("Nothing to save");
-      return;
-    }
-    const payload = [];
-    const pieceArray = Array.isArray(pieces) ? pieces : Array.from(pieces);
-
-    pieceArray.forEach((p) => {
-      payload.push(Utils.getPieceFromElement(p));
-    });
-
-    fetch(`/api/pieces`, {
-      method: "put",
-      headers: {
-        "Content-Type": "Application/json",
-      },
-      body: JSON.stringify(payload),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          this.saveToLocalStorage();
-          return;
-        }
-        return res.json();
-      })
-      .then((res) => {
-        if (res.status === "failure") {
-          console.info(
-            "[Puzzly] Save to DB failed, saving to Local Storage instead."
-          );
-          localStorage.setItem("puzzly", {
-            lastSaveDate: Date.now(),
-            progress: payload,
-          });
-        }
-      });
   }
 }
 
