@@ -1,6 +1,6 @@
 import { EVENT_TYPES } from "./constants.js";
 import Pockets from "./Pockets.js";
-import { Puzzly } from "./types.js";
+import { MovableElement, Puzzly } from "./types.js";
 import Utils from "./utils.js";
 
 class DragAndSelect {
@@ -15,6 +15,7 @@ class DragAndSelect {
   isMouseDown: boolean;
   isMouseDownHeld: boolean;
   hasMouseReleased: boolean;
+  hasMouseMoved: boolean;
   isRightClick: boolean;
   isInterrogatingMouse: boolean;
   piecesSelected: boolean;
@@ -22,11 +23,18 @@ class DragAndSelect {
 
   mouseHoldDetectionTime: number;
   mouseHoldDetectionMovementTolerance: number;
+  mouseHoldStartX: number | null;
+  mouseHoldStartY: number | null;
 
   drawBox: HTMLDivElement;
-  timer: TimerHandler | null;
-  touchStartTime: Date;
-  touchEndTime: Date;
+  drawBoxActive: boolean;
+  drawBoxStartX: number | null;
+  drawBoxStartY: number | null;
+  timer: ReturnType<typeof setTimeout> | null;
+  touchStartTime: number;
+  touchEndTime: number;
+  diffX: number;
+  diffY: number;
 
   constructor(opts: Puzzly) {
     this.Puzzly = opts;
@@ -39,6 +47,7 @@ class DragAndSelect {
     this.isMouseDown = false;
     this.isMouseDownHeld = false;
     this.hasMouseReleased = false;
+    this.hasMouseMoved = false;
     this.isRightClick = false;
     this.isInterrogatingMouse = false;
     this.piecesSelected = false;
@@ -62,15 +71,17 @@ class DragAndSelect {
     window.addEventListener(EVENT_TYPES.CHANGE_SCALE, this.setScale.bind(this));
     window.addEventListener("puzzly_pockets_pieces_added", (e) => {
       this.toggleDrawCursor();
-      this.toggleHighlightPieces();
+      this.toggleHighlightPieces(this.selectedPieces);
       this.selectedPieces = [];
       this.selectedPiecesContainer?.remove();
       this.selectedPiecesContainer = null;
-      Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, false);
+      window.dispatchEvent(
+        new CustomEvent(EVENT_TYPES.DRAGANDSELECT_ACTIVE, { detail: false })
+      );
     });
   }
 
-  setScale(eventData) {
+  setScale(eventData: CustomEvent) {
     const value = eventData.detail;
     this.zoomLevel = value;
   }
@@ -80,7 +91,7 @@ class DragAndSelect {
     return new Promise((resolve, reject) => {
       this.timer = setTimeout(() => {
         if (!this.hasMouseMoved && !this.hasMouseReleased) {
-          resolve();
+          resolve(true);
         } else {
           reject("Mouse-hold conditions not met");
         }
@@ -88,17 +99,19 @@ class DragAndSelect {
     });
   }
 
-  isMouseHoldWithinTolerance(e) {
-    return (
-      Math.abs(this.mouseHoldStartX - e.clientX) <=
-        this.mouseHoldDetectionMovementTolerance ||
-      Math.abs(e.clientX - this.mouseHoldStartX) <=
-        this.mouseHoldDetectionMovementTolerance ||
-      Math.abs(this.mouseHoldStartY - e.clientY) <=
-        this.mouseHoldDetectionMovementTolerance ||
-      Math.abs(e.clientY - this.mouseHoldStartY) <=
-        this.mouseHoldDetectionMovementTolerance
-    );
+  isMouseHoldWithinTolerance(event: MouseEvent) {
+    if (this.mouseHoldStartX && this.mouseHoldStartY) {
+      return (
+        Math.abs(this.mouseHoldStartX - event.clientX) <=
+          this.mouseHoldDetectionMovementTolerance ||
+        Math.abs(event.clientX - this.mouseHoldStartX) <=
+          this.mouseHoldDetectionMovementTolerance ||
+        Math.abs(this.mouseHoldStartY - event.clientY) <=
+          this.mouseHoldDetectionMovementTolerance ||
+        Math.abs(event.clientY - this.mouseHoldStartY) <=
+          this.mouseHoldDetectionMovementTolerance
+      );
+    }
   }
 
   initiateDrawBox() {
@@ -107,88 +120,89 @@ class DragAndSelect {
     this.drawBox.style.position = "fixed";
     this.drawBox.style.border = "1px solid #fefefe";
     this.drawBox.style.backgroundColor = "#cecece";
-    this.drawBox.style.opacity = 0.3;
+    this.drawBox.style.opacity = 0.3 + "";
     this.drawBox.style.display = "none";
     document.body.appendChild(this.drawBox);
   }
 
-  activateDrawBox(e) {
+  activateDrawBox(event: MouseEvent) {
     console.log("activating drawbox");
     this.drawBox.style.display = "block";
-    this.drawBox.style.top = e.clientY + "px";
-    this.drawBox.style.left = e.clientX + "px";
+    this.drawBox.style.top = event.clientY + "px";
+    this.drawBox.style.left = event.clientX + "px";
     this.drawBoxActive = true;
-    this.drawBoxStartY = e.clientY;
-    this.drawBoxStartX = e.clientX;
+    this.drawBoxStartY = event.clientY;
+    this.drawBoxStartX = event.clientX;
   }
 
   deactivateDrawBox() {
     this.drawBox.style.display = "none";
-    this.drawBox.style.width = null;
-    this.drawBox.style.height = null;
+    this.drawBox.style.width = 0 + "px";
+    this.drawBox.style.height = 0 + "px";
     this.drawBoxActive = false;
     this.drawBoxStartY = null;
     this.drawBoxStartX = null;
   }
 
-  updateDrawBox(e) {
+  updateDrawBox(event: MouseEvent) {
     let top, left, width, height;
 
-    if (e.clientX > this.drawBoxStartX) {
-      // Dragging right
-      left = this.drawBoxStartX;
-      width = e.clientX - this.drawBoxStartX;
-    } else {
-      // Dragging left
-      left = e.clientX;
-      width = this.drawBoxStartX - e.clientX;
-    }
+    if (this.drawBoxStartX && this.drawBoxStartY) {
+      if (event.clientX > this.drawBoxStartX) {
+        // Dragging right
+        left = this.drawBoxStartX;
+        width = event.clientX - this.drawBoxStartX;
+      } else {
+        // Dragging left
+        left = event.clientX;
+        width = this.drawBoxStartX - event.clientX;
+      }
 
-    if (e.clientY > this.drawBoxStartY) {
-      // Dragging down
-      top = this.drawBoxStartY;
-      height = e.clientY - this.drawBoxStartY;
-    } else {
-      // Dragging up
-      top = e.clientY;
-      height = this.drawBoxStartY - e.clientY;
-    }
+      if (event.clientY > this.drawBoxStartY) {
+        // Dragging down
+        top = this.drawBoxStartY;
+        height = event.clientY - this.drawBoxStartY;
+      } else {
+        // Dragging up
+        top = event.clientY;
+        height = this.drawBoxStartY - event.clientY;
+      }
 
-    this.drawBox.style.top = top + "px";
-    this.drawBox.style.left = left + "px";
-    this.drawBox.style.width = width + "px";
-    this.drawBox.style.height = height + "px";
+      this.drawBox.style.top = top + "px";
+      this.drawBox.style.left = left + "px";
+      this.drawBox.style.width = width + "px";
+      this.drawBox.style.height = height + "px";
+    }
   }
 
   toggleDrawCursor() {
     document.body.style.cursor = this.drawBoxActive ? "crosshair" : "default";
   }
 
-  setDrawCursor(state) {
+  setDrawCursor(state: number) {
     document.body.style.cursor = state === 1 ? "crosshair" : "default";
   }
 
-  getCollidingPieces() {
+  getCollidingPieces(): MovableElement {
     const dragBoxRect = this.drawBox.getBoundingClientRect();
     return Utils.getIndividualPiecesOnCanvas().filter((el) =>
       Utils.hasCollision(el.getBoundingClientRect(), dragBoxRect)
     );
   }
 
-  toggleHighlightPieces() {
-    if (this.selectedPiecesContainer) {
-      Array.from(this.selectedPiecesContainer.childNodes).forEach((element) => {
-        element.style.opacity = this.drawBoxActive ? 0.5 : 1;
-      });
-    } else {
-      Array.from(this.selectedPiecesContainer.childNodes).forEach((element) => {
-        element.style.opacity = this.drawBoxActive ? 1 : 0.5;
-      });
-    }
+  toggleHighlightPieces(pieces: MovableElement[]) {
+    Array.from(pieces).forEach((element) => {
+      const el = element as MovableElement;
+      const currentOpacity = el.style.opacity;
+      el.style.opacity = currentOpacity === "1" ? "0.5" : "1";
+    });
   }
 
-  getBoundingBoxForDragContainer(pieces) {
-    let minX, minY, maxX, maxY;
+  getBoundingBoxForDragContainer(pieces: MovableElement[]) {
+    let minX = 0,
+      minY = 0,
+      maxX = 0,
+      maxY = 0;
 
     for (let i = 0, l = pieces.length; i < l; i++) {
       const piece = pieces[i];
@@ -231,7 +245,7 @@ class DragAndSelect {
     };
   }
 
-  getContainerForMove(pieces) {
+  getContainerForMove(pieces: MovableElement[]) {
     const box = this.getBoundingBoxForDragContainer(pieces);
 
     const b = document.createElement("div");
@@ -252,22 +266,22 @@ class DragAndSelect {
     return b;
   }
 
-  dropPieces(pieces) {
+  dropPieces(pieces: MovableElement[]) {
     // Put pieces back in play area
     pieces.forEach((p) => {
       p.style.left =
-        p.offsetLeft + parseInt(this.selectedPiecesContainer.style.left) + "px";
+        p.offsetLeft +
+        parseInt((this.selectedPiecesContainer as HTMLDivElement).style.left) +
+        "px";
       p.style.top =
-        p.offsetTop + parseInt(this.selectedPiecesContainer.style.top) + "px";
+        p.offsetTop +
+        parseInt((this.selectedPiecesContainer as HTMLDivElement).style.top) +
+        "px";
       this.piecesContainer.appendChild(p);
     });
   }
 
-  resetSelectedPiecesContainer() {
-    this.selectedPiecesContainer.display = "none";
-  }
-
-  onMouseDown(e) {
+  onMouseDown(e: MouseEvent) {
     e.preventDefault();
 
     this.hasMouseReleased = false;
@@ -279,7 +293,7 @@ class DragAndSelect {
 
     this.touchStartTime = Date.now();
 
-    const isEmptySpace = !Utils.isPuzzlePiece(e.target);
+    const isEmptySpace = !Utils.isPuzzlePiece(e.target as HTMLElement);
 
     isEmptySpace &&
       !this.isRightClick &&
@@ -291,7 +305,9 @@ class DragAndSelect {
           this.activateDrawBox(e);
           this.toggleDrawCursor();
 
-          Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, true);
+          window.dispatchEvent(
+            new CustomEvent(EVENT_TYPES.DRAGANDSELECT_ACTIVE, { detail: true })
+          );
         })
         .catch((e) => {
           this.isMouseDownHeld = false;
@@ -301,21 +317,26 @@ class DragAndSelect {
 
             this.selectedPieces = [];
             this.drawBoxActive = false;
-            this.selectedPiecesContainer.remove();
+            (this.selectedPiecesContainer as HTMLDivElement).remove();
             this.selectedPiecesContainer = null;
 
-            Events.notify(EVENT_TYPES.CLEAR_BRIDGE, false);
+            window.dispatchEvent(
+              new CustomEvent(EVENT_TYPES.CLEAR_BRIDGE, { detail: false })
+            );
           }
 
-          Events.notify(EVENT_TYPES.DRAGANDSELECT_ACTIVE, false);
+          window.dispatchEvent(
+            new CustomEvent(EVENT_TYPES.DRAGANDSELECT_ACTIVE, { detail: false })
+          );
         });
 
     if (!isEmptySpace && this.selectedPieces.length > 0) {
       const pieceEl = Utils.getPuzzlePieceElementFromEvent(e);
 
       if (
-        pieceEl.classList.contains("puzzle-piece") &&
-        pieceEl.classList.contains("selected")
+        pieceEl?.classList.contains("puzzle-piece") &&
+        pieceEl.classList.contains("selected") &&
+        this.selectedPiecesContainer
       ) {
         this.diffX =
           e.clientX - this.selectedPiecesContainer.offsetLeft * this.zoomLevel;
@@ -343,7 +364,7 @@ class DragAndSelect {
       this.updateDrawBox(e);
     }
 
-    if (this.selectedPiecesAreMoving) {
+    if (this.selectedPiecesAreMoving && this.selectedPiecesContainer) {
       const newPosTop =
         e.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
       const newPosLeft =
@@ -354,10 +375,8 @@ class DragAndSelect {
     }
   }
 
-  onMouseUp(e) {
-    e.preventDefault();
-    const droppedElementIsInSelectedGroup =
-      e.target.classList?.contains("selected");
+  onMouseUp(event: MouseEvent) {
+    event.preventDefault();
 
     this.touchEndTime = Date.now();
 

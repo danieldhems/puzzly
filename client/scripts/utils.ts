@@ -1,6 +1,12 @@
 import { ELEMENT_IDS, PUZZLE_PIECE_CLASSES } from "./constants.js";
 import GroupOperations from "./GroupOperations.js";
-import { ConnectorType, DomBox, JigsawPieceData, SideNames } from "./types";
+import {
+  ConnectorType,
+  DomBox,
+  JigsawPieceData,
+  MovableElement,
+  SideNames,
+} from "./types";
 
 const Utils = {
   hasCollision(source: DomBox, target: DomBox): boolean {
@@ -637,19 +643,19 @@ const Utils = {
       : null;
   },
 
-  getStyleBoundingBox(element: HTMLDivElement) {
+  getStyleBoundingBox(
+    element: HTMLDivElement
+  ): Pick<DOMRect, "top" | "right" | "bottom" | "left" | "width" | "height"> {
     const top = parseInt(element.style.top);
     const left = parseInt(element.style.left);
-    return element
-      ? {
-          top,
-          right: left + element.offsetWidth,
-          bottom: top + element.offsetHeight,
-          left,
-          width: element.offsetWidth,
-          height: element.offsetHeight,
-        }
-      : null;
+    return {
+      top,
+      right: left + element.offsetWidth,
+      bottom: top + element.offsetHeight,
+      left,
+      width: element.offsetWidth,
+      height: element.offsetHeight,
+    };
   },
 
   getPocketByCollision(box: DOMRect) {
@@ -673,7 +679,7 @@ const Utils = {
     };
   },
 
-  getIndividualPiecesOnCanvas() {
+  getIndividualPiecesOnCanvas(): MovableElement {
     const pieces = document.querySelectorAll(".puzzle-piece");
     return Array.from(pieces).filter((el: HTMLDivElement) => {
       return (
@@ -681,7 +687,7 @@ const Utils = {
         !el.dataset.groupId &&
         !el.classList.contains("in-pocket")
       );
-    });
+    }) as MovableElement[];
   },
 
   isOverPockets(box: DOMRect) {
@@ -694,7 +700,7 @@ const Utils = {
     return Utils.hasCollision(box, pocketsBox);
   },
 
-  isPuzzlePiece(target: HTMLDivElement) {
+  isPuzzlePiece(target: HTMLElement) {
     const classes = target.classList;
     return (
       PUZZLE_PIECE_CLASSES.some((c) => classes.contains(c)) &&
@@ -702,7 +708,7 @@ const Utils = {
     );
   },
 
-  getPuzzlePieceElementFromEvent(e: MouseEvent) {
+  getPuzzlePieceElementFromEvent(e: MouseEvent): MovableElement | undefined {
     const classes = (e.target as HTMLDivElement)?.classList;
 
     if (!classes) return;
@@ -711,11 +717,11 @@ const Utils = {
     const isPuzzlePieceLayerElement = classes.contains("puzzle-piece-fg");
 
     if (isPuzzlePiece) {
-      return e.target;
+      return e.target as MovableElement;
     }
 
     if (isPuzzlePieceLayerElement) {
-      return (e.target as HTMLElement).parentNode;
+      return (e.target as HTMLElement).parentNode as MovableElement;
     }
   },
 
