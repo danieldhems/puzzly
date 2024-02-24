@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var constants_1 = require("./constants");
 var utils_1 = require("./utils");
-var events_1 = require("./events");
 var GroupOperations_js_1 = require("./GroupOperations.js");
 var types_1 = require("./types");
 var BaseMovable = /** @class */ (function () {
@@ -11,7 +10,7 @@ var BaseMovable = /** @class */ (function () {
         this.active = false;
         this.zoomLevel = 1;
         this.isDragAndSelectActive = false;
-        this.puzzly = puzzly;
+        this.Puzzly = puzzly;
         // console.log("puzzly", puzzly);
         this.puzzleImage = puzzly.puzzleImage;
         this.piecesContainer = document.querySelector("#".concat(constants_1.ELEMENT_IDS.PIECES_CONTAINER));
@@ -27,13 +26,29 @@ var BaseMovable = /** @class */ (function () {
         this.shadowOffset = puzzly.shadowOffset;
         this.boardWidth = puzzly.boardWidth;
         this.boardHeight = puzzly.boardHeight;
-        this.groupOperations = new GroupOperations_js_1.default(puzzly);
-        this.solvedGroupId = puzzly.solvedGroupId;
+        this.groupOperations = new GroupOperations_js_1.default({
+            width: this.Puzzly.boardWidth,
+            height: this.Puzzly.boardHeight,
+            puzzleImage: this.Puzzly.puzzleImage,
+            shadowOffset: this.Puzzly.shadowOffset,
+            piecesPerSideHorizontal: this.Puzzly.piecesPerSideHorizontal,
+            piecesPerSideVertical: this.Puzzly.piecesPerSideVertical,
+        });
         window.addEventListener(constants_1.EVENT_TYPES.CHANGE_SCALE, this.onChangeScale.bind(this));
         window.addEventListener(constants_1.EVENT_TYPES.DRAGANDSELECT_ACTIVE, function (event) {
             _this.isDragAndSelectActive = event.detail;
         });
     }
+    BaseMovable.prototype.getMovableInstanceFromElement = function (element) {
+        if (element.dataset.groupId) {
+            return this.Puzzly.groupInstances.find(function (instance) {
+                return instance.piecesInGroup.some(function (piece) { return piece.groupId === element.dataset.groupId; });
+            });
+        }
+        else {
+            return this.Puzzly.pieceInstances.find(function (instance) { return instance._id === element.dataset.pieceIdInPersistence; });
+        }
+    };
     BaseMovable.prototype.onChangeScale = function (event) {
         this.zoomLevel = event.detail;
     };
@@ -91,23 +106,14 @@ var BaseMovable = /** @class */ (function () {
     BaseMovable.prototype.isInsidePlayArea = function () {
         return utils_1.default.isInside(this.element.getBoundingClientRect(), this.piecesContainer.getBoundingClientRect());
     };
-    // Override
-    BaseMovable.prototype.isOutOfBounds = function () { };
     BaseMovable.prototype.isOverPockets = function (event) {
         return this.hasCollision(this.pocketsContainer, utils_1.default.getEventBox(event));
     };
     BaseMovable.prototype.addToStage = function (element) {
-        if (element === void 0) { element = undefined; }
         var elementToAdd = element || this.element;
         // console.log("element to add", this);
         this.piecesContainer.prepend(elementToAdd);
     };
-    // Override
-    BaseMovable.prototype.addToPocket = function () { };
-    // Override
-    BaseMovable.prototype.addToSolved = function () { };
-    // Override
-    BaseMovable.prototype.markAsSolved = function () { };
     BaseMovable.prototype.isPuzzleComplete = function () {
         var numbrOfSolvedPieces = this.solvedContainer.querySelectorAll(".puzzle-piece").length;
         return this.puzzly.selectedNumPieces === numbrOfSolvedPieces;
@@ -144,8 +150,6 @@ var BaseMovable = /** @class */ (function () {
     BaseMovable.prototype.onDrop = function () {
         this.clean();
     };
-    // Override
-    BaseMovable.prototype.onMouseDown = function () { };
     BaseMovable.prototype.onMouseMove = function (event) {
         if (this.active && !this.dragAndSelectActive) {
             var newPosTop = void 0, newPosLeft = void 0;
@@ -172,25 +176,35 @@ var BaseMovable = /** @class */ (function () {
             console.log("connection", this.connection);
             this.handleConnection();
         }
-        events_1.default.notify(constants_1.EVENT_TYPES.MOVE_FINISHED, event);
+        window.dispatchEvent(new CustomEvent(constants_1.EVENT_TYPES.MOVE_FINISHED, { detail: event }));
         this.clean();
     };
     BaseMovable.prototype.handleConnection = function () {
         var _a = this.connection, sourceElement = _a.sourceElement, targetElement = _a.targetElement, isSolving = _a.isSolving;
-        var sourceInstance = window.Puzzly.getMovableInstanceFromElement(sourceElement);
-        var targetInstance = window.Puzzly.getMovableInstanceFromElement(targetElement);
-        if (isSolving) {
-            sourceInstance.solve({ save: true });
+        var sourceInstance = this.getMovableInstanceFromElement(sourceElement);
+        var targetInstance;
+        if (targetElement) {
+            targetInstance = this.getMovableInstanceFromElement(targetElement);
+            if (isSolving) {
+                if ("solve" in sourceInstance) {
+                    sourceInstance.solve({ save: true });
+                }
+            }
+            else if (targetInstance) {
+                this.isConnectionBetweenSingleAndGroup(sourceInstance.instanceType, targetInstance.instanceType) ||
+                    this.isConnectionBetweenTwoGroups(sourceInstance.instanceType, targetInstance.instanceType);
+            }
+            else {
+                sourceInstance.joinTo(targetInstance);
+            }
         }
-        else if (this.isConnectionBetweenSingleAndGroup(sourceInstance.instanceType, targetInstance.instanceType) ||
-            this.isConnectionBetweenTwoGroups(sourceInstance.instanceType, targetInstance.instanceType)) {
-            sourceInstance.joinTo(targetInstance);
-        }
-        events_1.default.notify(constants_1.EVENT_TYPES.CONNECTION_MADE, {
-            sourceInstance: sourceInstance,
-            targetInstance: targetInstance,
-            isSolving: isSolving,
-        });
+        window.dispatchEvent(new CustomEvent(constants_1.EVENT_TYPES.CONNECTION_MADE, {
+            detail: {
+                sourceInstance: sourceInstance,
+                targetInstance: targetInstance,
+                isSolving: isSolving,
+            },
+        }));
     };
     BaseMovable.prototype.isConnectionBetweenSingleAndGroup = function (sourceInstanceType, targetInstanceType) {
         return ((sourceInstanceType === types_1.InstanceTypes.SingleMovable &&

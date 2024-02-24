@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var constants_js_1 = require("./constants.js");
-var GroupOperations_js_1 = require("./GroupOperations.js");
 var types_1 = require("./types");
 var Utils = {
     hasCollision: function (source, target) {
@@ -131,7 +130,7 @@ var Utils = {
         var isInnerPiece = el.dataset["isInnerPiece"];
         data.isInnerPiece = isInnerPiece == "true" ? true : false;
         data.isSolved = el.dataset.isSolved === "true";
-        data.groupId = GroupOperations_js_1.default.getGroup(el);
+        data.groupId = el.dataset.groupId;
         data.pocketId = parseInt(el.dataset["pocketId"]);
         data.pageX = parseInt(el.style.left);
         data.pageY = parseInt(el.style.top);
@@ -512,16 +511,14 @@ var Utils = {
     getStyleBoundingBox: function (element) {
         var top = parseInt(element.style.top);
         var left = parseInt(element.style.left);
-        return element
-            ? {
-                top: top,
-                right: left + element.offsetWidth,
-                bottom: top + element.offsetHeight,
-                left: left,
-                width: element.offsetWidth,
-                height: element.offsetHeight,
-            }
-            : null;
+        return {
+            top: top,
+            right: left + element.offsetWidth,
+            bottom: top + element.offsetHeight,
+            left: left,
+            width: element.offsetWidth,
+            height: element.offsetHeight,
+        };
     },
     getPocketByCollision: function (box) {
         var i = 0;

@@ -21,7 +21,12 @@ var GroupOperations = /** @class */ (function () {
         this.zIndex = config.zIndex;
         this.piecesPerSideHorizontal = config.piecesPerSideHorizontal;
         this.piecesPerSideVertical = config.piecesPerSideVertical;
-        this.canvasOperations = new canvasOperations_js_1.default(config);
+        this.CanvasOperations = new canvasOperations_js_1.default({
+            boardWidth: this.width,
+            boardHeight: this.height,
+            puzzleImage: this.puzzleImage,
+            shadowOffset: this.shadowOffset,
+        });
     }
     GroupOperations.prototype.isGroupSolved = function (groupId) {
         if (!groupId)
@@ -41,7 +46,7 @@ var GroupOperations = /** @class */ (function () {
             return this.getGroupTopContainer(el.parentNode);
         }
     };
-    GroupOperations.getGroup = function (element) {
+    GroupOperations.prototype.getGroup = function (element) {
         return element.dataset.groupId ? element.dataset.groupId : null;
     };
     GroupOperations.prototype.getPiecesInGroup = function (groupId) {
@@ -99,28 +104,28 @@ var GroupOperations = /** @class */ (function () {
         Array.from(groupContainerElement.querySelectorAll(".puzzle-piece")).forEach(function (element) { return (element.dataset.groupId = idAsString); });
         groupContainerElement.querySelector("canvas").dataset.groupId = idAsString;
     };
-    GroupOperations.prototype.createGroup = function (sourceElement, targetElement) {
+    GroupOperations.prototype.createGroup = function (sourceInstance, targetInstance) {
         var container = this.createGroupContainer();
-        var newCanvas = canvasOperations_js_1.default.makeCanvas.call(this);
-        var leftPos = targetElement.element.offsetLeft - targetElement.pieceData.solvedX;
-        var topPos = targetElement.element.offsetTop - targetElement.pieceData.solvedY;
-        sourceElement.element.style.left = utils_js_1.default.getPxString(sourceElement.pieceData.solvedX);
-        sourceElement.element.style.top = utils_js_1.default.getPxString(sourceElement.pieceData.solvedY);
-        targetElement.element.style.left = utils_js_1.default.getPxString(targetElement.pieceData.solvedX);
-        targetElement.element.style.top = utils_js_1.default.getPxString(targetElement.pieceData.solvedY);
-        sourceElement.element.classList.add("grouped");
-        targetElement.element.classList.add("grouped");
-        canvasOperations_js_1.default.drawPiecesOntoCanvas(newCanvas, [sourceElement, targetElement], this.puzzleImage, this.shadowOffset);
+        var newCanvas = this.CanvasOperations.makeCanvas();
+        var leftPos = targetInstance.element.offsetLeft - targetInstance.pieceData.solvedX;
+        var topPos = targetInstance.element.offsetTop - targetInstance.pieceData.solvedY;
+        sourceInstance.element.style.left = utils_js_1.default.getPxString(sourceInstance.pieceData.solvedX);
+        sourceInstance.element.style.top = utils_js_1.default.getPxString(sourceInstance.pieceData.solvedY);
+        targetInstance.element.style.left = utils_js_1.default.getPxString(targetInstance.pieceData.solvedX);
+        targetInstance.element.style.top = utils_js_1.default.getPxString(targetInstance.pieceData.solvedY);
+        sourceInstance.element.classList.add("grouped");
+        targetInstance.element.classList.add("grouped");
+        this.CanvasOperations.drawPiecesOntoCanvas(newCanvas, [sourceInstance.element, targetInstance.element], this.puzzleImage, this.shadowOffset);
         // TODO: Refactor Util methods to expect type array only, not piece object containing it.
         // Not sure if this logic is entirely applicable...
-        var elementAIsSolved = utils_js_1.default.isSolved(sourceElement.element);
-        var elementBIsSolved = utils_js_1.default.isSolved(targetElement.element);
+        var elementAIsSolved = utils_js_1.default.isSolved(sourceInstance.element);
+        var elementBIsSolved = utils_js_1.default.isSolved(targetInstance.element);
         if (elementAIsSolved || elementBIsSolved) {
-            sourceElement.element.setAttribute("data-is-solved", "true");
-            targetElement.element.setAttribute("data-is-solved", "true");
+            sourceInstance.element.setAttribute("data-is-solved", "true");
+            targetInstance.element.setAttribute("data-is-solved", "true");
             container.setAttribute("data-is-solved", "true");
         }
-        this.updateConnections([sourceElement.element, targetElement.element]);
+        this.updateConnections([sourceInstance.element, targetInstance.element]);
         this.setGroupContainerPosition(container, {
             y: topPos,
             x: leftPos,
@@ -128,22 +133,22 @@ var GroupOperations = /** @class */ (function () {
         container.appendChild(newCanvas);
         return { container: container, position: { top: topPos, left: leftPos } };
     };
-    GroupOperations.prototype.restoreGroup = function (groupId) {
+    GroupOperations.prototype.createGroupContainer = function (groupId) {
+        var _a, _b;
         var container = document.createElement("div");
-        container.id = "group-container-".concat(groupId);
-        var canvas = canvasOperations_js_1.default.makeCanvas.call(this);
-        container.prepend(canvas);
-        var elementsForGroup = GroupOperations.getElementsForGroup(groupId);
-        elementsForGroup.forEach(function (element) { return container.appendChild(element); });
-        GroupOperations.setIdForGroupElements(container, groupId);
-        canvasOperations_js_1.default.drawPiecesOntoCanvas(canvas, elementsForGroup, this.puzzleImage, this.shadowOffset);
-        container.style.top = this.position.top + "px";
-        container.style.left = this.position.left + "px";
+        container.classList.add("group-container");
+        if (groupId) {
+            container.id = "group-container-".concat(groupId);
+        }
+        container.style.top = ((_a = this.position) === null || _a === void 0 ? void 0 : _a.top) + "px";
+        container.style.left = ((_b = this.position) === null || _b === void 0 ? void 0 : _b.left) + "px";
         container.style.width = this.width + "px";
         container.style.height = this.height + "px";
         container.style.zIndex = this.zIndex + "";
+        container.style.pointerEvents = "none";
+        return container;
     };
-    GroupOperations.getElementsForGroup = function (groupId) {
+    GroupOperations.prototype.getElementsForGroup = function (groupId) {
         var allElements = document.querySelectorAll(".puzzle-piece");
         var filtered = [];
         for (var i = 0, l = allElements.length; i < l; i++) {
@@ -154,15 +159,6 @@ var GroupOperations = /** @class */ (function () {
             }
         }
         return filtered;
-    };
-    GroupOperations.prototype.createGroupContainer = function () {
-        var container = document.createElement("div");
-        container.classList.add("group-container");
-        container.style.width = utils_js_1.default.getPxString(this.width);
-        container.style.height = utils_js_1.default.getPxString(this.height);
-        container.style.pointerEvents = "none";
-        container.style.position = "absolute";
-        return container;
     };
     // @param alignGroupToElement: Should the group align itself to the element being added to it?
     // default: false
@@ -178,7 +174,7 @@ var GroupOperations = /** @class */ (function () {
         var targetGroupContainer = document.querySelector("#group-container-".concat(groupId));
         var isTargetGroupSolved = this.isGroupSolved(groupId) || groupId === "1111";
         // Add element(s) to target group container
-        var oldGroup = GroupOperations.getGroup(element);
+        var oldGroup = this.getGroup(element);
         var followingEls = [];
         if (oldGroup) {
             var container = document.querySelector("#group-container-".concat(groupId));
@@ -213,8 +209,8 @@ var GroupOperations = /** @class */ (function () {
         // Re-draw group with new piece
         var elementsInTargetGroup = Array.from(this.getPiecesInGroup(groupId));
         var allPieces = __spreadArray(__spreadArray([], elementsInTargetGroup, true), followingEls, true);
-        var canvas = canvasOperations_js_1.default.getCanvas(groupId);
-        canvasOperations_js_1.default.drawPiecesOntoCanvas(canvas, allPieces, this.puzzleImage, this.shadowOffset);
+        var canvas = this.CanvasOperations.getCanvas(groupId);
+        this.CanvasOperations.drawPiecesOntoCanvas(canvas, allPieces, this.puzzleImage, this.shadowOffset);
         // Update all connections
         this.updateConnections(allPieces);
         sourceInstance.setGroupIdAcrossInstance(groupId);
@@ -229,7 +225,7 @@ var GroupOperations = /** @class */ (function () {
         var p = {
             id: parseInt(element.dataset.pieceId),
             type: utils_js_1.default.getPieceType(element),
-            group: GroupOperations.getGroup(element),
+            group: this.getGroup(element),
         };
         var pieceTop = !utils_js_1.default.isTopEdgePiece(p.type) &&
             utils_js_1.default.getElementByPieceId(p.id - this.piecesPerSideHorizontal);
@@ -237,10 +233,10 @@ var GroupOperations = /** @class */ (function () {
         var pieceBottom = !utils_js_1.default.isBottomEdgePiece(p.type) &&
             utils_js_1.default.getElementByPieceId(p.id + this.piecesPerSideHorizontal);
         var pieceLeft = !utils_js_1.default.isLeftEdgePiece(p.type) && utils_js_1.default.getElementByPieceId(p.id - 1);
-        var pieceTopGroup = pieceTop && GroupOperations.getGroup(pieceTop);
-        var pieceRightGroup = pieceRight && GroupOperations.getGroup(pieceRight);
-        var pieceBottomGroup = pieceBottom && GroupOperations.getGroup(pieceBottom);
-        var pieceLeftGroup = pieceLeft && GroupOperations.getGroup(pieceLeft);
+        var pieceTopGroup = pieceTop && this.getGroup(pieceTop);
+        var pieceRightGroup = pieceRight && this.getGroup(pieceRight);
+        var pieceBottomGroup = pieceBottom && this.getGroup(pieceBottom);
+        var pieceLeftGroup = pieceLeft && this.getGroup(pieceLeft);
         if (pieceTopGroup &&
             pieceTopGroup === p.group &&
             !connections.includes("top")) {

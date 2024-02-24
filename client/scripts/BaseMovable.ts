@@ -281,23 +281,12 @@ export default class BaseMovable {
 
     const sourceInstance = this.getMovableInstanceFromElement(sourceElement);
 
-    let targetInstance: SingleMovable | GroupMovable | undefined;
+    let targetInstance: SingleMovable | GroupMovable;
     if (targetElement) {
       targetInstance = this.getMovableInstanceFromElement(targetElement);
 
       if (isSolving) {
-        if ("solve" in sourceInstance) {
-          sourceInstance.solve({ save: true });
-        }
-      } else if (targetInstance) {
-        this.isConnectionBetweenSingleAndGroup(
-          sourceInstance.instanceType,
-          targetInstance.instanceType
-        ) ||
-          this.isConnectionBetweenTwoGroups(
-            sourceInstance.instanceType,
-            targetInstance.instanceType
-          );
+        sourceInstance.solve({ save: true });
       } else {
         sourceInstance.joinTo(targetInstance);
       }

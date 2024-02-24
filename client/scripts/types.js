@@ -6,7 +6,6 @@ var InstanceTypes;
     InstanceTypes["SingleMovable"] = "SingleMovable";
     InstanceTypes["GroupMovable"] = "GroupMovable";
     InstanceTypes["PocketMovable"] = "PocketMovable";
-    InstanceTypes["DragAndSelectMovable"] = "DragAndSelectMovable";
     InstanceTypes["PlayBoundaryMovable"] = "PlayBoundaryMovable";
 })(InstanceTypes || (exports.InstanceTypes = InstanceTypes = {}));
 var ConnectorNames;

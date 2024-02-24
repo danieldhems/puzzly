@@ -18,7 +18,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var BaseMovable_1 = require("./BaseMovable");
 var checkConnections_1 = require("./checkConnections");
 var constants_1 = require("./constants");
-var events_1 = require("./events");
 var GroupOperations_1 = require("./GroupOperations");
 // import PathOperations from "./pathOperations.js";
 var types_1 = require("./types");
@@ -31,21 +30,28 @@ var SingleMovable = /** @class */ (function (_super) {
         _this.instanceType = types_1.InstanceTypes.SingleMovable;
         _this.shapeType = constants_1.SHAPE_TYPES.PLAIN;
         // console.log("SingleMovable constructor:", pieceData);
-        _this.GroupOperations = new GroupOperations_1.default(_this);
-        _this.puzzleId = puzzleData.puzzleId;
+        _this.GroupOperations = new GroupOperations_1.default({
+            width: _this.Puzzly.boardWidth,
+            height: _this.Puzzly.boardHeight,
+            puzzleImage: _this.Puzzly.puzzleImage,
+            shadowOffset: _this.Puzzly.shadowOffset,
+            piecesPerSideHorizontal: _this.Puzzly.piecesPerSideHorizontal,
+            piecesPerSideVertical: _this.Puzzly.piecesPerSideVertical,
+        });
+        _this.puzzleId = _this.Puzzly.puzzleId;
         _this._id = pieceData._id;
-        _this.piecesPerSideHorizontal = puzzleData.piecesPerSideHorizontal;
-        _this.shadowOffset = puzzleData.shadowOffset;
+        _this.piecesPerSideHorizontal = _this.Puzzly.piecesPerSideHorizontal;
+        _this.shadowOffset = _this.Puzzly.shadowOffset;
         _this.Puzzly = puzzleData;
-        _this.pocketId = pieceData.pocket;
-        _this.Pockets = puzzleData.Pockets;
+        _this.pocketId = pieceData.pocketId;
+        _this.Pockets = _this.Puzzly.Pockets;
         if (pieceData.groupId) {
             _this.groupId = pieceData.groupId;
         }
         _this.setPiece(pieceData);
-        _this.element = SingleMovable.createElement.call(_this, puzzleData);
-        _this.setLastPosition(pieceData.pageY, pieceData.pageX);
-        if (!puzzleData.complete) {
+        _this.element = _this.createElement();
+        _this.setLastPosition({ top: pieceData.pageY, left: pieceData.pageX });
+        if (!_this.Puzzly.complete) {
             _this.render();
             _this.save();
         }
@@ -55,38 +61,16 @@ var SingleMovable = /** @class */ (function (_super) {
         window.addEventListener(constants_1.EVENT_TYPES.GROUP_CREATED, _this.onGroupCreated.bind(_this));
         return _this;
     }
-    Object.defineProperty(SingleMovable.prototype, "element", {
-        get: function () {
-            return this.element;
-        },
-        set: function (element) {
-            this.element = element;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(SingleMovable.prototype, "active", {
-        get: function () {
-            return this.active;
-        },
-        set: function (active) {
-            this.active = active;
-        },
-        enumerable: false,
-        configurable: true
-    });
     SingleMovable.prototype.setPiece = function (pieceData) {
         this.pieceData = pieceData;
         // console.log(" setting piecedata", this.pieceData);
     };
-    SingleMovable.createElement = function (puzzleData) {
+    SingleMovable.prototype.createElement = function () {
         var _a = this.pieceData, id = _a.id, _id = _a._id, puzzleId = _a.puzzleId, groupId = _a.groupId, imgX = _a.imgX, imgY = _a.imgY, imgW = _a.imgW, imgH = _a.imgH, pageY = _a.pageY, pageX = _a.pageX, solvedY = _a.solvedY, solvedX = _a.solvedX, zIndex = _a.zIndex, spritePath = _a.spritePath, spriteY = _a.spriteY, spriteX = _a.spriteX, spriteShadowY = _a.spriteShadowY, spriteShadowX = _a.spriteShadowX, isInnerPiece = _a.isInnerPiece, isSolved = _a.isSolved, numPiecesFromTopEdge = _a.numPiecesFromTopEdge, numPiecesFromLeftEdge = _a.numPiecesFromLeftEdge, selectedNumPieces = _a.selectedNumPieces, pocketId = _a.pocketId, type = _a.type, svgPath = _a.svgPath;
         var el = document.createElement("div");
         el.classList.add("puzzle-piece");
         el.id = "piece-" + id;
         el.style.position = "absolute";
-        el.width = imgW;
-        el.height = imgH;
         el.style.width = imgW + "px";
         el.style.height = imgH + "px";
         if (pocketId === undefined || pocketId === null) {
@@ -94,65 +78,61 @@ var SingleMovable = /** @class */ (function (_super) {
             el.style.left = (!!groupId ? solvedX : pageX) + "px";
         }
         el.style.pointerEvents = "auto";
-        el.style.zIndex = zIndex || 1;
+        el.style.zIndex = (zIndex || 1) + "";
         el.setAttribute("data-jigsaw-type", type.join(","));
-        el.setAttribute("data-connector-distance-from-corner", this.connectorDistanceFromCorner);
-        el.setAttribute("data-connector-tolerance", this.connectorTolerance);
-        el.setAttribute("data-connector-distance-from-corner", this.connectorDistanceFromCorner);
-        el.setAttribute("data-connector-size", this.connectorSize);
-        el.setAttribute("data-shadow-offset", this.shadowOffset);
-        el.setAttribute("data-piece-id", id);
+        el.setAttribute("data-connector-distance-from-corner", this.connectorDistanceFromCorner + "");
+        el.setAttribute("data-connector-tolerance", this.connectorTolerance + "");
+        el.setAttribute("data-connector-size", this.connectorSize + "");
+        el.setAttribute("data-shadow-offset", this.shadowOffset + "");
+        el.setAttribute("data-piece-id", id + "");
         el.setAttribute("data-piece-id-in-persistence", _id);
         el.setAttribute("data-puzzle-id", puzzleId);
-        el.setAttribute("data-imgX", imgX);
-        el.setAttribute("data-imgy", imgY);
-        el.setAttribute("data-solvedX", solvedX);
-        el.setAttribute("data-solvedY", solvedY);
-        el.setAttribute("data-pageX", pageX);
-        el.setAttribute("data-pageY", pageY);
-        el.setAttribute("data-spriteX", spriteX);
-        el.setAttribute("data-spriteY", spriteY);
-        el.setAttribute("data-spriteshadowx", spriteShadowX);
-        el.setAttribute("data-spriteshadowy", spriteShadowY);
-        el.setAttribute("data-imgW", imgW);
-        el.setAttribute("data-imgH", imgH);
+        el.setAttribute("data-imgX", imgX + "");
+        el.setAttribute("data-imgy", imgY + "");
+        el.setAttribute("data-solvedX", solvedX + "");
+        el.setAttribute("data-solvedY", solvedY + "");
+        el.setAttribute("data-pageX", pageX + "");
+        el.setAttribute("data-pageY", pageY + "");
+        el.setAttribute("data-spriteX", spriteX + "");
+        el.setAttribute("data-spriteY", spriteY + "");
+        el.setAttribute("data-spriteshadowx", spriteShadowX + "");
+        el.setAttribute("data-spriteshadowy", spriteShadowY + "");
+        el.setAttribute("data-imgW", imgW + "");
+        el.setAttribute("data-imgH", imgH + "");
         el.setAttribute("data-svgPath", svgPath);
-        el.setAttribute("data-is-inner-piece", isInnerPiece);
-        el.setAttribute("data-connector-tolerance", this.Puzzly.connectorTolerance);
-        el.setAttribute("data-connects-to", JSON.stringify(SingleMovable.getConnectingPieceIds(this.pieceData, puzzleData)));
-        el.setAttribute("data-connections", this.GroupOperations.getConnections(el));
-        el.setAttribute("data-num-pieces-from-top-edge", numPiecesFromTopEdge);
-        el.setAttribute("data-num-pieces-from-left-edge", numPiecesFromLeftEdge);
-        el.setAttribute("data-num-puzzle-pieces", selectedNumPieces);
-        el.setAttribute("data-is-solved", isSolved);
+        el.setAttribute("data-is-inner-piece", isInnerPiece + "");
+        el.setAttribute("data-pieces-per-side-horizontal", this.piecesPerSideHorizontal + "");
+        el.setAttribute("data-pieces-per-side-vertical", this.piecesPerSideVertical + "");
+        el.setAttribute("data-connects-to", JSON.stringify(this.getConnectingPieceIds(this.pieceData)));
+        el.setAttribute("data-connections", JSON.stringify(this.GroupOperations.getConnections(el)));
+        el.setAttribute("data-num-pieces-from-top-edge", numPiecesFromTopEdge + "");
+        el.setAttribute("data-num-pieces-from-left-edge", numPiecesFromLeftEdge + "");
+        el.setAttribute("data-num-puzzle-pieces", selectedNumPieces + "");
+        el.setAttribute("data-is-solved", isSolved + "");
         var fgEl = document.createElement("div");
         fgEl.classList.add("puzzle-piece-fg");
         fgEl.style.backgroundImage = "url(".concat(spritePath);
-        fgEl.style.backgroundPositionX = spriteX === 0 ? 0 : "-" + spriteX + "px";
-        fgEl.style.backgroundPositionY = spriteY === 0 ? 0 : "-" + spriteY + "px";
+        fgEl.style.backgroundPositionX = spriteX === 0 ? "0" : "-" + spriteX + "px";
+        fgEl.style.backgroundPositionY = spriteY === 0 ? "0" : "-" + spriteY + "px";
         fgEl.style.position = "absolute";
-        fgEl.width = imgW;
-        fgEl.height = imgH;
         fgEl.style.width = imgW + "px";
         fgEl.style.height = imgH + "px";
-        fgEl.style.top = 0;
-        fgEl.style.left = 0;
-        fgEl.style.zIndex = 2;
+        fgEl.style.top = 0 + "";
+        fgEl.style.left = 0 + "";
+        fgEl.style.zIndex = 2 + "";
         var bgEl = document.createElement("div");
         bgEl.classList.add("puzzle-piece-bg");
         bgEl.style.position = "absolute";
-        bgEl.width = imgW;
-        bgEl.height = imgH;
         bgEl.style.width = imgW + "px";
         bgEl.style.height = imgH + "px";
         bgEl.style.top = this.shadowOffset + "px";
         bgEl.style.left = this.shadowOffset + "px";
         bgEl.style.backgroundImage = "url(".concat(spritePath);
         bgEl.style.backgroundPositionX =
-            spriteShadowX === 0 ? 0 : "-" + spriteShadowX + "px";
+            spriteShadowX === 0 ? "0" : "-" + spriteShadowX + "px";
         bgEl.style.backgroundPositionY =
-            spriteShadowY === 0 ? 0 : "-" + spriteShadowY + "px";
-        bgEl.style.zIndex = 1;
+            spriteShadowY === 0 ? "0" : "-" + spriteShadowY + "px";
+        bgEl.style.zIndex = 1 + "";
         el.appendChild(fgEl);
         el.appendChild(bgEl);
         this.element = el;
@@ -161,15 +141,15 @@ var SingleMovable = /** @class */ (function (_super) {
             el.classList.add("grouped");
         }
         if (pocketId) {
-            el.setAttribute("data-pocket-id", pocketId);
+            el.setAttribute("data-pocket-id", pocketId + "");
         }
         return el;
     };
     SingleMovable.prototype.render = function () {
         // console.log("rendering piece", this.pieceData);
-        var _a = this.pieceData, type = _a.type, pageX = _a.pageX, pageY = _a.pageY, isSolved = _a.isSolved, pocket = _a.pocket;
-        if (Number.isInteger(pocket)) {
-            var pocketElement = this.pocketsContainer.querySelector("#pocket-".concat(pocket));
+        var _a = this.pieceData, type = _a.type, pageX = _a.pageX, pageY = _a.pageY, isSolved = _a.isSolved, pocketId = _a.pocketId;
+        if (Number.isInteger(pocketId)) {
+            var pocketElement = this.pocketsContainer.querySelector("#pocket-".concat(pocketId));
             this.Pockets.addSingleToPocket(pocketElement, this);
             return;
         }
@@ -197,8 +177,6 @@ var SingleMovable = /** @class */ (function (_super) {
         // }
     };
     SingleMovable.prototype.isElementOwned = function (element) {
-        if (!element)
-            return;
         return element.dataset.pieceIdInPersistence === this.pieceData._id;
     };
     SingleMovable.prototype.hasMouseDown = function (element) {
@@ -206,21 +184,21 @@ var SingleMovable = /** @class */ (function (_super) {
     };
     SingleMovable.prototype.addToPocket = function (pocket) {
         var innerElement = pocket.querySelector(".pocket-inner");
-        innerElement.prepend(this.element);
+        innerElement === null || innerElement === void 0 ? void 0 : innerElement.prepend(this.element);
     };
     SingleMovable.prototype.addToSolved = function () {
-        this.GroupOperations.addToGroup(this.element, this.solvedGroupId);
+        this.GroupOperations.addToGroup(this, this.solvedGroupId + "");
     };
     SingleMovable.prototype.isOutOfBounds = function (event) {
         return !this.isInsidePlayArea() && !this.isOverPockets(event);
     };
     SingleMovable.prototype.markAsSolved = function () {
-        this.element.dataset.isSolved = true;
+        this.element.dataset.isSolved = "true";
     };
-    SingleMovable.getConnectingPieceIds = function (pieceData, puzzleData) {
+    SingleMovable.prototype.getConnectingPieceIds = function (pieceData) {
         var id = pieceData.id;
-        var pieceAboveId = id - puzzleData.piecesPerSideHorizontal;
-        var pieceBelowId = id + puzzleData.piecesPerSideHorizontal;
+        var pieceAboveId = id - pieceData.piecesPerSideHorizontal;
+        var pieceBelowId = id + pieceData.piecesPerSideVertical;
         if (utils_1.default.isTopLeftCorner(pieceData.type)) {
             return {
                 right: id + 1,
@@ -304,20 +282,21 @@ var SingleMovable = /** @class */ (function (_super) {
             }
             else if (this.isOverPockets(event)) {
                 var pocket = this.getPocketByCollision(utils_1.default.getEventBox(event));
-                this.Pockets.addSingleToPocket(pocket, this);
-                this.pocketId = parseInt(pocket.id.split("-")[1]);
+                if (pocket) {
+                    this.Pockets.addSingleToPocket(pocket, this);
+                    this.pocketId = parseInt(pocket.id.split("-")[1]);
+                }
             }
             else {
                 this.connection = checkConnections_1.checkConnections.call(this, this.element);
-                this.elementsToSaveIfNoConnection = [this.element];
             }
         }
         _super.prototype.onMouseUp.call(this, event);
     };
-    SingleMovable.prototype.setLastPosition = function () {
+    SingleMovable.prototype.setLastPosition = function (position) {
         this.lastPosition = {
-            top: parseInt(this.element.style.top),
-            left: parseInt(this.element.style.left),
+            top: (position === null || position === void 0 ? void 0 : position.top) || parseInt(this.element.style.top),
+            left: (position === null || position === void 0 ? void 0 : position.left) || parseInt(this.element.style.left),
         };
     };
     SingleMovable.prototype.onPuzzleLoaded = function () {
@@ -327,8 +306,8 @@ var SingleMovable = /** @class */ (function (_super) {
         if (this.active) {
             if (!BaseMovable_1.default.isGroupedPiece(this.element)) {
                 this.setLastPosition({
-                    left: this.element.offsetX,
-                    top: this.element.offsetY,
+                    left: this.element.offsetLeft,
+                    top: this.element.offsetTop,
                 });
                 // Only save if this piece isn't in a group
                 // (If it is in a group, the group will notify this piece to save once group operations are complete)
@@ -341,7 +320,7 @@ var SingleMovable = /** @class */ (function (_super) {
         var _this = this;
         this.solvedContainer.appendChild(this.element);
         this.element.classList.add("grouped");
-        this.element.dataset.isSolved = true;
+        this.element.dataset.isSolved = "true";
         this.setPositionAsGrouped();
         this.element.style.visibility = "hidden";
         this.element.style.pointerEvents = "none";
@@ -361,7 +340,7 @@ var SingleMovable = /** @class */ (function (_super) {
     };
     SingleMovable.prototype.onGroupCreated = function (event) {
         var _a = event.detail, groupId = _a.groupId, elementIds = _a.elementIds;
-        if (elementIds.includes(parseInt(this.element.dataset.pieceId))) {
+        if (elementIds.includes(this.element.dataset.pieceId)) {
             this.setGroupIdAcrossInstance(groupId);
         }
     };
@@ -371,7 +350,7 @@ var SingleMovable = /** @class */ (function (_super) {
     };
     SingleMovable.prototype.joinTo = function (groupInstance) {
         // console.log("SingleMovable joining to", groupInstance);
-        this.setGroupIdAcrossInstance(groupInstance._id);
+        this.setGroupIdAcrossInstance(groupInstance._id + "");
         this.element.classList.add("grouped");
         groupInstance.addPieces([this]);
         groupInstance.redrawCanvas();
@@ -396,7 +375,7 @@ var SingleMovable = /** @class */ (function (_super) {
         if (force === void 0) { force = false; }
         // console.log("Save single piece", this.getDataForSave());
         if (force || (this.active && !this.connection)) {
-            events_1.default.notify(constants_1.EVENT_TYPES.SAVE, this.getDataForSave());
+            window.dispatchEvent(new CustomEvent(constants_1.EVENT_TYPES.SAVE, { detail: this.getDataForSave() }));
         }
     };
     return SingleMovable;

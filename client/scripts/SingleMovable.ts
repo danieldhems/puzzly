@@ -462,7 +462,9 @@ export default class SingleMovable extends BaseMovable {
     this.element.style.left = this.pieceData.solvedX + "px";
   }
 
-  joinTo(groupInstance: GroupMovable) {
+  joinToSingle(instance: SingleMovable) {}
+
+  joinToGroup(groupInstance: GroupMovable) {
     // console.log("SingleMovable joining to", groupInstance);
     this.setGroupIdAcrossInstance(groupInstance._id + "");
     this.element.classList.add("grouped");
