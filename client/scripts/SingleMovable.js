@@ -18,6 +18,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var BaseMovable_1 = require("./BaseMovable");
 var checkConnections_1 = require("./checkConnections");
 var constants_1 = require("./constants");
+var GroupMovable_1 = require("./GroupMovable");
 var GroupOperations_1 = require("./GroupOperations");
 // import PathOperations from "./pathOperations.js";
 var types_1 = require("./types");
@@ -348,14 +349,24 @@ var SingleMovable = /** @class */ (function (_super) {
         this.element.style.top = this.pieceData.solvedY + "px";
         this.element.style.left = this.pieceData.solvedX + "px";
     };
-    SingleMovable.prototype.joinTo = function (groupInstance) {
-        // console.log("SingleMovable joining to", groupInstance);
-        this.setGroupIdAcrossInstance(groupInstance._id + "");
-        this.element.classList.add("grouped");
-        groupInstance.addPieces([this]);
-        groupInstance.redrawCanvas();
-        this.setPositionAsGrouped();
-        groupInstance.save(true);
+    SingleMovable.prototype.joinTo = function (targetInstance) {
+        if (targetInstance.instanceType === types_1.InstanceTypes.SingleMovable) {
+            this.Puzzly.groupInstances.push(new GroupMovable_1.default({
+                Puzzly: this.Puzzly,
+                pieces: [this, targetInstance],
+            }));
+        }
+        else {
+            var instance = targetInstance;
+            // console.log("SingleMovable joining to", instance);
+            this.setGroupIdAcrossInstance(instance._id + "");
+            this.element.classList.add("grouped");
+            // TDOD: Encapsulate in single method on target instance?
+            instance.addPieces([this]);
+            instance.redrawCanvas();
+            this.setPositionAsGrouped();
+            instance.save(true);
+        }
     };
     SingleMovable.prototype.getDataForSave = function () {
         return {

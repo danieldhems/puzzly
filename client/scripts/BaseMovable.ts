@@ -281,26 +281,27 @@ export default class BaseMovable {
 
     const sourceInstance = this.getMovableInstanceFromElement(sourceElement);
 
-    let targetInstance: SingleMovable | GroupMovable;
     if (targetElement) {
-      targetInstance = this.getMovableInstanceFromElement(targetElement);
+      const targetInstance = this.getMovableInstanceFromElement(
+        targetElement
+      ) as SingleMovable | GroupMovable;
 
       if (isSolving) {
         sourceInstance.solve({ save: true });
       } else {
         sourceInstance.joinTo(targetInstance);
       }
-    }
 
-    window.dispatchEvent(
-      new CustomEvent(EVENT_TYPES.CONNECTION_MADE, {
-        detail: {
-          sourceInstance,
-          targetInstance,
-          isSolving,
-        },
-      })
-    );
+      window.dispatchEvent(
+        new CustomEvent(EVENT_TYPES.CONNECTION_MADE, {
+          detail: {
+            sourceInstance,
+            targetInstance,
+            isSolving,
+          },
+        })
+      );
+    }
   }
 
   isConnectionBetweenSingleAndGroup(

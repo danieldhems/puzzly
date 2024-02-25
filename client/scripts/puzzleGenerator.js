@@ -1,6 +1,4 @@
-import { PIECE_SIZE } from "./constants.js";
 import jigsawPath from "./jigsawPath.js";
-import Utils from "./utils.js";
 
 // How big the connectors should be (how far they stick of from the piece's body), expressed as a percentage of the body of the piece
 const CONNECTOR_SIZE_PERC = 30;

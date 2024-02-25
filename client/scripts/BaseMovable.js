@@ -182,29 +182,22 @@ var BaseMovable = /** @class */ (function () {
     BaseMovable.prototype.handleConnection = function () {
         var _a = this.connection, sourceElement = _a.sourceElement, targetElement = _a.targetElement, isSolving = _a.isSolving;
         var sourceInstance = this.getMovableInstanceFromElement(sourceElement);
-        var targetInstance;
         if (targetElement) {
-            targetInstance = this.getMovableInstanceFromElement(targetElement);
+            var targetInstance = this.getMovableInstanceFromElement(targetElement);
             if (isSolving) {
-                if ("solve" in sourceInstance) {
-                    sourceInstance.solve({ save: true });
-                }
-            }
-            else if (targetInstance) {
-                this.isConnectionBetweenSingleAndGroup(sourceInstance.instanceType, targetInstance.instanceType) ||
-                    this.isConnectionBetweenTwoGroups(sourceInstance.instanceType, targetInstance.instanceType);
+                sourceInstance.solve({ save: true });
             }
             else {
                 sourceInstance.joinTo(targetInstance);
             }
+            window.dispatchEvent(new CustomEvent(constants_1.EVENT_TYPES.CONNECTION_MADE, {
+                detail: {
+                    sourceInstance: sourceInstance,
+                    targetInstance: targetInstance,
+                    isSolving: isSolving,
+                },
+            }));
         }
-        window.dispatchEvent(new CustomEvent(constants_1.EVENT_TYPES.CONNECTION_MADE, {
-            detail: {
-                sourceInstance: sourceInstance,
-                targetInstance: targetInstance,
-                isSolving: isSolving,
-            },
-        }));
     };
     BaseMovable.prototype.isConnectionBetweenSingleAndGroup = function (sourceInstanceType, targetInstanceType) {
         return ((sourceInstanceType === types_1.InstanceTypes.SingleMovable &&

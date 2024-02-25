@@ -1,5 +1,4 @@
 import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
-import Events from "./events.js";
 import Utils from "./utils.js";
 
 const POCKET_DEPTH = 110;

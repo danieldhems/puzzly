@@ -462,16 +462,25 @@ export default class SingleMovable extends BaseMovable {
     this.element.style.left = this.pieceData.solvedX + "px";
   }
 
-  joinToSingle(instance: SingleMovable) {}
-
-  joinToGroup(groupInstance: GroupMovable) {
-    // console.log("SingleMovable joining to", groupInstance);
-    this.setGroupIdAcrossInstance(groupInstance._id + "");
-    this.element.classList.add("grouped");
-    groupInstance.addPieces([this]);
-    groupInstance.redrawCanvas();
-    this.setPositionAsGrouped();
-    groupInstance.save(true);
+  joinTo(targetInstance: GroupMovable | SingleMovable) {
+    if (targetInstance.instanceType === InstanceTypes.SingleMovable) {
+      this.Puzzly.groupInstances.push(
+        new GroupMovable({
+          Puzzly: this.Puzzly,
+          pieces: [this, targetInstance as SingleMovable],
+        })
+      );
+    } else {
+      const instance = targetInstance as GroupMovable;
+      // console.log("SingleMovable joining to", instance);
+      this.setGroupIdAcrossInstance(instance._id + "");
+      this.element.classList.add("grouped");
+      // TDOD: Encapsulate in single method on target instance?
+      instance.addPieces([this]);
+      instance.redrawCanvas();
+      this.setPositionAsGrouped();
+      instance.save(true);
+    }
   }
 
   getDataForSave() {

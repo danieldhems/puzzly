@@ -367,24 +367,9 @@ class Puzzly {
     this.groupInstances.push(groupInstance);
   }
 
-  onConnectionMade(event) {
-    const { sourceInstance, targetInstance, isSolving } = event.detail;
-
+  onConnectionMade() {
     if (this.soundsEnabled) {
       this.clickSound.play();
-    }
-
-    if (
-      sourceInstance.instanceType === "SingleMovable" &&
-      targetInstance?.instanceType === "SingleMovable" &&
-      !isSolving
-    ) {
-      this.groupInstances.push(
-        new GroupMovable({
-          puzzleData: this,
-          pieces: [sourceInstance, targetInstance],
-        })
-      );
     }
   }
 

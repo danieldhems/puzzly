@@ -1,4 +1,3 @@
-import { DragAndSelectMovable } from "./DragAndSelectMovable.js";
 import GroupMovable from "./GroupMovable.js";
 import { PocketMovable } from "./PocketMovable.js";
 import Pockets from "./Pockets.js";
@@ -21,18 +20,12 @@ export enum InstanceTypes {
 export type SingleMovableElement = HTMLDivElement;
 export type GroupMovableElement = HTMLDivElement;
 export type PocketMovableElement = HTMLDivElement;
-export type DragAndSelectMovableElement = HTMLDivElement;
 export type MovableElement =
   | SingleMovableElement
   | GroupMovableElement
-  | PocketMovableElement
-  | DragAndSelectMovableElement;
+  | PocketMovableElement;
 
-export type MovableInstance =
-  | SingleMovable
-  | GroupMovable
-  | DragAndSelectMovable
-  | PocketMovable;
+export type MovableInstance = SingleMovable | GroupMovable | PocketMovable;
 
 export interface Connection {
   type: string;

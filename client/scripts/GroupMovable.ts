@@ -16,7 +16,7 @@ import {
 
 export default class GroupMovable extends BaseMovable {
   instanceType = InstanceTypes.GroupMovable;
-  _id: number;
+  _id: number | null;
   canvas: HTMLCanvasElement;
   piecesInGroup: SingleMovable[];
   elementsInGroup: MovableElement[];
@@ -43,19 +43,26 @@ export default class GroupMovable extends BaseMovable {
   }: {
     Puzzly: Puzzly;
     pieces: SingleMovable[];
-    _id: number;
-    position: {
+    _id?: number;
+    position?: {
       top: number;
       left: number;
     };
-    zIndex: number;
-    isSolved: boolean;
+    zIndex?: number;
+    isSolved?: boolean;
   }) {
     super(Puzzly);
 
     this.Puzzly = Puzzly;
-    this._id = _id;
-    this.position = position;
+
+    if (_id) {
+      this._id = _id;
+    }
+
+    if (position) {
+      this.position = position;
+    }
+
     this.piecesInGroup = pieces;
 
     this.puzzleId = Puzzly.puzzleId;
@@ -69,7 +76,9 @@ export default class GroupMovable extends BaseMovable {
 
     // console.log("GroupMovable zIndex", zIndex);
 
-    this.isSolved = isSolved;
+    if (isSolved) {
+      this.isSolved = isSolved;
+    }
 
     this.CanvasOperations = new CanvasOperations(this);
     this.GroupOperations = new GroupOperations({
