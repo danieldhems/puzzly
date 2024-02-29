@@ -11,6 +11,7 @@ import {
   JigsawPieceData,
   MovableElement,
   Puzzly,
+  SingleMovableSaveState,
 } from "./types";
 import Utils from "./utils";
 
@@ -483,7 +484,7 @@ export default class SingleMovable extends BaseMovable {
     }
   }
 
-  getDataForSave() {
+  getDataForSave(): SingleMovableSaveState {
     return {
       pageX: this.element.offsetLeft,
       pageY: this.element.offsetTop,
@@ -492,7 +493,7 @@ export default class SingleMovable extends BaseMovable {
       groupId: this.pieceData.groupId,
       puzzleId: this.puzzleId,
       _id: this.pieceData._id,
-      pocket: this.pocketId,
+      pocket: this.pocketId as number,
       instanceType: this.instanceType,
       isPuzzleComplete: this.isPuzzleComplete(),
     };

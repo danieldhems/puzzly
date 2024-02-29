@@ -11,18 +11,20 @@ import {
   InstanceTypes,
   JigsawPieceData,
   MovableElement,
+  GroupMovableSaveState,
   Puzzly,
 } from "./types.js";
 
 export default class GroupMovable extends BaseMovable {
   instanceType = InstanceTypes.GroupMovable;
-  _id: number | null;
+  _id?: string;
   canvas: HTMLCanvasElement;
   piecesInGroup: SingleMovable[];
   elementsInGroup: MovableElement[];
   Puzzly: Puzzly;
   GroupOperations: GroupOperations;
   CanvasOperations: CanvasOperations;
+  PersistenceOperations: PersistenceOperations;
   position: {
     top: number;
     left: number;
@@ -43,7 +45,7 @@ export default class GroupMovable extends BaseMovable {
   }: {
     Puzzly: Puzzly;
     pieces: SingleMovable[];
-    _id?: number;
+    _id?: string;
     position?: {
       top: number;
       left: number;
@@ -81,6 +83,7 @@ export default class GroupMovable extends BaseMovable {
     }
 
     this.CanvasOperations = new CanvasOperations(this);
+    this.PersistenceOperations = new PersistenceOperations(this);
     this.GroupOperations = new GroupOperations({
       width: this.boardWidth,
       height: this.boardHeight,
@@ -139,10 +142,12 @@ export default class GroupMovable extends BaseMovable {
     const canvas = this.CanvasOperations.makeCanvas();
     container.prepend(canvas);
 
-    const elementsForGroup = this.GroupOperations.getElementsForGroup(this._id);
+    const elementsForGroup = this.GroupOperations.getElementsForGroup(
+      this._id as string
+    );
     elementsForGroup.forEach((element) => container.appendChild(element));
 
-    GroupOperations.setIdForGroupElements(container, this._id);
+    GroupOperations.setIdForGroupElements(container, this._id as string);
     this.CanvasOperations.drawPiecesOntoCanvas(
       canvas,
       elementsForGroup,
@@ -348,7 +353,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   isServerResponseForThisGroup(data: {
-    _id: number;
+    _id: string;
     pieces: JigsawPieceData[];
   }) {
     if (!data) return;
@@ -356,7 +361,7 @@ export default class GroupMovable extends BaseMovable {
     return data._id === this._id || this.arePieceIdsInThisGroup(pieceIds);
   }
 
-  setGroupIdAcrossInstance(id: number) {
+  setGroupIdAcrossInstance(id: string) {
     this._id = id;
     this.element.dataset.groupId = this._id + "";
 
@@ -397,16 +402,17 @@ export default class GroupMovable extends BaseMovable {
     return this.piecesInGroup.map((piece) => piece.getDataForSave());
   }
 
-  getDataForSave() {
+  getDataForSave(): GroupMovableSaveState {
     const elementPosition = {
       top: this.element.offsetTop,
       left: this.element.offsetLeft,
     };
     return {
-      _id: this._id,
+      _id: this._id || "",
       pieces: this.getAllPieceData(),
       puzzleId: this.puzzleId,
-      position: elementPosition,
+      pageX: elementPosition.left,
+      pageY: elementPosition.top,
       zIndex: parseInt(this.element.style.zIndex),
       instanceType: this.instanceType,
       isSolved: this.isSolved,
@@ -425,7 +431,7 @@ export default class GroupMovable extends BaseMovable {
     // TODO: Still seeing duplicate saves
     // console.log("group save called", this);
     if (force || this.active || !this._id) {
-      return await PersistenceOperations.save(this.getDataForSave());
+      return await this.PersistenceOperations.save(this.getDataForSave());
     }
   }
 

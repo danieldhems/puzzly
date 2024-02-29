@@ -1,5 +1,4 @@
-import { ELEMENT_IDS, PUZZLE_PIECE_CLASSES } from "./constants.js";
-import GroupOperations from "./GroupOperations.js";
+import { ELEMENT_IDS, PUZZLE_PIECE_CLASSES } from "./constants";
 import {
   ConnectorType,
   DomBox,

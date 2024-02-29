@@ -129,7 +129,7 @@ export default class GroupOperations implements GroupOperationsProperties {
 
   static setIdForGroupElements(
     groupContainerElement: MovableElement,
-    id: number
+    id: string
   ) {
     // set group ID on group container element, elements in group and on canvas element
     const idAsString = id + "";
@@ -196,7 +196,7 @@ export default class GroupOperations implements GroupOperationsProperties {
     return { container, position: { top: topPos, left: leftPos } };
   }
 
-  createGroupContainer(groupId?: number): MovableElement {
+  createGroupContainer(groupId?: string): MovableElement {
     const container = document.createElement("div");
     container.classList.add("group-container");
 
@@ -213,12 +213,12 @@ export default class GroupOperations implements GroupOperationsProperties {
     return container;
   }
 
-  getElementsForGroup(groupId: number): MovableElement[] {
+  getElementsForGroup(groupId: string): MovableElement[] {
     const allElements = document.querySelectorAll(".puzzle-piece");
     const filtered: MovableElement[] = [];
     for (let i = 0, l = allElements.length; i < l; i++) {
       const element = allElements[i] as MovableElement;
-      const elementGroupId = parseInt(element.dataset.groupId as string);
+      const elementGroupId = element.dataset.groupId as string;
       if (elementGroupId === groupId) {
         filtered.push(element);
       }

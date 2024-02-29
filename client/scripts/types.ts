@@ -91,6 +91,18 @@ export interface JigsawPieceData {
   svgPath: string;
 }
 
+export interface GroupData {
+  id: string;
+  puzzleId: string;
+  piecesInGroup: JigsawPieceData;
+  lastPosition: {
+    top: number;
+    left: number;
+  };
+  isSolved: boolean;
+  zIndex: number;
+}
+
 export type DomBox = {
   top: number;
   right: number;
@@ -142,3 +154,36 @@ export interface PuzzleCreatorOptions {
   previewPath: string;
   integration: boolean;
 }
+
+export interface SavedProgress {
+  pieces: JigsawPieceData[];
+  groups: GroupData[];
+  latestSave: number;
+}
+
+export enum LocalStorageKeys {
+  Progress = "LOCAL_STORAGE_PUZZLY_PROGRESS_KEY",
+  LastSave = "LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY",
+}
+
+export interface SingleMovableSaveState {
+  _id: string;
+  groupId?: string;
+  pageX: number;
+  pageY: number;
+  zIndex: number;
+  isSolved: boolean;
+  puzzleId: string;
+  pocket: number;
+  instanceType: InstanceTypes;
+  isPuzzleComplete: boolean;
+  integration?: boolean;
+}
+
+export interface GroupMovableSaveState
+  extends Omit<SingleMovableSaveState, "pocket"> {
+  remove?: boolean;
+  pieces: SingleMovableSaveState[];
+}
+
+export type SaveStates = SingleMovableSaveState | GroupMovableSaveState;
