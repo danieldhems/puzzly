@@ -1,12 +1,14 @@
 import GroupMovable from "./GroupMovable.js";
 import { PocketMovable } from "./PocketMovable.js";
 import Pockets from "./Pockets.js";
+import { DebugOptions } from "./puzzlyCreator.js";
 import SingleMovable from "./SingleMovable.js";
 
 declare global {
   interface Window {
     Puzzly: any;
     Zoom: any;
+    PuzzlyCreator: any;
   }
 }
 
@@ -98,6 +100,7 @@ export type DomBox = {
 
 export interface Puzzly {
   puzzleId: string;
+  pieces: JigsawPieceData[];
   piecesPerSideHorizontal: number;
   piecesPerSideVertical: number;
   shadowOffset: number;
@@ -119,4 +122,23 @@ export interface Puzzly {
   isPreviewActive: boolean;
   keepOnTop: (element: MovableElement) => void;
   updateSolvedCanvas: () => void;
+}
+
+export interface PuzzleCreatorOptions {
+  stageWidth: number;
+  stageHeight: number;
+  debugOptions: DebugOptions;
+  selectedNumPieces: number;
+  imagePreviewType: string; // TODO: Enum
+  originalImageSize: {
+    width: number;
+    height: number;
+  };
+  pieces?: JigsawPieceData[];
+  boardSize: number;
+  imageSize: number;
+  puzzleToImageRatio: number;
+  spritePath?: string;
+  previewPath: string;
+  integration: boolean;
 }
