@@ -41,6 +41,20 @@ export enum ConnectorNames {
   Plug = "plug",
   Socket = "socket",
 }
+export type ConnectorControlPoints = {
+  cp1: {
+    x: number;
+    y: number;
+  };
+  cp2: {
+    x: number;
+    y: number;
+  };
+  dest: {
+    x: number;
+    y: number;
+  };
+};
 
 // Todo: These won't work for non-four-sided pieces - should be an array of ConnectorTypes instead
 export enum SideNames {
