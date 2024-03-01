@@ -150,7 +150,7 @@ export interface PuzzleCreatorOptions {
   boardSize: number;
   imageSize: number;
   puzzleToImageRatio: number;
-  spritePath?: string;
+  spritePath: string;
   previewPath: string;
   integration: boolean;
 }
