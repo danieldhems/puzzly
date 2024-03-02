@@ -1,14 +1,9 @@
-import BaseMovable from "./BaseMovable.js";
-import { EVENT_TYPES } from "./constants.js";
-import Pockets from "./Pockets.js";
-import SingleMovable from "./SingleMovable.js";
-import {
-  InstanceTypes,
-  MovableElement,
-  MovableInstance,
-  Puzzly,
-} from "./types.js";
-import Utils from "./utils.js";
+import BaseMovable from "./BaseMovable";
+import { EVENT_TYPES } from "./constants";
+import Pockets from "./Pockets";
+import SingleMovable from "./SingleMovable";
+import { InstanceTypes, MovableElement, Puzzly } from "./types";
+import Utils from "./utils";
 
 export class PocketMovable extends BaseMovable {
   instanceType = InstanceTypes.PocketMovable;
@@ -57,9 +52,9 @@ export class PocketMovable extends BaseMovable {
         this.addToStage();
       } else if (this.isOverPockets(event)) {
         const pocket = this.getPocketByCollision(Utils.getEventBox(event));
-        this.Pockets.addManyToPocket(pocket, this);
+        this.Pockets.addManyToPocket(pocket as HTMLDivElement, this);
       } else if (!this.isInsidePlayArea() && !this.isOverPockets(event)) {
-        this.Pockets.addManyToPocket(this.activePocket, this);
+        this.Pockets.addManyToPocket(this.activePocket as HTMLDivElement, this);
       }
 
       this.save();

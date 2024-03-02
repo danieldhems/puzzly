@@ -520,22 +520,7 @@ class Pockets {
         );
         this.addSingleToPocket(pocket, pieceInstance as SingleMovable);
       });
-    } else {
-      pieces = (movableOrArrayOfElements as PocketMovable).element.childNodes;
-      this.addSingleToPocket(pocket, pieces as MovableElement[]);
     }
-  }
-
-  getTargetBoxForPlacementInsidePocket() {
-    const box = Utils.getStyleBoundingBox(this.pockets[0]);
-    const onePercentWidth = box.width / 100;
-    const onePercentHeight = box.height / 100;
-    return {
-      top: onePercentHeight * 10,
-      left: onePercentWidth * 20,
-      right: onePercentWidth * 10 + 5,
-      bottom: onePercentHeight * 10 + 5,
-    };
   }
 }
 

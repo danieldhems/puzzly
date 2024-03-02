@@ -1,8 +1,8 @@
-import GroupMovable from "./GroupMovable.js";
-import { PocketMovable } from "./PocketMovable.js";
-import Pockets from "./Pockets.js";
-import { DebugOptions } from "./puzzlyCreator.js";
-import SingleMovable from "./SingleMovable.js";
+import GroupMovable from "./GroupMovable";
+import { PocketMovable } from "./PocketMovable";
+import Pockets from "./Pockets";
+import { DebugOptions } from "./puzzlyCreator";
+import SingleMovable from "./SingleMovable";
 
 declare global {
   interface Window {
@@ -166,7 +166,7 @@ export interface PuzzleCreatorOptions {
   boardSize: number;
   imageSize: number;
   puzzleToImageRatio: number;
-  spritePath: string;
+  spritePath?: string;
   previewPath: string;
   integration: boolean;
 }

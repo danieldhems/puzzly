@@ -637,7 +637,7 @@ class PuzzlyCreator {
 
     const generator = await puzzleGenerator(puzzleImagePath, puzzleData);
 
-    const { spriteEncodedString, pieces, config } =
+    const { spriteEncodedString, pieces } =
       await generator.generateDataForPuzzlePieces();
 
     // const { width, height } = puzzleData.originalImageSize;
@@ -667,7 +667,6 @@ class PuzzlyCreator {
       spriteEncodedString,
       puzzleImagePath,
       pieces,
-      ...config,
     });
 
     fetch("/api/puzzle", {

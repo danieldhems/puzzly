@@ -238,7 +238,7 @@ export default class SingleMovable extends BaseMovable {
         `#pocket-${pocketId}`
       );
 
-      this.Pockets.addSingleToPocket(pocketElement, this);
+      this.Pockets.addSingleToPocket(pocketElement as HTMLDivElement, this);
       return;
     }
 

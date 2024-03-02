@@ -446,7 +446,7 @@ class DragAndSelect extends BaseMovable {
       const pieceInstance = this.getMovableInstanceFromElement(
         this.selectedPieces[i]
       );
-      this.Pockets.addSingleToPocket(pocket, pieceInstance);
+      this.Pockets.addSingleToPocket(pocket, pieceInstance as SingleMovable);
     }
   }
 

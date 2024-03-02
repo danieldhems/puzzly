@@ -24,7 +24,6 @@ export type PuzzleGenerator = {
   largestPieceSpan: number;
   strokeWidth: number;
   strokeColor: string;
-  spritePath: string;
   spriteSpacing: number;
   stageWidth: number;
   stageHeight: number;
@@ -34,7 +33,7 @@ export type PuzzleGenerator = {
   image: HTMLImageElement;
   shadowColor: string;
   strokeStyle: string;
-  generateDataForPuzzlePieces: (puzzleId: string) => Promise<{
+  generateDataForPuzzlePieces: () => Promise<{
     spriteEncodedString: string;
     pieces: JigsawPieceData[];
   }>;
@@ -49,7 +48,6 @@ const puzzleGenerator = async function (
   Generator.debugOptions = puzzleConfig.debugOptions;
 
   Generator.image = await loadImage(imagePath);
-  Generator.spritePath = puzzleConfig.spritePath;
 
   Generator.piecesPerSideHorizontal = Math.sqrt(puzzleConfig.selectedNumPieces);
   Generator.piecesPerSideVertical = Math.sqrt(puzzleConfig.selectedNumPieces);
@@ -103,7 +101,7 @@ const loadImage = (path: string): Promise<HTMLImageElement> => {
   });
 };
 
-const generateDataForPuzzlePieces = async (puzzleId: string) => {
+const generateDataForPuzzlePieces = async () => {
   const pieces: JigsawPieceData[] = [];
 
   var curImgX = 0;
@@ -171,7 +169,6 @@ const generateDataForPuzzlePieces = async (puzzleId: string) => {
     );
 
     currentPiece = assignInitialPieceData(
-      puzzleId,
       curImgX,
       curImgY,
       currentPiece,
@@ -237,8 +234,6 @@ const generateDataForPuzzlePieces = async (puzzleId: string) => {
       done = true;
     }
   }
-
-  // writeToPngFile(cnv, Generator.spritePath);
 
   return {
     spriteEncodedString: cnv.toDataURL(),
@@ -443,7 +438,6 @@ const getRandomInt = (min: number, max: number) => {
 };
 
 const assignInitialPieceData = (
-  puzzleId: string,
   imgX: number,
   imgY: number,
   piece: JigsawPieceData,
@@ -475,7 +469,6 @@ const assignInitialPieceData = (
   return Object.assign(
     {
       id: i,
-      puzzleId,
       imgX: imgX,
       imgY: imgY,
       // Width and height that will be used to draw from the source image
