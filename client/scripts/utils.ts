@@ -689,7 +689,7 @@ const Utils = {
     }) as MovableElement[];
   },
 
-  isOverPockets(box: DOMRect) {
+  isOverPockets(box: DomBox) {
     const pocketsBox = (
       document.querySelector("#pockets") as HTMLDivElement
     ).getBoundingClientRect();

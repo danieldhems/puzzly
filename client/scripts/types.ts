@@ -9,6 +9,7 @@ declare global {
     Puzzly: any;
     Zoom: any;
     PuzzlyCreator: any;
+    move: any;
   }
 }
 
@@ -146,6 +147,7 @@ export interface Puzzly {
   stage: HTMLDivElement;
   piecesContainer: HTMLDivElement;
   isPreviewActive: boolean;
+  largestPieceSpan: number;
   keepOnTop: (element: MovableElement) => void;
   updateSolvedCanvas: () => void;
 }
@@ -201,3 +203,8 @@ export interface GroupMovableSaveState
 }
 
 export type SaveStates = SingleMovableSaveState | GroupMovableSaveState;
+
+export enum Orientation {
+  Landscape = "Landscape",
+  Portrait = "Portrait",
+}
