@@ -4,10 +4,14 @@ import {
   DomBox,
   JigsawPieceData,
   MovableElement,
+  PieceConnections,
   SideNames,
 } from "./types";
 
 const Utils = {
+  getAllPieces(): NodeListOf<HTMLDivElement> {
+    return document.querySelectorAll(".puzzle-piece");
+  },
   hasCollision(source: DomBox, target: DomBox): boolean {
     return !(
       source.left >= target.right ||
@@ -749,6 +753,29 @@ const Utils = {
       : width < height
       ? "portrait"
       : "landscape";
+  },
+
+  shuffleArray(array: unknown[]) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = array[i];
+      array[i] = array[j];
+      array[j] = temp;
+    }
+    return array;
+  },
+
+  getSequentialArray(start: number, end: number, shuffle = false): unknown[] {
+    let arr: unknown[] = [];
+    for (let i = start, l = end - start; i < l; i++) {
+      arr.push(i);
+    }
+
+    if (shuffle) {
+      arr = Utils.shuffleArray(arr);
+    }
+
+    return arr;
   },
 
   evalBez(poly: number[], t: number) {

@@ -208,3 +208,17 @@ export enum Orientation {
   Landscape = "Landscape",
   Portrait = "Portrait",
 }
+
+export type PieceSectors = {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}[];
+
+export type PieceConnections = Record<SideNames, number>;
+
+export enum SolvedPuzzlePreviewType {
+  AlwaysOn = "AlwaysOn",
+  Toggle = "Toggle",
+}
