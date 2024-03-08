@@ -1,6 +1,6 @@
 import { PuzzleSizes } from "./constants.js";
 import puzzleGenerator from "./puzzleGenerator.js";
-import { PuzzleCreatorOptions } from "./types.js";
+import { PuzzleCreationResponse, PuzzleCreatorOptions } from "./types.js";
 import Utils from "./utils.js";
 
 export interface SourceImage {
@@ -39,7 +39,7 @@ export interface DebugOptions {
   highlightConnectingPieces: boolean;
 }
 
-class PuzzlyCreator {
+export default class PuzzlyCreator {
   selectedNumPieces: number;
   piecesPerSide: number;
   sourceImage: SourceImage;
@@ -678,7 +678,7 @@ class PuzzlyCreator {
     })
       .then((response) => response.json())
       .then(
-        function (response: PuzzleCreatorOptions & { _id: string }) {
+        function (response: PuzzleCreationResponse) {
           console.log("response", response);
           const puzzleId = response._id;
 

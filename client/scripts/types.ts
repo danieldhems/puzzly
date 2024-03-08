@@ -152,11 +152,21 @@ export interface Puzzly {
   updateSolvedCanvas: () => void;
 }
 
+export enum PuzzleShapes {
+  Square = "Square",
+  Rectangle = "Rectangle",
+}
+
+export type PuzzleCreationResponse = PuzzleCreatorOptions & { _id: string };
+
 export interface PuzzleCreatorOptions {
   stageWidth: number;
   stageHeight: number;
   debugOptions: DebugOptions;
   selectedNumPieces: number;
+  selectedShape: PuzzleShapes;
+  piecesPerSideHorizontal: number;
+  piecesPerSideVertical?: number;
   imagePreviewType: string; // TODO: Enum
   originalImageSize: {
     width: number;

@@ -100,6 +100,11 @@ export default class BaseMovable {
     );
   }
 
+  keepOnTop(element: MovableElement) {
+    element.style.zIndex = window.Puzzly.currentZIndex =
+      window.Puzzly.currentZIndex + 1;
+  }
+
   getMovableInstanceFromElement(
     element: MovableElement
   ): SingleMovable | GroupMovable {
