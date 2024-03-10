@@ -11,8 +11,11 @@ import Zoom from "./zoom.js";
 import PlayBoundaryMovable from "./PlayBoundaryMovable.js";
 import SolvedPuzzlePreview from "./SolvedPuzzlePreview.js";
 import {
+  JigsawPieceData,
+  MovableElement,
   PuzzleCreationResponse,
   PuzzleShapes,
+  PuzzlyProperties,
   SolvedPuzzlePreviewType,
 } from "./types.js";
 import PieceLayouts from "./PieceLayouts.js";
@@ -21,7 +24,12 @@ import PieceLayouts from "./PieceLayouts.js";
  *
  */
 
-export default class Puzzly {
+export default interface Puzzly extends PuzzlyProperties {
+  pieces: JigsawPieceData[];
+  connectorSize: number;
+}
+
+export default class Puzzly implements PuzzlyProperties {
   constructor(puzzleId: string, config: PuzzleCreationResponse) {
     Object.assign(this, {
       ...config,
@@ -43,8 +51,8 @@ export default class Puzzly {
 
     window.Puzzly = this;
 
-    this.pieces = config.pieces;
-    this.connectorSize = config.connectorSize;
+    this.pieces = config.pieces as JigsawPieceData[];
+    this.connectorSize = config.connectorSize as number;
 
     this.complete = config.complete;
 

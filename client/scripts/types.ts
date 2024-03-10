@@ -125,7 +125,37 @@ export type DomBox = {
   left: number;
 };
 
-export interface Puzzly {
+export enum PuzzleShapes {
+  Square = "Square",
+  Rectangle = "Rectangle",
+}
+
+export interface PuzzleCreatorOptions {
+  stageWidth: number;
+  stageHeight: number;
+  debugOptions: DebugOptions;
+  selectedNumPieces: number;
+  selectedShape: PuzzleShapes;
+  piecesPerSideHorizontal: number;
+  piecesPerSideVertical?: number;
+  imagePreviewType: string; // TODO: Enum
+  originalImageSize: {
+    width: number;
+    height: number;
+  };
+  pieces?: JigsawPieceData[];
+  boardSize: number;
+  imageSize: number;
+  puzzleToImageRatio: number;
+  spritePath?: string;
+  previewPath: string;
+  drawOutlines?: boolean;
+  connectorSize: number;
+}
+
+export type PuzzleCreationResponse = PuzzleCreatorOptions & { _id: string };
+
+export interface PuzzlyProperties {
   puzzleId: string;
   pieces: JigsawPieceData[];
   piecesPerSideHorizontal: number;
@@ -148,36 +178,6 @@ export interface Puzzly {
   piecesContainer: HTMLDivElement;
   isPreviewActive: boolean;
   largestPieceSpan: number;
-  keepOnTop: (element: MovableElement) => void;
-  updateSolvedCanvas: () => void;
-}
-
-export enum PuzzleShapes {
-  Square = "Square",
-  Rectangle = "Rectangle",
-}
-
-export type PuzzleCreationResponse = PuzzleCreatorOptions & { _id: string };
-
-export interface PuzzleCreatorOptions {
-  stageWidth: number;
-  stageHeight: number;
-  debugOptions: DebugOptions;
-  selectedNumPieces: number;
-  selectedShape: PuzzleShapes;
-  piecesPerSideHorizontal: number;
-  piecesPerSideVertical?: number;
-  imagePreviewType: string; // TODO: Enum
-  originalImageSize: {
-    width: number;
-    height: number;
-  };
-  pieces?: JigsawPieceData[];
-  boardSize: number;
-  imageSize: number;
-  puzzleToImageRatio: number;
-  spritePath?: string;
-  previewPath: string;
   integration: boolean;
 }
 
