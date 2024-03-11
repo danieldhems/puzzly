@@ -12,10 +12,8 @@ import PlayBoundaryMovable from "./PlayBoundaryMovable.js";
 import SolvedPuzzlePreview from "./SolvedPuzzlePreview.js";
 import {
   JigsawPieceData,
-  MovableElement,
   PuzzleCreationResponse,
   PuzzleShapes,
-  PuzzlyProperties,
   SolvedPuzzlePreviewType,
 } from "./types.js";
 import PieceLayouts from "./PieceLayouts.js";
@@ -24,12 +22,48 @@ import PieceLayouts from "./PieceLayouts.js";
  *
  */
 
-export default interface Puzzly extends PuzzlyProperties {
+export default class Puzzly {
+  puzzleId: string;
   pieces: JigsawPieceData[];
+  piecesPerSideHorizontal: number;
+  piecesPerSideVertical: number;
+  shadowOffset: number;
+  Pockets: Pockets;
+  pocketId: number;
+  puzzleImage: HTMLImageElement;
+  previewImage: HTMLImageElement;
+  previewImageType: SolvedPuzzlePreviewType;
+  puzzleImagePath: string;
+  spritePath: string;
+  boardWidth: number;
+  solvedGroupId: number;
+  boardHeight: number;
+  zoomLevel: number;
+  connectorTolerance: number;
+  connectorDistanceFromCorner: number;
   connectorSize: number;
-}
+  pieceInstances: SingleMovable[];
+  groupInstances: GroupMovable[];
+  complete?: boolean;
+  loadedAssets?: HTMLImageElement[];
+  stage: HTMLDivElement | null;
+  playBoundary: HTMLDivElement | null;
+  piecesContainer: HTMLDivElement | null;
+  isPreviewActive: boolean;
+  largestPieceSpan: number;
+  noDispersal?: boolean;
+  currentZIndex?: number;
+  solvedCnv: HTMLCanvasElement | null;
+  solvingArea: HTMLDivElement | null;
+  clickSound: HTMLAudioElement;
+  filterBtn: HTMLSpanElement | null;
+  filterBtnOffLabel: HTMLSpanElement | null;
+  filterBtnOnLabel: HTMLSpanElement | null;
+  soundsBtn: HTMLSpanElement | null;
+  soundsBtnOnLabel: HTMLSpanElement | null;
+  soundsBtnOffLabel: HTMLSpanElement | null;
+  integration: boolean;
 
-export default class Puzzly implements PuzzlyProperties {
   constructor(puzzleId: string, config: PuzzleCreationResponse) {
     Object.assign(this, {
       ...config,
@@ -56,34 +90,16 @@ export default class Puzzly implements PuzzlyProperties {
 
     this.complete = config.complete;
 
-    this.animationDuration = 200;
-
     this.puzzleId = puzzleId;
-    this.movingPiece = null;
 
-    this.dragAndSelectActive = false;
-
-    this.highlightConnectingPieces =
-      config.debugOptions.highlightConnectingPieces;
     this.noDispersal = config.debugOptions.noDispersal;
 
     this.currentZIndex = config.zIndex || 3;
 
-    this.usedPieceSectors = [];
-    this.sectors = {};
-
     this.solvedGroupId = 1111;
 
-    this.isMovingSinglePiece = false;
-    this.movingElement = null;
     this.puzzleId = puzzleId;
-    this.progress = config.pieces || [];
 
-    this.innerPiecesVisible =
-      config.innerPiecesVisible !== undefined
-        ? config.innerPiecesVisible
-        : true;
-    this.movingPieces = [];
     this.loadedAssets = [];
     this.previewImage = new Image();
     this.previewImage.src = this.puzzleImagePath;
@@ -101,41 +117,16 @@ export default class Puzzly implements PuzzlyProperties {
     this.piecesContainer = document.querySelector(
       `#${ELEMENT_IDS.PIECES_CONTAINER}`
     );
-
-    this.interactionEventDown = "mousedown";
-    this.interactionEventUp = "mouseup";
-    this.interactionEventMove = "mousemove";
-
     this.clickSound = new Audio("./mixkit-plastic-bubble-click-1124.wav");
-
     this.filterBtn = document.getElementById("filter-pieces");
     this.filterBtnOffLabel = document.getElementById("inner-pieces-on");
     this.filterBtnOnLabel = document.getElementById("inner-pieces-off");
-
     this.soundsBtn = document.getElementById("sound-toggle");
     this.soundsBtnOnLabel = document.getElementById("sounds-on");
     this.soundsBtnOffLabel = document.getElementById("sounds-off");
-    this.debugInfoWindow = document.getElementById("debug-info");
-
-    if (this.innerPiecesVisible) {
-      this.filterBtnOnLabel.style.display = "block";
-      this.filterBtnOffLabel.style.display = "none";
-    } else {
-      this.filterBtnOffLabel.style.display = "block";
-      this.filterBtnOnLabel.style.display = "none";
-    }
 
     this.soundsEnabled = true;
     this.soundsBtnOnLabel.style.display = "none";
-
-    this.filterBtn.addEventListener(
-      this.interactionEventDown,
-      this.toggleInnerPieces.bind(this)
-    );
-    this.soundsBtn.addEventListener(
-      this.interactionEventDown,
-      this.toggleSounds.bind(this)
-    );
 
     const assets = [this.previewImage, this.puzzleImage];
 
@@ -255,10 +246,6 @@ export default class Puzzly implements PuzzlyProperties {
       window.location = "/";
     });
 
-    window.addEventListener(EVENT_TYPES.DRAGANDSELECT_ACTIVE, (e) => {
-      this.dragAndSelectActive = e.detail;
-    });
-
     window.addEventListener(
       EVENT_TYPES.CONNECTION_MADE,
       this.onConnectionMade.bind(this)
@@ -346,34 +333,6 @@ export default class Puzzly implements PuzzlyProperties {
 
   hidePiece(el) {
     el.style.display = "none";
-  }
-
-  toggleInnerPieces() {
-    if (this.innerPiecesVisible) {
-      this.allPieces().forEach((piece) => {
-        const p = this.getPieceFromElement(piece, [
-          "jigsaw-type",
-          "is-solved",
-          "group",
-        ]);
-        if (Utils.isInnerPiece(p.type) && !p.isSolved && !p.group) {
-          this.hidePiece(piece);
-        }
-      });
-      this.innerPiecesVisible = false;
-      this.filterBtnOffLabel.style.display = "block";
-      this.filterBtnOnLabel.style.display = "none";
-    } else {
-      this.allPieces().forEach((piece) => {
-        const p = this.getPieceFromElement(piece, ["jigsaw-type"]);
-        if (Utils.isInnerPiece(p.type)) {
-          this.showPiece(piece);
-        }
-      });
-      this.innerPiecesVisible = true;
-      this.filterBtnOffLabel.style.display = "none";
-      this.filterBtnOnLabel.style.display = "block";
-    }
   }
 
   setupSolvingArea() {

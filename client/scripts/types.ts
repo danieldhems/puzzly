@@ -153,33 +153,11 @@ export interface PuzzleCreatorOptions {
   connectorSize: number;
 }
 
-export type PuzzleCreationResponse = PuzzleCreatorOptions & { _id: string };
-
-export interface PuzzlyProperties {
-  puzzleId: string;
-  pieces: JigsawPieceData[];
-  piecesPerSideHorizontal: number;
-  piecesPerSideVertical: number;
-  shadowOffset: number;
-  Pockets: Pockets;
-  pocketId: number;
-  puzzleImage: ImageBitmap;
-  boardWidth: number;
-  boardHeight: number;
-  zoomLevel: number;
-  connectorTolerance: number;
-  connectorDistanceFromCorner: number;
-  connectorSize: number;
-  pieceInstances: SingleMovable[];
-  groupInstances: GroupMovable[];
-  complete: boolean;
-  playBoundary: HTMLDivElement;
-  stage: HTMLDivElement;
-  piecesContainer: HTMLDivElement;
-  isPreviewActive: boolean;
-  largestPieceSpan: number;
-  integration: boolean;
-}
+export type PuzzleCreationResponse = PuzzleCreatorOptions & {
+  _id: string;
+  complete?: boolean;
+  zIndex?: number;
+};
 
 export interface SavedProgress {
   pieces: JigsawPieceData[];

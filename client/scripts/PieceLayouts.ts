@@ -24,6 +24,10 @@ export default class PieceLayouts {
   sendToEdgeShuffleBtn: HTMLElement | null;
   gatherPiecesBtn: HTMLSpanElement | null;
   controlsPanelIsOpen: boolean;
+  innerPiecesVisible: boolean;
+  filterBtnOnLabel: HTMLSpanElement | null;
+  filterBtnOffLabel: HTMLSpanElement | null;
+  filterBtn: HTMLElement | null;
   solvingAreaBoundingBox: {
     width: number;
     height: number;
@@ -48,6 +52,9 @@ export default class PieceLayouts {
     this.controlsHandle = document.getElementById("controls-handle");
     this.controlsPanel = document.getElementById("controls-panel");
     this.gatherPiecesBtn = document.getElementById("gather-pieces");
+    this.filterBtn = document.getElementById("filter-pieces");
+    this.filterBtnOffLabel = document.getElementById("inner-pieces-on");
+    this.filterBtnOnLabel = document.getElementById("inner-pieces-off");
 
     this.Pockets = Pockets;
 
@@ -113,6 +120,24 @@ export default class PieceLayouts {
         "mousedown",
         this.gatherPieces.bind(this)
       );
+    }
+
+    if (this.filterBtn) {
+      this.filterBtn.addEventListener(
+        "mousedown",
+        this.toggleInnerPieces.bind(this)
+      );
+    }
+    this.soundsBtn.addEventListener("mousedown", this.toggleSounds.bind(this));
+  }
+
+  toggleInnerPieceVisibility() {
+    if (this.innerPiecesVisible) {
+      (this.filterBtnOnLabel as HTMLSpanElement).style.display = "block";
+      (this.filterBtnOffLabel as HTMLSpanElement).style.display = "none";
+    } else {
+      (this.filterBtnOffLabel as HTMLSpanElement).style.display = "block";
+      (this.filterBtnOnLabel as HTMLSpanElement).style.display = "none";
     }
   }
 
