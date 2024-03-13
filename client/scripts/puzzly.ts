@@ -3,7 +3,13 @@ import GroupMovable from "./GroupMovable.js";
 import Pockets from "./pockets.js";
 import DragAndSelect from "./dragAndSelect.js";
 import Utils from "./utils.js";
-import { ELEMENT_IDS, EVENT_TYPES } from "./constants.js";
+import {
+  CONNECTOR_TOLERANCE_AMOUNT,
+  ELEMENT_IDS,
+  EVENT_TYPES,
+  FLOAT_TOLERANCE_AMOUNT,
+  SHADOW_OFFSET_RATIO,
+} from "./constants.js";
 import { PocketMovable } from "./PocketMovable.js";
 import PersistenceOperations from "./persistence.js";
 import CanvasOperations from "./canvasOperations.js";
@@ -17,16 +23,26 @@ import {
   SolvedPuzzlePreviewType,
 } from "./types.js";
 import PieceLayouts from "./PieceLayouts.js";
+import loadAssets from "./assetLoader.js";
+import Sounds from "./Sounds.js";
 /**
  * Puzzly
  *
  */
 
 export default class Puzzly {
+  DragAndSelect: DragAndSelect;
+  SolvedPuzzlePreview: SolvedPuzzlePreview;
+  PocketMovable: PocketMovable;
+  PieceLayouts: PieceLayouts;
+  PersistenceOperations: PersistenceOperations;
+  Sounds: Sounds;
   puzzleId: string;
   pieces: JigsawPieceData[];
+  pieceSize: number;
   piecesPerSideHorizontal: number;
   piecesPerSideVertical: number;
+  selectedNumPieces: number;
   shadowOffset: number;
   Pockets: Pockets;
   pocketId: number;
@@ -42,10 +58,10 @@ export default class Puzzly {
   connectorTolerance: number;
   connectorDistanceFromCorner: number;
   connectorSize: number;
+  floatTolerance: number;
   pieceInstances: SingleMovable[];
   groupInstances: GroupMovable[];
   complete?: boolean;
-  loadedAssets?: HTMLImageElement[];
   stage: HTMLDivElement | null;
   playBoundary: HTMLDivElement | null;
   piecesContainer: HTMLDivElement | null;
@@ -54,14 +70,10 @@ export default class Puzzly {
   noDispersal?: boolean;
   currentZIndex?: number;
   solvedCnv: HTMLCanvasElement | null;
-  solvingArea: HTMLDivElement | null;
-  clickSound: HTMLAudioElement;
+  solvingArea: HTMLDivElement;
   filterBtn: HTMLSpanElement | null;
   filterBtnOffLabel: HTMLSpanElement | null;
   filterBtnOnLabel: HTMLSpanElement | null;
-  soundsBtn: HTMLSpanElement | null;
-  soundsBtnOnLabel: HTMLSpanElement | null;
-  soundsBtnOffLabel: HTMLSpanElement | null;
   integration: boolean;
 
   constructor(puzzleId: string, config: PuzzleCreationResponse) {
@@ -100,7 +112,6 @@ export default class Puzzly {
 
     this.puzzleId = puzzleId;
 
-    this.loadedAssets = [];
     this.previewImage = new Image();
     this.previewImage.src = this.puzzleImagePath;
     this.puzzleImage = new Image();
@@ -111,66 +122,50 @@ export default class Puzzly {
 
     this.stage = document.querySelector(`#${ELEMENT_IDS.STAGE}`);
     this.playBoundary = document.querySelector(`#${ELEMENT_IDS.PLAY_BOUNDARY}`);
-    this.solvingArea = document.querySelector(
-      `#${ELEMENT_IDS.SOLVED_PUZZLE_AREA}`
-    );
+    if (this.solvingArea) {
+      this.solvingArea = document.querySelector(
+        `#${ELEMENT_IDS.SOLVED_PUZZLE_AREA}`
+      ) as HTMLDivElement;
+    }
     this.piecesContainer = document.querySelector(
       `#${ELEMENT_IDS.PIECES_CONTAINER}`
     );
-    this.clickSound = new Audio("./mixkit-plastic-bubble-click-1124.wav");
-    this.filterBtn = document.getElementById("filter-pieces");
-    this.filterBtnOffLabel = document.getElementById("inner-pieces-on");
-    this.filterBtnOnLabel = document.getElementById("inner-pieces-off");
-    this.soundsBtn = document.getElementById("sound-toggle");
-    this.soundsBtnOnLabel = document.getElementById("sounds-on");
-    this.soundsBtnOffLabel = document.getElementById("sounds-off");
 
-    this.soundsEnabled = true;
-    this.soundsBtnOnLabel.style.display = "none";
-
-    const assets = [this.previewImage, this.puzzleImage];
-
-    this.loadAssets(assets).then(() => {
-      this.init(this);
+    loadAssets([this.previewImage, this.puzzleImage]).then(() => {
+      this.init();
     });
-
-    return this;
   }
 
-  init(puzzly) {
+  init() {
     this.zoomLevel = 1;
 
-    this.shadowOffsetRatio = 0.025;
-    this.shadowOffset = this.pieceSize * this.shadowOffsetRatio;
+    this.shadowOffset = this.pieceSize * SHADOW_OFFSET_RATIO;
 
-    this.connectorToleranceAmount = 40;
     this.connectorTolerance =
-      (this.connectorSize / 100) * ((100 - this.connectorToleranceAmount) / 2);
+      (this.connectorSize / 100) * ((100 - CONNECTOR_TOLERANCE_AMOUNT) / 2);
 
-    this.floatToleranceAmount = 20;
-    this.floatTolerance = (this.pieceSize / 100) * this.floatToleranceAmount;
-    this.collisionBoxWidth = this.pieceSize - this.floatTolerance;
+    this.floatTolerance = (this.pieceSize / 100) * FLOAT_TOLERANCE_AMOUNT;
 
     this.largestPieceSpan = this.pieceSize + this.connectorSize * 2;
-    this.pieceSeparationDistance = this.largestPieceSpan + 20;
 
     this.playBoundary = document.querySelector("#play-boundary");
 
     this.setupSolvingArea();
 
-    const solvingAreaBoundingBox = this.solvingArea.getBoundingClientRect();
+    const solvingAreaBoundingBox = (
+      this.solvingArea as HTMLDivElement
+    ).getBoundingClientRect();
 
     this.boardWidth = solvingAreaBoundingBox.width;
     this.boardHeight = solvingAreaBoundingBox.height;
 
-    this.isFullImageViewerActive = false;
-
-    this.Pockets = new Pockets(puzzly);
-    this.DragAndSelect = new DragAndSelect(puzzly);
+    this.Pockets = new Pockets(this);
+    this.DragAndSelect = new DragAndSelect(this);
     this.SolvedPuzzlePreview = new SolvedPuzzlePreview(this.previewImageType);
-    this.PocketMovable = new PocketMovable(puzzly);
-    this.PieceLayouts = new PieceLayouts(puzzly);
-    this.PersistenceOperations = new PersistenceOperations(puzzly);
+    this.PocketMovable = new PocketMovable(this);
+    this.PieceLayouts = new PieceLayouts(this);
+    this.PersistenceOperations = new PersistenceOperations(this);
+    this.Sounds = new Sounds();
 
     const storage = this.PersistenceOperations.getPersistence(
       this.pieces,
@@ -234,15 +229,13 @@ export default class Puzzly {
 
     addEventListener(
       "beforeunload",
-      function (e) {
+      function () {
         this.updateElapsedTime();
       }.bind(this)
     );
 
-    this.innerPieces = document.querySelectorAll(".inner-piece");
-
     const newPuzzleBtn = document.getElementById("js-create-new-puzzle");
-    newPuzzleBtn.addEventListener(this.interactionEventDown, () => {
+    newPuzzleBtn.addEventListener("mousedown", () => {
       window.location = "/";
     });
 
@@ -255,7 +248,9 @@ export default class Puzzly {
     new PlayBoundaryMovable(this);
 
     this.stage.classList.add("loaded");
-    Events.notify(EVENT_TYPES.PUZZLE_LOADED, this);
+    window.dispatchEvent(
+      new CustomEvent(EVENT_TYPES.PUZZLE_LOADED, { detail: this })
+    );
 
     const integrationTestDragHelper = document.querySelector(
       "#integration-test-drag-helper"
@@ -317,14 +312,6 @@ export default class Puzzly {
 
   renderPieces(pieces) {
     pieces.forEach((piece) => this.initiatePiece.call(this, piece));
-  }
-
-  toggleSounds() {
-    this.soundsEnabled = this.soundsEnabled ? false : true;
-    this.soundsBtnOffLabel.style.display = this.soundsEnabled
-      ? "block"
-      : "none";
-    this.soundsBtnOnLabel.style.display = this.soundsEnabled ? "none" : "block";
   }
 
   showPiece(el) {
@@ -405,18 +392,7 @@ export default class Puzzly {
     el.style.zIndex = this.currentZIndex = this.currentZIndex + 1;
   }
 
-  loadAssets(assets) {
-    let promises = [];
-    for (let i = 0, l = assets.length; i < l; i++) {
-      promises.push(
-        this.loadAsset(assets[i]).then((assetData) =>
-          this.loadedAssets.push(assetData)
-        )
-      );
-    }
-
-    return Promise.all(promises);
-  }
+  loadAssets(assets) {}
 
   loadAsset(asset) {
     return new Promise((resolve, reject) => {

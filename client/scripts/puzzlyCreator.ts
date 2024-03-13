@@ -667,6 +667,7 @@ export default class PuzzlyCreator {
       spriteEncodedString,
       puzzleImagePath,
       pieces,
+      pieceSize: generator.pieceSize,
     });
 
     fetch("/api/puzzle", {

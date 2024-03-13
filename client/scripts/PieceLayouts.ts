@@ -1,21 +1,22 @@
 import arrangePiecesAroundEdge from "./pieceLayoutsNeaten";
 import randomisePiecePositions from "./pieceLayoutsShuffle";
 import Pockets from "./Pockets";
-import { PieceSectors } from "./types";
+import { MovableElement, PieceSectors } from "./types";
 import Utils from "./utils";
 
 export interface PieceLayoutsProperties {
   largestPieceSpan: number;
   selectedNumPieces: number;
-  solvingAreaElement: HTMLDivElement;
-  playBoundary: HTMLDivElement;
+  solvingArea: HTMLDivElement | null;
+  playBoundary: HTMLDivElement | null;
   Pockets: Pockets;
 }
 
 export default interface PieceLayouts extends PieceLayoutsProperties {}
 
 export default class PieceLayouts {
-  playBoundary: HTMLDivElement;
+  playBoundary: HTMLDivElement | null;
+  solvingArea: HTMLDivElement | null;
   selectedNumberOfPieces: number;
   pieceSectors: PieceSectors;
   sendToEdgeNeatenBtn: HTMLSpanElement | null;
@@ -39,12 +40,12 @@ export default class PieceLayouts {
   constructor({
     largestPieceSpan,
     selectedNumPieces,
-    solvingAreaElement,
+    solvingArea,
     playBoundary,
     Pockets,
   }: PieceLayoutsProperties) {
     this.largestPieceSpan = largestPieceSpan;
-    this.solvingAreaElement = solvingAreaElement;
+    this.solvingArea = solvingArea;
     this.playBoundary = playBoundary;
     this.selectedNumberOfPieces = selectedNumPieces;
 
@@ -64,33 +65,37 @@ export default class PieceLayouts {
   }
 
   getSolvingAreaBoundingBox() {
-    return {
-      top: parseInt(this.solvingAreaElement.style.top),
-      left: parseInt(this.solvingAreaElement.style.left),
-      right:
-        parseInt(this.solvingAreaElement.style.left) +
-        parseInt(this.solvingAreaElement.style.width),
-      bottom:
-        parseInt(this.solvingAreaElement.style.top) +
-        parseInt(this.solvingAreaElement.style.height),
-      width: parseInt(this.solvingAreaElement.style.width),
-      height: parseInt(this.solvingAreaElement.style.height),
-    };
+    if (this.solvingArea) {
+      return {
+        top: parseInt(this.solvingArea.style.top),
+        left: parseInt(this.solvingArea.style.left),
+        right:
+          parseInt(this.solvingArea.style.left) +
+          parseInt(this.solvingArea.style.width),
+        bottom:
+          parseInt(this.solvingArea.style.top) +
+          parseInt(this.solvingArea.style.height),
+        width: parseInt(this.solvingArea.style.width),
+        height: parseInt(this.solvingArea.style.height),
+      };
+    }
   }
 
   getPlayBoundaryBoundingBox() {
-    return {
-      top: parseInt(this.playBoundary.style.top),
-      left: parseInt(this.playBoundary.style.left),
-      right:
-        parseInt(this.playBoundary.style.left) +
-        parseInt(this.playBoundary.style.width),
-      bottom:
-        parseInt(this.playBoundary.style.top) +
-        parseInt(this.playBoundary.style.height),
-      width: parseInt(this.playBoundary.style.width),
-      height: parseInt(this.playBoundary.style.height),
-    };
+    if (this.playBoundary) {
+      return {
+        top: parseInt(this.playBoundary.style.top),
+        left: parseInt(this.playBoundary.style.left),
+        right:
+          parseInt(this.playBoundary.style.left) +
+          parseInt(this.playBoundary.style.width),
+        bottom:
+          parseInt(this.playBoundary.style.top) +
+          parseInt(this.playBoundary.style.height),
+        width: parseInt(this.playBoundary.style.width),
+        height: parseInt(this.playBoundary.style.height),
+      };
+    }
   }
 
   attachEventListeners() {
@@ -128,21 +133,37 @@ export default class PieceLayouts {
         this.toggleInnerPieces.bind(this)
       );
     }
-    this.soundsBtn.addEventListener("mousedown", this.toggleSounds.bind(this));
   }
 
-  toggleInnerPieceVisibility() {
-    if (this.innerPiecesVisible) {
+  toggleInnerPieces(piecesVisible: boolean) {
+    if (piecesVisible) {
+      Utils.getAllPieces().forEach((piece: MovableElement) => {
+        const p = Utils.getPieceFromElement(piece);
+        if (Utils.isInnerPiece(p.type) && !p.isSolved && !p.groupId) {
+          window.Puzzly.hidePiece(piece);
+        }
+      });
+      this.innerPiecesVisible = false;
       (this.filterBtnOnLabel as HTMLSpanElement).style.display = "block";
       (this.filterBtnOffLabel as HTMLSpanElement).style.display = "none";
     } else {
+      Utils.getAllPieces().forEach((piece: MovableElement) => {
+        const p = Utils.getPieceFromElement(piece);
+        if (Utils.isInnerPiece(p.type)) {
+          window.Puzzly.showPiece(piece);
+        }
+      });
+      this.innerPiecesVisible = true;
       (this.filterBtnOffLabel as HTMLSpanElement).style.display = "block";
       (this.filterBtnOnLabel as HTMLSpanElement).style.display = "none";
     }
   }
 
   onArrangePiecesAroundEdge() {
-    arrangePiecesAroundEdge(this.largestPieceSpan, this.solvingAreaElement);
+    arrangePiecesAroundEdge(
+      this.largestPieceSpan,
+      this.solvingArea as HTMLDivElement
+    );
     this.onControlsHandleClick();
   }
 
@@ -164,7 +185,7 @@ export default class PieceLayouts {
 
   // Generate map of sectors that can be used for even dispersal of pieces around outside of puzzle board
   generatePieceSectorMap() {
-    const box = Utils.getStyleBoundingBox(this.playBoundary);
+    const box = Utils.getStyleBoundingBox(this.playBoundary as HTMLDivElement);
     const totalArea = box.width * box.height;
     const pieceSectorSize = totalArea / this.selectedNumberOfPieces;
 
@@ -213,8 +234,9 @@ export default class PieceLayouts {
       "top-left",
     ];
     const chosen = sectors[sectorIndex];
-    const solvingAreaBoundingBox = this.getSolvingAreaBoundingBox();
-    const playBoundaryBoundingBox = this.getPlayBoundaryBoundingBox();
+    const solvingAreaBoundingBox = this.getSolvingAreaBoundingBox() as DOMRect;
+    const playBoundaryBoundingBox =
+      this.getPlayBoundaryBoundingBox() as DOMRect;
     switch (chosen) {
       case "top-first-half":
         return {

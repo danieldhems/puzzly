@@ -157,6 +157,7 @@ export type PuzzleCreationResponse = PuzzleCreatorOptions & {
   _id: string;
   complete?: boolean;
   zIndex?: number;
+  pieceSize: number;
 };
 
 export interface SavedProgress {

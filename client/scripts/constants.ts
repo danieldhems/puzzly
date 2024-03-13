@@ -73,9 +73,11 @@ export const SIDES = {
   LEFT: "LEFT",
 };
 
-export const SHADOW_OFFSET_RATIO = 0.01;
-
 export const SHAPE_TYPES = {
   PLAIN: 1,
   NATURAL: 2,
 };
+
+export const SHADOW_OFFSET_RATIO = 0.025;
+export const CONNECTOR_TOLERANCE_AMOUNT = 40;
+export const FLOAT_TOLERANCE_AMOUNT = 20;
