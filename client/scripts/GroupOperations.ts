@@ -1,4 +1,4 @@
-import CanvasOperations from "./canvasOperations.js";
+import CanvasOperations from "./CanvasOperations.js";
 import { ConnectorType, MovableElement } from "./types.js";
 import Utils from "./utils.js";
 import SingleMovable from "./SingleMovable.js";
@@ -6,7 +6,7 @@ import SingleMovable from "./SingleMovable.js";
 export interface GroupOperationsProperties {
   width: number;
   height: number;
-  puzzleImage: ImageBitmap;
+  puzzleImage: HTMLImageElement;
   shadowOffset: number;
   piecesPerSideHorizontal: number;
   piecesPerSideVertical: number;

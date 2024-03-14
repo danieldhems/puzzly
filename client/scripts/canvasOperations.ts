@@ -1,6 +1,7 @@
 import { EVENT_TYPES, SHADOW_OFFSET_RATIO } from "./constants.js";
+import Puzzly from "./puzzly.js";
 import SingleMovable from "./SingleMovable.js";
-import { MovableElement, Puzzly } from "./types.js";
+import { MovableElement } from "./types.js";
 import Utils from "./utils.js";
 
 export default class CanvasOperations {
@@ -48,14 +49,14 @@ export default class CanvasOperations {
 
   drawPiecesOntoCanvas(
     canvas: HTMLCanvasElement,
-    elements: MovableElement[],
+    pieces: SingleMovable[],
     puzzleImage: Puzzly["puzzleImage"],
     shadowOffset: Puzzly["shadowOffset"]
   ) {
     const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     // ctx.imageSmoothingEnabled = false;
-    elements.forEach((element) => {
-      const data = element.dataset;
+    pieces.forEach((piece) => {
+      const data = piece.element.dataset;
       // console.log("drawPiecesOntoCanvas", data, shadowOffset);
       if (
         data.spriteshadowx &&
@@ -78,13 +79,13 @@ export default class CanvasOperations {
         );
       }
 
-      element.childNodes.forEach(
+      piece.element.childNodes.forEach(
         (element: HTMLDivElement) => (element.style.visibility = "hidden")
       );
     });
 
-    elements.forEach((element) => {
-      const data = element.dataset;
+    pieces.forEach((piece) => {
+      const data = piece.element.dataset;
       if (
         data.spritex &&
         data.spritey &&

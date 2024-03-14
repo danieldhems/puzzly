@@ -4,7 +4,7 @@ import { EVENT_TYPES } from "./constants.js";
 import Utils from "./utils.js";
 import BaseMovable from "./BaseMovable.js";
 import SingleMovable from "./SingleMovable.js";
-import CanvasOperations from "./canvasOperations.js";
+import CanvasOperations from "./CanvasOperations.js";
 import PersistenceOperations from "./persistence.js";
 import {
   DomBox,
@@ -12,8 +12,8 @@ import {
   JigsawPieceData,
   MovableElement,
   GroupMovableSaveState,
-  Puzzly,
 } from "./types.js";
+import Puzzly from "./puzzly.js";
 
 export default class GroupMovable extends BaseMovable {
   instanceType = InstanceTypes.GroupMovable;

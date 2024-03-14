@@ -1,3 +1,5 @@
+import { EVENT_TYPES } from "./constants";
+
 export default class Sounds {
   soundsBtn: HTMLElement | null;
   soundsBtnOnLabel: HTMLSpanElement | null;
@@ -28,6 +30,11 @@ export default class Sounds {
         this.toggleSounds.bind(this)
       );
     }
+
+    window.addEventListener(
+      EVENT_TYPES.CONNECTION_MADE,
+      this.playPieceConnectionSound.bind(this)
+    );
   }
 
   toggleSounds() {

@@ -55,7 +55,11 @@ export default class PersistenceOperations {
       hasLocalStorageSupport && localStorage.getItem(lastSaveKey);
 
     let availableStorage;
-    const storage = {} as SavedProgress;
+    const storage = {
+      pieces: [],
+      groups: [],
+      latestSave: 0,
+    } as SavedProgress;
 
     if (!lastSaveTimeFromServer && !lastSaveInLocalStorage) {
       console.info("Puzzly: No saved data found");

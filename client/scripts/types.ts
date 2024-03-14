@@ -107,10 +107,10 @@ export interface JigsawPieceData {
 }
 
 export interface GroupData {
-  id: string;
+  _id: string;
   puzzleId: string;
   piecesInGroup: JigsawPieceData;
-  lastPosition: {
+  position: {
     top: number;
     left: number;
   };

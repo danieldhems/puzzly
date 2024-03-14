@@ -1,15 +1,10 @@
 import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants";
 import Utils from "./utils";
 import GroupOperations from "./GroupOperations.js";
-import {
-  Connection,
-  DomBox,
-  InstanceTypes,
-  MovableElement,
-  Puzzly,
-} from "./types";
+import { Connection, DomBox, InstanceTypes, MovableElement } from "./types";
 import SingleMovable from "./SingleMovable";
 import GroupMovable from "./GroupMovable";
+import Puzzly from "./puzzly";
 
 export default class BaseMovable {
   instanceType: InstanceTypes;
@@ -22,7 +17,7 @@ export default class BaseMovable {
   active: boolean = false;
   puzzleId: string;
   connection: Connection;
-  puzzleImage: ImageBitmap;
+  puzzleImage: HTMLImageElement;
   // Element containing all pieces in-play
   piecesContainer: HTMLDivElement;
   // Used by PocketMovable to know which pocket the movable originated from, and which the movable's child nodes will be returned to if out-of-bounds.
@@ -109,14 +104,15 @@ export default class BaseMovable {
     element: MovableElement
   ): SingleMovable | GroupMovable {
     if (element.dataset.groupId) {
-      return this.Puzzly.groupInstances.find((instance) =>
+      return this.Puzzly.groupInstances.find((instance: GroupMovable) =>
         instance.piecesInGroup.some(
           (piece) => piece.groupId === element.dataset.groupId
         )
       ) as GroupMovable;
     } else {
       return this.Puzzly.pieceInstances.find(
-        (instance) => instance._id === element.dataset.pieceIdInPersistence
+        (instance: SingleMovable) =>
+          instance._id === element.dataset.pieceIdInPersistence
       ) as SingleMovable;
     }
   }

@@ -12,12 +12,14 @@ import {
 } from "./constants.js";
 import { PocketMovable } from "./PocketMovable.js";
 import PersistenceOperations from "./persistence.js";
-import CanvasOperations from "./canvasOperations.js";
+import CanvasOperations from "./CanvasOperations.js";
 import Zoom from "./zoom.js";
 import PlayBoundaryMovable from "./PlayBoundaryMovable.js";
 import SolvedPuzzlePreview from "./SolvedPuzzlePreview.js";
 import {
+  GroupData,
   JigsawPieceData,
+  MovableElement,
   PuzzleCreationResponse,
   PuzzleShapes,
   SolvedPuzzlePreviewType,
@@ -36,9 +38,14 @@ export default class Puzzly {
   PocketMovable: PocketMovable;
   PieceLayouts: PieceLayouts;
   PersistenceOperations: PersistenceOperations;
+  CanvasOperations: CanvasOperations;
+  Zoom: Zoom;
   Sounds: Sounds;
+  boardSize: number;
   puzzleId: string;
   pieces: JigsawPieceData[];
+  groups: GroupData[];
+  lastSaveDate: number;
   pieceSize: number;
   piecesPerSideHorizontal: number;
   piecesPerSideVertical: number;
@@ -74,6 +81,7 @@ export default class Puzzly {
   filterBtn: HTMLSpanElement | null;
   filterBtnOffLabel: HTMLSpanElement | null;
   filterBtnOnLabel: HTMLSpanElement | null;
+  timeStarted: number;
   integration: boolean;
 
   constructor(puzzleId: string, config: PuzzleCreationResponse) {
@@ -166,6 +174,7 @@ export default class Puzzly {
     this.PieceLayouts = new PieceLayouts(this);
     this.PersistenceOperations = new PersistenceOperations(this);
     this.Sounds = new Sounds();
+    this.CanvasOperations = new CanvasOperations(this);
 
     const storage = this.PersistenceOperations.getPersistence(
       this.pieces,
@@ -176,9 +185,18 @@ export default class Puzzly {
     this.pieceInstances = [];
     this.groupInstances = [];
 
-    if (storage?.pieces?.length > 0) {
+    if (storage && storage.pieces.length > 0) {
       storage.pieces.forEach((p) => {
-        this.initiatePiece.call(this, p);
+        const data = {
+          ...p,
+          spritePath: this.spritePath,
+        };
+        const pieceInstance = new SingleMovable({
+          puzzleData: this,
+          pieceData: data,
+        });
+
+        this.pieceInstances.push(pieceInstance);
       });
 
       console.log("groups from persistence", this.groups);
@@ -190,7 +208,7 @@ export default class Puzzly {
           });
           // console.log("piece instances found for group", pieceInstances);
           const groupInstance = new GroupMovable({
-            puzzleData: this,
+            Puzzly: this,
             _id: group._id,
             pieces: pieceInstances,
             zIndex: group.zIndex,
@@ -203,26 +221,31 @@ export default class Puzzly {
       }
 
       if (this.complete) {
-        CanvasOperations.drawPiecesOntoCanvas(
-          this.solvedCnv,
+        this.CanvasOperations.drawPiecesOntoCanvas(
+          this.solvedCnv as HTMLCanvasElement,
           this.pieceInstances,
           this.puzzleImage,
           this.shadowOffset
         );
       }
     } else {
-      this.piecePositionMap = Utils.shuffleArray(
-        this.PieceLayouts.getRandomCoordsFromSectorMap()
-      );
       // console.log("pieces", this.pieces);
-      this.renderPieces(this.pieces);
+      this.pieces.forEach((piece) => {
+        const pieceInstance = new SingleMovable({
+          puzzleData: this,
+          pieceData: {
+            ...piece,
+            spritePath: this.spritePath,
+          },
+        });
+        this.pieceInstances.push(pieceInstance);
+      });
       if (!this.noDispersal) {
         this.PieceLayouts.arrangePiecesAroundEdge(
           this.largestPieceSpan,
           this.solvingArea as HTMLDivElement
         );
       }
-      // this.assignPieceConnections();
     }
 
     this.timeStarted = new Date().getTime();
@@ -235,30 +258,25 @@ export default class Puzzly {
     );
 
     const newPuzzleBtn = document.getElementById("js-create-new-puzzle");
-    newPuzzleBtn.addEventListener("mousedown", () => {
-      window.location = "/";
+    (newPuzzleBtn as HTMLElement).addEventListener("mousedown", () => {
+      window.location.href = "/";
     });
-
-    window.addEventListener(
-      EVENT_TYPES.CONNECTION_MADE,
-      this.onConnectionMade.bind(this)
-    );
 
     this.Zoom = new Zoom(this);
     new PlayBoundaryMovable(this);
 
-    this.stage.classList.add("loaded");
+    (this.stage as HTMLDivElement).classList.add("loaded");
     window.dispatchEvent(
       new CustomEvent(EVENT_TYPES.PUZZLE_LOADED, { detail: this })
     );
 
     const integrationTestDragHelper = document.querySelector(
       "#integration-test-drag-helper"
-    );
+    ) as HTMLDivElement;
     integrationTestDragHelper.style.position = "absolute";
     integrationTestDragHelper.style.top = window.innerHeight / 2 + "px";
     integrationTestDragHelper.style.top =
-      parseInt(this.playBoundary.style.left) / 2 + "px";
+      parseInt((this.playBoundary as HTMLDivElement).style.left) / 2 + "px";
     integrationTestDragHelper.style.width = "100px";
     integrationTestDragHelper.style.height = "100px";
   }
@@ -268,58 +286,18 @@ export default class Puzzly {
       (instance) => instance.isSolved
     );
     console.log("updateSolvedCanvas with solved pieces", solvedPieces);
-    CanvasOperations.drawPiecesOntoCanvas(
-      this.solvedCnv,
+    this.CanvasOperations.drawPiecesOntoCanvas(
+      this.solvedCnv as HTMLCanvasElement,
       solvedPieces,
       this.puzzleImage,
       this.shadowOffset
     );
   }
 
-  removeGroupInstance(groupInstance) {
+  removeGroupInstance(groupInstance: GroupMovable) {
     this.groupInstances = this.groupInstances.filter(
       (instance) => instance._id !== groupInstance._id
     );
-  }
-
-  initiatePiece(pieceData) {
-    const data = {
-      ...pieceData,
-      spritePath: this.spritePath,
-    };
-    const pieceInstance = new SingleMovable({
-      puzzleData: this,
-      pieceData: data,
-    });
-
-    this.pieceInstances.push(pieceInstance);
-  }
-
-  initiateGroup(event) {
-    const pieces = event.detail;
-    const groupInstance = new GroupMovable({
-      puzzleData: this,
-      pieces,
-    });
-    this.groupInstances.push(groupInstance);
-  }
-
-  onConnectionMade() {
-    if (this.soundsEnabled) {
-      this.clickSound.play();
-    }
-  }
-
-  renderPieces(pieces) {
-    pieces.forEach((piece) => this.initiatePiece.call(this, piece));
-  }
-
-  showPiece(el) {
-    el.style.display = "block";
-  }
-
-  hidePiece(el) {
-    el.style.display = "none";
   }
 
   setupSolvingArea() {
@@ -332,11 +310,13 @@ export default class Puzzly {
         ? window.innerWidth
         : window.innerHeight;
 
-    this.playBoundary.style.width = Utils.getPxString(playBoundaryWidth);
-    this.playBoundary.style.height = Utils.getPxString(playBoundaryHeight);
+    (this.playBoundary as HTMLDivElement).style.width =
+      Utils.getPxString(playBoundaryWidth);
+    (this.playBoundary as HTMLDivElement).style.height =
+      Utils.getPxString(playBoundaryHeight);
 
-    this.solvingArea.style.width = Utils.getPxString(this.boardSize);
-    this.solvingArea.style.height = Utils.getPxString(this.boardSize);
+    this.solvingArea.style.width = Utils.getPxString(this.boardWidth);
+    this.solvingArea.style.height = Utils.getPxString(this.boardHeight);
     this.solvingArea.style.top = Utils.getPxString(
       playBoundaryHeight / 2 - this.solvingArea.offsetHeight / 2
     );
@@ -346,10 +326,8 @@ export default class Puzzly {
 
     const solvedCnvContainer = document.getElementById(
       `group-container-${this.solvedGroupId}`
-    );
+    ) as HTMLDivElement;
     solvedCnvContainer.style.pointerEvents = "none";
-    solvedCnvContainer.style.top = Utils.getPxString(this.boardTop);
-    solvedCnvContainer.style.left = Utils.getPxString(this.boardLeft);
     solvedCnvContainer.style.width = Utils.getPxString(
       this.boardWidth + this.shadowOffset
     );
@@ -359,7 +337,7 @@ export default class Puzzly {
 
     this.solvedCnv = document.getElementById(
       `group-canvas-${this.solvedGroupId}`
-    );
+    ) as HTMLCanvasElement;
     // solvedCnv.style.pointerEvents = 'none';
     const solvingAreaBox = Utils.getStyleBoundingBox(this.solvingArea);
     this.solvedCnv.width = solvingAreaBox.width + this.shadowOffset;
@@ -388,13 +366,16 @@ export default class Puzzly {
     });
   }
 
-  keepOnTop(el) {
-    el.style.zIndex = this.currentZIndex = this.currentZIndex + 1;
+  keepOnTop(el: MovableElement) {
+    el.style.zIndex =
+      (this.currentZIndex = (this.currentZIndex as number) + 1) + "";
   }
 
-  loadAssets(assets) {}
+  loadAssets(assets: HTMLImageElement[]) {
+    return Promise.all(assets.map((asset) => this.loadAsset(asset)));
+  }
 
-  loadAsset(asset) {
+  loadAsset(asset: HTMLImageElement) {
     return new Promise((resolve, reject) => {
       asset.onload = (asset) => {
         resolve(asset);
