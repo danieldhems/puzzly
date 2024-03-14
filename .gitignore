@@ -9,3 +9,4 @@ data
 /playwright/.cache/
 /target
 /uploads_integration
+client/scripts/**.js
