@@ -1,19 +1,19 @@
-import GroupOperations from "./GroupOperations.js";
+import GroupOperations from "./GroupOperations";
 import { checkConnections } from "./checkConnections";
-import { EVENT_TYPES } from "./constants.js";
-import Utils from "./utils.js";
-import BaseMovable from "./BaseMovable.js";
-import SingleMovable from "./SingleMovable.js";
-import CanvasOperations from "./CanvasOperations.js";
-import PersistenceOperations from "./persistence.js";
+import { EVENT_TYPES } from "./constants";
+import Utils from "./utils";
+import BaseMovable from "./BaseMovable";
+import SingleMovable from "./SingleMovable";
+import CanvasOperations from "./CanvasOperations";
+import PersistenceOperations from "./persistence";
 import {
   DomBox,
   InstanceTypes,
   JigsawPieceData,
   MovableElement,
   GroupMovableSaveState,
-} from "./types.js";
-import Puzzly from "./puzzly.js";
+} from "./types";
+import Puzzly from "./puzzly";
 
 export default class GroupMovable extends BaseMovable {
   instanceType = InstanceTypes.GroupMovable;
@@ -148,7 +148,7 @@ export default class GroupMovable extends BaseMovable {
     elementsForGroup.forEach((element) => container.appendChild(element));
 
     GroupOperations.setIdForGroupElements(container, this._id as string);
-    this.CanvasOperations.drawPiecesOntoCanvas(
+    this.CanvasOperations.drawMovableElementsOntoCanvas(
       canvas,
       elementsForGroup,
       this.puzzleImage,
@@ -218,7 +218,7 @@ export default class GroupMovable extends BaseMovable {
     const elements = this.piecesInGroup.map(
       (piece: SingleMovable) => piece.element
     );
-    this.CanvasOperations.drawPiecesOntoCanvas(
+    this.CanvasOperations.drawMovableElementsOntoCanvas(
       canvas,
       elements,
       this.puzzleImage,

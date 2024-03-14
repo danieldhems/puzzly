@@ -1,11 +1,11 @@
 import { EVENT_TYPES } from "./constants";
+import Puzzly from "./puzzly";
 import {
   GroupData,
   GroupMovableSaveState,
   InstanceTypes,
   JigsawPieceData,
   LocalStorageKeys,
-  Puzzly,
   SavedProgress,
   SaveStates,
 } from "./types";

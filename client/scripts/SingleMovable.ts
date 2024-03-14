@@ -4,13 +4,13 @@ import { EVENT_TYPES, SHAPE_TYPES } from "./constants";
 import GroupMovable from "./GroupMovable";
 import GroupOperations from "./GroupOperations";
 import Pockets from "./Pockets";
+import Puzzly from "./puzzly";
 // import PathOperations from "./pathOperations.js";
 import {
   DomBox,
   InstanceTypes,
   JigsawPieceData,
   MovableElement,
-  Puzzly,
   SingleMovableSaveState,
 } from "./types";
 import Utils from "./utils";

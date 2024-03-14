@@ -1,5 +1,6 @@
 import BaseMovable from "./BaseMovable.js";
-import { InstanceTypes, Puzzly } from "./types.js";
+import Puzzly from "./puzzly.js";
+import { InstanceTypes } from "./types.js";
 
 export default class PlayBoundaryMovable extends BaseMovable {
   instanceType = InstanceTypes.PlayBoundaryMovable;

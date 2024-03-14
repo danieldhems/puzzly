@@ -1,7 +1,7 @@
 import { EVENT_TYPES, ZOOM_INTERVALS } from "./constants.js";
 import Utils from "./utils.js";
 import BaseMovable from "./BaseMovable.js";
-import { Puzzly } from "./types.js";
+import Puzzly from "./puzzly.js";
 
 export enum ZoomTypes {
   Normal = "normal",
@@ -22,9 +22,9 @@ export default class Zoom extends BaseMovable {
 
   constructor(puzzly: Puzzly) {
     super(puzzly);
-    this.playBoundary = puzzly.playBoundary;
+    this.playBoundary = puzzly.playBoundary as HTMLDivElement;
     this.isPreviewActive = puzzly.isPreviewActive;
-    this.stage = puzzly.stage;
+    this.stage = puzzly.stage as HTMLDivElement;
     this.currentZoomInterval = 0;
     this.zoomLevel = ZOOM_INTERVALS[this.currentZoomInterval];
 

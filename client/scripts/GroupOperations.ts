@@ -2,6 +2,7 @@ import CanvasOperations from "./CanvasOperations.js";
 import { ConnectorType, MovableElement } from "./types.js";
 import Utils from "./utils.js";
 import SingleMovable from "./SingleMovable.js";
+import BaseMovable from "./BaseMovable.js";
 
 export interface GroupOperationsProperties {
   width: number;
@@ -167,9 +168,9 @@ export default class GroupOperations implements GroupOperationsProperties {
     sourceInstance.element.classList.add("grouped");
     targetInstance.element.classList.add("grouped");
 
-    this.CanvasOperations.drawPiecesOntoCanvas(
+    this.CanvasOperations.drawMovableInstancesOntoCanvas(
       newCanvas,
-      [sourceInstance.element, targetInstance.element],
+      [sourceInstance, targetInstance],
       this.puzzleImage,
       this.shadowOffset
     );
@@ -301,7 +302,7 @@ export default class GroupOperations implements GroupOperationsProperties {
     const canvas = this.CanvasOperations.getCanvas(
       groupId
     ) as HTMLCanvasElement;
-    this.CanvasOperations.drawPiecesOntoCanvas(
+    this.CanvasOperations.drawMovableElementsOntoCanvas(
       canvas,
       allPieces,
       this.puzzleImage,

@@ -47,16 +47,16 @@ export default class CanvasOperations {
     return el;
   }
 
-  drawPiecesOntoCanvas(
+  drawMovableInstancesOntoCanvas(
     canvas: HTMLCanvasElement,
-    pieces: SingleMovable[],
+    instances: SingleMovable[],
     puzzleImage: Puzzly["puzzleImage"],
     shadowOffset: Puzzly["shadowOffset"]
   ) {
     const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     // ctx.imageSmoothingEnabled = false;
-    pieces.forEach((piece) => {
-      const data = piece.element.dataset;
+    instances.forEach((instance) => {
+      const data = instance.element.dataset;
       // console.log("drawPiecesOntoCanvas", data, shadowOffset);
       if (
         data.spriteshadowx &&
@@ -79,13 +79,75 @@ export default class CanvasOperations {
         );
       }
 
-      piece.element.childNodes.forEach(
+      instance.element.childNodes.forEach(
         (element: HTMLDivElement) => (element.style.visibility = "hidden")
       );
     });
 
-    pieces.forEach((piece) => {
-      const data = piece.element.dataset;
+    instances.forEach((instance) => {
+      const data = instance.element.dataset;
+      if (
+        data.spritex &&
+        data.spritey &&
+        data.imgw &&
+        data.imgh &&
+        data.solvedx &&
+        data.solvedy
+      ) {
+        ctx.drawImage(
+          puzzleImage,
+          parseInt(data.spritex),
+          parseInt(data.spritey),
+          parseInt(data.imgw),
+          parseInt(data.imgh),
+          parseInt(data.solvedx),
+          parseInt(data.solvedy),
+          parseInt(data.imgw),
+          parseInt(data.imgh)
+        );
+      }
+    });
+  }
+
+  drawMovableElementsOntoCanvas(
+    canvas: HTMLCanvasElement,
+    elements: MovableElement[],
+    puzzleImage: Puzzly["puzzleImage"],
+    shadowOffset: Puzzly["shadowOffset"]
+  ) {
+    const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+    // ctx.imageSmoothingEnabled = false;
+    elements.forEach((element) => {
+      const data = element.dataset;
+      // console.log("drawPiecesOntoCanvas", data, shadowOffset);
+      if (
+        data.spriteshadowx &&
+        data.spriteshadowy &&
+        data.imgw &&
+        data.imgh &&
+        data.solvedx &&
+        data.solvedy
+      ) {
+        ctx.drawImage(
+          puzzleImage,
+          parseInt(data.spriteshadowx),
+          parseInt(data.spriteshadowy),
+          parseInt(data.imgw),
+          parseInt(data.imgh),
+          parseInt(data.solvedx) + shadowOffset,
+          parseInt(data.solvedy) + shadowOffset,
+          parseInt(data.imgw),
+          parseInt(data.imgh)
+        );
+      }
+
+      element.childNodes.forEach(
+        (element: HTMLDivElement) => (element.style.visibility = "hidden")
+      );
+    });
+
+    elements.forEach((element) => {
+      const data = element.dataset;
       if (
         data.spritex &&
         data.spritey &&

@@ -1,21 +1,21 @@
-import SingleMovable from "./SingleMovable.js";
-import GroupMovable from "./GroupMovable.js";
-import Pockets from "./pockets.js";
-import DragAndSelect from "./dragAndSelect.js";
-import Utils from "./utils.js";
+import SingleMovable from "./SingleMovable";
+import GroupMovable from "./GroupMovable";
+import Pockets from "./Pockets";
+import DragAndSelect from "./dragAndSelect";
+import Utils from "./utils";
 import {
   CONNECTOR_TOLERANCE_AMOUNT,
   ELEMENT_IDS,
   EVENT_TYPES,
   FLOAT_TOLERANCE_AMOUNT,
   SHADOW_OFFSET_RATIO,
-} from "./constants.js";
-import { PocketMovable } from "./PocketMovable.js";
-import PersistenceOperations from "./persistence.js";
-import CanvasOperations from "./CanvasOperations.js";
-import Zoom from "./zoom.js";
-import PlayBoundaryMovable from "./PlayBoundaryMovable.js";
-import SolvedPuzzlePreview from "./SolvedPuzzlePreview.js";
+} from "./constants";
+import { PocketMovable } from "./PocketMovable";
+import PersistenceOperations from "./persistence";
+import CanvasOperations from "./CanvasOperations";
+import Zoom from "./zoom";
+import PlayBoundaryMovable from "./PlayBoundaryMovable";
+import SolvedPuzzlePreview from "./SolvedPuzzlePreview";
 import {
   GroupData,
   JigsawPieceData,
@@ -23,10 +23,10 @@ import {
   PuzzleCreationResponse,
   PuzzleShapes,
   SolvedPuzzlePreviewType,
-} from "./types.js";
-import PieceLayouts from "./PieceLayouts.js";
-import loadAssets from "./assetLoader.js";
-import Sounds from "./Sounds.js";
+} from "./types";
+import PieceLayouts from "./PieceLayouts";
+import loadAssets from "./assetLoader";
+import Sounds from "./Sounds";
 /**
  * Puzzly
  *
@@ -221,7 +221,7 @@ export default class Puzzly {
       }
 
       if (this.complete) {
-        this.CanvasOperations.drawPiecesOntoCanvas(
+        this.CanvasOperations.drawMovableInstancesOntoCanvas(
           this.solvedCnv as HTMLCanvasElement,
           this.pieceInstances,
           this.puzzleImage,
@@ -286,7 +286,7 @@ export default class Puzzly {
       (instance) => instance.isSolved
     );
     console.log("updateSolvedCanvas with solved pieces", solvedPieces);
-    this.CanvasOperations.drawPiecesOntoCanvas(
+    this.CanvasOperations.drawMovableInstancesOntoCanvas(
       this.solvedCnv as HTMLCanvasElement,
       solvedPieces,
       this.puzzleImage,

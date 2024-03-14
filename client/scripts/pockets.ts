@@ -1,19 +1,14 @@
 import BaseMovable from "./BaseMovable";
 import { ELEMENT_IDS, EVENT_TYPES } from "./constants";
 import { PocketMovable } from "./PocketMovable";
+import Puzzly from "./puzzly";
 import SingleMovable from "./SingleMovable";
-import {
-  DomBox,
-  JigsawPieceData,
-  MovableElement,
-  Orientation,
-  Puzzly,
-} from "./types";
+import { DomBox, MovableElement, Orientation } from "./types";
 import Utils from "./utils";
 
 const POCKET_DEPTH = 110;
 
-class Pockets {
+export default class Pockets {
   Puzzly: Puzzly;
   playBoundary: Puzzly["playBoundary"];
   ui: HTMLDivElement | null;
@@ -523,5 +518,3 @@ class Pockets {
     }
   }
 }
-
-export default Pockets;

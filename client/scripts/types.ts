@@ -1,6 +1,5 @@
 import GroupMovable from "./GroupMovable";
 import { PocketMovable } from "./PocketMovable";
-import Pockets from "./Pockets";
 import { DebugOptions } from "./puzzlyCreator";
 import SingleMovable from "./SingleMovable";
 
@@ -135,8 +134,8 @@ export interface PuzzleCreatorOptions {
   stageHeight: number;
   debugOptions: DebugOptions;
   selectedNumPieces: number;
-  selectedShape: PuzzleShapes;
-  piecesPerSideHorizontal: number;
+  selectedShape?: PuzzleShapes;
+  piecesPerSideHorizontal?: number;
   piecesPerSideVertical?: number;
   imagePreviewType: string; // TODO: Enum
   originalImageSize: {
@@ -150,7 +149,8 @@ export interface PuzzleCreatorOptions {
   spritePath?: string;
   previewPath: string;
   drawOutlines?: boolean;
-  connectorSize: number;
+  connectorSize?: number;
+  integration: boolean;
 }
 
 export type PuzzleCreationResponse = PuzzleCreatorOptions & {
