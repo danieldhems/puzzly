@@ -1,7 +1,7 @@
 import BaseMovable from "./BaseMovable.js";
 import { EVENT_TYPES } from "./constants.js";
 import Pockets from "./Pockets.js";
-import Puzzly from "./puzzly.js";
+import Puzzly from "./Puzzly.js";
 import SingleMovable from "./SingleMovable.js";
 import { MovableElement } from "./types.js";
 import Utils from "./utils.js";

@@ -13,7 +13,7 @@ import {
   MovableElement,
   GroupMovableSaveState,
 } from "./types";
-import Puzzly from "./puzzly";
+import Puzzly from "./Puzzly";
 
 export default class GroupMovable extends BaseMovable {
   instanceType = InstanceTypes.GroupMovable;

@@ -1,7 +1,7 @@
 import { EVENT_TYPES, ZOOM_INTERVALS } from "./constants.js";
 import Utils from "./utils.js";
 import BaseMovable from "./BaseMovable.js";
-import Puzzly from "./puzzly.js";
+import Puzzly from "./Puzzly.js";
 
 export enum ZoomTypes {
   Normal = "normal",

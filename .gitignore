@@ -10,3 +10,4 @@ data
 /target
 /uploads_integration
 client/scripts/**.js
+/dist

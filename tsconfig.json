@@ -2,12 +2,8 @@
     "compilerOptions": {
         "declaration": true,
         "emitDeclarationOnly": true,
-        "isolatedModules": true,
         "strictNullChecks": true,
         "preserveConstEnums": true,
         "noImplicitAny": true,
-        "allowJs": true,
-        "checkJs": true,
-        "outDir": "./client/scripts/dist"
     }
 }

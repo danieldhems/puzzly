@@ -4,7 +4,7 @@ import GroupOperations from "./GroupOperations.js";
 import { Connection, DomBox, InstanceTypes, MovableElement } from "./types";
 import SingleMovable from "./SingleMovable";
 import GroupMovable from "./GroupMovable";
-import Puzzly from "./puzzly";
+import Puzzly from "./Puzzly";
 
 export default class BaseMovable {
   instanceType: InstanceTypes;
