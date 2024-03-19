@@ -9,8 +9,8 @@ import Utils from "./utils.js";
 class DragAndSelect extends BaseMovable {
   Puzzly: Puzzly;
   Pockets: Pockets;
-  playBoundary: HTMLDivElement;
-  piecesContainer: HTMLDivElement;
+  playBoundary: HTMLDivElement | null;
+  piecesContainer: HTMLDivElement | null;
   selectedPiecesContainer: HTMLDivElement | null;
   zoomLevel: number;
   selectedPieces: HTMLDivElement[];
@@ -285,7 +285,7 @@ class DragAndSelect extends BaseMovable {
         p.offsetTop +
         parseInt((this.selectedPiecesContainer as HTMLDivElement).style.top) +
         "px";
-      this.piecesContainer.appendChild(p);
+      (this.piecesContainer as HTMLDivElement).appendChild(p);
     });
   }
 
@@ -414,7 +414,9 @@ class DragAndSelect extends BaseMovable {
         this.selectedPieces
       );
 
-      this.piecesContainer.appendChild(this.selectedPiecesContainer);
+      (this.piecesContainer as HTMLDivElement).appendChild(
+        this.selectedPiecesContainer
+      );
       this.setLastPosition();
 
       this.piecesSelected = true;
@@ -483,7 +485,9 @@ class DragAndSelect extends BaseMovable {
     const selectedPiecesRect = (
       this.selectedPiecesContainer as HTMLDivElement
     ).getBoundingClientRect();
-    const playBoundaryRect = this.playBoundary.getBoundingClientRect();
+    const playBoundaryRect = (
+      this.playBoundary as HTMLDivElement
+    ).getBoundingClientRect();
 
     return !Utils.isInside(selectedPiecesRect, playBoundaryRect);
   }

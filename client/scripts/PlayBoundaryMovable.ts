@@ -8,7 +8,7 @@ export default class PlayBoundaryMovable extends BaseMovable {
   constructor(puzzly: Puzzly) {
     super(puzzly);
 
-    this.element = this.playBoundary;
+    this.element = this.playBoundary as HTMLDivElement;
     this.element.addEventListener("mousedown", this.onMouseDown.bind(this));
   }
 

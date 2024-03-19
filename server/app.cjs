@@ -10,7 +10,10 @@ var makePuzzleImage = require("./api/makePuzzleImage.cjs");
 var generatorTest = require("./api/generator-test.cjs");
 var app = express();
 
-app.use("/", express.static("./dist"));
+app.use(
+  "/",
+  express.static(process?.ENV?.mode === "production" ? "./dist" : "./client")
+);
 app.use("/uploads", express.static("./uploads"));
 app.use("/uploads_integration", express.static("./uploads_integration"));
 app.use("/common", express.static("./common"));

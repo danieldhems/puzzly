@@ -81,8 +81,12 @@ export default class Zoom extends BaseMovable {
   ): { top: number; left: number } | undefined {
     if (this.zoomType === ZoomTypes.Normal) {
       return {
-        top: window.innerHeight / 2 - this.playBoundary.offsetTop,
-        left: window.innerWidth / 2 - this.playBoundary.offsetLeft,
+        top:
+          window.innerHeight / 2 -
+          (this.playBoundary as HTMLDivElement).offsetTop,
+        left:
+          window.innerWidth / 2 -
+          (this.playBoundary as HTMLDivElement).offsetLeft,
       };
     } else if (this.zoomType === ZoomTypes.Pointer) {
       const pointerEvent = event as MouseEvent;
@@ -99,7 +103,9 @@ export default class Zoom extends BaseMovable {
       left: number;
     };
     // console.log("transform origin", top, left);
-    this.playBoundary.style.transformOrigin = `${top}px ${left}px`;
+    (
+      this.playBoundary as HTMLDivElement
+    ).style.transformOrigin = `${top}px ${left}px`;
   }
 
   // Might want an observer of some kind for the scalePlayBoundary method calls here, instead of manually calling it in all of these helper methods.
@@ -141,7 +147,7 @@ export default class Zoom extends BaseMovable {
   }
 
   scalePlayBoundary(scale: number) {
-    this.playBoundary.style.transform = `scale(${scale})`;
+    (this.playBoundary as HTMLDivElement).style.transform = `scale(${scale})`;
 
     if (this.zoomLevel !== this.prevZoomLevel) {
       window.dispatchEvent(
@@ -156,16 +162,18 @@ export default class Zoom extends BaseMovable {
   }
 
   centerPlayBoundary() {
-    const stageRect = this.stage.getBoundingClientRect();
-    const playBoundaryRect = this.playBoundary.getBoundingClientRect();
+    if (this.playBoundary) {
+      const stageRect = this.stage.getBoundingClientRect();
+      const playBoundaryRect = this.playBoundary.getBoundingClientRect();
 
-    this.playBoundary.style.top = Utils.getPxString(
-      stageRect.height / 2 - playBoundaryRect.height / 2
-    );
-    this.playBoundary.style.left = Utils.getPxString(
-      stageRect.width / 2 - playBoundaryRect.width / 2
-    );
+      this.playBoundary.style.top = Utils.getPxString(
+        stageRect.height / 2 - playBoundaryRect.height / 2
+      );
+      this.playBoundary.style.left = Utils.getPxString(
+        stageRect.width / 2 - playBoundaryRect.width / 2
+      );
 
-    window.dispatchEvent(new CustomEvent(EVENT_TYPES.RESIZE));
+      window.dispatchEvent(new CustomEvent(EVENT_TYPES.RESIZE));
+    }
   }
 }

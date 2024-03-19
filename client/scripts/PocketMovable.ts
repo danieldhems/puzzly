@@ -161,7 +161,9 @@ export class PocketMovable extends BaseMovable {
 
   addToStage() {
     this.piecesInPocket.forEach((element) => {
-      const playboundaryRect = this.piecesContainer.getBoundingClientRect();
+      const playboundaryRect = (
+        this.piecesContainer as HTMLDivElement
+      ).getBoundingClientRect();
       const elRect = element.getBoundingClientRect();
 
       const pos = {
@@ -172,7 +174,7 @@ export class PocketMovable extends BaseMovable {
       element.style.top = pos.y + "px";
       element.style.left = pos.x + "px";
 
-      this.piecesContainer.appendChild(element);
+      (this.piecesContainer as HTMLDivElement).appendChild(element);
       element.classList.remove("in-pocket");
       element.setAttribute("data-pocket-id", "");
       element.style.pointerEvents = "auto";

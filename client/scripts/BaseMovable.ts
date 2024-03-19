@@ -19,7 +19,7 @@ export default class BaseMovable {
   connection: Connection;
   puzzleImage: HTMLImageElement;
   // Element containing all pieces in-play
-  piecesContainer: HTMLDivElement;
+  piecesContainer: HTMLDivElement | null;
   // Used by PocketMovable to know which pocket the movable originated from, and which the movable's child nodes will be returned to if out-of-bounds.
   activePocket?: HTMLDivElement;
   boardWidth: number;
@@ -32,7 +32,7 @@ export default class BaseMovable {
   isDragAndSelectActive = false;
   puzzly: any;
   solvedContainer: HTMLDivElement;
-  playBoundary: HTMLDivElement;
+  playBoundary: HTMLDivElement | null;
   solvedCanvas: HTMLDivElement;
   pocketsContainer: HTMLDivElement;
   pockets: NodeListOf<HTMLDivElement>;
@@ -186,7 +186,7 @@ export default class BaseMovable {
   isInsidePlayArea() {
     return Utils.isInside(
       this.element.getBoundingClientRect(),
-      this.piecesContainer.getBoundingClientRect()
+      (this.piecesContainer as HTMLDivElement).getBoundingClientRect()
     );
   }
 
@@ -197,7 +197,7 @@ export default class BaseMovable {
   addToStage(element?: MovableElement) {
     const elementToAdd = element || this.element;
     // console.log("element to add", this);
-    this.piecesContainer.prepend(elementToAdd);
+    (this.piecesContainer as HTMLDivElement).prepend(elementToAdd);
   }
 
   isPuzzleComplete() {

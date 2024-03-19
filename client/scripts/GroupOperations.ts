@@ -2,7 +2,6 @@ import CanvasOperations from "./CanvasOperations.js";
 import { ConnectorType, MovableElement } from "./types.js";
 import Utils from "./utils.js";
 import SingleMovable from "./SingleMovable.js";
-import BaseMovable from "./BaseMovable.js";
 
 export interface GroupOperationsProperties {
   width: number;

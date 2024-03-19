@@ -315,7 +315,9 @@ export default class GroupMovable extends BaseMovable {
   }
 
   isOutOfBounds() {
-    const playAreaBox = this.piecesContainer.getBoundingClientRect();
+    const playAreaBox = (
+      this.piecesContainer as HTMLDivElement
+    ).getBoundingClientRect();
     return this.piecesInGroup.some(
       (instance) =>
         !Utils.isInside(instance.element.getBoundingClientRect(), playAreaBox)

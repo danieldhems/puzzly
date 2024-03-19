@@ -1,9 +1,11 @@
 {
     "compilerOptions": {
+        "module": "es6",
         "declaration": true,
-        "emitDeclarationOnly": true,
+        "esModuleInterop": true,
         "strictNullChecks": true,
         "preserveConstEnums": true,
         "noImplicitAny": true,
+        "moduleResolution": "node"
     }
 }
