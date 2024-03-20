@@ -6,13 +6,13 @@
     "server": "nodemon server/index.cjs",
     "db": "mongod --dbpath=./data",
     "start": "concurrently 'npm run db' 'npm run server'",
-    "build": "webpack --config webpack.config.cjs",
+    "build": "webpack --mode production --config webpack.config.cjs",
     "serenity": "failsafe serenity:update serenity:clean wdio serenity:report",
     "serenity:update": "serenity-bdd update",
     "serenity:clean": "rimraf target",
     "wdio": "wdio run ./wdio.conf.cjs",
     "serenity:report": "serenity-bdd run",
-    "ts": "npx tsc ./client/scripts/**.ts"
+    "ts": "npx tsc"
   },
   "author": "Dan Hems",
   "license": "ISC",

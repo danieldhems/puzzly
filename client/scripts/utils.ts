@@ -4,7 +4,6 @@ import {
   DomBox,
   JigsawPieceData,
   MovableElement,
-  PieceConnections,
   SideNames,
 } from "./types";
 

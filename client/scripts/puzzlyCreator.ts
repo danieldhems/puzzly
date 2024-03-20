@@ -1,7 +1,7 @@
-import { PuzzleSizes } from "./constants.js";
-import puzzleGenerator from "./puzzleGenerator.js";
-import { PuzzleCreationResponse, PuzzleCreatorOptions } from "./types.js";
-import Utils from "./utils.js";
+import { PuzzleSizes } from "./constants";
+import puzzleGenerator from "./puzzleGenerator";
+import { PuzzleCreationResponse, PuzzleCreatorOptions } from "./types";
+import Utils from "./utils";
 
 export interface SourceImage {
   dimensions: {
@@ -687,11 +687,12 @@ export default class PuzzlyCreator {
 
           this.newPuzzleForm.style.display = "none";
 
-          puzzleData.pieces = response.pieces;
-          puzzleData.spritePath = response.spritePath;
-          puzzleData.previewPath = response.previewPath;
-
-          new window.Puzzly(puzzleId, puzzleData);
+          new window.Puzzly(puzzleId, {
+            ...puzzleData,
+            pieces: response.pieces,
+            spritePath: response.spritePath,
+            previewPath: response.previewPath,
+          });
         }.bind(this)
       )
       .catch(function (err) {

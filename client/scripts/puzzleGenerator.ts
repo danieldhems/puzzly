@@ -1,4 +1,4 @@
-import jigsawPath from "./jigsawPath.js";
+import jigsawPath from "./jigsawPath";
 import { ConnectorType, JigsawPieceData, PuzzleCreatorOptions } from "./types";
 
 // How big the connectors should be (how far they stick of from the piece's body), expressed as a percentage of the body of the piece

@@ -1,6 +1,6 @@
-import CanvasOperations from "./CanvasOperations";
-import { MovableElement } from "./types";
-import SingleMovable from "./SingleMovable";
+import CanvasOperations from "./CanvasOperations.js";
+import { MovableElement } from "./types.js";
+import SingleMovable from "./SingleMovable.js";
 export interface GroupOperationsProperties {
     width: number;
     height: number;

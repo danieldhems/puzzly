@@ -5,7 +5,7 @@ import {
   MovableElement,
   SideNames,
 } from "./types";
-import Utils from "./utils.js";
+import Utils from "./utils";
 
 export const getOppositeSide = (sideName: SideNames) => {
   const map: Partial<Record<SideNames, SideNames>> = {

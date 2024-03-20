@@ -1,8 +1,8 @@
-import { EVENT_TYPES, SHADOW_OFFSET_RATIO } from "./constants.js";
-import Puzzly from "./Puzzly.js";
-import SingleMovable from "./SingleMovable.js";
-import { MovableElement } from "./types.js";
-import Utils from "./utils.js";
+import { EVENT_TYPES, SHADOW_OFFSET_RATIO } from "./constants";
+import Puzzly from "./Puzzly";
+import SingleMovable from "./SingleMovable";
+import { MovableElement } from "./types";
+import Utils from "./utils";
 
 export default class CanvasOperations {
   shadowOffset: Puzzly["shadowOffset"];

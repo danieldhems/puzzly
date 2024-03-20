@@ -1,6 +1,6 @@
 import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants";
 import Utils from "./utils";
-import GroupOperations from "./GroupOperations.js";
+import GroupOperations from "./GroupOperations";
 import { Connection, DomBox, InstanceTypes, MovableElement } from "./types";
 import SingleMovable from "./SingleMovable";
 import GroupMovable from "./GroupMovable";

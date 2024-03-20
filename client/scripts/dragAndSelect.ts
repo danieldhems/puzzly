@@ -1,10 +1,10 @@
-import BaseMovable from "./BaseMovable.js";
-import { EVENT_TYPES } from "./constants.js";
-import Pockets from "./Pockets.js";
-import Puzzly from "./Puzzly.js";
-import SingleMovable from "./SingleMovable.js";
-import { MovableElement } from "./types.js";
-import Utils from "./utils.js";
+import BaseMovable from "./BaseMovable";
+import { EVENT_TYPES } from "./constants";
+import Pockets from "./Pockets";
+import Puzzly from "./Puzzly";
+import SingleMovable from "./SingleMovable";
+import { MovableElement } from "./types";
+import Utils from "./utils";
 
 class DragAndSelect extends BaseMovable {
   Puzzly: Puzzly;

@@ -1,5 +1,5 @@
-import BaseMovable from "./BaseMovable";
-import Puzzly from "./Puzzly";
+import BaseMovable from "./BaseMovable.js";
+import Puzzly from "./Puzzly.js";
 export declare enum ZoomTypes {
     Normal = "normal",
     Pointer = "pointer"

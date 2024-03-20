@@ -1,7 +1,7 @@
-import BaseMovable from "./BaseMovable";
-import Pockets from "./Pockets";
-import Puzzly from "./Puzzly";
-import { MovableElement } from "./types";
+import BaseMovable from "./BaseMovable.js";
+import Pockets from "./Pockets.js";
+import Puzzly from "./Puzzly.js";
+import { MovableElement } from "./types.js";
 declare class DragAndSelect extends BaseMovable {
     Puzzly: Puzzly;
     Pockets: Pockets;
