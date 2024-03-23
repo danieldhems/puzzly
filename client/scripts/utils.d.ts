@@ -1,5 +1,7 @@
 import { ConnectorType, DomBox, JigsawPieceData, MovableElement, SideNames } from "./types";
 declare const Utils: {
+    loadAssets(assets: HTMLImageElement[]): Promise<unknown[]>;
+    loadAsset(asset: HTMLImageElement | HTMLAudioElement): Promise<unknown>;
     getAllPieces(): NodeListOf<HTMLDivElement>;
     hasCollision(source: DomBox, target: DomBox): boolean;
     isInside(source: DOMRect, target: DOMRect): boolean;

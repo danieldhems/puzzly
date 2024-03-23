@@ -8,6 +8,21 @@ import {
 } from "./types";
 
 const Utils = {
+  loadAssets(assets: HTMLImageElement[]) {
+    return Promise.all(assets.map((asset) => Utils.loadAsset(asset)));
+  },
+
+  loadAsset(asset: HTMLImageElement | HTMLAudioElement) {
+    return new Promise((resolve, reject) => {
+      asset.onload = (asset) => {
+        resolve(asset);
+      };
+      asset.onerror = (err) => {
+        reject(err);
+      };
+    });
+  },
+
   getAllPieces(): NodeListOf<HTMLDivElement> {
     return document.querySelectorAll(".puzzle-piece");
   },

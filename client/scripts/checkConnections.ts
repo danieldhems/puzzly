@@ -87,52 +87,55 @@ export function checkConnections(element: MovableElement) {
   Object.keys(connectsTo).some((key: SideNames) => {
     // console.log("key", key);
     const targetElement = Utils.getElementByPieceId(connectsTo[key]);
-    const { pieceId, groupId, isSolved } = targetElement.dataset;
-    const targetPiece = {
-      pieceId: parseInt(pieceId as string),
-      groupId: groupId,
-      isSolved: isSolved === "true",
-    };
 
-    let thisPieceConnectorBoundingBox;
+    if (targetElement) {
+      const { pieceId, groupId, isSolved } = targetElement.dataset;
+      const targetPiece = {
+        pieceId: parseInt(pieceId as string),
+        groupId: groupId,
+        isSolved: isSolved === "true",
+      };
 
-    if (shouldCompare(targetPiece)) {
-      thisPieceConnectorBoundingBox = Utils.getConnectorBoundingBox(
-        element,
-        key
-      ) as DomBox;
+      let thisPieceConnectorBoundingBox;
 
-      const oppositeConnection = getOppositeSide(key);
+      if (shouldCompare(targetPiece)) {
+        thisPieceConnectorBoundingBox = Utils.getConnectorBoundingBox(
+          element,
+          key
+        ) as DomBox;
 
-      const targetPieceConnectorBoundingBox = Utils.getConnectorBoundingBox(
-        targetElement,
-        oppositeConnection as SideNames
-      ) as DomBox;
+        const oppositeConnection = getOppositeSide(key);
 
-      // console.log("source element", element);
-      // console.log("target element", targetElement);
-
-      // console.log(
-      // `checking ${key}`,
-      // thisPieceConnectorBoundingBox,
-      // targetPieceConnectorBoundingBox
-      // );
-
-      // Utils.drawBox(thisPieceConnectorBoundingBox);
-      // Utils.drawBox(targetPieceConnectorBoundingBox, null, "blue");
-
-      if (
-        Utils.hasCollision(
-          thisPieceConnectorBoundingBox,
-          targetPieceConnectorBoundingBox
-        )
-      ) {
-        return {
-          type: key,
-          sourceElement: element,
+        const targetPieceConnectorBoundingBox = Utils.getConnectorBoundingBox(
           targetElement,
-          isSolving: targetElement.dataset.isSolved === "true",
-        };
+          oppositeConnection as SideNames
+        ) as DomBox;
+
+        // console.log("source element", element);
+        // console.log("target element", targetElement);
+
+        // console.log(
+        // `checking ${key}`,
+        // thisPieceConnectorBoundingBox,
+        // targetPieceConnectorBoundingBox
+        // );
+
+        // Utils.drawBox(thisPieceConnectorBoundingBox);
+        // Utils.drawBox(targetPieceConnectorBoundingBox, null, "blue");
+
+        if (
+          Utils.hasCollision(
+            thisPieceConnectorBoundingBox,
+            targetPieceConnectorBoundingBox
+          )
+        ) {
+          return {
+            type: key,
+            sourceElement: element,
+            targetElement,
+            isSolving: targetElement.dataset.isSolved === "true",
+          };
+        }
       }
     }
   });

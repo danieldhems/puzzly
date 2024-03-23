@@ -21,6 +21,8 @@ export default class SolvedPuzzlePreview {
       "solved-preview"
     ) as HTMLDivElement;
 
+    this.previewImage = new Image();
+
     this.setupFullImagePreviewer();
   }
 

@@ -72,6 +72,4 @@ export default class Puzzly {
     setupSolvingArea(): void;
     updateElapsedTime(isComplete?: boolean): Promise<Response>;
     keepOnTop(el: MovableElement): void;
-    loadAssets(assets: HTMLImageElement[]): Promise<unknown[]>;
-    loadAsset(asset: HTMLImageElement): Promise<unknown>;
 }

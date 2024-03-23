@@ -77,7 +77,7 @@ export default class PuzzlyCreator {
     showForm(): void;
     setDefaultNumPieces(): void;
     addEventListeners(): void;
-    onImageUploadChange(): void;
+    onImageUploadChange(e: MouseEvent): void;
     onStartBtnClick(e: SubmitEvent): void;
     onUploadSuccess(response: {
         data: SourceImage;

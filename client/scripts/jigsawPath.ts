@@ -61,7 +61,7 @@ export default class JigsawPath {
   }
 
   rotate(point: { x: number; y: number }, deg: number) {
-    if (deg < 1 || deg > 359) throw new Error("Invalid degree value provided");
+    if (deg < 0 || deg > 359) throw new Error("Invalid degree value provided");
 
     const rad = (deg * Math.PI) / 180;
 

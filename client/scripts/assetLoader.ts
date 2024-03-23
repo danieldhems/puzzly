@@ -1,15 +1,19 @@
+import Utils from "./utils";
+
 export default async function loadAssets(
   assets: Array<HTMLImageElement | HTMLAudioElement>
 ) {
   let promises = [];
+  const loadedAssets = [] as (HTMLImageElement | HTMLAudioElement)[];
   for (let i = 0, l = assets.length; i < l; i++) {
     promises.push(
-      this.loadAsset(assets[i]).then(
+      Utils.loadAsset(assets[i]).then(
         (assetData: HTMLImageElement | HTMLAudioElement) =>
-          this.loadedAssets.push(assetData)
+          loadedAssets.push(assetData)
       )
     );
   }
 
-  return Promise.all(promises);
+  await Promise.all(promises);
+  return loadedAssets;
 }

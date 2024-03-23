@@ -49,14 +49,16 @@ export default class SingleMovable extends BaseMovable {
       piecesPerSideVertical: this.Puzzly.piecesPerSideVertical,
     });
 
+    this.Puzzly = puzzleData;
     this.puzzleId = this.Puzzly.puzzleId;
     this._id = pieceData._id;
 
     this.piecesPerSideHorizontal = this.Puzzly.piecesPerSideHorizontal;
-    this.shadowOffset = this.Puzzly.shadowOffset;
-    this.Puzzly = puzzleData;
+    this.shadowOffset = puzzleData.shadowOffset;
     this.pocketId = pieceData.pocketId;
     this.Pockets = this.Puzzly.Pockets;
+
+    console.log("piece instance", this);
 
     if (pieceData.groupId) {
       this.groupId = pieceData.groupId;

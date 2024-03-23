@@ -130,11 +130,9 @@ export default class Puzzly {
 
     this.stage = document.querySelector(`#${ELEMENT_IDS.STAGE}`);
     this.playBoundary = document.querySelector(`#${ELEMENT_IDS.PLAY_BOUNDARY}`);
-    if (this.solvingArea) {
-      this.solvingArea = document.querySelector(
-        `#${ELEMENT_IDS.SOLVED_PUZZLE_AREA}`
-      ) as HTMLDivElement;
-    }
+    this.solvingArea = document.querySelector(
+      `#${ELEMENT_IDS.SOLVED_PUZZLE_AREA}`
+    ) as HTMLDivElement;
     this.piecesContainer = document.querySelector(
       `#${ELEMENT_IDS.PIECES_CONTAINER}`
     );
@@ -369,20 +367,5 @@ export default class Puzzly {
   keepOnTop(el: MovableElement) {
     el.style.zIndex =
       (this.currentZIndex = (this.currentZIndex as number) + 1) + "";
-  }
-
-  loadAssets(assets: HTMLImageElement[]) {
-    return Promise.all(assets.map((asset) => this.loadAsset(asset)));
-  }
-
-  loadAsset(asset: HTMLImageElement) {
-    return new Promise((resolve, reject) => {
-      asset.onload = (asset) => {
-        resolve(asset);
-      };
-      asset.onerror = (err) => {
-        reject(err);
-      };
-    });
   }
 }

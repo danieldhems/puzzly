@@ -166,7 +166,7 @@ const generateDataForPuzzlePieces = async () => {
       adjacentPieceAbove,
       endOfRow,
       finalRow
-    );
+    ) as ConnectorType[];
 
     currentPiece = assignInitialPieceData(
       curImgX,
@@ -205,6 +205,8 @@ const generateDataForPuzzlePieces = async () => {
 
       rowCount++;
     } else {
+      curImgX += currentPiece.imgW - Generator.connectorSize;
+
       if (rowCount > 1) {
         const nextPieceAbove =
           pieces[pieces.length - Generator.piecesPerSideHorizontal];
@@ -217,12 +219,6 @@ const generateDataForPuzzlePieces = async () => {
         ) {
           curImgY -= Generator.connectorSize;
         }
-      }
-
-      if (currentPiece.type[1] === -1) {
-        curImgX += currentPiece.imgW - Generator.connectorSize;
-      } else if (currentPiece.type[1] === 1) {
-        curImgX += currentPiece.imgW - Generator.connectorSize;
       }
 
       numPiecesFromLeftEdge++;
@@ -252,8 +248,6 @@ const createPuzzlePiece = async (
   data: JigsawPieceData,
   ctxForSprite: CanvasRenderingContext2D
 ) => {
-  // console.log("createPuzzlePiece", data);
-
   const shadowCnv = createCanvas(data.imgW, data.imgH);
   const shdCtx = shadowCnv.getContext("2d");
   shadowCnv.width = data.imgW;
@@ -332,23 +326,36 @@ const getConnectors = (
   adjacentPieceAbove: JigsawPieceData | null,
   endOfRow: boolean,
   finalRow: boolean
-): ConnectorType[] => {
-  const pieceAboveIsTopRightCorner =
-    adjacentPieceAbove?.type[0] === 0 && adjacentPieceAbove?.type[1] === 0;
-  const pieceAboveIsRightSide = adjacentPieceAbove?.type[1] === 0;
-  const pieceAboveIsTopLeftCorner =
-    adjacentPieceAbove?.type[3] === 0 && adjacentPieceAbove?.type[0] === 0;
-  const pieceAboveIsLeftSide = adjacentPieceAbove?.type[3] === 0;
-  const pieceAboveIsTopSide = adjacentPieceAbove?.type[0] === 0;
-  const pieceAboveIsInnerPiece =
-    adjacentPieceAbove?.type.join(",").indexOf("0") === -1;
+) => {
+  let pieceAboveIsTopRightCorner,
+    pieceAboveIsRightSide,
+    pieceAboveIsTopLeftCorner,
+    pieceAboveIsLeftSide,
+    pieceAboveIsTopSide,
+    pieceAboveIsInnerPiece,
+    pieceBehindIsBottomLeftCorner,
+    pieceBehindIsBottomSide,
+    pieceAboveHasBottomPlug,
+    pieceBehindHasRightPlug;
 
-  const pieceBehindIsBottomLeftCorner =
-    adjacentPieceBehind?.type[2] === 0 && adjacentPieceBehind?.type[3] === 0;
-  const pieceBehindIsBottomSide = adjacentPieceBehind?.type[2] === 0;
+  if (adjacentPieceAbove) {
+    pieceAboveIsTopRightCorner =
+      adjacentPieceAbove.type[0] === 0 && adjacentPieceAbove.type[1] === 0;
+    pieceAboveIsRightSide = adjacentPieceAbove?.type[1] === 0;
+    pieceAboveIsTopLeftCorner =
+      adjacentPieceAbove.type[3] === 0 && adjacentPieceAbove.type[0] === 0;
+    pieceAboveIsLeftSide = adjacentPieceAbove.type[3] === 0;
+    pieceAboveIsTopSide = adjacentPieceAbove.type[0] === 0;
+    pieceAboveIsInnerPiece = !adjacentPieceAbove.type.includes(0);
+    pieceAboveHasBottomPlug = adjacentPieceAbove.type[2] === 1;
+  }
 
-  const pieceAboveHasBottomPlug = adjacentPieceAbove?.type[2] === 1;
-  const pieceBehindHasRightPlug = adjacentPieceBehind?.type[1] === 1;
+  if (adjacentPieceBehind) {
+    pieceBehindIsBottomLeftCorner =
+      adjacentPieceBehind.type[2] === 0 && adjacentPieceBehind.type[3] === 0;
+    pieceBehindIsBottomSide = adjacentPieceBehind.type[2] === 0;
+    pieceBehindHasRightPlug = adjacentPieceBehind.type[1] === 1;
+  }
 
   const connectorChoices = [-1, 1] as ConnectorType[];
 
@@ -371,36 +378,43 @@ const getConnectors = (
   }
   // All pieces after top row
   else {
-    let topConnector, rightConnector, bottomConnector, leftConnector;
     // Last piece of each row, should be right side
     if (pieceAboveIsTopRightCorner || (!finalRow && pieceAboveIsRightSide)) {
-      topConnector = pieceAboveHasBottomPlug ? -1 : 1;
-      rightConnector = 0;
-      bottomConnector = connectorChoices[Math.floor(Math.random() * 2)];
-      leftConnector = pieceBehindHasRightPlug ? -1 : 1;
+      return [
+        pieceAboveHasBottomPlug ? -1 : 1,
+        0,
+        connectorChoices[Math.floor(Math.random() * 2)],
+        pieceBehindHasRightPlug ? -1 : 1,
+      ] as ConnectorType[];
     }
 
     // First piece of each row, should be left side
     if (pieceAboveIsTopLeftCorner || (!finalRow && pieceAboveIsLeftSide)) {
-      topConnector = pieceAboveHasBottomPlug ? -1 : 1;
-      rightConnector = connectorChoices[Math.floor(Math.random() * 2)];
-      bottomConnector = connectorChoices[Math.floor(Math.random() * 2)];
-      leftConnector = 0;
+      return [
+        pieceAboveHasBottomPlug ? -1 : 1,
+        connectorChoices[Math.floor(Math.random() * 2)],
+        connectorChoices[Math.floor(Math.random() * 2)],
+        0,
+      ] as ConnectorType[];
     }
 
     // All middle pieces
     if ((!finalRow && pieceAboveIsInnerPiece) || pieceAboveIsTopSide) {
-      topConnector = pieceAboveHasBottomPlug ? -1 : 1;
-      rightConnector = connectorChoices[Math.floor(Math.random() * 2)];
-      bottomConnector = connectorChoices[Math.floor(Math.random() * 2)];
-      leftConnector = pieceBehindHasRightPlug ? -1 : 1;
+      return [
+        pieceAboveHasBottomPlug ? -1 : 1,
+        connectorChoices[Math.floor(Math.random() * 2)],
+        connectorChoices[Math.floor(Math.random() * 2)],
+        pieceBehindHasRightPlug ? -1 : 1,
+      ] as ConnectorType[];
     }
 
     if (finalRow && pieceAboveIsLeftSide) {
-      topConnector = pieceAboveHasBottomPlug ? -1 : 1;
-      rightConnector = connectorChoices[Math.floor(Math.random() * 2)];
-      bottomConnector = 0;
-      leftConnector = 0;
+      return [
+        pieceAboveHasBottomPlug ? -1 : 1,
+        connectorChoices[Math.floor(Math.random() * 2)],
+        0,
+        0,
+      ] as ConnectorType[];
     }
 
     if (
@@ -408,26 +422,23 @@ const getConnectors = (
       pieceAboveIsInnerPiece &&
       (pieceBehindIsBottomLeftCorner || pieceBehindIsBottomSide)
     ) {
-      topConnector = pieceAboveHasBottomPlug ? -1 : 1;
-      rightConnector = connectorChoices[Math.floor(Math.random() * 2)];
-      bottomConnector = 0;
-      leftConnector = pieceBehindHasRightPlug ? -1 : 1;
+      return [
+        pieceAboveHasBottomPlug ? -1 : 1,
+        connectorChoices[Math.floor(Math.random() * 2)],
+        0,
+        pieceBehindHasRightPlug ? -1 : 1,
+      ] as ConnectorType[];
     }
 
     // Very last piece, should be corner bottom right
     if (pieceAboveIsRightSide && pieceBehindIsBottomSide) {
-      topConnector = pieceAboveHasBottomPlug ? -1 : 1;
-      rightConnector = 0;
-      bottomConnector = 0;
-      leftConnector = pieceBehindHasRightPlug ? -1 : 1;
+      return [
+        pieceAboveHasBottomPlug ? -1 : 1,
+        0,
+        0,
+        pieceBehindHasRightPlug ? -1 : 1,
+      ] as ConnectorType[];
     }
-
-    return [
-      topConnector,
-      rightConnector,
-      bottomConnector,
-      leftConnector,
-    ] as ConnectorType[];
   }
 };
 

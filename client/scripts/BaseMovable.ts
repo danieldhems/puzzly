@@ -203,7 +203,7 @@ export default class BaseMovable {
   isPuzzleComplete() {
     const numbrOfSolvedPieces =
       this.solvedContainer.querySelectorAll(".puzzle-piece").length;
-    return this.puzzly.selectedNumPieces === numbrOfSolvedPieces;
+    return this.Puzzly.selectedNumPieces === numbrOfSolvedPieces;
   }
 
   // Lifecycle method called when a movable is picked up i.e. the user has begun interacting with it

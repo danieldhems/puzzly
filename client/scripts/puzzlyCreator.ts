@@ -1,5 +1,6 @@
 import { PuzzleSizes } from "./constants";
 import puzzleGenerator from "./puzzleGenerator";
+import Puzzly from "./Puzzly";
 import { PuzzleCreationResponse, PuzzleCreatorOptions } from "./types";
 import Utils from "./utils";
 
@@ -146,6 +147,32 @@ export default class PuzzlyCreator {
 
     this.imageCropDragHandlesInUse = false;
 
+    this.crop = {
+      selectedOffsetX: 0,
+      selectedOffsetY: 0,
+      selectedWidth: 0,
+      selectedHeight: 0,
+      hasCrop: false,
+    };
+
+    this.sourceImage = {
+      dimensions: {
+        width: 0,
+        height: 0,
+      },
+      previewPath: "",
+      fullSizePath: "",
+      imageName: "",
+      filename: "",
+      width: 0,
+      height: 0,
+    };
+
+    this.debugOptions = {
+      noDispersal: false,
+      highlightConnectingPieces: false,
+    };
+
     this.addEventListeners();
     this.setDefaultNumPieces();
     this.showForm();
@@ -232,9 +259,8 @@ export default class PuzzlyCreator {
     this.startBtn.addEventListener("click", this.onStartBtnClick.bind(this));
   }
 
-  onImageUploadChange() {
+  onImageUploadChange(e: MouseEvent) {
     // e.preventDefault();
-
     this.upload()
       .then(
         function (d: Response) {
@@ -687,8 +713,10 @@ export default class PuzzlyCreator {
 
           this.newPuzzleForm.style.display = "none";
 
-          new window.Puzzly(puzzleId, {
+          window.Puzzly = new Puzzly(puzzleId, {
             ...puzzleData,
+            _id: response._id,
+            pieceSize: response.pieceSize,
             pieces: response.pieces,
             spritePath: response.spritePath,
             previewPath: response.previewPath,
