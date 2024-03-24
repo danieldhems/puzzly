@@ -66,7 +66,7 @@ declare const Utils: {
         bottom: any;
         left: any;
     };
-    drawBox(box: DOMRect, container?: HTMLDivElement, borderColor?: string): void;
+    drawBox(box: DOMRect | DomBox, container?: HTMLDivElement | null, borderColor?: string): void;
     removeAllBoundingBoxIndicators(): void;
     getBoundingBoxForOffset(element: HTMLDivElement): {
         top: number;

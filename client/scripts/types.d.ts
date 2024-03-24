@@ -140,6 +140,7 @@ export type PuzzleCreationResponse = PuzzleCreatorOptions & {
     complete?: boolean;
     zIndex?: number;
     pieceSize: number;
+    connectorDistanceFromCorner: number;
 };
 export interface SavedProgress {
     pieces: JigsawPieceData[];

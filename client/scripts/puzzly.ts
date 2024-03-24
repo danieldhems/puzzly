@@ -162,9 +162,6 @@ export default class Puzzly {
       this.solvingArea as HTMLDivElement
     ).getBoundingClientRect();
 
-    this.boardWidth = solvingAreaBoundingBox.width;
-    this.boardHeight = solvingAreaBoundingBox.height;
-
     this.Pockets = new Pockets(this);
     this.DragAndSelect = new DragAndSelect(this);
     this.SolvedPuzzlePreview = new SolvedPuzzlePreview(this.previewImageType);

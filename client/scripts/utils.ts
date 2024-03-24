@@ -405,6 +405,8 @@ const Utils = {
       elementBoundingBox.left = parseInt(element.style.left);
     }
 
+    console.log("elementBoundingBox", elementBoundingBox);
+
     switch (side) {
       case "left":
         box = {
@@ -622,15 +624,52 @@ const Utils = {
     return box;
   },
 
-  drawBox(box: DOMRect, container?: HTMLDivElement, borderColor?: string) {
+  drawBox(
+    box: DOMRect | DomBox,
+    container?: HTMLDivElement | null,
+    borderColor?: string
+  ) {
+    let width;
+    if ("width" in box) {
+      width = box.width;
+    } else if ("right" in box) {
+      width = box.right - box.left;
+    } else {
+      width = 1;
+    }
+
+    let height;
+    if ("height" in box) {
+      height = box.height;
+    } else if ("bottom" in box) {
+      height = box.bottom - box.top;
+    } else {
+      height = 1;
+    }
+
+    let top;
+    if ("y" in box) {
+      top = box.y;
+    } else {
+      top = box.top;
+    }
+
+    let left;
+    if ("x" in box) {
+      left = box.x;
+    } else {
+      left = box.left;
+    }
+
     const div = document.createElement("div");
     div.classList.add("bounding-box-indicator");
     div.style.position = "absolute";
     div.style.zIndex = "100";
-    div.style.top = (box.top || box.y) + "px";
-    div.style.left = (box.left || box.x) + "px";
-    div.style.width = (box.width || box.right - box.left || 1) + "px";
-    div.style.height = (box.height || box.bottom - box.top || 1) + "px";
+    div.style.top = top + "px";
+    div.style.left = left + "px";
+
+    div.style.width = width + "px";
+    div.style.height = height + "px";
     div.style.border = `5px solid ${borderColor || "green"}`;
     div.style.pointerEvents = "none";
     if (container) {

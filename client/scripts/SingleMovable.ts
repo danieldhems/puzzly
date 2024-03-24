@@ -55,6 +55,7 @@ export default class SingleMovable extends BaseMovable {
 
     this.piecesPerSideHorizontal = this.Puzzly.piecesPerSideHorizontal;
     this.shadowOffset = puzzleData.shadowOffset;
+    this.connectorTolerance = puzzleData.connectorTolerance;
     this.pocketId = pieceData.pocketId;
     this.Pockets = this.Puzzly.Pockets;
 
@@ -395,6 +396,7 @@ export default class SingleMovable extends BaseMovable {
         }
       } else {
         this.connection = checkConnections.call(this, this.element);
+        console.log("connection", this.connection);
       }
     }
 

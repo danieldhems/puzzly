@@ -143,7 +143,8 @@ export interface PuzzleCreatorOptions {
     height: number;
   };
   pieces?: JigsawPieceData[];
-  boardSize: number;
+  boardWidth: number;
+  boardHeight: number;
   imageSize: number;
   puzzleToImageRatio: number;
   spritePath?: string;
@@ -158,6 +159,7 @@ export type PuzzleCreationResponse = PuzzleCreatorOptions & {
   complete?: boolean;
   zIndex?: number;
   pieceSize: number;
+  connectorDistanceFromCorner: number;
 };
 
 export interface SavedProgress {

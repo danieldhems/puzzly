@@ -115,9 +115,9 @@ export function checkConnections(element: MovableElement) {
         // console.log("target element", targetElement);
 
         // console.log(
-        // `checking ${key}`,
-        // thisPieceConnectorBoundingBox,
-        // targetPieceConnectorBoundingBox
+        //   `checking ${key}`,
+        //   thisPieceConnectorBoundingBox,
+        //   targetPieceConnectorBoundingBox
         // );
 
         // Utils.drawBox(thisPieceConnectorBoundingBox);
@@ -129,7 +129,7 @@ export function checkConnections(element: MovableElement) {
             targetPieceConnectorBoundingBox
           )
         ) {
-          return {
+          connection = {
             type: key,
             sourceElement: element,
             targetElement,
@@ -139,4 +139,6 @@ export function checkConnections(element: MovableElement) {
       }
     }
   });
+
+  if (connection) return connection;
 }

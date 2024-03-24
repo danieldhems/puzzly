@@ -645,7 +645,8 @@ export default class PuzzlyCreator {
       selectedNumPieces: this.selectedNumPieces,
       imagePreviewType: this.imagePreviewType,
       originalImageSize: this.sourceImage.dimensions,
-      boardSize: this.boardSize,
+      boardWidth: this.boardSize,
+      boardHeight: this.boardSize,
       imageSize: this.imageSize,
       puzzleToImageRatio: this.puzzleToImageRatio,
       integration: this.integration,
@@ -694,6 +695,8 @@ export default class PuzzlyCreator {
       puzzleImagePath,
       pieces,
       pieceSize: generator.pieceSize,
+      connectorSize: generator.connectorSize,
+      connectorDistanceFromCorner: generator.connectorDistanceFromCorner,
     });
 
     fetch("/api/puzzle", {
@@ -717,6 +720,8 @@ export default class PuzzlyCreator {
             ...puzzleData,
             _id: response._id,
             pieceSize: response.pieceSize,
+            connectorSize: response.connectorSize,
+            connectorDistanceFromCorner: response.connectorDistanceFromCorner,
             pieces: response.pieces,
             spritePath: response.spritePath,
             previewPath: response.previewPath,

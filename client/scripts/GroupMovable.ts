@@ -84,9 +84,10 @@ export default class GroupMovable extends BaseMovable {
 
     this.CanvasOperations = new CanvasOperations(this);
     this.PersistenceOperations = new PersistenceOperations(this);
+    console.log("this.Puzzly", this.Puzzly);
     this.GroupOperations = new GroupOperations({
-      width: this.boardWidth,
-      height: this.boardHeight,
+      width: this.Puzzly.boardSize,
+      height: this.Puzzly.boardSize,
       puzzleImage: this.puzzleImage,
       shadowOffset: this.shadowOffset,
       piecesPerSideHorizontal: Puzzly.piecesPerSideHorizontal,
