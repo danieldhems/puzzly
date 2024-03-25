@@ -39,7 +39,8 @@ export default class PuzzlyCreator {
     imageCropData: ImageCropData;
     cropNotNeeded: boolean;
     debugOptions: DebugOptions;
-    boardSize: number;
+    boardWidth: number;
+    boardHeight: number;
     imagePreviewType: string;
     puzzleSizeInputField: HTMLInputElement;
     puzzleSizeInputLabel: HTMLLabelElement;
@@ -65,7 +66,6 @@ export default class PuzzlyCreator {
     imagePreviewTypeToggleRadio: HTMLInputElement;
     imagePreviewTypeAlwaysOnRadio: HTMLInputElement;
     imageCropDragHandlesInUse: boolean;
-    puzzleToImageRatio: number;
     imageSize: number;
     imageCropVisible: boolean;
     selectedOffsetX: number;

@@ -146,7 +146,6 @@ export interface PuzzleCreatorOptions {
   boardWidth: number;
   boardHeight: number;
   imageSize: number;
-  puzzleToImageRatio: number;
   spritePath?: string;
   previewPath: string;
   drawOutlines?: boolean;

@@ -55,7 +55,7 @@ const puzzleGenerator = async function (
 
   // pieces will be generated at their full size according to the source image's dimensions
   Generator.pieceSize = Math.floor(
-    puzzleConfig.boardSize / Generator.piecesPerSideHorizontal
+    puzzleConfig.boardWidth / Generator.piecesPerSideHorizontal
   );
 
   Generator.strokeWidth = STROKE_WIDTH;
@@ -211,12 +211,14 @@ const generateDataForPuzzlePieces = async () => {
         const nextPieceAbove =
           pieces[pieces.length - Generator.piecesPerSideHorizontal];
 
-        if (currentPiece.type[0] === 1 && nextPieceAbove.type[2] === -1) {
+        const thisPieceHasTopPlug = currentPiece.type[0] === 1;
+        const nextPieceAboveHasBottomPlug = nextPieceAbove.type[2] === 1;
+        const thisPieceHasTopSocket = currentPiece.type[0] === -1;
+        const nextPieceAboveHasBottomSocket = nextPieceAbove.type[2] === -1;
+
+        if (thisPieceHasTopPlug && nextPieceAboveHasBottomPlug) {
           curImgY += Generator.connectorSize;
-        } else if (
-          currentPiece.type[0] === -1 &&
-          nextPieceAbove.type[2] === -1
-        ) {
+        } else if (thisPieceHasTopSocket && nextPieceAboveHasBottomSocket) {
           curImgY -= Generator.connectorSize;
         }
       }

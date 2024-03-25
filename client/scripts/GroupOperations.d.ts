@@ -39,7 +39,7 @@ export default class GroupOperations implements GroupOperationsProperties {
     createGroupContainer(groupId?: string): MovableElement;
     getElementsForGroup(groupId: string): MovableElement[];
     addToGroup(sourceInstance: SingleMovable, groupId: string, alignGroupToElement?: boolean): void;
-    setGroupContainerPosition(container: MovableElement, { top, left }: Partial<DOMRect>): void;
+    setGroupContainerPosition(container: MovableElement, { top, left }: Pick<DOMRect, "top" | "left">): void;
     getConnectionsForPiece(element: MovableElement): string[];
     updateConnections(elements: MovableElement[]): void;
 }

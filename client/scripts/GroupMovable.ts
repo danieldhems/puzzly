@@ -57,6 +57,10 @@ export default class GroupMovable extends BaseMovable {
 
     this.Puzzly = Puzzly;
 
+    console.log("GroupMovable constructor");
+    console.log("GroupMovable constructor _id", _id);
+    console.log("GroupMovable constructor pieces", pieces);
+
     if (_id) {
       this._id = _id;
     }
@@ -86,8 +90,8 @@ export default class GroupMovable extends BaseMovable {
     this.PersistenceOperations = new PersistenceOperations(this);
     console.log("this.Puzzly", this.Puzzly);
     this.GroupOperations = new GroupOperations({
-      width: this.Puzzly.boardSize,
-      height: this.Puzzly.boardSize,
+      width: this.Puzzly.boardWidth,
+      height: this.Puzzly.boardHeight,
       puzzleImage: this.puzzleImage,
       shadowOffset: this.shadowOffset,
       piecesPerSideHorizontal: Puzzly.piecesPerSideHorizontal,

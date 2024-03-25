@@ -143,13 +143,20 @@ export default class GroupOperations implements GroupOperationsProperties {
   }
 
   createGroup(sourceInstance: SingleMovable, targetInstance: SingleMovable) {
+    console.log("target style top", parseInt(targetInstance.element.style.top));
+    console.log("target solved top", targetInstance.pieceData.solvedY);
+    const leftPos =
+      parseInt(targetInstance.element.style.left) -
+      targetInstance.pieceData.solvedX;
+    const topPos =
+      parseInt(targetInstance.element.style.top) -
+      targetInstance.pieceData.solvedY;
+
     const container = this.createGroupContainer();
     const newCanvas = this.CanvasOperations.makeCanvas();
 
-    const leftPos =
-      targetInstance.element.offsetLeft - targetInstance.pieceData.solvedX;
-    const topPos =
-      targetInstance.element.offsetTop - targetInstance.pieceData.solvedY;
+    console.log("createGroup", targetInstance.pieceData.solvedX);
+    console.log("createGroup", targetInstance.pieceData.solvedY);
 
     sourceInstance.element.style.left = Utils.getPxString(
       sourceInstance.pieceData.solvedX
@@ -187,8 +194,8 @@ export default class GroupOperations implements GroupOperationsProperties {
 
     this.updateConnections([sourceInstance.element, targetInstance.element]);
     this.setGroupContainerPosition(container, {
-      y: topPos,
-      x: leftPos,
+      top: topPos,
+      left: leftPos,
     });
 
     container.appendChild(newCanvas);
@@ -316,10 +323,10 @@ export default class GroupOperations implements GroupOperationsProperties {
 
   setGroupContainerPosition(
     container: MovableElement,
-    { top, left }: Partial<DOMRect>
+    { top, left }: Pick<DOMRect, "top" | "left">
   ) {
-    container.style.top = Utils.getPxString(top as number);
-    container.style.left = Utils.getPxString(left as number);
+    container.style.top = Utils.getPxString(top);
+    container.style.left = Utils.getPxString(left);
   }
 
   getConnectionsForPiece(element: MovableElement) {

@@ -59,8 +59,6 @@ export default class SingleMovable extends BaseMovable {
     this.pocketId = pieceData.pocketId;
     this.Pockets = this.Puzzly.Pockets;
 
-    console.log("piece instance", this);
-
     if (pieceData.groupId) {
       this.groupId = pieceData.groupId;
     }
@@ -477,7 +475,7 @@ export default class SingleMovable extends BaseMovable {
       );
     } else {
       const instance = targetInstance as GroupMovable;
-      // console.log("SingleMovable joining to", instance);
+      console.log("SingleMovable joining to", instance);
       this.setGroupIdAcrossInstance(instance._id + "");
       this.element.classList.add("grouped");
       // TDOD: Encapsulate in single method on target instance?

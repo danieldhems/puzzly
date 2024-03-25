@@ -49,7 +49,8 @@ export default class PuzzlyCreator {
   imageCropData: ImageCropData;
   cropNotNeeded: boolean;
   debugOptions: DebugOptions;
-  boardSize: number;
+  boardWidth: number;
+  boardHeight: number;
   imagePreviewType: string;
   puzzleSizeInputField: HTMLInputElement;
   puzzleSizeInputLabel: HTMLLabelElement;
@@ -75,7 +76,6 @@ export default class PuzzlyCreator {
   imagePreviewTypeToggleRadio: HTMLInputElement;
   imagePreviewTypeAlwaysOnRadio: HTMLInputElement;
   imageCropDragHandlesInUse: boolean;
-  puzzleToImageRatio: number;
   imageSize: number;
   imageCropVisible: boolean;
   selectedOffsetX: number;
@@ -85,7 +85,13 @@ export default class PuzzlyCreator {
   integration: boolean;
 
   constructor() {
-    this.boardSize = Math.ceil((window.innerHeight / 100) * 40);
+    if (window.innerHeight < window.innerWidth) {
+      this.boardHeight = Math.ceil((window.innerHeight / 100) * 40);
+      this.boardWidth = this.boardHeight;
+    } else if (window.innerWidth < window.innerHeight) {
+      this.boardWidth = Math.ceil((window.innerWidth / 100) * 40);
+      this.boardHeight = this.boardWidth;
+    }
     this.imagePreviewType = "toggle";
 
     this.puzzleSizeInputField = document.querySelector(
@@ -302,7 +308,6 @@ export default class PuzzlyCreator {
       // TODO: Revisit when we support rectangular puzzles
       const imageSize = Math.min(width, height);
 
-      this.puzzleToImageRatio = this.boardSize / imageSize;
       this.imageSize = imageSize;
     }
   }
@@ -580,7 +585,7 @@ export default class PuzzlyCreator {
     fd.append("files[]", this.image);
     fd.append("previewWidth", this.imagePreviewEl.offsetWidth.toString());
     fd.append("previewHeight", this.imagePreviewEl.offsetHeight.toString());
-    fd.append("boardSize", this.boardSize.toString());
+    fd.append("boardSize", this.boardHeight.toString());
     fd.append("integration", this.integration + "");
 
     return fetch("/api/upload", {
@@ -645,10 +650,9 @@ export default class PuzzlyCreator {
       selectedNumPieces: this.selectedNumPieces,
       imagePreviewType: this.imagePreviewType,
       originalImageSize: this.sourceImage.dimensions,
-      boardWidth: this.boardSize,
-      boardHeight: this.boardSize,
+      boardWidth: this.boardWidth,
+      boardHeight: this.boardHeight,
       imageSize: this.imageSize,
-      puzzleToImageRatio: this.puzzleToImageRatio,
       integration: this.integration,
     };
 

@@ -405,7 +405,7 @@ const Utils = {
       elementBoundingBox.left = parseInt(element.style.left);
     }
 
-    console.log("elementBoundingBox", elementBoundingBox);
+    // console.log("elementBoundingBox", elementBoundingBox);
 
     switch (side) {
       case "left":

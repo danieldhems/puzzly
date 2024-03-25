@@ -22,9 +22,10 @@ async function makeImage(data, puzzleImgPath) {
   const resizeWidth = isSquare ? origW : origW < origH ? origW : origH;
   const resizeHeight = isSquare ? origH : origH < origW ? origH : origW;
 
-  img.resize(data.boardSize, data.boardSize);
-  await img.toFile(puzzleImgPath);
+  // Resize the image according to the dimensions requested by the Frontend
+  img.resize(data.boardWidth, data.boardHeight);
 
+  await img.toFile(puzzleImgPath);
   return puzzleImgPath;
 }
 

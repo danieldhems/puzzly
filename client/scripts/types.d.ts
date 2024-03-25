@@ -126,9 +126,9 @@ export interface PuzzleCreatorOptions {
         height: number;
     };
     pieces?: JigsawPieceData[];
-    boardSize: number;
+    boardWidth: number;
+    boardHeight: number;
     imageSize: number;
-    puzzleToImageRatio: number;
     spritePath?: string;
     previewPath: string;
     drawOutlines?: boolean;
