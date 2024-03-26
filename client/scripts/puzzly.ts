@@ -231,6 +231,8 @@ export default class Puzzly {
           pieceData: {
             ...piece,
             spritePath: this.spritePath,
+            piecesPerSideHorizontal: this.piecesPerSideHorizontal,
+            piecesPerSideVertical: this.piecesPerSideVertical,
           },
         });
         this.pieceInstances.push(pieceInstance);

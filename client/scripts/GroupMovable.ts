@@ -288,11 +288,10 @@ export default class GroupMovable extends BaseMovable {
       );
     // console.log("collision candidates found", collisionCandidates);
 
-    let connection;
     let i = 0;
 
-    while (i < collisionCandidates.length && !connection) {
-      connection = checkConnections.call(this, collisionCandidates[i]);
+    while (i < collisionCandidates.length) {
+      const connection = checkConnections.call(this, collisionCandidates[i]);
       if (connection) return connection;
       i++;
     }
@@ -370,6 +369,8 @@ export default class GroupMovable extends BaseMovable {
 
   setGroupIdAcrossInstance(id: string) {
     this._id = id;
+    this.element.id = `group-container-${this._id}`;
+
     this.element.dataset.groupId = this._id + "";
 
     if (this.canvas) {
@@ -411,15 +412,14 @@ export default class GroupMovable extends BaseMovable {
 
   getDataForSave(): GroupMovableSaveState {
     const elementPosition = {
-      top: this.element.offsetTop,
-      left: this.element.offsetLeft,
+      top: parseInt(this.element.style.top),
+      left: parseInt(this.element.style.left),
     };
     return {
-      _id: this._id || "",
+      _id: this._id || undefined,
       pieces: this.getAllPieceData(),
       puzzleId: this.puzzleId,
-      pageX: elementPosition.left,
-      pageY: elementPosition.top,
+      position: elementPosition,
       zIndex: parseInt(this.element.style.zIndex),
       instanceType: this.instanceType,
       isSolved: this.isSolved,

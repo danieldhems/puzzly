@@ -171,9 +171,8 @@ export default class SingleMovable extends BaseMovable {
       "data-pieces-per-side-vertical",
       this.piecesPerSideVertical + ""
     );
-    el.setAttribute(
-      "data-connects-to",
-      JSON.stringify(this.getConnectingPieceIds(this.pieceData))
+    el.dataset.connectsTo = JSON.stringify(
+      this.getConnectingPieceIds(this.pieceData)
     );
     el.setAttribute(
       "data-connections",
@@ -295,38 +294,40 @@ export default class SingleMovable extends BaseMovable {
     this.element.dataset.isSolved = "true";
   }
 
-  getConnectingPieceIds(pieceData: JigsawPieceData) {
-    const id = pieceData.id;
-    const pieceAboveId = id - pieceData.piecesPerSideHorizontal;
-    const pieceBelowId = id + pieceData.piecesPerSideVertical;
+  getConnectingPieceIds(
+    data: Pick<JigsawPieceData, "id" | "piecesPerSideHorizontal" | "type">
+  ) {
+    const id = data.id;
+    const pieceAboveId = id - data.piecesPerSideHorizontal;
+    const pieceBelowId = id + data.piecesPerSideHorizontal;
 
-    if (Utils.isTopLeftCorner(pieceData.type)) {
+    if (Utils.isTopLeftCorner(data.type)) {
       return {
         right: id + 1,
         bottom: pieceBelowId,
       };
     }
-    if (Utils.isTopSide(pieceData.type)) {
+    if (Utils.isTopSide(data.type)) {
       return {
         left: id - 1,
         right: id + 1,
         bottom: pieceBelowId,
       };
     }
-    if (Utils.isTopRightCorner(pieceData.type)) {
+    if (Utils.isTopRightCorner(data.type)) {
       return {
         left: id - 1,
         bottom: pieceBelowId,
       };
     }
-    if (Utils.isLeftSide(pieceData.type)) {
+    if (Utils.isLeftSide(data.type)) {
       return {
         top: pieceAboveId,
         right: id + 1,
         bottom: pieceBelowId,
       };
     }
-    if (Utils.isInnerPiece(pieceData.type)) {
+    if (Utils.isInnerPiece(data.type)) {
       return {
         top: pieceAboveId,
         right: id + 1,
@@ -334,27 +335,27 @@ export default class SingleMovable extends BaseMovable {
         left: id - 1,
       };
     }
-    if (Utils.isRightSide(pieceData.type)) {
+    if (Utils.isRightSide(data.type)) {
       return {
         top: pieceAboveId,
         left: id - 1,
         bottom: pieceBelowId,
       };
     }
-    if (Utils.isBottomLeftCorner(pieceData.type)) {
+    if (Utils.isBottomLeftCorner(data.type)) {
       return {
         top: pieceAboveId,
         right: id + 1,
       };
     }
-    if (Utils.isBottomSide(pieceData.type)) {
+    if (Utils.isBottomSide(data.type)) {
       return {
         top: pieceAboveId,
         left: id - 1,
         right: id + 1,
       };
     }
-    if (Utils.isBottomRightCorner(pieceData.type)) {
+    if (Utils.isBottomRightCorner(data.type)) {
       return {
         top: pieceAboveId,
         left: id - 1,

@@ -173,7 +173,7 @@ export enum LocalStorageKeys {
 }
 
 export interface SingleMovableSaveState {
-  _id: string;
+  _id: string | undefined;
   groupId?: string;
   pageX: number;
   pageY: number;
@@ -187,7 +187,11 @@ export interface SingleMovableSaveState {
 }
 
 export interface GroupMovableSaveState
-  extends Omit<SingleMovableSaveState, "pocket"> {
+  extends Omit<SingleMovableSaveState, "pocket" | "pageX" | "pageY"> {
+  position: {
+    top: number;
+    left: number;
+  };
   remove?: boolean;
   pieces: SingleMovableSaveState[];
 }

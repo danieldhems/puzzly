@@ -152,7 +152,7 @@ export declare enum LocalStorageKeys {
     LastSave = "LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY"
 }
 export interface SingleMovableSaveState {
-    _id: string;
+    _id: string | undefined;
     groupId?: string;
     pageX: number;
     pageY: number;
@@ -164,7 +164,11 @@ export interface SingleMovableSaveState {
     isPuzzleComplete: boolean;
     integration?: boolean;
 }
-export interface GroupMovableSaveState extends Omit<SingleMovableSaveState, "pocket"> {
+export interface GroupMovableSaveState extends Omit<SingleMovableSaveState, "pocket" | "pageX" | "pageY"> {
+    position: {
+        top: number;
+        left: number;
+    };
     remove?: boolean;
     pieces: SingleMovableSaveState[];
 }

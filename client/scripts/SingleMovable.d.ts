@@ -31,7 +31,7 @@ export default class SingleMovable extends BaseMovable {
     addToSolved(): void;
     isOutOfBounds(event: MouseEvent): boolean;
     markAsSolved(): void;
-    getConnectingPieceIds(pieceData: JigsawPieceData): {
+    getConnectingPieceIds(data: Pick<JigsawPieceData, "id" | "piecesPerSideHorizontal" | "type">): {
         right: number;
         bottom: number;
         left?: undefined;

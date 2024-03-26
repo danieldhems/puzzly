@@ -111,14 +111,14 @@ export function checkConnections(element: MovableElement) {
           oppositeConnection as SideNames
         ) as DomBox;
 
-        // console.log("source element", element);
-        // console.log("target element", targetElement);
+        console.log("source element", element);
+        console.log("target element", targetElement);
 
-        // console.log(
-        //   `checking ${key}`,
-        //   thisPieceConnectorBoundingBox,
-        //   targetPieceConnectorBoundingBox
-        // );
+        console.log(
+          `checking ${key}`,
+          thisPieceConnectorBoundingBox,
+          targetPieceConnectorBoundingBox
+        );
 
         // Utils.drawBox(thisPieceConnectorBoundingBox);
         // Utils.drawBox(targetPieceConnectorBoundingBox, null, "blue");
