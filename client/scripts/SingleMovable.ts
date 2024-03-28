@@ -394,7 +394,12 @@ export default class SingleMovable extends BaseMovable {
           this.pocketId = parseInt(pocket.id.split("-")[1]);
         }
       } else {
-        this.connection = checkConnections.call(this, this.element);
+        console.log("solving area box", this.getSolvingAreaBoundingBox());
+        this.connection = checkConnections(
+          this.element,
+          this.getSolvingAreaBoundingBox(),
+          this.connectorTolerance
+        );
         console.log("connection", this.connection);
       }
     }

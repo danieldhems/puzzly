@@ -1,7 +1,13 @@
 import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants";
 import Utils from "./utils";
 import GroupOperations from "./GroupOperations";
-import { Connection, DomBox, InstanceTypes, MovableElement } from "./types";
+import {
+  Connection,
+  DomBox,
+  DomBoxWithoutDimensions,
+  InstanceTypes,
+  MovableElement,
+} from "./types";
 import SingleMovable from "./SingleMovable";
 import GroupMovable from "./GroupMovable";
 import Puzzly from "./Puzzly";
@@ -16,7 +22,7 @@ export default class BaseMovable {
   };
   active: boolean = false;
   puzzleId: string;
-  connection: Connection;
+  connection: Connection | undefined;
   puzzleImage: HTMLImageElement;
   // Element containing all pieces in-play
   piecesContainer: HTMLDivElement | null;
@@ -32,6 +38,7 @@ export default class BaseMovable {
   isDragAndSelectActive = false;
   puzzly: any;
   solvedContainer: HTMLDivElement;
+  solvedAreaElement: HTMLDivElement;
   playBoundary: HTMLDivElement | null;
   solvedCanvas: HTMLDivElement;
   pocketsContainer: HTMLDivElement;
@@ -52,6 +59,9 @@ export default class BaseMovable {
     ) as HTMLDivElement;
     this.solvedContainer = document.getElementById(
       ELEMENT_IDS.SOLVED_CONTAINER
+    ) as HTMLDivElement;
+    this.solvedAreaElement = document.getElementById(
+      ELEMENT_IDS.SOLVED_PUZZLE_AREA
     ) as HTMLDivElement;
     this.playBoundary = document.getElementById(
       ELEMENT_IDS.PLAY_BOUNDARY
@@ -166,7 +176,7 @@ export default class BaseMovable {
     return false;
   }
 
-  getPocketByCollision(box: DomBox) {
+  getPocketByCollision(box: DomBoxWithoutDimensions) {
     let i = 0;
     while (i <= this.pockets.length) {
       const pocket = this.pockets[i];
@@ -177,9 +187,12 @@ export default class BaseMovable {
     }
   }
 
-  hasCollision(targetElement: HTMLDivElement, source?: DOMRect | DomBox) {
+  hasCollision(
+    targetElement: HTMLDivElement,
+    source?: DomBoxWithoutDimensions
+  ) {
     const targetBoundingBox = targetElement.getBoundingClientRect();
-    const thisBoundingBox = source || this.element.getBoundingClientRect();
+    const thisBoundingBox = source || Utils.getStyleBoundingBox(this.element);
     return Utils.hasCollision(thisBoundingBox, targetBoundingBox);
   }
 
@@ -202,7 +215,7 @@ export default class BaseMovable {
 
   isPuzzleComplete() {
     const numbrOfSolvedPieces =
-      this.solvedContainer.querySelectorAll(".puzzle-piece").length;
+      this.solvedAreaElement.querySelectorAll(".puzzle-piece").length;
     return this.Puzzly.selectedNumPieces === numbrOfSolvedPieces;
   }
 
@@ -278,31 +291,28 @@ export default class BaseMovable {
   }
 
   handleConnection() {
-    const { sourceElement, targetElement, isSolving } = this.connection;
+    const { sourceElement, targetElement, isSolving } = this
+      .connection as Connection;
 
     const sourceInstance = this.getMovableInstanceFromElement(sourceElement);
+
+    if (isSolving) {
+      sourceInstance.solve({ save: true });
+    }
 
     if (targetElement) {
       const targetInstance = this.getMovableInstanceFromElement(
         targetElement
       ) as SingleMovable | GroupMovable;
 
-      if (isSolving) {
-        sourceInstance.solve({ save: true });
-      } else {
-        sourceInstance.joinTo(targetInstance);
-      }
-
-      window.dispatchEvent(
-        new CustomEvent(EVENT_TYPES.CONNECTION_MADE, {
-          detail: {
-            sourceInstance,
-            targetInstance,
-            isSolving,
-          },
-        })
-      );
+      sourceInstance.joinTo(targetInstance);
     }
+
+    window.dispatchEvent(
+      new CustomEvent(EVENT_TYPES.CONNECTION_MADE, {
+        detail: this.connection,
+      })
+    );
   }
 
   isConnectionBetweenSingleAndGroup(
@@ -327,6 +337,21 @@ export default class BaseMovable {
       (sourceInstanceType === "GroupMovable" &&
         targetInstanceType === "GroupMovable")
     );
+  }
+
+  getSolvingAreaBoundingBox() {
+    return {
+      top: parseInt(this.solvedAreaElement.style.top),
+      left: parseInt(this.solvedAreaElement.style.left),
+      right:
+        parseInt(this.solvedAreaElement.style.left) +
+        this.solvedAreaElement.offsetWidth,
+      bottom:
+        parseInt(this.solvedAreaElement.style.left) +
+        this.solvedAreaElement.offsetHeight,
+      width: this.solvedAreaElement.offsetWidth,
+      height: this.solvedAreaElement.offsetHeight,
+    };
   }
 
   getPosition() {

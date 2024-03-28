@@ -1,3 +1,3 @@
-import { Connection, MovableElement, SideNames } from "./types";
+import { Connection, DomBox, MovableElement, SideNames } from "./types";
 export declare const getOppositeSide: (sideName: SideNames) => SideNames | undefined;
-export declare function checkConnections(element: MovableElement): Connection | undefined;
+export declare function checkConnections(element: MovableElement, solvingAreaBox: DomBox, connectorTolerance: number): Connection | undefined;

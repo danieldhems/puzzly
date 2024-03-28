@@ -18,7 +18,11 @@ export const getOppositeSide = (sideName: SideNames) => {
   return map[sideName];
 };
 
-export function checkConnections(element: MovableElement) {
+export function checkConnections(
+  element: MovableElement,
+  solvingAreaBox: DomBox,
+  connectorTolerance: number
+) {
   let connection: Connection | undefined;
 
   const piece = {
@@ -29,11 +33,14 @@ export function checkConnections(element: MovableElement) {
     connectsTo: element.dataset.connectsTo,
   };
 
+  console.log("checkConnections", piece);
+
   const shouldCompare = (targetPiece: Partial<JigsawPieceData>) =>
     (piece.group === undefined && targetPiece.groupId === undefined) ||
     piece.group !== targetPiece.groupId;
 
   if (Utils.isCornerPiece(piece.type)) {
+    console.log("piece is corner", piece);
     const cornerConnections = [
       SideNames.TopRight,
       SideNames.BottomRight,
@@ -42,28 +49,22 @@ export function checkConnections(element: MovableElement) {
     ];
 
     let i = 0;
-    while (!connection && i < cornerConnections.length) {
+    while (i < cornerConnections.length) {
       const connectionToCheck = cornerConnections[i];
 
-      const elBB = element.getBoundingClientRect();
       let elBBWithinTolerance = {
-        top: elBB.top,
-        right: elBB.right,
-        bottom: elBB.bottom,
-        left: elBB.left,
-        width: elBB.width,
-        height: elBB.height,
+        top: parseInt(element.style.top),
+        right: parseInt(element.style.left) + element.offsetWidth,
+        bottom: parseInt(element.style.top) + element.offsetHeight,
+        left: parseInt(element.style.left),
+        width: element.offsetWidth,
+        height: element.offsetHeight,
       };
 
-      elBBWithinTolerance = Utils.getElementBoundingBoxRelativeToCorner.call(
-        this,
-        elBBWithinTolerance,
-        connectionToCheck
-      );
-
-      const cornerBoundingBox = Utils.getCornerBoundingBox.call(
-        this,
-        connectionToCheck
+      const cornerBoundingBox = Utils.getCornerBoundingBox(
+        connectionToCheck,
+        solvingAreaBox,
+        connectorTolerance
       );
 
       // console.log("checking", connectionToCheck);
@@ -140,5 +141,6 @@ export function checkConnections(element: MovableElement) {
     }
   });
 
+  console.log("connection result", connection);
   if (connection) return connection;
 }

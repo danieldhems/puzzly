@@ -1,4 +1,4 @@
-import { Connection, DomBox, InstanceTypes, MovableElement } from "./types";
+import { Connection, DomBoxWithoutDimensions, InstanceTypes, MovableElement } from "./types";
 import SingleMovable from "./SingleMovable";
 import GroupMovable from "./GroupMovable";
 import Puzzly from "./Puzzly";
@@ -12,7 +12,7 @@ export default class BaseMovable {
     };
     active: boolean;
     puzzleId: string;
-    connection: Connection;
+    connection: Connection | undefined;
     puzzleImage: HTMLImageElement;
     piecesContainer: HTMLDivElement | null;
     activePocket?: HTMLDivElement;
@@ -26,6 +26,7 @@ export default class BaseMovable {
     isDragAndSelectActive: boolean;
     puzzly: any;
     solvedContainer: HTMLDivElement;
+    solvedAreaElement: HTMLDivElement;
     playBoundary: HTMLDivElement | null;
     solvedCanvas: HTMLDivElement;
     pocketsContainer: HTMLDivElement;
@@ -45,8 +46,8 @@ export default class BaseMovable {
     static isGroupedPiece(element: HTMLDivElement): boolean;
     isPocketPiece(element: HTMLDivElement): boolean;
     isDragAndSelectPiece(element: HTMLDivElement): boolean;
-    getPocketByCollision(box: DomBox): HTMLDivElement | undefined;
-    hasCollision(targetElement: HTMLDivElement, source?: DOMRect | DomBox): boolean;
+    getPocketByCollision(box: DomBoxWithoutDimensions): HTMLDivElement | undefined;
+    hasCollision(targetElement: HTMLDivElement, source?: DomBoxWithoutDimensions): boolean;
     isInsidePlayArea(): boolean;
     isOverPockets(event: MouseEvent): boolean;
     addToStage(element?: MovableElement): void;
@@ -58,6 +59,14 @@ export default class BaseMovable {
     handleConnection(): void;
     isConnectionBetweenSingleAndGroup(sourceInstanceType: InstanceTypes, targetInstanceType: InstanceTypes): boolean;
     isConnectionBetweenTwoGroups(sourceInstanceType: InstanceTypes, targetInstanceType: InstanceTypes): boolean;
+    getSolvingAreaBoundingBox(): {
+        top: number;
+        left: number;
+        right: number;
+        bottom: number;
+        width: number;
+        height: number;
+    };
     getPosition(): {
         top: number;
         left: number;

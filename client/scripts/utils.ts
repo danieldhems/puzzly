@@ -2,6 +2,7 @@ import { ELEMENT_IDS, PUZZLE_PIECE_CLASSES } from "./constants";
 import {
   ConnectorType,
   DomBox,
+  DomBoxWithoutDimensions,
   JigsawPieceData,
   MovableElement,
   SideNames,
@@ -26,7 +27,11 @@ const Utils = {
   getAllPieces(): NodeListOf<HTMLDivElement> {
     return document.querySelectorAll(".puzzle-piece");
   },
-  hasCollision(source: DomBox, target: DomBox): boolean {
+
+  hasCollision(
+    source: DomBoxWithoutDimensions,
+    target: DomBoxWithoutDimensions
+  ): boolean {
     return !(
       source.left >= target.right ||
       source.top >= target.bottom ||
@@ -133,10 +138,10 @@ const Utils = {
 
   isCornerPiece(type: ConnectorType[]) {
     return (
-      this.isTopLeftCorner(type) ||
-      this.isTopRightCorner(type) ||
-      this.isBottomRightCorner(type) ||
-      this.isBottomLeftCorner(type)
+      Utils.isTopLeftCorner(type) ||
+      Utils.isTopRightCorner(type) ||
+      Utils.isBottomRightCorner(type) ||
+      Utils.isBottomLeftCorner(type)
     );
   },
 
@@ -246,30 +251,33 @@ const Utils = {
     return Array.from(document.querySelectorAll(`[data-group='${groupId}']`));
   },
 
-  getCornerBoundingBox(key: SideNames): DomBox {
-    const box = this.solvedContainer.getBoundingClientRect();
+  getCornerBoundingBox(
+    key: SideNames,
+    solvingAreaBox: DomBoxWithoutDimensions,
+    connectorTolerance: number
+  ): DomBoxWithoutDimensions {
     const rect = {} as DomBox;
     switch (key) {
       case "top-right":
-        rect.top = box.top;
-        rect.right = box.right;
-        rect.bottom = box.top + this.connectorTolerance;
-        rect.left = box.right - this.connectorTolerance;
+        rect.top = solvingAreaBox.top;
+        rect.right = solvingAreaBox.right;
+        rect.bottom = solvingAreaBox.top + connectorTolerance;
+        rect.left = solvingAreaBox.right - connectorTolerance;
       case "bottom-right":
-        rect.top = box.bottom - this.connectorTolerance;
-        rect.right = box.right;
-        rect.bottom = box.bottom;
-        rect.left = box.right - this.connectorTolerance;
+        rect.top = solvingAreaBox.bottom - connectorTolerance;
+        rect.right = solvingAreaBox.right;
+        rect.bottom = solvingAreaBox.bottom;
+        rect.left = solvingAreaBox.right - connectorTolerance;
       case "bottom-left":
-        rect.top = box.bottom - this.connectorTolerance;
-        rect.right = box.left + this.connectorTolerance;
-        rect.bottom = box.bottom;
-        rect.left = box.left;
+        rect.top = solvingAreaBox.bottom - connectorTolerance;
+        rect.right = solvingAreaBox.left + connectorTolerance;
+        rect.bottom = solvingAreaBox.bottom;
+        rect.left = solvingAreaBox.left;
       case "top-left":
-        rect.top = box.top;
-        rect.right = box.left + this.connectorTolerance;
-        rect.bottom = box.top + this.connectorTolerance;
-        rect.left = box.left;
+        rect.top = solvingAreaBox.top;
+        rect.right = solvingAreaBox.left + connectorTolerance;
+        rect.bottom = solvingAreaBox.top + connectorTolerance;
+        rect.left = solvingAreaBox.left;
     }
     return rect;
   },
@@ -303,7 +311,7 @@ const Utils = {
     return elementBoundingBox;
   },
 
-  getTopLeftCornerBoundingBox(): DomBox {
+  getTopLeftCornerBoundingBox(): DomBoxWithoutDimensions {
     const box = this.solvedContainer.getBoundingClientRect();
     return {
       top: box.top,
@@ -313,7 +321,7 @@ const Utils = {
     };
   },
 
-  getTopRightCornerBoundingBox(): DomBox {
+  getTopRightCornerBoundingBox(): DomBoxWithoutDimensions {
     const box = this.solvedContainer.getBoundingClientRect();
     return {
       top: box.top,
@@ -323,7 +331,7 @@ const Utils = {
     };
   },
 
-  getBottomRightCornerBoundingBox(): DomBox {
+  getBottomRightCornerBoundingBox(): DomBoxWithoutDimensions {
     const box = this.solvedContainer.getBoundingClientRect();
     return {
       top: box.bottom - this.connectorTolerance,
@@ -333,7 +341,7 @@ const Utils = {
     };
   },
 
-  getBottomLeftCornerBoundingBox(): DomBox {
+  getBottomLeftCornerBoundingBox(): DomBoxWithoutDimensions {
     const box = this.solvedContainer.getBoundingClientRect();
     return {
       top: box.bottom - this.connectorTolerance,
@@ -627,51 +635,19 @@ const Utils = {
   },
 
   drawBox(
-    box: DOMRect | DomBox,
+    box: DomBox,
     container?: HTMLDivElement | null,
     borderColor?: string
   ) {
-    let width;
-    if ("width" in box) {
-      width = box.width;
-    } else if ("right" in box) {
-      width = box.right - box.left;
-    } else {
-      width = 1;
-    }
-
-    let height;
-    if ("height" in box) {
-      height = box.height;
-    } else if ("bottom" in box) {
-      height = box.bottom - box.top;
-    } else {
-      height = 1;
-    }
-
-    let top;
-    if ("y" in box) {
-      top = box.y;
-    } else {
-      top = box.top;
-    }
-
-    let left;
-    if ("x" in box) {
-      left = box.x;
-    } else {
-      left = box.left;
-    }
-
     const div = document.createElement("div");
     div.classList.add("bounding-box-indicator");
     div.style.position = "absolute";
     div.style.zIndex = "100";
-    div.style.top = top + "px";
-    div.style.left = left + "px";
+    div.style.top = box.top + "px";
+    div.style.left = box.left + "px";
 
-    div.style.width = width + "px";
-    div.style.height = height + "px";
+    div.style.width = box.width + "px";
+    div.style.height = box.height + "px";
     div.style.border = `5px solid ${borderColor || "green"}`;
     div.style.pointerEvents = "none";
     if (container) {
@@ -701,9 +677,7 @@ const Utils = {
       : null;
   },
 
-  getStyleBoundingBox(
-    element: HTMLDivElement
-  ): Pick<DOMRect, "top" | "right" | "bottom" | "left" | "width" | "height"> {
+  getStyleBoundingBox(element: HTMLDivElement): DomBox {
     const top = parseInt(element.style.top);
     const left = parseInt(element.style.left);
     return {
@@ -716,7 +690,9 @@ const Utils = {
     };
   },
 
-  getPocketByCollision(box: DomBox): HTMLDivElement | undefined {
+  getPocketByCollision(
+    box: DomBoxWithoutDimensions
+  ): HTMLDivElement | undefined {
     let i = 0;
     const pockets = document.querySelectorAll(".pocket");
     while (i < pockets.length) {
@@ -728,7 +704,7 @@ const Utils = {
     }
   },
 
-  getEventBox(e: MouseEvent): DomBox {
+  getEventBox(e: MouseEvent): DomBoxWithoutDimensions {
     return {
       top: e.clientY,
       right: e.clientX,

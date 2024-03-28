@@ -122,7 +122,11 @@ export type DomBox = {
   right: number;
   bottom: number;
   left: number;
+  width: number;
+  height: number;
 };
+
+export type DomBoxWithoutDimensions = Omit<DomBox, "width" | "height">;
 
 export enum PuzzleShapes {
   Square = "Square",

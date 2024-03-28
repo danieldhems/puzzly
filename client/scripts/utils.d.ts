@@ -1,9 +1,9 @@
-import { ConnectorType, DomBox, JigsawPieceData, MovableElement, SideNames } from "./types";
+import { ConnectorType, DomBox, DomBoxWithoutDimensions, JigsawPieceData, MovableElement, SideNames } from "./types";
 declare const Utils: {
     loadAssets(assets: HTMLImageElement[]): Promise<unknown[]>;
     loadAsset(asset: HTMLImageElement | HTMLAudioElement): Promise<unknown>;
     getAllPieces(): NodeListOf<HTMLDivElement>;
-    hasCollision(source: DomBox, target: DomBox): boolean;
+    hasCollision(source: DomBoxWithoutDimensions, target: DomBoxWithoutDimensions): boolean;
     isInside(source: DOMRect, target: DOMRect): boolean;
     /**
      * Returns a random integer between min (inclusive) and max (inclusive).
@@ -29,7 +29,7 @@ declare const Utils: {
     isBottomSide(type: ConnectorType[]): boolean;
     isSidePiece(type: ConnectorType[]): boolean;
     isBottomRightCorner(type: ConnectorType[]): boolean;
-    isCornerPiece(type: ConnectorType[]): any;
+    isCornerPiece(type: ConnectorType[]): boolean;
     isCornerConnection(str: SideNames): boolean;
     isEdgePiece(pieceType: ConnectorType[]): any;
     getPieceType(element: HTMLDivElement): ConnectorType[];
@@ -42,12 +42,12 @@ declare const Utils: {
     getPieceIdFromElement(element: HTMLDivElement): string | undefined;
     getGroupIdFromElement(element: HTMLDivElement): string | undefined;
     getElementsInGroupByElement(groupedElement: HTMLDivElement): Element[];
-    getCornerBoundingBox(key: SideNames): DomBox;
+    getCornerBoundingBox(key: SideNames, solvingAreaBox: DomBoxWithoutDimensions, connectorTolerance: number): DomBoxWithoutDimensions;
     getElementBoundingBoxRelativeToCorner(elementBoundingBox: DomBox, corner: SideNames): DomBox;
-    getTopLeftCornerBoundingBox(): DomBox;
-    getTopRightCornerBoundingBox(): DomBox;
-    getBottomRightCornerBoundingBox(): DomBox;
-    getBottomLeftCornerBoundingBox(): DomBox;
+    getTopLeftCornerBoundingBox(): DomBoxWithoutDimensions;
+    getTopRightCornerBoundingBox(): DomBoxWithoutDimensions;
+    getBottomRightCornerBoundingBox(): DomBoxWithoutDimensions;
+    getBottomLeftCornerBoundingBox(): DomBoxWithoutDimensions;
     getConnectorBoundingBox(element: HTMLDivElement, side: SideNames): {
         top: number;
         right: number;
@@ -66,7 +66,7 @@ declare const Utils: {
         bottom: any;
         left: any;
     };
-    drawBox(box: DOMRect | DomBox, container?: HTMLDivElement | null, borderColor?: string): void;
+    drawBox(box: DomBox, container?: HTMLDivElement | null, borderColor?: string): void;
     removeAllBoundingBoxIndicators(): void;
     getBoundingBoxForOffset(element: HTMLDivElement): {
         top: number;
@@ -76,9 +76,9 @@ declare const Utils: {
         width: number;
         height: number;
     } | null;
-    getStyleBoundingBox(element: HTMLDivElement): Pick<DOMRect, "top" | "right" | "bottom" | "left" | "width" | "height">;
-    getPocketByCollision(box: DomBox): HTMLDivElement | undefined;
-    getEventBox(e: MouseEvent): DomBox;
+    getStyleBoundingBox(element: HTMLDivElement): DomBox;
+    getPocketByCollision(box: DomBoxWithoutDimensions): HTMLDivElement | undefined;
+    getEventBox(e: MouseEvent): DomBoxWithoutDimensions;
     getIndividualPiecesOnCanvas(): MovableElement[];
     isOverPockets(box: DomBox): boolean;
     isPuzzlePiece(target: HTMLElement): boolean;
