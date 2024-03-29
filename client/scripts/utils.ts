@@ -391,7 +391,6 @@ const Utils = {
     }
 
     if (parent) {
-      console.log("Getting parent offset");
       const parentElement = parent as HTMLDivElement;
       elementBoundingBox.top =
         parseInt(parentElement.style.top) + parseInt(element.style.top);
@@ -406,7 +405,6 @@ const Utils = {
       elementBoundingBox.left =
         parseInt(parentElement.style.left) + parseInt(element.style.left);
     } else {
-      console.log("not getting parent offset");
       elementBoundingBox.top = parseInt(element.style.top);
       elementBoundingBox.right =
         parseInt(element.style.left) + element.offsetWidth;

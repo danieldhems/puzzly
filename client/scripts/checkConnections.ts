@@ -61,15 +61,17 @@ export function checkConnections(
         height: element.offsetHeight,
       };
 
+      console.log("solving area box", solvingAreaBox);
+
       const cornerBoundingBox = Utils.getCornerBoundingBox(
         connectionToCheck,
         solvingAreaBox,
         connectorTolerance
       );
 
-      // console.log("checking", connectionToCheck);
-      // console.log("elBBWithinTolerance", elBBWithinTolerance);
-      // console.log("cornerBoundingBox", cornerBoundingBox);
+      console.log("checking corner", connectionToCheck);
+      console.log("elBBWithinTolerance", elBBWithinTolerance);
+      console.log("cornerBoundingBox", cornerBoundingBox);
 
       if (Utils.hasCollision(elBBWithinTolerance, cornerBoundingBox)) {
         return {
