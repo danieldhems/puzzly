@@ -1,6 +1,7 @@
 import {
   Connection,
   DomBox,
+  DomBoxWithoutDimensions,
   JigsawPieceData,
   MovableElement,
   SideNames,
@@ -52,28 +53,39 @@ export function checkConnections(
     while (i < cornerConnections.length) {
       const connectionToCheck = cornerConnections[i];
 
-      let elBBWithinTolerance = {
-        top: parseInt(element.style.top),
-        right: parseInt(element.style.left) + element.offsetWidth,
-        bottom: parseInt(element.style.top) + element.offsetHeight,
-        left: parseInt(element.style.left),
-        width: element.offsetWidth,
-        height: element.offsetHeight,
-      };
-
-      console.log("solving area box", solvingAreaBox);
+      const elementBoundingBox = Utils.getElementBoundingBox(element);
+      const elementBoundingBoxToTolerance = Utils.narrowBoundingBoxToTolerance(
+        elementBoundingBox,
+        connectorTolerance
+      );
 
       const cornerBoundingBox = Utils.getCornerBoundingBox(
         connectionToCheck,
-        solvingAreaBox,
+        { width: element.offsetWidth, height: element.offsetHeight },
+        solvingAreaBox
+      ) as DomBoxWithoutDimensions;
+
+      const cornerBoundingBoxToTolerance = Utils.narrowBoundingBoxToTolerance(
+        cornerBoundingBox,
         connectorTolerance
       );
 
       console.log("checking corner", connectionToCheck);
-      console.log("elBBWithinTolerance", elBBWithinTolerance);
-      console.log("cornerBoundingBox", cornerBoundingBox);
+      console.log("elBBWithinTolerance", elementBoundingBoxToTolerance);
+      console.log("cornerBoundingBox", cornerBoundingBoxToTolerance);
 
-      if (Utils.hasCollision(elBBWithinTolerance, cornerBoundingBox)) {
+      Utils.drawBox({
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+        ...elementBoundingBoxToTolerance,
+      });
+
+      if (
+        Utils.hasCollision(
+          elementBoundingBoxToTolerance,
+          cornerBoundingBoxToTolerance
+        )
+      ) {
         return {
           type: connectionToCheck,
           sourceElement: element,
@@ -114,14 +126,14 @@ export function checkConnections(
           oppositeConnection as SideNames
         ) as DomBox;
 
-        console.log("source element", element);
-        console.log("target element", targetElement);
+        // console.log("source element", element);
+        // console.log("target element", targetElement);
 
-        console.log(
-          `checking ${key}`,
-          thisPieceConnectorBoundingBox,
-          targetPieceConnectorBoundingBox
-        );
+        // console.log(
+        //   `checking ${key}`,
+        //   thisPieceConnectorBoundingBox,
+        //   targetPieceConnectorBoundingBox
+        // );
 
         // Utils.drawBox(thisPieceConnectorBoundingBox);
         // Utils.drawBox(targetPieceConnectorBoundingBox, null, "blue");

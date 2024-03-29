@@ -42,7 +42,17 @@ declare const Utils: {
     getPieceIdFromElement(element: HTMLDivElement): string | undefined;
     getGroupIdFromElement(element: HTMLDivElement): string | undefined;
     getElementsInGroupByElement(groupedElement: HTMLDivElement): Element[];
-    getCornerBoundingBox(key: SideNames, solvingAreaBox: DomBoxWithoutDimensions, connectorTolerance: number): DomBoxWithoutDimensions;
+    getElementBoundingBox(element: MovableElement): DomBoxWithoutDimensions;
+    getCornerBoundingBox(key: SideNames, pieceDimensions: {
+        width: number;
+        height: number;
+    }, solvingAreaBox: DomBoxWithoutDimensions): DomBoxWithoutDimensions | undefined;
+    narrowBoundingBoxToTolerance(box: DomBoxWithoutDimensions, tolerance: number): {
+        top: number;
+        right: number;
+        bottom: number;
+        left: number;
+    };
     getElementBoundingBoxRelativeToCorner(elementBoundingBox: DomBox, corner: SideNames): DomBox;
     getTopLeftCornerBoundingBox(): DomBoxWithoutDimensions;
     getTopRightCornerBoundingBox(): DomBoxWithoutDimensions;

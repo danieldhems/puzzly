@@ -435,6 +435,7 @@ export default class SingleMovable extends BaseMovable {
   }
 
   solve(options?: { save: boolean } | undefined) {
+    console.log("SingleInstance", this, "solve()");
     this.solvedContainer.appendChild(this.element);
     this.element.classList.add("grouped");
     this.element.dataset.isSolved = "true";
@@ -472,6 +473,7 @@ export default class SingleMovable extends BaseMovable {
   }
 
   joinTo(targetInstance: GroupMovable | SingleMovable) {
+    console.log("SingleInstance", this, "joinTo()", targetInstance);
     if (targetInstance.instanceType === InstanceTypes.SingleMovable) {
       this.Puzzly.groupInstances.push(
         new GroupMovable({

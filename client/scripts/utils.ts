@@ -251,35 +251,88 @@ const Utils = {
     return Array.from(document.querySelectorAll(`[data-group='${groupId}']`));
   },
 
+  getElementBoundingBox(element: MovableElement) {
+    let parent;
+    if (element.dataset.groupId) {
+      parent = element.parentNode;
+    }
+    if (element.dataset.isSolved === "true") {
+      parent = document.querySelector("#solved-puzzle-area");
+    }
+
+    let boundingBox = {} as DomBoxWithoutDimensions;
+
+    if (parent) {
+      const parentElement = parent as HTMLDivElement;
+      boundingBox.top =
+        parseInt(parentElement.style.top) + parseInt(element.style.top);
+      boundingBox.right =
+        parseInt(parentElement.style.left) +
+        parseInt(element.style.left) +
+        element.offsetWidth;
+      boundingBox.bottom =
+        parseInt(parentElement.style.top) +
+        parseInt(element.style.top) +
+        element.offsetHeight;
+      boundingBox.left =
+        parseInt(parentElement.style.left) + parseInt(element.style.left);
+    } else {
+      boundingBox.top = parseInt(element.style.top);
+      boundingBox.right = parseInt(element.style.left) + element.offsetWidth;
+      boundingBox.bottom = parseInt(element.style.top) + element.offsetHeight;
+      boundingBox.left = parseInt(element.style.left);
+    }
+
+    return boundingBox;
+  },
+
   getCornerBoundingBox(
     key: SideNames,
-    solvingAreaBox: DomBoxWithoutDimensions,
-    connectorTolerance: number
-  ): DomBoxWithoutDimensions {
-    const rect = {} as DomBox;
+    pieceDimensions: { width: number; height: number },
+    solvingAreaBox: DomBoxWithoutDimensions
+  ): DomBoxWithoutDimensions | undefined {
     switch (key) {
-      case "top-right":
-        rect.top = solvingAreaBox.top;
-        rect.right = solvingAreaBox.right;
-        rect.bottom = solvingAreaBox.top + connectorTolerance;
-        rect.left = solvingAreaBox.right - connectorTolerance;
-      case "bottom-right":
-        rect.top = solvingAreaBox.bottom - connectorTolerance;
-        rect.right = solvingAreaBox.right;
-        rect.bottom = solvingAreaBox.bottom;
-        rect.left = solvingAreaBox.right - connectorTolerance;
-      case "bottom-left":
-        rect.top = solvingAreaBox.bottom - connectorTolerance;
-        rect.right = solvingAreaBox.left + connectorTolerance;
-        rect.bottom = solvingAreaBox.bottom;
-        rect.left = solvingAreaBox.left;
-      case "top-left":
-        rect.top = solvingAreaBox.top;
-        rect.right = solvingAreaBox.left + connectorTolerance;
-        rect.bottom = solvingAreaBox.top + connectorTolerance;
-        rect.left = solvingAreaBox.left;
+      case SideNames.TopRight:
+        return {
+          top: solvingAreaBox.top,
+          right: solvingAreaBox.right,
+          bottom: solvingAreaBox.top + pieceDimensions.height,
+          left: solvingAreaBox.right - pieceDimensions.width,
+        };
+      case SideNames.BottomRight:
+        return {
+          top: solvingAreaBox.bottom - pieceDimensions.height,
+          right: solvingAreaBox.right,
+          bottom: solvingAreaBox.bottom,
+          left: solvingAreaBox.right - pieceDimensions.width,
+        };
+      case SideNames.BottomLeft:
+        return {
+          top: solvingAreaBox.bottom - pieceDimensions.height,
+          right: solvingAreaBox.left + pieceDimensions.width,
+          bottom: solvingAreaBox.bottom,
+          left: solvingAreaBox.left,
+        };
+      case SideNames.TopLeft:
+        return {
+          top: solvingAreaBox.top,
+          right: solvingAreaBox.left + pieceDimensions.width,
+          bottom: solvingAreaBox.top + pieceDimensions.height,
+          left: solvingAreaBox.left,
+        };
     }
-    return rect;
+  },
+
+  narrowBoundingBoxToTolerance(
+    box: DomBoxWithoutDimensions,
+    tolerance: number
+  ) {
+    return {
+      top: box.top + tolerance,
+      right: box.right - tolerance,
+      bottom: box.bottom - tolerance,
+      left: box.left + tolerance,
+    };
   },
 
   getElementBoundingBoxRelativeToCorner(
@@ -380,43 +433,12 @@ const Utils = {
       : connectorDistanceFromCorner;
 
     // const elementBoundingBox = element.getBoundingClientRect();
-    const elementBoundingBox = {} as DomBox;
-
-    let parent;
-    if (element.dataset.groupId) {
-      parent = element.parentNode;
-    }
-    if (element.dataset.isSolved === "true") {
-      parent = document.querySelector("#solved-puzzle-area");
-    }
-
-    if (parent) {
-      const parentElement = parent as HTMLDivElement;
-      elementBoundingBox.top =
-        parseInt(parentElement.style.top) + parseInt(element.style.top);
-      elementBoundingBox.right =
-        parseInt(parentElement.style.left) +
-        parseInt(element.style.left) +
-        element.offsetWidth;
-      elementBoundingBox.bottom =
-        parseInt(parentElement.style.top) +
-        parseInt(element.style.top) +
-        element.offsetHeight;
-      elementBoundingBox.left =
-        parseInt(parentElement.style.left) + parseInt(element.style.left);
-    } else {
-      elementBoundingBox.top = parseInt(element.style.top);
-      elementBoundingBox.right =
-        parseInt(element.style.left) + element.offsetWidth;
-      elementBoundingBox.bottom =
-        parseInt(element.style.top) + element.offsetHeight;
-      elementBoundingBox.left = parseInt(element.style.left);
-    }
+    const elementBoundingBox = Utils.getElementBoundingBox(element);
 
     // console.log("elementBoundingBox", elementBoundingBox);
 
     switch (side) {
-      case "left":
+      case SideNames.Left:
         box = {
           top: elementBoundingBox.top + topBoundary + tolerance,
           right: elementBoundingBox.left + connectorSize - tolerance,
@@ -425,7 +447,7 @@ const Utils = {
           left: elementBoundingBox.left + tolerance,
         };
         break;
-      case "right":
+      case SideNames.Right:
         box = {
           top: elementBoundingBox.top + topBoundary + tolerance,
           right: elementBoundingBox.right - tolerance,
@@ -434,7 +456,7 @@ const Utils = {
           left: elementBoundingBox.right - connectorSize + tolerance,
         };
         break;
-      case "bottom":
+      case SideNames.Bottom:
         box = {
           top:
             elementBoundingBox.bottom -
@@ -447,7 +469,7 @@ const Utils = {
           left: elementBoundingBox.left + leftBoundary + tolerance,
         };
         break;
-      case "top":
+      case SideNames.Top:
         box = {
           top: elementBoundingBox.top + tolerance,
           right:

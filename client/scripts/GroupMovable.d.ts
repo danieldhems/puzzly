@@ -47,7 +47,7 @@ export default class GroupMovable extends BaseMovable {
     render(): void;
     isPuzzlePieceInThisGroup(element: MovableElement): boolean;
     onMouseDown(event: MouseEvent): void;
-    getConnection(): any;
+    getConnection(): import("./types").Connection | undefined;
     onMouseUp(event: MouseEvent): void;
     onMoveFinished(): void;
     isOutOfBounds(): boolean;

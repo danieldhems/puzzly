@@ -298,9 +298,7 @@ export default class BaseMovable {
 
     if (isSolving) {
       sourceInstance.solve({ save: true });
-    }
-
-    if (targetElement) {
+    } else if (targetElement) {
       const targetInstance = this.getMovableInstanceFromElement(
         targetElement
       ) as SingleMovable | GroupMovable;
