@@ -42,6 +42,7 @@ declare const Utils: {
     getPieceIdFromElement(element: HTMLDivElement): string | undefined;
     getGroupIdFromElement(element: HTMLDivElement): string | undefined;
     getElementsInGroupByElement(groupedElement: HTMLDivElement): Element[];
+    getCornerNameForPiece(pieceType: ConnectorType[]): SideNames.TopRight | SideNames.BottomRight | SideNames.BottomLeft | SideNames.TopLeft | undefined;
     getElementBoundingBox(element: MovableElement): DomBoxWithoutDimensions;
     getCornerBoundingBox(key: SideNames, pieceDimensions: {
         width: number;

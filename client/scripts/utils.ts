@@ -251,6 +251,13 @@ const Utils = {
     return Array.from(document.querySelectorAll(`[data-group='${groupId}']`));
   },
 
+  getCornerNameForPiece(pieceType: ConnectorType[]) {
+    if (pieceType[0] === 0 && pieceType[3] === 0) return SideNames.TopLeft;
+    if (pieceType[0] === 0 && pieceType[1] === 0) return SideNames.TopRight;
+    if (pieceType[1] === 0 && pieceType[2] === 0) return SideNames.BottomRight;
+    if (pieceType[2] === 0 && pieceType[3] === 0) return SideNames.BottomLeft;
+  },
+
   getElementBoundingBox(element: MovableElement) {
     let parent;
     if (element.dataset.groupId) {

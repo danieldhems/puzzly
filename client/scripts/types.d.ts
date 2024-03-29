@@ -22,7 +22,7 @@ export type PocketMovableElement = HTMLDivElement;
 export type MovableElement = SingleMovableElement | GroupMovableElement | PocketMovableElement;
 export type MovableInstance = SingleMovable | GroupMovable | PocketMovable;
 export interface Connection {
-    type: string;
+    type: SideNames | undefined;
     sourceElement: HTMLDivElement;
     targetElement?: HTMLDivElement;
     isSolving: boolean;

@@ -34,66 +34,55 @@ export function checkConnections(
     connectsTo: element.dataset.connectsTo,
   };
 
-  console.log("checkConnections", piece);
+  // console.log("checkConnections", piece);
 
   const shouldCompare = (targetPiece: Partial<JigsawPieceData>) =>
     (piece.group === undefined && targetPiece.groupId === undefined) ||
     piece.group !== targetPiece.groupId;
 
   if (Utils.isCornerPiece(piece.type)) {
-    console.log("piece is corner", piece);
-    const cornerConnections = [
-      SideNames.TopRight,
-      SideNames.BottomRight,
-      SideNames.BottomLeft,
-      SideNames.TopLeft,
-    ];
+    // console.log("piece is corner", piece);
 
-    let i = 0;
-    while (i < cornerConnections.length) {
-      const connectionToCheck = cornerConnections[i];
+    const cornerToCheck = Utils.getCornerNameForPiece(piece.type);
 
-      const elementBoundingBox = Utils.getElementBoundingBox(element);
-      const elementBoundingBoxToTolerance = Utils.narrowBoundingBoxToTolerance(
-        elementBoundingBox,
-        connectorTolerance
-      );
+    const elementBoundingBox = Utils.getElementBoundingBox(element);
+    const elementBoundingBoxToTolerance = Utils.narrowBoundingBoxToTolerance(
+      elementBoundingBox,
+      connectorTolerance
+    );
 
-      const cornerBoundingBox = Utils.getCornerBoundingBox(
-        connectionToCheck,
-        { width: element.offsetWidth, height: element.offsetHeight },
-        solvingAreaBox
-      ) as DomBoxWithoutDimensions;
+    const cornerBoundingBox = Utils.getCornerBoundingBox(
+      cornerToCheck as SideNames,
+      { width: element.offsetWidth, height: element.offsetHeight },
+      solvingAreaBox
+    ) as DomBoxWithoutDimensions;
 
-      const cornerBoundingBoxToTolerance = Utils.narrowBoundingBoxToTolerance(
-        cornerBoundingBox,
-        connectorTolerance
-      );
+    const cornerBoundingBoxToTolerance = Utils.narrowBoundingBoxToTolerance(
+      cornerBoundingBox,
+      connectorTolerance
+    );
 
-      console.log("checking corner", connectionToCheck);
-      console.log("elBBWithinTolerance", elementBoundingBoxToTolerance);
-      console.log("cornerBoundingBox", cornerBoundingBoxToTolerance);
+    // console.log("checking corner", cornerToCheck);
+    // console.log("elBBWithinTolerance", elementBoundingBoxToTolerance);
+    // console.log("cornerBoundingBox", cornerBoundingBoxToTolerance);
 
-      Utils.drawBox({
-        width: element.offsetWidth,
-        height: element.offsetHeight,
-        ...elementBoundingBoxToTolerance,
-      });
+    // Utils.drawBox({
+    //   width: element.offsetWidth,
+    //   height: element.offsetHeight,
+    //   ...elementBoundingBoxToTolerance,
+    // });
 
-      if (
-        Utils.hasCollision(
-          elementBoundingBoxToTolerance,
-          cornerBoundingBoxToTolerance
-        )
-      ) {
-        return {
-          type: connectionToCheck,
-          sourceElement: element,
-          isSolving: true,
-        };
-      }
-
-      i++;
+    if (
+      Utils.hasCollision(
+        elementBoundingBoxToTolerance,
+        cornerBoundingBoxToTolerance
+      )
+    ) {
+      return {
+        type: cornerToCheck,
+        sourceElement: element,
+        isSolving: true,
+      };
     }
   }
 
