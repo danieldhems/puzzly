@@ -1,27 +1,13 @@
-const MongoClient = require('mongodb').MongoClient;
-const assert = require('assert')
+const MongoClient = require("mongodb").MongoClient;
 
-// Connection URL
-const url = 'mongodb://localhost:27017';
-const API_KEY = 'gSM5sBXJ2nYl8bOqpZUYSX6KF7mLqbjGkwmVqdEFzY90DT7gTMm1XwEowKRi8qyI';
-// const url = 'https://data.mongodb-api.com/app/data-vqdlp/endpoint/data/beta';
+const dbConfig = {
+    protocol: 'mongodb+srv://',
+    url: 'cluster0.0t6gvus.mongodb.net',
+    queryParams: 'retryWrites=true&w=majority&appName=Cluster0',
+    username: 'danhems87',
+    password: 'GCo4jTrojM01vhRr'
+}
 
-// Database Name
-const db = 'puzzly';
+const url = `${dbConfig.protocol}${dbConfig.username}:${dbConfig.password}@${dbConfig.url}/?${dbConfig.queryParams}`;
 
-const collection = 'puzzles'
-const username = 'admin';
-const password = 'mxb8YOWC0uM68RVO';
-
-// Create a new MongoClient
-const client = new MongoClient(url);
-
-// Use connect method to connect to the Server
-client.connect().then((client, err) => {
-    assert.strictEqual(err, undefined);
-    const db = client.db(db);
-    const collection = db.use(collection);
-  console.log("Connected successfully to server");
-});
-
-module.exports = client;
+module.exports.default = new MongoClient(url);

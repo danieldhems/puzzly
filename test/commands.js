@@ -1,5 +1,5 @@
 import { URL } from "url";
-import { PuzzleSizes } from "../client/scripts/constants.js";
+import { PuzzleSizes } from "../client/scripts/constants.ts";
 import path from "path";
 
 const uploadsPathAndPrefix = "./uploads_integration/preview_";

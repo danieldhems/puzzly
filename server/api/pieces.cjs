@@ -4,21 +4,16 @@ var router = require("express").Router();
 const MongoClient = require("mongodb").MongoClient;
 const ObjectID = require("mongodb").ObjectID;
 const assert = require("assert");
+const dbClient = require('../database.cjs').default;
 const getDatabaseCollections = require("./getDatabaseCollections.cjs").default;
-
-// Connection URL
-const url = "mongodb://127.0.0.1:27017";
 
 // Database Name
 const dbName = "puzzly";
 
-// Create a new MongoClient
-const client = new MongoClient(url);
-
 let db, collection;
 
 module.exports.clean = function () {
-  client.connect().then((client, err) => {
+  dbClient.connect().then((client, err) => {
     assert.strictEqual(err, undefined);
     db = client.db(dbName);
     collection = db.collection(collectionName);
@@ -32,7 +27,7 @@ module.exports.clean = function () {
 
 var api = {
   create: function (req, res) {
-    client.connect().then((client, err) => {
+    dbClient.connect().then((client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
 
@@ -58,7 +53,7 @@ var api = {
   read: function (req, res) {
     const puzzleId = req.params.id;
 
-    client.connect().then(async (client, err) => {
+    dbClient.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
       const puzzles = db.collection(puzzlesCollection);
@@ -77,7 +72,7 @@ var api = {
     var data = req.body;
     // console.log("update request", req.body);
 
-    client.connect().then(async (client, err) => {
+    dbClient.connect().then(async (client, err) => {
       if (!err) {
         db = client.db(dbName);
 
@@ -166,7 +161,7 @@ var api = {
 };
 
 api.unsolvePiece = function (req, res) {
-  client.connect().then(async (client, err) => {
+  dbClient.connect().then(async (client, err) => {
     assert.strictEqual(err, undefined);
     db = client.db(dbName);
     const id = req.params.id;

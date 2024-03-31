@@ -10,7 +10,7 @@
     "serenity": "failsafe serenity:update serenity:clean wdio serenity:report",
     "serenity:update": "serenity-bdd update",
     "serenity:clean": "rimraf target",
-    "wdio": "wdio run ./wdio.conf.cjs",
+    "e2e": "wdio run ./wdio.conf.cjs",
     "serenity:report": "serenity-bdd run",
     "ts": "npx tsc"
   },
@@ -58,6 +58,7 @@
     "npm-failsafe": "^1.2.0",
     "rimraf": "^5.0.5",
     "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
     "wdio-wait-for": "^3.0.10",
     "webpack": "^5.90.3",

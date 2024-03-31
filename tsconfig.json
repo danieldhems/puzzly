@@ -6,5 +6,7 @@
         "strictNullChecks": true,
         "preserveConstEnums": true,
         "noImplicitAny": true,
+        "moduleResolution": "node",
+        "types": ["node", "@wdio/globals/types"]
     }
 }

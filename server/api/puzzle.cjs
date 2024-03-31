@@ -10,11 +10,8 @@ const {
   PUZZLES_PROD_COLLECTION,
   PIECES_PROD_COLLECTION,
 } = require("../constants.cjs");
+const dbClient = require('../database.cjs').default;
 
-const MongoClient = require("mongodb").MongoClient;
-
-const url = "mongodb://127.0.0.1:27017";
-const client = new MongoClient(url);
 const dbName = "puzzly";
 
 const getDatabaseCollections = require("./getDatabaseCollections.cjs").default;
@@ -22,7 +19,7 @@ const getDatabaseCollections = require("./getDatabaseCollections.cjs").default;
 let db;
 
 module.exports.clean = function () {
-  client.connect().then((client, err) => {
+  dbClient.connect().then((client, err) => {
     const db = client.db(dbName);
 
     assert.strictEqual(err, undefined);
@@ -37,7 +34,7 @@ module.exports.clean = function () {
 
 var api = {
   create: function (req, res) {
-    client.connect().then(async (client, err) => {
+    dbClient.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
 
@@ -124,7 +121,7 @@ var api = {
   read: function (req, res) {
     const puzzleId = req.params.id;
 
-    client.connect().then(async (client, err) => {
+    dbClient.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
 
@@ -159,7 +156,7 @@ var api = {
     const args = req.params || req;
 
     // console.log("Puzzle destroy() called with arg", args.id);
-    client.connect().then(async (client, err) => {
+    dbClient.connect().then(async (client, err) => {
       assert.strictEqual(err, undefined);
       db = client.db(dbName);
 
@@ -195,7 +192,7 @@ var api = {
 };
 
 api.fetchAll = function (req, res) {
-  client
+  dbClient
     .connect()
     .then(async (client, err) => {
       assert.strictEqual(err, undefined);
@@ -237,7 +234,7 @@ api.fetchAll = function (req, res) {
 };
 
 api.removeAll = function (req, res) {
-  client.connect().then(async (client, err) => {
+  dbClient.connect().then(async (client, err) => {
     assert.strictEqual(err, undefined);
     db = client.db(dbName);
     let coll;
@@ -257,7 +254,7 @@ api.removeAll = function (req, res) {
 };
 
 api.updateTime = function (req, res) {
-  client.connect().then(async (client, err) => {
+  dbClient.connect().then(async (client, err) => {
     assert.strictEqual(err, undefined);
     db = client.db(dbName);
 
@@ -280,7 +277,7 @@ api.updateTime = function (req, res) {
 };
 
 api.unsolvePiece = function (req, res) {
-  client.connect().then(async (client, err) => {
+  dbClient.connect().then(async (client, err) => {
     assert.strictEqual(err, undefined);
     db = client.db(dbName);
     const id = req.params.id;
