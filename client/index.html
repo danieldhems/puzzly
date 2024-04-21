@@ -26,53 +26,34 @@
               <div id="puzzle-creator">
                 <div class="bg-screen"></div>
                 <div class="inner-content">
-                  <div id="puzzle-setup--main-options">
+                  <div id="puzzle-setup--main">
                     <div id="puzzle-setup--image">
-                      <div id="puzzle-setup--image_preview">
+                      <div id="puzzle-setup--image_preview" class="js-hidden">
+                        <div class="vertical-center">
+                          <div class="horizontal-center">
                         <img id="puzzle-setup--image_preview-imgEl" />
-                        <div id="image-crop"></div>
-                        <div id="image-crop-drag-handle-tl" class="image-crop-drag-handle"></div>
-                        <div id="image-crop-drag-handle-tr" class="image-crop-drag-handle"></div>
-                        <div id="image-crop-drag-handle-br" class="image-crop-drag-handle"></div>
-                        <div id="image-crop-drag-handle-bl" class="image-crop-drag-handle"></div>
+                        </div></div>
                       </div>
                       <div id="puzzle-setup--image_input">
-                        <label id="image-upload-label" for="upload">Choose your image</label>
                         <input name="image" id="upload-fld" type="file" value="No file chosen" />
                       </div>
                     </div>
                     <div id="puzzle-setup--options" class="form-label-row">
-                      <div class="form-label-row">
-                        <label>How many pieces?</label>
+                      <div id="puzzle-setup--select-number-of-pieces" class="puzzle-setup--option-row form-label-row">
                         <div>
-                          <label for="puzzle-size-input-field" id="puzzle-size-input-label"></label>
+                          <label>How many pieces? <span id="puzzle-size-input-label"></span></label>
                           <input type="range" class="form-range" min="0" max="10" id="puzzle-size-input-field">
                         </div>
                       </div>
-                      <div class="form-label-row">
-                        <div class="form-label-row--heading">
-                          <span>Image preview type</span>
-                        </div>
-                        <div>
-                          <label for="image-preview-type-toggle">Toggle</label>
-                          <input type="radio" name="image-preview-type" id="image-preview-type-toggle" value="toggle" checked="checked" />
-                        </div>
-                        <div>
-                          <label for="image-preview-type-always-on">Always on</label>
-                          <input type="radio" name="image-preview-type" id="image-preview-type-always-on" value="always-on" />
-                        </div>
-                      </div>
-                      <div class="js-admin-only">
-                        <div id="puzzle-setup--debug-highlights" class="form-label-row align-content-row">
-                          <label for="chk-highlights">Highlight pieces?</label>
-                          <input type="checkbox" id="chk-highlights" />
-                        </div>
-                        <div id="puzzle-setup--debug-no-disperse" class="form-label-row align-content-row">
+                      <div class="puzzle-setup--option-row js-admin-only">
+                        <div id="puzzle-setup--debug-no-disperse" class="align-content-row">
                           <label for="chk-no-disperse">Don't disperse pieces?</label>
                           <input type="checkbox" id="chk-no-disperse" />
                         </div>
                       </div>
-                      <input type="submit" id="start-btn" value="Start">
+                      <div class="puzzle-setup--option-row">
+                        <input type="submit" id="start-btn" value="Start">
+                      </div>
                     </div>
                   </div>
                 </div>

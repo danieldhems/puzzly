@@ -25,11 +25,9 @@ async function upload(req, res) {
     //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
     let image = req.files["files[]"];
 
-    let isIntegration = false;
-
-    if (req.body.integration) {
-      isIntegration = true;
-    }
+    // The client is sending the request body as FormData
+    // so expect boolean values to be sent as strings
+    const isIntegration = req.body.integration === 'true';
 
     const uploadDir = isIntegration
       ? UPLOADS_DIR_INTEGRATION

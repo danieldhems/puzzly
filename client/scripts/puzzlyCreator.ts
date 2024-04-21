@@ -114,6 +114,7 @@ export default class PuzzlyCreator {
     ) as this["imageUpload"];
     this.newPuzzleForm = document.querySelector(
       "#form-container"
+    
     ) as this["newPuzzleForm"];
     this.startBtn = document.querySelector("#start-btn") as this["startBtn"];
     this.puzzleSizeField = document.getElementById(
@@ -209,22 +210,22 @@ export default class PuzzlyCreator {
       }.bind(this)
     );
 
-    this.imagePreviewTypeToggleRadio.addEventListener("change", () => {
-      this.imagePreviewType = "toggle";
-    });
+    // this.imagePreviewTypeToggleRadio.addEventListener("change", () => {
+    //   this.imagePreviewType = "toggle";
+    // });
 
-    this.imagePreviewTypeAlwaysOnRadio.addEventListener("change", () => {
-      this.imagePreviewType = "alwaysOn";
-    });
+    // this.imagePreviewTypeAlwaysOnRadio.addEventListener("change", () => {
+    //   this.imagePreviewType = "alwaysOn";
+    // });
 
-    this.chkHighlights.addEventListener(
-      "input",
-      function (e: InputEvent) {
-        this.debugOptions.highlightConnectingPieces = (
-          e.target as HTMLInputElement
-        ).checked;
-      }.bind(this)
-    );
+    // this.chkHighlights.addEventListener(
+    //   "input",
+    //   function (e: InputEvent) {
+    //     this.debugOptions.highlightConnectingPieces = (
+    //       e.target as HTMLInputElement
+    //     ).checked;
+    //   }.bind(this)
+    // );
 
     this.chkNoDispersal.addEventListener(
       "input",
@@ -246,14 +247,14 @@ export default class PuzzlyCreator {
       "change",
       this.onImageUploadChange.bind(this)
     );
-    this.imageCropElement.addEventListener(
-      "mousedown",
-      this.onImageCropMouseDown.bind(this)
-    );
-    this.imageCropElement.addEventListener(
-      "mouseup",
-      this.onImageCropMouseUp.bind(this)
-    );
+    // this.imageCropElement.addEventListener(
+    //   "mousedown",
+    //   this.onImageCropMouseDown.bind(this)
+    // );
+    // this.imageCropElement.addEventListener(
+    //   "mouseup",
+    //   this.onImageCropMouseUp.bind(this)
+    // );
     this.imageUploadPreviewEl.addEventListener(
       "load",
       this.onImagePreviewLoad.bind(this)
@@ -290,11 +291,11 @@ export default class PuzzlyCreator {
 
     if (response.data) {
       this.imagePreviewEl.style.display = "flex";
-      this.sourceImage.previewPath = (
+      // (
+      //   this.imagePreviewEl as HTMLImageElement
+      // ).style.backgroundImage = "url("+response.data.fullSizePath+")";
+      (
         this.imageUploadPreviewEl as HTMLImageElement
-      ).src = response.data.previewPath;
-      this.sourceImage.fullSizePath = (
-        this.fullSizeImageHidden as HTMLImageElement
       ).src = response.data.fullSizePath;
       this.sourceImage.imageName = response.data.filename;
 
@@ -315,16 +316,16 @@ export default class PuzzlyCreator {
   onImagePreviewLoad() {
     // console.log('image info', e)
 
-    if (this.cropNotNeeded) {
-      this.setPuzzleImageOffsetAndWidth(true);
-      if (this.imageCropVisible) {
-        this.destroyImageCrop();
-      }
-    } else {
-      this.initiateImageCrop();
-    }
+    // if (this.cropNotNeeded) {
+    //   this.setPuzzleImageOffsetAndWidth(true);
+    //   if (this.imageCropVisible) {
+    //     this.destroyImageCrop();
+    //   }
+    // } else {
+    //   this.initiateImageCrop();
+    // }
 
-    this.imagePreviewEl.style.display = "block";
+    this.imagePreviewEl.classList.remove("js-hidden");
   }
 
   onFullSizeImageLoad(e: Response) {
@@ -563,7 +564,7 @@ export default class PuzzlyCreator {
     this.imageCropElement.style.height = cropSize + "px";
     this.imageCropElement.style.width = cropSize + "px";
 
-    this.setImageCropDragHandles();
+    // this.setImageCropDragHandles();
     this.setPuzzleImageOffsetAndWidth();
   }
 
