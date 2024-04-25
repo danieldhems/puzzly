@@ -133,6 +133,16 @@ export enum PuzzleShapes {
   Rectangle = "Rectangle",
 }
 
+export enum MovementAxis {
+  X = "x",
+  Y = "y"
+}
+
+export enum MovementPropertyName {
+  Top = "top",
+  Left = "left"
+}
+
 export interface PuzzleCreatorOptions {
   stageWidth: number;
   stageHeight: number;
@@ -141,7 +151,6 @@ export interface PuzzleCreatorOptions {
   selectedShape?: PuzzleShapes;
   piecesPerSideHorizontal?: number;
   piecesPerSideVertical?: number;
-  imagePreviewType: string; // TODO: Enum
   originalImageSize: {
     width: number;
     height: number;
@@ -149,12 +158,11 @@ export interface PuzzleCreatorOptions {
   pieces?: JigsawPieceData[];
   boardWidth: number;
   boardHeight: number;
-  imageSize: number;
   spritePath?: string;
   previewPath: string;
   drawOutlines?: boolean;
   connectorSize?: number;
-  integration: boolean;
+  isIntegration: boolean;
 }
 
 export type PuzzleCreationResponse = PuzzleCreatorOptions & {

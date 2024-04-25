@@ -177,9 +177,8 @@ label {
     height: 100%;
 }
 
-#image-crop {
+#puzzle-impression-overlay {
     position: absolute;
-    display: none;
     top: 0;
     left: 0;
     cursor: move;
@@ -279,10 +278,11 @@ label {
 
 #puzzle-setup--image {
     height: 75%;
+    position: relative;
 }
 
 #puzzle-setup--options {
-    width: 100%;
+    /* width: 100%; */
 }
 
 #puzzle-setup--image {

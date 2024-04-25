@@ -1,5 +1,5 @@
 import { URL } from "url";
-import { PuzzleSizes } from "../client/scripts/constants.ts";
+import { SquareShapedPuzzleDefinitions } from "../client/scripts/constants.ts";
 import path from "path";
 
 const uploadsPathAndPrefix = "./uploads_integration/preview_";
@@ -18,7 +18,7 @@ export const createPuzzle = async function () {
 
   const numPiecesField = $("#puzzle-size-input-field");
   const numPiecesFldValue = await numPiecesField.getValue();
-  const selectNumberOfPieces = PuzzleSizes[numPiecesFldValue].numPieces;
+  const selectNumberOfPieces = SquareShapedPuzzleDefinitions[numPiecesFldValue].numPieces;
 
   await $("#chk-no-disperse").click();
 

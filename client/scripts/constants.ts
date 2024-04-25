@@ -1,4 +1,4 @@
-export const PuzzleSizes = [
+export const SquareShapedPuzzleDefinitions = [
   { numPieces: 9, piecesPerSide: 3 },
   { numPieces: 16, piecesPerSide: 4 },
   { numPieces: 25, piecesPerSide: 5 },
