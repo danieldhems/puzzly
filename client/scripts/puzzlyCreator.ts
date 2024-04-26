@@ -40,8 +40,6 @@ export default class PuzzlyCreator {
   puzzleTargetAreaOffsetTop: number;
   puzzleTargetAreaWidth: number;
   puzzleTargetAreaHeight: number;
-  puzzleTargetAreaDiffLeft: number;
-  puzzleTargetAreaDiffTop: number;
   puzzleTargetAreaCalculatedWidth: number;
   puzzleTargetAreaCalculatedHeight: number;
   puzzleTargetAreaElement: HTMLElement;
@@ -192,19 +190,14 @@ export default class PuzzlyCreator {
       "change",
       this.onImageUploadChange.bind(this)
     );
-    // this.imageCropElement.addEventListener(
-    //   "mousedown",
-    //   this.onImageCropMouseDown.bind(this)
-    // );
-    // this.imageCropElement.addEventListener(
-    //   "mouseup",
-    //   this.onImageCropMouseUp.bind(this)
-    // );
-    console.log("here")
+
     this.imageUploadPreviewEl.addEventListener(
       "load",
       this.onImagePreviewLoad.bind(this)
     );
+
+    window.addEventListener("PuzzlyPuzzleImpressionMoved", this.onOverlayMove.bind(this))
+
     this.startBtn.addEventListener("click", this.onStartBtnClick.bind(this));
   }
 
@@ -222,6 +215,15 @@ export default class PuzzlyCreator {
         }.bind(this)
       );
   }
+
+  onOverlayMove(event: CustomEvent) {
+    console.log(event.detail);
+    const { left, top } = event.detail;
+    this.puzzleTargetAreaOffsetLeft = left;
+    this.puzzleTargetAreaOffsetTop = top;
+
+    this.setPuzzleImageOffsetAndWidth();
+}
 
   onStartBtnClick(e: SubmitEvent) {
     e.preventDefault();
@@ -292,22 +294,6 @@ export default class PuzzlyCreator {
         (this.imageUploadPreviewEl.naturalWidth / 100) * cropHeightPercentage;
   }
 
-  onImageCropMouseDown(e: MouseEvent) {
-    e.preventDefault();
-    const el = e.target as HTMLElement;
-    const diffX = e.clientX - el.offsetLeft;
-    const diffY = e.clientY - el.offsetTop;
-    const w = this.imageUploadPreviewEl.offsetWidth;
-    const h = this.imageUploadPreviewEl.offsetHeight;
-
-    this.puzzleTargetAreaOffsetLeft = el.offsetLeft;
-    this.puzzleTargetAreaOffsetTop = el.offsetTop;
-    this.puzzleTargetAreaDiffLeft = diffX;
-    this.puzzleTargetAreaDiffTop = diffY;
-    this.puzzleTargetAreaWidth = el.clientWidth;
-    this.puzzleTargetAreaHeight = el.clientHeight;
-  }
-
   upload(): Promise<Response> {
     const fileFld = document.querySelector("#upload-fld") as HTMLInputElement;
     const files = fileFld.files as FileList;
@@ -344,16 +330,16 @@ export default class PuzzlyCreator {
     const imageHeight = imageEl.offsetHeight;
 
     if (imageWidth > imageHeight) {
-      widthPercentage = (this.puzzleTargetAreaElement.offsetWidth / imageWidth) * 100;
+      widthPercentage = (this.puzzleTargetAreaWidth / imageWidth) * 100;
       leftOffsetPercentage =
-        (parseInt(this.puzzleTargetAreaElement.style.left) / imageWidth) * 100;
+        (this.puzzleTargetAreaOffsetLeft / imageWidth) * 100;
       topOffsetPercentage = 0;
       heightPercentage = 100;
     } else {
       heightPercentage =
-        (this.puzzleTargetAreaElement.offsetHeight / imageHeight) * 100;
+        (this.puzzleTargetAreaHeight / imageHeight) * 100;
       topOffsetPercentage =
-        (parseInt(this.puzzleTargetAreaElement.style.top) / imageHeight) * 100;
+        (this.puzzleTargetAreaOffsetTop / imageHeight) * 100;
       leftOffsetPercentage = 0;
       widthPercentage = 100;
     }
