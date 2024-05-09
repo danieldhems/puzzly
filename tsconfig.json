@@ -2,11 +2,11 @@
     "compilerOptions": {
         "module": "ES2015",
         "target": "ES5",
-        "declaration": true,
         "strictNullChecks": true,
         "preserveConstEnums": true,
         "noImplicitAny": true,
         "moduleResolution": "node",
+        "noEmit": true,
         "types": ["node", "@wdio/globals/types"]
     }
 }

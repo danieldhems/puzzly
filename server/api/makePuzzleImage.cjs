@@ -2,12 +2,12 @@ var Sharp = require("sharp");
 var router = require("express").Router();
 
 async function makeImage(data, puzzleImgPath) {
-  // console.log("makeImage", data, puzzleImgPath);
+  console.log("makeImage", data, puzzleImgPath);
   // Create the resized and cropped puzzle preview image from the uploaded source image
-  img = Sharp(data.fullSizePath);
+  img = Sharp(data.imagePath);
 
   const imgMetadata = await img.metadata();
-  const { width: origW, height: origH } = imgMetadata;
+  const { width: origW, height: origH } = data.dimensions;
 
   const opts = {
     left: Math.floor((origW / 100) * data.leftOffsetPercentage),
@@ -18,12 +18,8 @@ async function makeImage(data, puzzleImgPath) {
 
   img.extract(opts);
 
-  const isSquare = origW === origH;
-  const resizeWidth = isSquare ? origW : origW < origH ? origW : origH;
-  const resizeHeight = isSquare ? origH : origH < origW ? origH : origW;
-
   // Resize the image according to the dimensions requested by the Frontend
-  img.resize(data.boardWidth, data.boardHeight);
+  img.resize(data.resizeWidth, data.resizeHeight);
 
   await img.toFile(puzzleImgPath);
   return puzzleImgPath;

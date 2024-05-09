@@ -144,26 +144,59 @@ export enum MovementPropertyName {
 }
 
 export interface PuzzleCreatorOptions {
-  stageWidth: number;
-  stageHeight: number;
   debugOptions: DebugOptions;
   selectedNumPieces: number;
   selectedShape?: PuzzleShapes;
   piecesPerSideHorizontal?: number;
   piecesPerSideVertical?: number;
-  originalImageSize: {
-    width: number;
-    height: number;
-  };
   pieces?: JigsawPieceData[];
-  boardWidth: number;
-  boardHeight: number;
-  spritePath?: string;
-  previewPath: string;
-  drawOutlines?: boolean;
   connectorSize?: number;
   isIntegration: boolean;
 }
+
+export interface PuzzleSize {
+  numberOfPiecesHorizontal?: number;
+  numberOfPiecesVertical?: number;
+  pieceSize: number;
+  puzzleWidth: number;
+  puzzleHeight: number;
+  imageWidth: number;
+  imageHeight: number;
+}
+
+export enum PuzzleAxis {
+  Horizontal = "Horizontal",
+  Vertical = "Vertical",
+}
+
+export type PuzzleGenerator = {
+  connectorRatio: number;
+  piecesPerSideHorizontal: number;
+  piecesPerSideVertical: number;
+  selectedNumberOfPieces: number;
+  pieceSize: number;
+  connectorDistanceFromCorner: number;
+  connectorSize: number;
+  connectorLateralControlPointDistance: number;
+  largestPieceSpan: number;
+  strokeWidth: number;
+  strokeColor: string;
+  spriteSpacing: number;
+  stageWidth: number;
+  stageHeight: number;
+  debugOptions: {
+    noDispersal: boolean;
+  };
+  image: HTMLImageElement;
+  shadowColor: string;
+  strokeStyle: string;
+  generateDataForPuzzlePieces: () => Promise<{
+    spriteEncodedString: string;
+    pieces: JigsawPieceData[];
+  }>;
+  drawJigsawShape: (piece: JigsawPieceData) => string;
+  puzzleSizes: PuzzleSize[];
+};
 
 export type PuzzleCreationResponse = PuzzleCreatorOptions & {
   _id: string;

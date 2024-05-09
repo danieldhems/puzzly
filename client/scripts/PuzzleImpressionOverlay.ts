@@ -2,18 +2,19 @@ import RestrictedDraggable from "./RestrictedDraggable";
 import { MovementAxis, PuzzleShapes } from "./types";
 
 export default class PuzzleImpressionOverlay { 
+    draggable: RestrictedDraggable;
     targetElement: HTMLImageElement | HTMLDivElement;
     container: HTMLElement;
-    isSquareOptionSelected: boolean = true;
+    isSquareOptionSelected: boolean;
 
-    constructor({ targetElement, isSquareOptionSelected }: { targetElement: HTMLImageElement | HTMLDivElement; isSquareOptionSelected: true }) {
+    constructor({ targetElement, isSquareOptionSelected }: { targetElement: HTMLImageElement | HTMLDivElement; isSquareOptionSelected: boolean }) {
         this.targetElement = targetElement;
         this.isSquareOptionSelected = isSquareOptionSelected;
         this.container = this.targetElement.parentElement as HTMLElement;
 
         const layout = this.getInitialValues({ isSquareOptionSelected: this.isSquareOptionSelected });
 
-        new RestrictedDraggable({ containerElement: this.container, layout, id: "puzzle-impression-overlay", restrictionBoundingBox: layout });
+        this.draggable = new RestrictedDraggable({ containerElement: this.container, layout, id: "puzzle-impression-overlay", restrictionBoundingBox: layout });
     }
 
     getInitialValues({ isSquareOptionSelected }: { isSquareOptionSelected: boolean }) {

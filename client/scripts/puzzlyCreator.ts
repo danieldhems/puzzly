@@ -56,10 +56,12 @@ export default class PuzzlyCreator {
   newPuzzleForm: HTMLDivElement;
   startBtn: HTMLInputElement;
   puzzleSizeField: HTMLInputElement;
+  fullSizePath: string;
   imageUploadPreviewEl: HTMLImageElement & {
     naturalWidth: number;
     naturalHeight: number;
   };
+  PuzzleImpressionOverlay: PuzzleImpressionOverlay;
   isIntegration: boolean;
 
   constructor() {
@@ -242,22 +244,19 @@ export default class PuzzlyCreator {
         this.imageUploadPreviewEl as HTMLImageElement
       ).src = response.data.fullSizePath;
       this.sourceImage.imageName = response.data.filename;
+      this.fullSizePath = response.data.fullSizePath;
 
       this.sourceImage.dimensions.width = response.data.width;
       this.sourceImage.dimensions.height = response.data.height;
-
-      const { width, height } = this.sourceImage.dimensions;
-
-      this.puzzleTargetAreaWidth = width;
-      this.puzzleTargetAreaHeight = height;
     }
   }
 
   onImagePreviewLoad() {
     // console.log('image info', e)
       
-    new PuzzleImpressionOverlay({ targetElement: this.imageUploadPreviewEl, isSquareOptionSelected: true })
+    this.PuzzleImpressionOverlay = new PuzzleImpressionOverlay({ targetElement: this.imageUploadPreviewEl, isSquareOptionSelected: true })
     this.imagePreviewEl.classList.remove("js-hidden");
+    console.log("PuzzleImpressionOverlay", this.PuzzleImpressionOverlay)
   }
 
   onFullSizeImageLoad(e: Response) {
@@ -274,13 +273,13 @@ export default class PuzzlyCreator {
       const topPos = this.puzzleTargetAreaOffsetTop;
 
       const cropLeftOffsetPercentage =
-        (leftPos / this.imageUploadPreviewEl.naturalWidth) * 100;
+        Math.floor((leftPos / this.imageUploadPreviewEl.naturalWidth) * 100);
       const cropTopOffsetPercentage =
-        (topPos / this.imageUploadPreviewEl.naturalHeight) * 100;
+      Math.floor((topPos / this.imageUploadPreviewEl.naturalHeight) * 100);
       const cropWidthPercentage =
-        (this.puzzleTargetAreaWidth / this.imageUploadPreviewEl.naturalWidth) * 100;
+        Math.floor((this.puzzleTargetAreaWidth / this.imageUploadPreviewEl.naturalWidth) * 100);
       const cropHeightPercentage =
-        (this.puzzleTargetAreaWidth / this.imageUploadPreviewEl.naturalWidth) * 100;
+      Math.floor((this.puzzleTargetAreaWidth / this.imageUploadPreviewEl.naturalWidth) * 100);
 
       this.puzzleTargetAreaOffsetLeft =
         (this.imageUploadPreviewEl.naturalWidth / 100) *
@@ -326,8 +325,12 @@ export default class PuzzlyCreator {
       heightPercentage,
       leftOffsetPercentage,
       topOffsetPercentage;
-    const imageWidth = imageEl.offsetWidth;
-    const imageHeight = imageEl.offsetHeight;
+
+    const imageWidth = this.sourceImage.dimensions.width;
+    const imageHeight = this.sourceImage.dimensions.height;
+
+    console.log("image width", imageWidth)
+    console.log("crop width", this.puzzleTargetAreaWidth)
 
     if (imageWidth > imageHeight) {
       widthPercentage = (this.puzzleTargetAreaWidth / imageWidth) * 100;
@@ -363,22 +366,26 @@ export default class PuzzlyCreator {
         };
   }
 
-  async createPuzzle(options = null) {
-    const puzzleData: PuzzleCreatorOptions = {
+  async createPuzzle(options: Record<any, any> | null = null) {
+    const makePuzzleImageRequestData = {
       ...this.sourceImage,
       ...this.getImageDimensions(this.imageUploadPreviewEl),
-      stageWidth: window.innerWidth,
-      stageHeight: window.innerHeight,
-      debugOptions: this.debugOptions,
-      selectedNumPieces: this.selectedNumPieces,
+      imagePath: this.fullSizePath,
       originalImageSize: this.sourceImage.dimensions,
-      boardWidth: this.boardWidth,
-      boardHeight: this.boardHeight,
+      resizeWidth: this.boardWidth,
+      resizeHeight: this.boardHeight,
       isIntegration: this.isIntegration,
     };
 
+    let makePuzzleImageRequest = makePuzzleImageRequestData;
+    if(options) {
+      makePuzzleImageRequest = {
+        ...makePuzzleImageRequest,
+        ...options,
+      };
+    }
     const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {
-      body: JSON.stringify(options || puzzleData),
+      body: JSON.stringify(makePuzzleImageRequest),
       method: "POST",
       headers: {
         "Content-Type": "Application/json",
@@ -387,7 +394,11 @@ export default class PuzzlyCreator {
 
     const { puzzleImagePath } = await makePuzzleImageResponse.json();
 
-    const generator = await puzzleGenerator(puzzleImagePath, puzzleData);
+    const puzzleCreatorOptions: PuzzleCreatorOptions = {
+
+    }
+
+    const generator = await puzzleGenerator(puzzleImagePath, puzzleCreatorOptions);
 
     const { spriteEncodedString, pieces } =
       await generator.generateDataForPuzzlePieces();
