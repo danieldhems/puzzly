@@ -25,7 +25,7 @@ export const LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY =
 
 export const PUZZLE_PIECE_CLASSES = ["puzzle-piece", "puzzle-piece-fg"];
 
-export const PIECE_SIZE = 100;
+export const PIECE_SIZE = 30;
 export const MINIMUM_NUMBER_OF_PIECES = 9;
 
 export const ZOOM_INTERVALS = [1, 1.5, 2.5];

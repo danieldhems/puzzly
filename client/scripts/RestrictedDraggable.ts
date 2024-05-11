@@ -11,13 +11,13 @@ export interface RestrictedDraggableArguments {
   };
   id: string;
   restrictionBoundingBox:
-    | {
-        top: number;
-        right: number;
-        bottom: number;
-        left: number;
-      }
-    | undefined;
+  | {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  }
+  | undefined;
 }
 
 export default class RestrictedDraggable {

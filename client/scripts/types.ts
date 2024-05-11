@@ -146,7 +146,6 @@ export enum MovementPropertyName {
 export interface PuzzleCreatorOptions {
   debugOptions: DebugOptions;
   selectedNumPieces: number;
-  selectedShape?: PuzzleShapes;
   piecesPerSideHorizontal?: number;
   piecesPerSideVertical?: number;
   pieces?: JigsawPieceData[];
@@ -155,8 +154,8 @@ export interface PuzzleCreatorOptions {
 }
 
 export interface PuzzleSize {
-  numberOfPiecesHorizontal?: number;
-  numberOfPiecesVertical?: number;
+  numberOfPiecesHorizontal: number;
+  numberOfPiecesVertical: number;
   pieceSize: number;
   puzzleWidth: number;
   puzzleHeight: number;
@@ -203,6 +202,8 @@ export type PuzzleCreationResponse = PuzzleCreatorOptions & {
   complete?: boolean;
   zIndex?: number;
   pieceSize: number;
+  spritePath: string;
+  previewPath: string;
   connectorDistanceFromCorner: number;
 };
 

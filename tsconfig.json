@@ -6,7 +6,6 @@
         "preserveConstEnums": true,
         "noImplicitAny": true,
         "moduleResolution": "node",
-        "noEmit": true,
         "types": ["node", "@wdio/globals/types"]
     }
 }

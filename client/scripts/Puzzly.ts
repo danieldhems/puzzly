@@ -89,17 +89,8 @@ export default class Puzzly {
       ...config,
       debug: true,
       showDebugInfo: false,
-      jigsawSpriteConnectorSize: 42,
-      jigsawSpriteConnectorDistanceFromCorner: 43,
-      piecesPerSideHorizontal:
-        config.selectedShape === PuzzleShapes.Rectangle
-          ? config.piecesPerSideHorizontal
-          : Math.sqrt(config.selectedNumPieces),
-      piecesPerSideVertical:
-        config.selectedShape === PuzzleShapes.Rectangle
-          ? config.piecesPerSideVertical
-          : Math.sqrt(config.selectedNumPieces),
-      drawOutlines: config.drawOutlines || false,
+      piecesPerSideHorizontal: config.piecesPerSideHorizontal,
+      piecesPerSideVertical: config.piecesPerSideVertical,
       drawSquares: false,
     });
 

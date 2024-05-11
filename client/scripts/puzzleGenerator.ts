@@ -1,7 +1,6 @@
-import { MINIMUM_NUMBER_OF_PIECES } from "./constants";
-import { AxisNames, Orientation } from "./dist/types";
+import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE } from "./constants";
 import jigsawPath from "./jigsawPath";
-import { ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleSize, SideNames } from "./types";
+import { ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleSize, SideNames } from "./types";
 
 // How big the connectors should be (how far they stick of from the piece's body), expressed as a percentage of the body of the piece
 const CONNECTOR_SIZE_PERC = 30;
@@ -25,11 +24,6 @@ const puzzleGenerator = async function (
   Generator.piecesPerSideVertical = Math.sqrt(puzzleConfig.selectedNumPieces);
   Generator.selectedNumberOfPieces = puzzleConfig.selectedNumPieces;
 
-  // pieces will be generated at their full size according to the source image's dimensions
-  Generator.pieceSize = Math.floor(
-    puzzleConfig.boardWidth / Generator.piecesPerSideHorizontal
-  );
-
   Generator.strokeWidth = STROKE_WIDTH;
   Generator.strokeColor = STROKE_COLOR;
   Generator.shadowColor = SHADOW_COLOR;
@@ -51,12 +45,6 @@ const puzzleGenerator = async function (
 
   return {
     ...Generator,
-    puzzleSizes: getPuzzleSizes(
-      Generator.image.naturalWidth,
-      Generator.image.naturalHeight,
-      PIECE_SIZE,
-      MINIMUM_NUMBER_OF_PIECES
-    ),
     generateDataForPuzzlePieces,
     drawJigsawShape,
   };
@@ -76,118 +64,7 @@ const loadImage = (path: string): Promise<HTMLImageElement> => {
   });
 };
 
-export function getPuzzleSizes(
-  imageWidth: number,
-  imageHeight: number,
-  minimumPieceSize: number,
-  minimumNumberOfPieces: number
-) {
-  const shortSide: PuzzleAxis | null =
-    imageWidth < imageHeight ? PuzzleAxis.Horizontal
-      : imageHeight < imageWidth ? PuzzleAxis.Vertical
-        : null;
 
-  let n: number = minimumNumberOfPieces;
-  let divisionResult: number;
-
-  const puzzleSizes: PuzzleSize[] = [];
-
-  if (shortSide) {
-    do {
-      let shortSideKeyName: string;
-      let longSideKeyName: string;
-      let puzzleWidth: number;
-      let puzzleHeight: number;
-      let numberOfPiecesOnLongSide: number;
-
-      divisionResult = Math.ceil(
-        shortSide === PuzzleAxis.Horizontal
-          ? imageWidth / n
-          : imageHeight / n
-      );
-
-      if (shortSide === PuzzleAxis.Horizontal) {
-        // Portrait puzzle
-        shortSideKeyName = "numberOfPiecesHorizontal";
-        longSideKeyName = "numberOfPiecesVertical";
-        puzzleWidth = imageWidth;
-        const longSideConfig = getConfigForForAdjacentSideByPieceSize(
-          imageHeight,
-          divisionResult
-        );
-        numberOfPiecesOnLongSide = longSideConfig.numberOfPieces;
-        puzzleHeight = longSideConfig.totalLength;
-      } else {
-        // Landscape puzzle
-        shortSideKeyName = "numberOfPiecesVertical";
-        longSideKeyName = "numberOfPiecesHorizontal";
-        puzzleHeight = imageHeight;
-        const longSideConfig = getConfigForForAdjacentSideByPieceSize(
-          imageWidth,
-          divisionResult
-        );
-        numberOfPiecesOnLongSide = longSideConfig.numberOfPieces;
-        puzzleWidth = longSideConfig.totalLength;
-      }
-
-      puzzleSizes.push({
-        [shortSideKeyName]: n,
-        [longSideKeyName]: numberOfPiecesOnLongSide,
-        pieceSize: divisionResult,
-        puzzleWidth,
-        puzzleHeight,
-        imageWidth,
-        imageHeight,
-      });
-
-      n = n + 2;
-    } while (divisionResult > minimumPieceSize)
-
-    return puzzleSizes;
-  } else {
-    // Square puzzles
-  }
-}
-
-/**
-* Calculate the maximum number of pieces we can have along a given edge
-* by simple addition based on a known size.
-* 
-* i.e. keep adding the known piece size while it still fits within the length
-* 
-* Use this to get the number of pieces for the longer edge once we know
-* the number of pieces and their sizes for the shorter egde.
-* 
-* @param edgeLength number
-* @param interval number
-* @returns { numberOfPieces: number, totalLength: number }
-*/
-export function getConfigForForAdjacentSideByPieceSize(
-  edgeLength: number,
-  pieceSize: number,
-): {
-  numberOfPieces: number,
-  totalLength: number
-} {
-  let n: number = 0;
-  let sum: number = 0;
-  let done = false;
-
-  while (!done) {
-    const newValue = sum + pieceSize;
-    if (newValue < edgeLength) {
-      sum = newValue;
-      n++;
-    } else {
-      done = true;
-    }
-  }
-
-  return {
-    numberOfPieces: n,
-    totalLength: sum
-  }
-}
 
 const generateDataForPuzzlePieces = async () => {
   const pieces: JigsawPieceData[] = [];

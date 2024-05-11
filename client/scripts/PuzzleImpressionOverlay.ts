@@ -1,20 +1,35 @@
 import RestrictedDraggable from "./RestrictedDraggable";
-import { MovementAxis, PuzzleShapes } from "./types";
+import { MovementAxis, PuzzleShapes, PuzzleSize } from "./types";
 
-export default class PuzzleImpressionOverlay { 
+export default class PuzzleImpressionOverlay {
     draggable: RestrictedDraggable;
     targetElement: HTMLImageElement | HTMLDivElement;
     container: HTMLElement;
+    selectedPuzzleSize: PuzzleSize;
     isSquareOptionSelected: boolean;
 
-    constructor({ targetElement, isSquareOptionSelected }: { targetElement: HTMLImageElement | HTMLDivElement; isSquareOptionSelected: boolean }) {
+    constructor({
+        targetElement,
+        selectedPuzzleSize,
+        isSquareOptionSelected
+    }: {
+        targetElement: HTMLImageElement | HTMLDivElement;
+        selectedPuzzleSize: PuzzleSize;
+        isSquareOptionSelected: boolean
+    }) {
         this.targetElement = targetElement;
         this.isSquareOptionSelected = isSquareOptionSelected;
+        this.selectedPuzzleSize = selectedPuzzleSize;
         this.container = this.targetElement.parentElement as HTMLElement;
 
         const layout = this.getInitialValues({ isSquareOptionSelected: this.isSquareOptionSelected });
 
-        this.draggable = new RestrictedDraggable({ containerElement: this.container, layout, id: "puzzle-impression-overlay", restrictionBoundingBox: layout });
+        this.draggable = new RestrictedDraggable({
+            containerElement: this.container,
+            layout,
+            id: "puzzle-impression-overlay",
+            restrictionBoundingBox: layout
+        });
     }
 
     getInitialValues({ isSquareOptionSelected }: { isSquareOptionSelected: boolean }) {
@@ -26,29 +41,38 @@ export default class PuzzleImpressionOverlay {
         const rightBoundary = this.container.offsetWidth - leftBoundary;
         const bottomBoundary = this.container.offsetHeight - topBoundary;
 
-        if(isSquareOptionSelected){
+        if (isSquareOptionSelected) {
             const size = Math.min(this.targetElement.offsetWidth, this.targetElement.offsetHeight);
             width = height = size;
 
-            if(this.targetElement.offsetWidth < this.targetElement.offsetHeight){
+            if (this.targetElement.offsetWidth < this.targetElement.offsetHeight) {
                 allowedMovementAxis = MovementAxis.Y;
             } else {
                 allowedMovementAxis = MovementAxis.X;
             }
         } else {
-            width = this.targetElement.offsetWidth;
-            height = this.targetElement.offsetHeight;
+            width = this.selectedPuzzleSize.puzzleWidth;
+            height = this.selectedPuzzleSize.puzzleHeight;
+            const { imageWidth, imageHeight } = this.selectedPuzzleSize;
+            allowedMovementAxis = imageWidth < imageHeight ? MovementAxis.Y : MovementAxis.X;
         }
+
+        const scaledWidth = (this.targetElement.offsetWidth / this.selectedPuzzleSize.imageWidth) * this.selectedPuzzleSize.puzzleWidth;
+        const scaledHeight = (this.targetElement.offsetHeight / this.selectedPuzzleSize.imageHeight) * this.selectedPuzzleSize.puzzleHeight;
 
         return {
             left: leftBoundary,
             top: topBoundary,
             right: rightBoundary,
             bottom: bottomBoundary,
-            width,
-            height,
+            width: scaledWidth,
+            height: scaledHeight,
             allowedMovementAxis,
         }
+    }
+
+    getScale(length: number) {
+        return this.targetElement.offsetWidth / length;
     }
 
     onShapeChange(shape: PuzzleShapes) {

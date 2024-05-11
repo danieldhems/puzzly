@@ -1,8 +1,8 @@
-import { SquareShapedPuzzleDefinitions } from "./constants";
+import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SquareShapedPuzzleDefinitions } from "./constants";
 import puzzleGenerator from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
 import Puzzly from "./Puzzly";
-import { PuzzleCreationResponse, PuzzleCreatorOptions } from "./types";
+import { PuzzleAxis, PuzzleCreationResponse, PuzzleCreatorOptions, PuzzleSize } from "./types";
 import Utils from "./utils";
 
 export interface SourceImage {
@@ -28,6 +28,8 @@ export default class PuzzlyCreator {
   piecesPerSideHorizontal: number;
   piecesPerSideVertical: number;
   sourceImage: SourceImage;
+  puzzleSizes?: PuzzleSize[];
+  selectedPuzzleSize: PuzzleSize;
   /**
    * Puzzle target area
    * 
@@ -93,7 +95,7 @@ export default class PuzzlyCreator {
     ) as this["imageUploadField"];
     this.newPuzzleForm = document.querySelector(
       "#form-container"
-    
+
     ) as this["newPuzzleForm"];
     this.startBtn = document.querySelector("#start-btn") as this["startBtn"];
     this.puzzleSizeField = document.getElementById(
@@ -151,7 +153,7 @@ export default class PuzzlyCreator {
         e.preventDefault();
         const target = e.target as HTMLInputElement;
         this.puzzleSizeInputLabel.textContent = this.selectedNumPieces =
-        SquareShapedPuzzleDefinitions[parseInt(target.value)].numPieces;
+          SquareShapedPuzzleDefinitions[parseInt(target.value)].numPieces;
       }.bind(this)
     );
 
@@ -184,7 +186,7 @@ export default class PuzzlyCreator {
       function (e: InputEvent) {
         e.preventDefault();
         this.selectedNumPieces =
-        SquareShapedPuzzleDefinitions[parseInt((e.target as HTMLInputElement).value)].numPieces;
+          SquareShapedPuzzleDefinitions[parseInt((e.target as HTMLInputElement).value)].numPieces;
       }.bind(this)
     );
 
@@ -201,6 +203,122 @@ export default class PuzzlyCreator {
     window.addEventListener("PuzzlyPuzzleImpressionMoved", this.onOverlayMove.bind(this))
 
     this.startBtn.addEventListener("click", this.onStartBtnClick.bind(this));
+  }
+
+  getPuzzleSizes(
+    imageWidth: number,
+    imageHeight: number,
+    minimumPieceSize: number,
+    minimumNumberOfPieces: number
+  ) {
+
+    const shortSide: PuzzleAxis | null =
+      imageWidth < imageHeight ? PuzzleAxis.Horizontal
+        : imageHeight < imageWidth ? PuzzleAxis.Vertical
+          : null;
+
+    let n: number = minimumNumberOfPieces;
+    let divisionResult: number;
+
+    const puzzleSizes: PuzzleSize[] = [];
+
+    if (shortSide) {
+      do {
+        let puzzleWidth: number;
+        let puzzleHeight: number;
+        let numberOfPiecesOnLongSide: number;
+
+        divisionResult = Math.ceil(
+          shortSide === PuzzleAxis.Horizontal
+            ? imageWidth / n
+            : imageHeight / n
+        );
+
+        const puzzleSize = {} as PuzzleSize;
+
+        puzzleSize.imageWidth = imageWidth;
+        puzzleSize.imageHeight = imageHeight;
+        puzzleSize.pieceSize = divisionResult;
+
+        if (shortSide === PuzzleAxis.Horizontal) {
+          // Portrait puzzle
+          puzzleWidth = imageWidth;
+          const longSideConfig = this.getConfigForForAdjacentSideByPieceSize(
+            imageHeight,
+            divisionResult
+          );
+          numberOfPiecesOnLongSide = longSideConfig.numberOfPieces;
+          puzzleHeight = longSideConfig.totalLength;
+
+          puzzleSize.numberOfPiecesHorizontal = n;
+          puzzleSize.numberOfPiecesVertical = numberOfPiecesOnLongSide;
+          puzzleSize.puzzleWidth = imageWidth;
+          puzzleSize.puzzleHeight = puzzleHeight;
+        } else {
+          // Landscape puzzle
+          puzzleHeight = imageHeight;
+          const longSideConfig = this.getConfigForForAdjacentSideByPieceSize(
+            imageWidth,
+            divisionResult
+          );
+          numberOfPiecesOnLongSide = longSideConfig.numberOfPieces;
+          puzzleWidth = longSideConfig.totalLength;
+
+          puzzleSize.numberOfPiecesHorizontal = numberOfPiecesOnLongSide;
+          puzzleSize.numberOfPiecesVertical = n;
+          puzzleSize.puzzleWidth = puzzleWidth;
+          puzzleSize.puzzleHeight = imageHeight;
+        }
+
+        puzzleSizes.push(puzzleSize);
+
+        n = n + 2;
+      } while (divisionResult > minimumPieceSize)
+
+      return puzzleSizes;
+    } else {
+      // Square puzzles
+    }
+  }
+
+  /**
+  * Calculate the maximum number of pieces we can have along a given edge
+  * by simple addition based on a known size.
+  * 
+  * i.e. keep adding the known piece size while it still fits within the length
+  * 
+  * Use this to get the number of pieces for the longer edge once we know
+  * the number of pieces and their sizes for the shorter egde.
+  * 
+  * @param edgeLength number
+  * @param interval number
+  * @returns { numberOfPieces: number, totalLength: number }
+  */
+  getConfigForForAdjacentSideByPieceSize(
+    edgeLength: number,
+    pieceSize: number,
+  ): {
+    numberOfPieces: number,
+    totalLength: number
+  } {
+    let n: number = 0;
+    let sum: number = 0;
+    let done = false;
+
+    while (!done) {
+      const newValue = sum + pieceSize;
+      if (newValue < edgeLength) {
+        sum = newValue;
+        n++;
+      } else {
+        done = true;
+      }
+    }
+
+    return {
+      numberOfPieces: n,
+      totalLength: sum
+    }
   }
 
   onImageUploadChange(e: MouseEvent) {
@@ -225,7 +343,7 @@ export default class PuzzlyCreator {
     this.puzzleTargetAreaOffsetTop = top;
 
     this.setPuzzleImageOffsetAndWidth();
-}
+  }
 
   onStartBtnClick(e: SubmitEvent) {
     e.preventDefault();
@@ -253,8 +371,31 @@ export default class PuzzlyCreator {
 
   onImagePreviewLoad() {
     // console.log('image info', e)
-      
-    this.PuzzleImpressionOverlay = new PuzzleImpressionOverlay({ targetElement: this.imageUploadPreviewEl, isSquareOptionSelected: true })
+
+    const { width, height } = this.sourceImage.dimensions;
+    this.puzzleSizes = this.getPuzzleSizes(
+      width,
+      height,
+      PIECE_SIZE,
+      MINIMUM_NUMBER_OF_PIECES
+    ) as PuzzleSize[];
+
+    console.log("puzzle sizes", this.puzzleSizes)
+
+    this.selectedPuzzleSize = this.puzzleSizes[(this.puzzleSizes.length - 1) / 2];
+
+    const largestPuzzleSize = this.puzzleSizes[this.puzzleSizes.length - 1] as PuzzleSize;
+    const maxNumberOfPieces = largestPuzzleSize.numberOfPiecesHorizontal * largestPuzzleSize.numberOfPiecesVertical;
+    this.puzzleSizeInputField.min = MINIMUM_NUMBER_OF_PIECES + "";
+    this.puzzleSizeInputField.max = maxNumberOfPieces + "";
+
+    const puzzleImpressionOverlayConfig = {
+      targetElement: this.imageUploadPreviewEl,
+      selectedPuzzleSize: this.selectedPuzzleSize,
+      isSquareOptionSelected: false
+    };
+
+    this.PuzzleImpressionOverlay = new PuzzleImpressionOverlay(puzzleImpressionOverlayConfig);
     this.imagePreviewEl.classList.remove("js-hidden");
     console.log("PuzzleImpressionOverlay", this.PuzzleImpressionOverlay)
   }
@@ -269,34 +410,34 @@ export default class PuzzlyCreator {
   }
 
   setPuzzleImageOffsetAndWidth() {
-      const leftPos = this.puzzleTargetAreaOffsetLeft;
-      const topPos = this.puzzleTargetAreaOffsetTop;
+    const leftPos = this.puzzleTargetAreaOffsetLeft;
+    const topPos = this.puzzleTargetAreaOffsetTop;
 
-      const cropLeftOffsetPercentage =
-        Math.floor((leftPos / this.imageUploadPreviewEl.naturalWidth) * 100);
-      const cropTopOffsetPercentage =
+    const cropLeftOffsetPercentage =
+      Math.floor((leftPos / this.imageUploadPreviewEl.naturalWidth) * 100);
+    const cropTopOffsetPercentage =
       Math.floor((topPos / this.imageUploadPreviewEl.naturalHeight) * 100);
-      const cropWidthPercentage =
-        Math.floor((this.puzzleTargetAreaWidth / this.imageUploadPreviewEl.naturalWidth) * 100);
-      const cropHeightPercentage =
+    const cropWidthPercentage =
+      Math.floor((this.puzzleTargetAreaWidth / this.imageUploadPreviewEl.naturalWidth) * 100);
+    const cropHeightPercentage =
       Math.floor((this.puzzleTargetAreaWidth / this.imageUploadPreviewEl.naturalWidth) * 100);
 
-      this.puzzleTargetAreaOffsetLeft =
-        (this.imageUploadPreviewEl.naturalWidth / 100) *
-        cropLeftOffsetPercentage;
-      this.puzzleTargetAreaOffsetTop =
-        (this.imageUploadPreviewEl.naturalHeight / 100) *
-        cropTopOffsetPercentage;
-      this.puzzleTargetAreaCalculatedWidth =
-        (this.imageUploadPreviewEl.naturalWidth / 100) * cropWidthPercentage;
-      this.puzzleTargetAreaCalculatedHeight =
-        (this.imageUploadPreviewEl.naturalWidth / 100) * cropHeightPercentage;
+    this.puzzleTargetAreaOffsetLeft =
+      (this.imageUploadPreviewEl.naturalWidth / 100) *
+      cropLeftOffsetPercentage;
+    this.puzzleTargetAreaOffsetTop =
+      (this.imageUploadPreviewEl.naturalHeight / 100) *
+      cropTopOffsetPercentage;
+    this.puzzleTargetAreaCalculatedWidth =
+      (this.imageUploadPreviewEl.naturalWidth / 100) * cropWidthPercentage;
+    this.puzzleTargetAreaCalculatedHeight =
+      (this.imageUploadPreviewEl.naturalWidth / 100) * cropHeightPercentage;
   }
 
   upload(): Promise<Response> {
     const fileFld = document.querySelector("#upload-fld") as HTMLInputElement;
     const files = fileFld.files as FileList;
-    
+
     let image;
     if (files.length > 0) {
       image = files[0] as File;
@@ -305,7 +446,7 @@ export default class PuzzlyCreator {
 
     const fd = new FormData();
 
-    if(image){
+    if (image) {
       fd.append("files[]", image);
     }
 
@@ -359,11 +500,11 @@ export default class PuzzlyCreator {
     return imageEl.offsetWidth !== imageEl.offsetHeight
       ? this.getCropData(imageEl)
       : {
-          topOffsetPercentage: 0,
-          leftOffsetPercentage: 0,
-          heightPercentage: 100,
-          widthPercentage: 100,
-        };
+        topOffsetPercentage: 0,
+        leftOffsetPercentage: 0,
+        heightPercentage: 100,
+        widthPercentage: 100,
+      };
   }
 
   async createPuzzle(options: Record<any, any> | null = null) {
@@ -378,7 +519,7 @@ export default class PuzzlyCreator {
     };
 
     let makePuzzleImageRequest = makePuzzleImageRequestData;
-    if(options) {
+    if (options) {
       makePuzzleImageRequest = {
         ...makePuzzleImageRequest,
         ...options,
@@ -394,14 +535,14 @@ export default class PuzzlyCreator {
 
     const { puzzleImagePath } = await makePuzzleImageResponse.json();
 
-    const puzzleCreatorOptions: PuzzleCreatorOptions = {
+    // const puzzleCreatorOptions: PuzzleCreatorOptions = {
 
-    }
+    // }
 
-    const generator = await puzzleGenerator(puzzleImagePath, puzzleCreatorOptions);
+    // const generator = await puzzleGenerator(puzzleImagePath, puzzleCreatorOptions);
 
-    const { spriteEncodedString, pieces } =
-      await generator.generateDataForPuzzlePieces();
+    // const { spriteEncodedString, pieces } =
+    //   await generator.generateDataForPuzzlePieces();
 
     // const { width, height } = puzzleData.originalImageSize;
 
@@ -426,15 +567,16 @@ export default class PuzzlyCreator {
     //   body: getFormDataForImgFile,
     // });
 
-    Object.assign(puzzleData, {
-      spriteEncodedString,
-      puzzleImagePath,
-      pieces,
-      pieceSize: generator.pieceSize,
-      connectorSize: generator.connectorSize,
-      connectorDistanceFromCorner: generator.connectorDistanceFromCorner,
-    });
+    // const puzzleData = {
+    //   spriteEncodedString,
+    //   puzzleImagePath,
+    //   pieces,
+    //   pieceSize: generator.pieceSize,
+    //   connectorSize: generator.connectorSize,
+    //   connectorDistanceFromCorner: generator.connectorDistanceFromCorner,
+    // });
 
+    /*
     fetch("/api/puzzle", {
       body: JSON.stringify(puzzleData),
       method: "POST",
@@ -467,6 +609,7 @@ export default class PuzzlyCreator {
       .catch(function (err) {
         console.log(err);
       });
+      */
   }
 }
 
