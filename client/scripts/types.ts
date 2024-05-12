@@ -156,6 +156,7 @@ export interface PuzzleCreatorOptions {
 export interface PuzzleSize {
   numberOfPiecesHorizontal: number;
   numberOfPiecesVertical: number;
+  totalNumberOfPieces: number;
   pieceSize: number;
   puzzleWidth: number;
   puzzleHeight: number;

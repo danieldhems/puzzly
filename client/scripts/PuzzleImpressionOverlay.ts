@@ -6,23 +6,19 @@ export default class PuzzleImpressionOverlay {
     targetElement: HTMLImageElement | HTMLDivElement;
     container: HTMLElement;
     selectedPuzzleSize: PuzzleSize;
-    isSquareOptionSelected: boolean;
 
     constructor({
         targetElement,
         selectedPuzzleSize,
-        isSquareOptionSelected
     }: {
         targetElement: HTMLImageElement | HTMLDivElement;
-        selectedPuzzleSize: PuzzleSize;
-        isSquareOptionSelected: boolean
+        selectedPuzzleSize: PuzzleSize
     }) {
         this.targetElement = targetElement;
-        this.isSquareOptionSelected = isSquareOptionSelected;
         this.selectedPuzzleSize = selectedPuzzleSize;
         this.container = this.targetElement.parentElement as HTMLElement;
 
-        const layout = this.getInitialValues({ isSquareOptionSelected: this.isSquareOptionSelected });
+        const layout = this.getLayout(this.selectedPuzzleSize);
 
         this.draggable = new RestrictedDraggable({
             containerElement: this.container,
@@ -32,7 +28,7 @@ export default class PuzzleImpressionOverlay {
         });
     }
 
-    getInitialValues({ isSquareOptionSelected }: { isSquareOptionSelected: boolean }) {
+    getLayout(puzzleSize: PuzzleSize) {
         let width, height, allowedMovementAxis;
 
         // Calculate top and left position of target element, assuming it is centered
@@ -41,24 +37,14 @@ export default class PuzzleImpressionOverlay {
         const rightBoundary = this.container.offsetWidth - leftBoundary;
         const bottomBoundary = this.container.offsetHeight - topBoundary;
 
-        if (isSquareOptionSelected) {
-            const size = Math.min(this.targetElement.offsetWidth, this.targetElement.offsetHeight);
-            width = height = size;
+        width = puzzleSize.puzzleWidth;
+        height = puzzleSize.puzzleHeight;
 
-            if (this.targetElement.offsetWidth < this.targetElement.offsetHeight) {
-                allowedMovementAxis = MovementAxis.Y;
-            } else {
-                allowedMovementAxis = MovementAxis.X;
-            }
-        } else {
-            width = this.selectedPuzzleSize.puzzleWidth;
-            height = this.selectedPuzzleSize.puzzleHeight;
-            const { imageWidth, imageHeight } = this.selectedPuzzleSize;
-            allowedMovementAxis = imageWidth < imageHeight ? MovementAxis.Y : MovementAxis.X;
-        }
+        const { imageWidth, imageHeight } = puzzleSize;
+        allowedMovementAxis = imageWidth < imageHeight ? MovementAxis.Y : MovementAxis.X;
 
-        const scaledWidth = (this.targetElement.offsetWidth / this.selectedPuzzleSize.imageWidth) * this.selectedPuzzleSize.puzzleWidth;
-        const scaledHeight = (this.targetElement.offsetHeight / this.selectedPuzzleSize.imageHeight) * this.selectedPuzzleSize.puzzleHeight;
+        const scaledWidth = (this.targetElement.offsetWidth / puzzleSize.imageWidth) * puzzleSize.puzzleWidth;
+        const scaledHeight = (this.targetElement.offsetHeight / puzzleSize.imageHeight) * puzzleSize.puzzleHeight;
 
         return {
             left: leftBoundary,
@@ -75,7 +61,11 @@ export default class PuzzleImpressionOverlay {
         return this.targetElement.offsetWidth / length;
     }
 
-    onShapeChange(shape: PuzzleShapes) {
-
+    update(puzzleSize: PuzzleSize) {
+        this.selectedPuzzleSize = puzzleSize;
+        const layout = this.getLayout(this.selectedPuzzleSize);
+        if (this.draggable) {
+            this.draggable.update(layout);
+        }
     }
 }

@@ -1,4 +1,5 @@
-import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SquareShapedPuzzleDefinitions } from "./constants";
+import { normalize } from "path/win32";
+import { MINIMUM_NUMBER_OF_PIECES, MINIMUM_NUMBER_OF_PIECES_PER_SIDE, PIECE_SIZE, SquareShapedPuzzleDefinitions } from "./constants";
 import puzzleGenerator from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
 import Puzzly from "./Puzzly";
@@ -28,7 +29,7 @@ export default class PuzzlyCreator {
   piecesPerSideHorizontal: number;
   piecesPerSideVertical: number;
   sourceImage: SourceImage;
-  puzzleSizes?: PuzzleSize[];
+  puzzleSizes: PuzzleSize[];
   selectedPuzzleSize: PuzzleSize;
   /**
    * Puzzle target area
@@ -127,23 +128,19 @@ export default class PuzzlyCreator {
     };
 
     this.addEventListeners();
-    this.setDefaultNumPieces();
     this.showForm();
+
+    this.puzzleSizeInputField.value = 1 + "";
+
+    if (!this.puzzleSizes) {
+      this.puzzleSizeInputField.disabled = true;
+    }
 
     this.isIntegration = window.location.href.indexOf("isIntegration=true") > -1;
   }
 
   showForm() {
     this.newPuzzleForm.style.display = "flex";
-  }
-
-  setDefaultNumPieces() {
-    this.puzzleSizeField.value = "0";
-    const defaultPuzzleSize = SquareShapedPuzzleDefinitions[0];
-    this.puzzleSizeInputLabel.textContent = (this.selectedNumPieces =
-      defaultPuzzleSize.numPieces).toString();
-    this.piecesPerSideHorizontal = defaultPuzzleSize.piecesPerSide;
-    this.piecesPerSideVertical = defaultPuzzleSize.piecesPerSide;
   }
 
   addEventListeners() {
@@ -217,7 +214,7 @@ export default class PuzzlyCreator {
         : imageHeight < imageWidth ? PuzzleAxis.Vertical
           : null;
 
-    let n: number = minimumNumberOfPieces;
+    let n: number = MINIMUM_NUMBER_OF_PIECES_PER_SIDE;
     let divisionResult: number;
 
     const puzzleSizes: PuzzleSize[] = [];
@@ -270,9 +267,11 @@ export default class PuzzlyCreator {
           puzzleSize.puzzleHeight = imageHeight;
         }
 
+        puzzleSize.totalNumberOfPieces = n * numberOfPiecesOnLongSide;
+
         puzzleSizes.push(puzzleSize);
 
-        n = n + 2;
+        n = n + 1;
       } while (divisionResult > minimumPieceSize)
 
       return puzzleSizes;
@@ -382,12 +381,21 @@ export default class PuzzlyCreator {
 
     console.log("puzzle sizes", this.puzzleSizes)
 
-    this.selectedPuzzleSize = this.puzzleSizes[(this.puzzleSizes.length - 1) / 2];
+    this.puzzleSizeInputField.disabled = false;
+    this.updatePuzzleSizeField(this.puzzleSizes);
 
-    const largestPuzzleSize = this.puzzleSizes[this.puzzleSizes.length - 1] as PuzzleSize;
-    const maxNumberOfPieces = largestPuzzleSize.numberOfPiecesHorizontal * largestPuzzleSize.numberOfPiecesVertical;
-    this.puzzleSizeInputField.min = MINIMUM_NUMBER_OF_PIECES + "";
-    this.puzzleSizeInputField.max = maxNumberOfPieces + "";
+    this.puzzleSizeInputField.addEventListener("input", (event: InputEvent) => {
+      const eventTarget = event.target as HTMLInputElement;
+      const value = parseInt(eventTarget.value);
+
+      const highlightedPuzzleSize: PuzzleSize = this.puzzleSizes[value - 1];
+
+      if (this.puzzleSizes) {
+        this.puzzleSizeInputLabel.textContent = highlightedPuzzleSize.totalNumberOfPieces + "";
+        this.PuzzleImpressionOverlay.update(highlightedPuzzleSize);
+      }
+
+    })
 
     const puzzleImpressionOverlayConfig = {
       targetElement: this.imageUploadPreviewEl,
@@ -398,6 +406,13 @@ export default class PuzzlyCreator {
     this.PuzzleImpressionOverlay = new PuzzleImpressionOverlay(puzzleImpressionOverlayConfig);
     this.imagePreviewEl.classList.remove("js-hidden");
     console.log("PuzzleImpressionOverlay", this.PuzzleImpressionOverlay)
+  }
+
+  updatePuzzleSizeField(puzzleSizes: PuzzleSize[]) {
+    this.selectedPuzzleSize = puzzleSizes[0];
+    this.puzzleSizeInputField.min = 1 + "";
+    this.puzzleSizeInputField.max = this.puzzleSizes.length + "";
+    this.puzzleSizeInputLabel.textContent = this.selectedPuzzleSize.totalNumberOfPieces + "";
   }
 
   onFullSizeImageLoad(e: Response) {

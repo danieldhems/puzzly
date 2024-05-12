@@ -79,6 +79,15 @@ export default class RestrictedDraggable {
     }
   }
 
+  update(layout: {
+    width: number;
+    height: number;
+  }) {
+    const { width, height } = layout;
+    this.element.style.width = width + "px";
+    this.element.style.height = height + "px";
+  }
+
   attachListeners() {
     this.element.addEventListener("mousedown", this.onMouseDown.bind(this));
   }
