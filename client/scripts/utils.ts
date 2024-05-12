@@ -67,8 +67,8 @@ const Utils = {
       window.location.search.replace(
         new RegExp(
           "^(?:.*[&\\?]" +
-            encodeURIComponent(key).replace(/[\.\+\*]/g, "\\$&") +
-            "(?:\\=([^&]*))?)?.*$",
+          encodeURIComponent(key).replace(/[\.\+\*]/g, "\\$&") +
+          "(?:\\=([^&]*))?)?.*$",
           "i"
         ),
         "$1"
@@ -622,9 +622,9 @@ const Utils = {
 
     const parentLocation = hasGroup
       ? {
-          top: parseInt(element.style.top),
-          left: parseInt(element.style.left),
-        }
+        top: parseInt(element.style.top),
+        left: parseInt(element.style.left),
+      }
       : { top: 0, left: 0 };
 
     const diffX = element.offsetWidth / 2 - this.floatTolerance / 2;
@@ -694,13 +694,13 @@ const Utils = {
   getBoundingBoxForOffset(element: HTMLDivElement) {
     return element
       ? {
-          top: element.offsetTop,
-          right: element.offsetLeft + element.offsetWidth,
-          bottom: element.offsetTop + element.offsetHeight,
-          left: element.offsetLeft,
-          width: element.offsetWidth,
-          height: element.offsetHeight,
-        }
+        top: element.offsetTop,
+        right: element.offsetLeft + element.offsetWidth,
+        bottom: element.offsetTop + element.offsetHeight,
+        left: element.offsetLeft,
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+      }
       : null;
   },
 
@@ -789,9 +789,9 @@ const Utils = {
   elementIsInDragContainer(element: HTMLDivElement) {
     return (
       (element?.parentNode as HTMLDivElement).id ===
-        ELEMENT_IDS.DRAGANDSELECT_CONTAINER ||
+      ELEMENT_IDS.DRAGANDSELECT_CONTAINER ||
       (element?.parentNode as HTMLDivElement).id ===
-        ELEMENT_IDS.POCKET_DRAG_CONTAINER
+      ELEMENT_IDS.POCKET_DRAG_CONTAINER
     );
   },
 
@@ -809,8 +809,8 @@ const Utils = {
     return width === height
       ? "square"
       : width < height
-      ? "portrait"
-      : "landscape";
+        ? "portrait"
+        : "landscape";
   },
 
   shuffleArray(array: unknown[]) {
@@ -922,6 +922,11 @@ const Utils = {
 
     // alert("" + xl + " " + xh + " " + yl + " " + yh);
   },
+
+  getOppositeConnector(connector: ConnectorType) {
+    if (connector === -1) return 1 as ConnectorType;
+    if (connector === 1) return -1 as ConnectorType;
+  }
 };
 
 export default Utils;

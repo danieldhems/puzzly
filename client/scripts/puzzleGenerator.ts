@@ -1,6 +1,7 @@
 import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE } from "./constants";
 import jigsawPath from "./jigsawPath";
-import { ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleSize, SideNames } from "./types";
+import { ConnectorNames, ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleSize, SideNames } from "./types";
+import Utils from "./utils";
 
 // How big the connectors should be (how far they stick of from the piece's body), expressed as a percentage of the body of the piece
 const CONNECTOR_SIZE_PERC = 30;
@@ -203,6 +204,77 @@ const generateDataForPuzzlePieces = async () => {
     pieces,
   };
 };
+
+export const generatePieces = (puzzleConfig: PuzzleSize): Pick<JigsawPieceData, "type">[] => {
+  const pieces: Pick<JigsawPieceData, "type">[] = [];
+  let n = 0;
+
+  let pieceAbove = {} as Pick<JigsawPieceData, "type">;
+  let previousPiece = {} as Pick<JigsawPieceData, "type">;
+
+  let rightConnector: ConnectorType;
+  let bottomConnector: ConnectorType;
+  let leftConnector: ConnectorType;
+  let topConnector: ConnectorType;
+
+  const { totalNumberOfPieces, numberOfPiecesHorizontal } = puzzleConfig;
+  const connectorChoices = [-1, 1];
+
+  while (n < puzzleConfig.totalNumberOfPieces) {
+    const piece = {} as {
+      type: ConnectorType[];
+    };
+
+    if (n === 0) {
+      // First piece
+      topConnector = 0 as ConnectorType;
+      rightConnector = connectorChoices[Math.floor(Math.random())] as ConnectorType;
+      bottomConnector = connectorChoices[Math.floor(Math.random())] as ConnectorType;
+      leftConnector = 0 as ConnectorType;
+
+      piece.type = [topConnector, rightConnector, bottomConnector, leftConnector];
+    } else {
+      // All other pieces
+      pieceAbove = pieces[n - puzzleConfig.numberOfPiecesHorizontal];
+      previousPiece = pieces[n - 1];
+
+      if (pieceAbove) {
+        topConnector = Utils.getOppositeConnector(pieceAbove.type[2]) as ConnectorType;
+      } else {
+        topConnector = 0 as ConnectorType;
+      }
+
+      if (previousPiece.type[1] === 0) {
+        // Previous piece was a right edge so make current piece a left edge
+        leftConnector = 0 as ConnectorType;
+      } else {
+        leftConnector = Utils.getOppositeConnector(previousPiece.type[1]) as ConnectorType;
+      }
+
+      if ((n + 1) % puzzleConfig.numberOfPiecesHorizontal === 0) {
+        // Right edge pieces
+        rightConnector = 0 as ConnectorType;
+      } else {
+        rightConnector = connectorChoices[Math.floor(Math.random())] as ConnectorType
+      }
+
+      if (n >= totalNumberOfPieces - numberOfPiecesHorizontal) {
+        // Last row
+        bottomConnector = 0 as ConnectorType;
+      } else {
+        bottomConnector = connectorChoices[Math.floor(Math.random())] as ConnectorType;
+      }
+
+      piece.type = [topConnector, rightConnector, bottomConnector, leftConnector];
+    }
+
+    pieces.push(piece);
+
+    n++;
+  }
+
+  return pieces;
+}
 
 const createCanvas = (width: number, height: number) => {
   const el = document.createElement("canvas");

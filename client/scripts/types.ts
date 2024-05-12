@@ -83,6 +83,7 @@ export interface JigsawPieceData {
   imgH: number;
   pageX: number;
   pageY: number;
+  size: number;
   zIndex: number;
   type: ConnectorType[];
   spriteX: number;
