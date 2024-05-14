@@ -1,5 +1,6 @@
 import GroupMovable from "./GroupMovable";
 import { PocketMovable } from "./PocketMovable";
+import { SkeletonPiece } from "./puzzleGenerator";
 import { DebugOptions } from "./puzzlyCreator";
 import SingleMovable from "./SingleMovable";
 
@@ -159,10 +160,27 @@ export interface PuzzleSize {
   numberOfPiecesVertical: number;
   totalNumberOfPieces: number;
   pieceSize: number;
+  connectorSize: number;
+  /** 
+   * Width and height of the puzzle based on how much of the image it includes
+   * (This will almost never match the image's dimensions exactly unless the user
+   * uploads a perfectly square image, or one who's dimensions just-so-happen to match
+   * a given puzzle config)
+   */
   puzzleWidth: number;
   puzzleHeight: number;
+  /**
+   * True width and height of the uploaded image
+   */
   imageWidth: number;
   imageHeight: number;
+  /**
+   * The width and height of the impression generated and displayed when the
+   * user first uploads their image and configures their puzzle 
+   */
+  impressionWidth: number;
+  impressionHeight: number;
+  impressionPieceSize: number;
 }
 
 export enum PuzzleAxis {
@@ -195,7 +213,14 @@ export type PuzzleGenerator = {
     spriteEncodedString: string;
     pieces: JigsawPieceData[];
   }>;
-  drawJigsawShape: (piece: JigsawPieceData) => string;
+  getJigsawShapeSvgString: (
+    piece: SkeletonPiece,
+    pieceSize: number,
+    position?: {
+      x: number;
+      y: number
+    }
+  ) => string;
   puzzleSizes: PuzzleSize[];
 };
 

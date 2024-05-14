@@ -47,9 +47,16 @@ const puzzleGenerator = async function (
   return {
     ...Generator,
     generateDataForPuzzlePieces,
-    drawJigsawShape,
+    getJigsawShapeSvgString,
   };
 };
+
+export const getConnectorDimensions = (pieceSize: number) => {
+  return {
+    connectorDistanceFromCorner: (pieceSize / 100) * SHOULDER_SIZE_PERC,
+    connectorSize: (pieceSize / 100) * CONNECTOR_SIZE_PERC,
+  }
+}
 
 const loadImage = (path: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
@@ -143,7 +150,7 @@ const generateDataForPuzzlePieces = async () => {
       i
     );
 
-    const svgPath = drawJigsawShape(currentPiece);
+    const svgPath = getJigsawShapeSvgString(currentPiece, Generator.pieceSize);
     currentPiece.svgPath = svgPath;
 
     // console.log("generated piece", currentPiece);
@@ -205,8 +212,23 @@ const generateDataForPuzzlePieces = async () => {
   };
 };
 
-export const generatePieces = (puzzleConfig: PuzzleSize): Pick<JigsawPieceData, "type">[] => {
-  const pieces: Pick<JigsawPieceData, "type">[] = [];
+// Using 'pieceAbove' and 'pieceBehind' won't scale for wild piece shapes:
+// adjacentPieces[] would be more flexible...
+export type SkeletonPiece = Pick<
+  JigsawPieceData,
+  "type" | "numPiecesFromLeftEdge" | "numPiecesFromTopEdge"
+> & {
+  connectorSize: number;
+  pieceAbove: {
+    type: ConnectorType[],
+  };
+  pieceBehind: {
+    type: ConnectorType[],
+  }
+};
+
+export const generatePieces = (puzzleConfig: PuzzleSize): SkeletonPiece[] => {
+  const pieces: SkeletonPiece[] = [];
   let n = 0;
 
   let pieceAbove = {} as Pick<JigsawPieceData, "type">;
@@ -220,23 +242,43 @@ export const generatePieces = (puzzleConfig: PuzzleSize): Pick<JigsawPieceData, 
   const { totalNumberOfPieces, numberOfPiecesHorizontal } = puzzleConfig;
   const connectorChoices = [-1, 1];
 
+  const { connectorSize: connectorSizeValue } = getConnectorDimensions(puzzleConfig.pieceSize);
+
+  let currentIndexFromLeftEdge = 0;
+  let currentIndexFromTopEdge = 0;
+
   while (n < puzzleConfig.totalNumberOfPieces) {
-    const piece = {} as {
-      type: ConnectorType[];
-    };
+    const piece = {
+      connectorSize: connectorSizeValue,
+    } as SkeletonPiece;
 
     if (n === 0) {
       // First piece
       topConnector = 0 as ConnectorType;
-      rightConnector = connectorChoices[Math.floor(Math.random())] as ConnectorType;
-      bottomConnector = connectorChoices[Math.floor(Math.random())] as ConnectorType;
+      rightConnector = connectorChoices[Utils.getRandomInt(0, 1)] as ConnectorType;
+      bottomConnector = connectorChoices[Utils.getRandomInt(0, 1)] as ConnectorType;
       leftConnector = 0 as ConnectorType;
 
       piece.type = [topConnector, rightConnector, bottomConnector, leftConnector];
+      piece.numPiecesFromTopEdge = 0;
+      piece.numPiecesFromLeftEdge = 0;
     } else {
       // All other pieces
       pieceAbove = pieces[n - puzzleConfig.numberOfPiecesHorizontal];
       previousPiece = pieces[n - 1];
+
+      piece.pieceAbove = pieceAbove;
+      if (previousPiece.type[1] !== 0) {
+        piece.pieceBehind = previousPiece;
+
+        currentIndexFromLeftEdge++;
+      } else {
+        currentIndexFromLeftEdge = 0;
+        currentIndexFromTopEdge++;
+      }
+
+      piece.numPiecesFromLeftEdge = currentIndexFromLeftEdge;
+      piece.numPiecesFromTopEdge = currentIndexFromTopEdge;
 
       if (pieceAbove) {
         topConnector = Utils.getOppositeConnector(pieceAbove.type[2]) as ConnectorType;
@@ -255,14 +297,14 @@ export const generatePieces = (puzzleConfig: PuzzleSize): Pick<JigsawPieceData, 
         // Right edge pieces
         rightConnector = 0 as ConnectorType;
       } else {
-        rightConnector = connectorChoices[Math.floor(Math.random())] as ConnectorType
+        rightConnector = connectorChoices[Utils.getRandomInt(0, 1)] as ConnectorType
       }
 
       if (n >= totalNumberOfPieces - numberOfPiecesHorizontal) {
         // Last row
         bottomConnector = 0 as ConnectorType;
       } else {
-        bottomConnector = connectorChoices[Math.floor(Math.random())] as ConnectorType;
+        bottomConnector = connectorChoices[Utils.getRandomInt(0, 1)] as ConnectorType;
       }
 
       piece.type = [topConnector, rightConnector, bottomConnector, leftConnector];
@@ -292,7 +334,9 @@ const createPuzzlePiece = async (
   shadowCnv.width = data.imgW;
   shadowCnv.height = data.imgH;
 
-  const svgPath = drawJigsawShape(data);
+  // Using 'imgW' property for piece size assuming pieces are square-shaped
+  // meaning we width and height are equal.
+  const svgPath = getJigsawShapeSvgString(data, data.imgW);
 
   if (shdCtx) {
     shdCtx.fillStyle = Generator.shadowColor;
@@ -549,17 +593,26 @@ const assignInitialPieceData = (
   );
 };
 
-const drawJigsawShape = (piece: JigsawPieceData) => {
+const getJigsawShapeSvgString = (
+  piece: SkeletonPiece | JigsawPieceData,
+  pieceSize: number,
+  startingPosition?: {
+    x: number;
+    y: number;
+  }
+) => {
+
   let svgString = "";
 
-  let x = 0;
-  let y = 0;
+  let x = startingPosition?.x || 0;
+  let y = startingPosition?.y || 0;
 
+  const { connectorSize, connectorDistanceFromCorner } = getConnectorDimensions(pieceSize);
   const hasTopPlug = piece.type[0] === 1;
   const hasLeftPlug = piece.type[3] === 1;
 
-  let topBoundary = hasTopPlug ? y + Generator.connectorSize : y;
-  let leftBoundary = hasLeftPlug ? x + Generator.connectorSize : x;
+  let topBoundary = hasTopPlug ? y + connectorSize : y;
+  let leftBoundary = hasLeftPlug ? x + connectorSize : x;
 
   let topConnector = null,
     rightConnector = null,
@@ -567,8 +620,8 @@ const drawJigsawShape = (piece: JigsawPieceData) => {
     leftConnector = null;
 
   const jigsawShapes = new jigsawPath(
-    Generator.pieceSize,
-    Generator.connectorSize
+    pieceSize,
+    connectorSize
   );
 
   const getRotatedConnector = jigsawShapes.getRotatedConnector;
@@ -583,11 +636,11 @@ const drawJigsawShape = (piece: JigsawPieceData) => {
   // console.log(Generator.connectorDistanceFromCorner);
 
   if (topConnector) {
-    svgString += `h ${Generator.connectorDistanceFromCorner} `;
+    svgString += `h ${connectorDistanceFromCorner} `;
     svgString += `c ${topConnector.cp1.x} ${topConnector.cp1.y}, ${topConnector.cp2.x} ${topConnector.cp2.y}, ${topConnector.dest.x} ${topConnector.dest.y} `;
-    svgString += `h ${Generator.connectorDistanceFromCorner} `;
+    svgString += `h ${connectorDistanceFromCorner} `;
   } else {
-    svgString += `h ${Generator.pieceSize} `;
+    svgString += `h ${pieceSize} `;
   }
 
   if (piece.type[1] === 1) {
@@ -597,11 +650,11 @@ const drawJigsawShape = (piece: JigsawPieceData) => {
   }
 
   if (rightConnector !== null) {
-    svgString += `v ${Generator.connectorDistanceFromCorner} `;
+    svgString += `v ${connectorDistanceFromCorner} `;
     svgString += `c ${rightConnector.cp1.x} ${rightConnector.cp1.y}, ${rightConnector.cp2.x} ${rightConnector.cp2.y}, ${rightConnector.dest.x} ${rightConnector.dest.y} `;
-    svgString += `v ${Generator.connectorDistanceFromCorner} `;
+    svgString += `v ${connectorDistanceFromCorner} `;
   } else {
-    svgString += `v ${Generator.pieceSize} `;
+    svgString += `v ${pieceSize} `;
   }
 
   if (piece.type[2] === 1) {
@@ -611,11 +664,11 @@ const drawJigsawShape = (piece: JigsawPieceData) => {
   }
 
   if (bottomConnector) {
-    svgString += `h -${Generator.connectorDistanceFromCorner} `;
+    svgString += `h -${connectorDistanceFromCorner} `;
     svgString += `c ${bottomConnector.cp1.x} ${bottomConnector.cp1.y}, ${bottomConnector.cp2.x} ${bottomConnector.cp2.y}, ${bottomConnector.dest.x} ${bottomConnector.dest.y} `;
-    svgString += `h -${Generator.connectorDistanceFromCorner} `;
+    svgString += `h -${connectorDistanceFromCorner} `;
   } else {
-    svgString += `h -${Generator.pieceSize} `;
+    svgString += `h -${pieceSize} `;
   }
 
   if (piece.type[3] === 1) {
@@ -625,7 +678,7 @@ const drawJigsawShape = (piece: JigsawPieceData) => {
   }
 
   if (leftConnector !== null) {
-    svgString += `v -${Generator.connectorDistanceFromCorner} `;
+    svgString += `v -${connectorDistanceFromCorner} `;
     svgString += `c ${leftConnector.cp1.x} ${leftConnector.cp1.y}, ${leftConnector.cp2.x} ${leftConnector.cp2.y}, ${leftConnector.dest.x} ${leftConnector.dest.y} `;
   }
 
@@ -633,6 +686,57 @@ const drawJigsawShape = (piece: JigsawPieceData) => {
 
   return svgString;
 };
+
+export const getPiecePositionBasedOnAdjacentPieces = (piece: SkeletonPiece, currentPosition: { x: number, y: number }, connectorSize: number): { x: number; y: number } => {
+  return {
+    x: piece.pieceBehind?.type[1] === -1 ? currentPosition.x - connectorSize : currentPosition.x,
+    y: piece.pieceAbove?.type[2] === -1 ? currentPosition.y - connectorSize : currentPosition.y,
+  }
+}
+
+export const getPuzzleImpression = (pieces: SkeletonPiece[], puzzleConfig: PuzzleSize): void => {
+  const canvas = createCanvas(puzzleConfig.puzzleWidth / 2, puzzleConfig.puzzleHeight / 2);
+  const context2d = canvas.getContext("2d");
+
+  canvas.width = 1300;
+  canvas.height = 1300;
+
+  const piecePosition = {
+    x: 0,
+    y: 0,
+  }
+
+  document.body.appendChild(canvas);
+
+  canvas.style.position = "absolute";
+  canvas.style.top = "30px";
+  canvas.style.left = "100px";
+  canvas.style.zIndex = 10 + "";
+
+  if (context2d) {
+    // context2d.strokeStyle = "#000";
+
+    for (let n = 0, l = pieces.length; n < l; n++) {
+      const currentPiece = pieces[n];
+      const shape = getJigsawShapeSvgString(
+        currentPiece,
+        puzzleConfig.pieceSize,
+        getPiecePositionBasedOnAdjacentPieces(currentPiece, piecePosition, puzzleConfig.connectorSize),
+      );
+
+      const path = new Path2D(shape);
+      context2d.stroke(path);
+
+      if (currentPiece.numPiecesFromLeftEdge === puzzleConfig.numberOfPiecesHorizontal - 1) {
+        piecePosition.y += puzzleConfig.pieceSize;
+        piecePosition.x = 0;
+      } else {
+        piecePosition.x += puzzleConfig.pieceSize;
+      }
+    }
+  }
+
+}
 
 // exports.drawJigsawShape = drawJigsawShape;
 // exports.default = PuzzleGenerator;

@@ -1,6 +1,6 @@
 import { normalize } from "path/win32";
 import { MINIMUM_NUMBER_OF_PIECES, MINIMUM_NUMBER_OF_PIECES_PER_SIDE, PIECE_SIZE, SquareShapedPuzzleDefinitions } from "./constants";
-import puzzleGenerator, { generatePieces } from "./puzzleGenerator";
+import puzzleGenerator, { generatePieces, getConnectorDimensions, getPuzzleImpression } from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
 import Puzzly from "./Puzzly";
 import { PuzzleAxis, PuzzleCreationResponse, PuzzleCreatorOptions, PuzzleSize } from "./types";
@@ -206,7 +206,7 @@ export default class PuzzlyCreator {
     imageWidth: number,
     imageHeight: number,
     minimumPieceSize: number,
-    minimumNumberOfPieces: number
+    minimumNumberOfPieces: number,
   ) {
 
     const shortSide: PuzzleAxis | null =
@@ -214,7 +214,7 @@ export default class PuzzlyCreator {
         : imageHeight < imageWidth ? PuzzleAxis.Vertical
           : null;
 
-    let n: number = MINIMUM_NUMBER_OF_PIECES_PER_SIDE;
+    let n: number = minimumNumberOfPieces;
     let divisionResult: number;
 
     const puzzleSizes: PuzzleSize[] = [];
@@ -231,11 +231,14 @@ export default class PuzzlyCreator {
             : imageHeight / n
         );
 
+        const { connectorSize } = getConnectorDimensions(divisionResult);
+
         const puzzleSize = {} as PuzzleSize;
 
         puzzleSize.imageWidth = imageWidth;
         puzzleSize.imageHeight = imageHeight;
         puzzleSize.pieceSize = divisionResult;
+        puzzleSize.connectorSize = connectorSize;
 
         if (shortSide === PuzzleAxis.Horizontal) {
           // Portrait puzzle
@@ -268,7 +271,6 @@ export default class PuzzlyCreator {
         }
 
         puzzleSize.totalNumberOfPieces = n * numberOfPiecesOnLongSide;
-
         puzzleSizes.push(puzzleSize);
 
         n = n + 1;
@@ -376,7 +378,7 @@ export default class PuzzlyCreator {
       width,
       height,
       PIECE_SIZE,
-      MINIMUM_NUMBER_OF_PIECES
+      MINIMUM_NUMBER_OF_PIECES,
     ) as PuzzleSize[];
 
     // console.log("puzzle sizes", this.puzzleSizes)
@@ -386,7 +388,8 @@ export default class PuzzlyCreator {
     this.updatePuzzleSizeField(this.puzzleSizes);
 
     const pieces = generatePieces(this.puzzleSizes[4]);
-    console.log(pieces)
+
+    getPuzzleImpression(pieces, this.puzzleSizes[4])
 
     this.puzzleSizeInputField.addEventListener("input", (event: InputEvent) => {
       const eventTarget = event.target as HTMLInputElement;
@@ -397,7 +400,6 @@ export default class PuzzlyCreator {
       if (this.puzzleSizes) {
         this.puzzleSizeInputLabel.textContent = highlightedPuzzleSize.totalNumberOfPieces + "";
         this.PuzzleImpressionOverlay.update(highlightedPuzzleSize);
-
       }
 
     })
@@ -410,7 +412,7 @@ export default class PuzzlyCreator {
 
     this.PuzzleImpressionOverlay = new PuzzleImpressionOverlay(puzzleImpressionOverlayConfig);
     this.imagePreviewEl.classList.remove("js-hidden");
-    console.log("PuzzleImpressionOverlay", this.PuzzleImpressionOverlay)
+    // console.log("PuzzleImpressionOverlay", this.PuzzleImpressionOverlay)
   }
 
   updatePuzzleSizeField(puzzleSizes: PuzzleSize[]) {
