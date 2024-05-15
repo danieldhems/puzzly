@@ -26,6 +26,9 @@ export default class PuzzleImpressionOverlay {
             id: "puzzle-impression-overlay",
             restrictionBoundingBox: layout
         });
+
+        const svg = document.getElementsByTagName("svg")[0];
+        this.draggable.element.appendChild(svg)
     }
 
     getLayout(puzzleSize: PuzzleSize) {

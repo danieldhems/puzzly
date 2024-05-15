@@ -695,44 +695,75 @@ export const getPiecePositionBasedOnAdjacentPieces = (piece: SkeletonPiece, curr
 }
 
 export const getPuzzleImpression = (pieces: SkeletonPiece[], puzzleConfig: PuzzleSize): void => {
-  const canvas = createCanvas(puzzleConfig.puzzleWidth / 2, puzzleConfig.puzzleHeight / 2);
-  const context2d = canvas.getContext("2d");
+  // Why use canvas for this?
+  // Can't we just create an SVG element and draw with that?
+  // const canvas = createCanvas(puzzleConfig.puzzleWidth / 2, puzzleConfig.puzzleHeight / 2);
+  // const context2d = canvas.getContext("2d");
 
-  canvas.width = 1300;
-  canvas.height = 1300;
+  // canvas.width = 1300;
+  // canvas.height = 1300;
+
+  const svgns = "http://www.w3.org/2000/svg";
+  const element = document.createElementNS(svgns, "svg");
+  element.setAttribute("xmlns", svgns);
+  // element.setAttributeNS(svgns, "width", puzzleConfig.puzzleWidth + "");
+  // element.setAttributeNS(svgns, "height", puzzleConfig.puzzleHeight + "");
+  element.setAttributeNS(svgns, "viewBox", "0 0 " + puzzleConfig.puzzleWidth + " " + puzzleConfig.puzzleHeight)
+
+  document.body.appendChild(element);
 
   const piecePosition = {
     x: 0,
     y: 0,
   }
 
-  document.body.appendChild(canvas);
+  const groupElement = document.createElementNS(svgns, "g");
+  groupElement.setAttributeNS(svgns, "id", "puzzle-" + puzzleConfig.totalNumberOfPieces);
+  element.appendChild(groupElement)
+  element.style.width = "100%";
+  element.style.height = "100%";
 
-  canvas.style.position = "absolute";
-  canvas.style.top = "30px";
-  canvas.style.left = "100px";
-  canvas.style.zIndex = 10 + "";
 
-  if (context2d) {
+  if (element) {
     // context2d.strokeStyle = "#000";
 
     for (let n = 0, l = pieces.length; n < l; n++) {
+
       const currentPiece = pieces[n];
+
+      // variable for the namespace 
+      const pathElement = document.createElementNS(svgns, "path");
+      pathElement.setAttributeNS(svgns, "id", "piece-" + n);
+      groupElement.appendChild(pathElement);
+
+      // pathElement.setAttributeNS(svgns, "stroke", "black");
+      // pathElement.setAttributeNS(svgns, "stroke-width", "1px");
+      // pathElement.setAttributeNS(svgns, "opacity", "1")
+      pathElement.style.stroke = "#000";
+      pathElement.style.strokeWidth = "1"
+      pathElement.style.fill = "none";
+
       const shape = getJigsawShapeSvgString(
         currentPiece,
         puzzleConfig.pieceSize,
-        getPiecePositionBasedOnAdjacentPieces(currentPiece, piecePosition, puzzleConfig.connectorSize),
+        getPiecePositionBasedOnAdjacentPieces(
+          currentPiece,
+          piecePosition,
+          puzzleConfig.connectorSize
+        ),
       );
-
-      const path = new Path2D(shape);
-      context2d.stroke(path);
-
+      pathElement.setAttribute("d", shape);
+      // element.appendChild(pathElement)
       if (currentPiece.numPiecesFromLeftEdge === puzzleConfig.numberOfPiecesHorizontal - 1) {
         piecePosition.y += puzzleConfig.pieceSize;
         piecePosition.x = 0;
       } else {
         piecePosition.x += puzzleConfig.pieceSize;
       }
+
+      // const path = new Path2D(shape);
+      // context2d.stroke(path);
+
     }
   }
 
