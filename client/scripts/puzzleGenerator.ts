@@ -329,6 +329,15 @@ const createPuzzlePiece = async (
   data: JigsawPieceData,
   ctxForSprite: CanvasRenderingContext2D
 ) => {
+  /**
+   * TODO: What if we don't need to use the canvas to create pieces?
+   * 
+   * Can we instead create an SVG element and set the puzzle image as its background,
+   * then use clipPath with viewBox to produce the shape and position the image to get the
+   * part we need for the piece?
+   * 
+   * Could this make the pieces look better AND speed up puzzle generation?
+   */
   const shadowCnv = createCanvas(data.imgW, data.imgH);
   const shdCtx = shadowCnv.getContext("2d");
   shadowCnv.width = data.imgW;
