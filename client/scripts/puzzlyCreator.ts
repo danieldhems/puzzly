@@ -1,10 +1,7 @@
-import { normalize } from "path/win32";
-import { MINIMUM_NUMBER_OF_PIECES, MINIMUM_NUMBER_OF_PIECES_PER_SIDE, PIECE_SIZE, SquareShapedPuzzleDefinitions } from "./constants";
-import puzzleGenerator, { generatePieces, getConnectorDimensions, getPuzzleImpression } from "./puzzleGenerator";
+import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SquareShapedPuzzleDefinitions } from "./constants";
+import { getConnectorDimensions } from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
-import Puzzly from "./Puzzly";
-import { PuzzleAxis, PuzzleCreationResponse, PuzzleCreatorOptions, PuzzleSize } from "./types";
-import Utils from "./utils";
+import { PuzzleAxis, PuzzleSize } from "./types";
 
 export interface SourceImage {
   dimensions: {
@@ -381,15 +378,8 @@ export default class PuzzlyCreator {
       MINIMUM_NUMBER_OF_PIECES,
     ) as PuzzleSize[];
 
-    // console.log("puzzle sizes", this.puzzleSizes)
-    console.log("puzzle config", this.puzzleSizes[4]);
-
     this.puzzleSizeInputField.disabled = false;
     this.updatePuzzleSizeField(this.puzzleSizes);
-
-    const pieces = generatePieces(this.puzzleSizes[4]);
-
-    getPuzzleImpression(pieces, this.puzzleSizes[4])
 
     this.puzzleSizeInputField.addEventListener("input", (event: InputEvent) => {
       const eventTarget = event.target as HTMLInputElement;
@@ -401,12 +391,12 @@ export default class PuzzlyCreator {
         this.puzzleSizeInputLabel.textContent = highlightedPuzzleSize.totalNumberOfPieces + "";
         this.PuzzleImpressionOverlay.update(highlightedPuzzleSize);
       }
-
     })
 
     const puzzleImpressionOverlayConfig = {
       targetElement: this.imageUploadPreviewEl,
-      selectedPuzzleSize: this.selectedPuzzleSize,
+      puzzleConfigs: this.puzzleSizes,
+      selectedPuzzleConfig: this.selectedPuzzleSize,
       isSquareOptionSelected: false
     };
 

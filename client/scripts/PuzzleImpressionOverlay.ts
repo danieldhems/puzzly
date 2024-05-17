@@ -1,34 +1,37 @@
 import RestrictedDraggable from "./RestrictedDraggable";
+import { SVG_NAMESPACE } from "./constants";
+import { getPuzzleImpressions } from "./puzzleGenerator";
 import { MovementAxis, PuzzleShapes, PuzzleSize } from "./types";
 
 export default class PuzzleImpressionOverlay {
+    svgElement: SVGSVGElement;
     draggable: RestrictedDraggable;
     targetElement: HTMLImageElement | HTMLDivElement;
     container: HTMLElement;
-    selectedPuzzleSize: PuzzleSize;
+    puzzleConfigs: PuzzleSize[];
+    selectedPuzzleConfig: PuzzleSize;
+    pieceSvgGroups: HTMLOrSVGElement[];
+    impressionsContainer: HTMLDivElement;
 
     constructor({
         targetElement,
-        selectedPuzzleSize,
+        selectedPuzzleConfig,
+        puzzleConfigs,
     }: {
         targetElement: HTMLImageElement | HTMLDivElement;
-        selectedPuzzleSize: PuzzleSize
+        selectedPuzzleConfig: PuzzleSize;
+        puzzleConfigs: PuzzleSize[];
     }) {
+        console.log("selected puzzle config", selectedPuzzleConfig)
         this.targetElement = targetElement;
-        this.selectedPuzzleSize = selectedPuzzleSize;
+        this.selectedPuzzleConfig = selectedPuzzleConfig;
+        this.puzzleConfigs = puzzleConfigs;
         this.container = this.targetElement.parentElement as HTMLElement;
 
-        const layout = this.getLayout(this.selectedPuzzleSize);
-
-        this.draggable = new RestrictedDraggable({
-            containerElement: this.container,
-            layout,
-            id: "puzzle-impression-overlay",
-            restrictionBoundingBox: layout
-        });
-
-        const svg = document.getElementsByTagName("svg")[0];
-        this.draggable.element.appendChild(svg)
+        this.impressionsContainer = getPuzzleImpressions(this.puzzleConfigs);
+        console.log(this.impressionsContainer);
+        this.targetElement.appendChild(this.impressionsContainer);
+        this.update(this.selectedPuzzleConfig);
     }
 
     getLayout(puzzleSize: PuzzleSize) {
@@ -64,11 +67,32 @@ export default class PuzzleImpressionOverlay {
         return this.targetElement.offsetWidth / length;
     }
 
-    update(puzzleSize: PuzzleSize) {
-        this.selectedPuzzleSize = puzzleSize;
-        const layout = this.getLayout(this.selectedPuzzleSize);
+    update(puzzleConfig: PuzzleSize) {
+        const layout = this.getLayout(puzzleConfig);
+
         if (this.draggable) {
             this.draggable.update(layout);
+        } else {
+            this.draggable = new RestrictedDraggable({
+                containerElement: this.container,
+                layout,
+                id: "puzzle-impression-overlay",
+                restrictionBoundingBox: layout
+            });
+            this.draggable.element.appendChild(this.impressionsContainer)
         }
+
+        this.setImpression("puzzle-" + puzzleConfig.totalNumberOfPieces);
+    }
+
+    setImpression(id: string) {
+        const impressions = this.impressionsContainer.getElementsByTagName("div");
+        Array.from(impressions).forEach((impression) => {
+            if (impression.id === id) {
+                impression.classList.remove("js-hidden");
+            } else {
+                impression.classList.add("js-hidden");
+            }
+        })
     }
 }

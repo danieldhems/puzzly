@@ -1,3 +1,5 @@
+export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+
 export const SquareShapedPuzzleDefinitions = [
   { numPieces: 9, piecesPerSide: 3 },
   { numPieces: 16, piecesPerSide: 4 },

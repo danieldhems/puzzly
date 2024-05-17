@@ -503,6 +503,16 @@ label, input[type=checkbox] {
     pointer-events: none;
 }
 
+svg {
+    position: relative;
+}
+
+svg g {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
 @media only screen and (min-width: 800px) and (min-height: 800px){
     body {
         font-size: 1em;

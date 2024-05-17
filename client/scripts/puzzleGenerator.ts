@@ -1,4 +1,4 @@
-import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE } from "./constants";
+import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SVG_NAMESPACE } from "./constants";
 import jigsawPath from "./jigsawPath";
 import { ConnectorNames, ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleSize, SideNames } from "./types";
 import Utils from "./utils";
@@ -703,79 +703,65 @@ export const getPiecePositionBasedOnAdjacentPieces = (piece: SkeletonPiece, curr
   }
 }
 
-export const getPuzzleImpression = (pieces: SkeletonPiece[], puzzleConfig: PuzzleSize): void => {
-  // Why use canvas for this?
-  // Can't we just create an SVG element and draw with that?
-  // const canvas = createCanvas(puzzleConfig.puzzleWidth / 2, puzzleConfig.puzzleHeight / 2);
-  // const context2d = canvas.getContext("2d");
-
-  // canvas.width = 1300;
-  // canvas.height = 1300;
-
-  const svgns = "http://www.w3.org/2000/svg";
-  const element = document.createElementNS(svgns, "svg");
-  element.setAttribute("xmlns", svgns);
-  // element.setAttributeNS(svgns, "width", puzzleConfig.puzzleWidth + "");
-  // element.setAttributeNS(svgns, "height", puzzleConfig.puzzleHeight + "");
-  element.setAttributeNS(svgns, "viewBox", "0 0 " + puzzleConfig.puzzleWidth + " " + puzzleConfig.puzzleHeight)
-
-  document.body.appendChild(element);
-
-  const piecePosition = {
-    x: 0,
-    y: 0,
-  }
-
-  const groupElement = document.createElementNS(svgns, "g");
-  groupElement.setAttributeNS(svgns, "id", "puzzle-" + puzzleConfig.totalNumberOfPieces);
-  element.appendChild(groupElement)
-  element.style.width = "100%";
-  element.style.height = "100%";
+export const getPuzzleImpressions = (puzzleConfigs: PuzzleSize[]): HTMLDivElement => {
+  const puzzleGroups: HTMLOrSVGElement[] = [];
 
 
-  if (element) {
-    // context2d.strokeStyle = "#000";
+  const container = document.createElement("div");
+
+  for (let nConf = 0, lConf = puzzleConfigs.length; nConf < lConf; nConf++) {
+    const piecePosition = {
+      x: 0,
+      y: 0,
+    }
+    const currentConfig = puzzleConfigs[nConf];
+    const pieces = generatePieces(currentConfig);
+
+    const element = document.createElement("div");
+    element.id = "puzzle-" + currentConfig.totalNumberOfPieces;
+    // element.classList.add("js-hidden");
+
+    const svgElement = document.createElementNS(SVG_NAMESPACE, "svg");
+    svgElement.setAttribute("xmlns", SVG_NAMESPACE);
+    svgElement.setAttribute("fill", "none");
+    svgElement.setAttribute("stroke", "#000")
+    svgElement.setAttribute("viewBox", "0 0 " + currentConfig.puzzleWidth + " " + currentConfig.puzzleHeight);
+
+    element.appendChild(svgElement)
+    container.appendChild(element)
+
+    // const groupElement = document.createElementNS(SVG_NAMESPACE, "symbol");
+    // groupElement.setAttribute("width", currentConfig.puzzleWidth + "");
+    // groupElement.setAttribute("height", currentConfig.puzzleHeight + "");
 
     for (let n = 0, l = pieces.length; n < l; n++) {
-
       const currentPiece = pieces[n];
 
-      // variable for the namespace 
-      const pathElement = document.createElementNS(svgns, "path");
-      pathElement.setAttributeNS(svgns, "id", "piece-" + n);
-      groupElement.appendChild(pathElement);
-
-      // pathElement.setAttributeNS(svgns, "stroke", "black");
-      // pathElement.setAttributeNS(svgns, "stroke-width", "1px");
-      // pathElement.setAttributeNS(svgns, "opacity", "1")
-      pathElement.style.stroke = "#000";
-      pathElement.style.strokeWidth = "1"
-      pathElement.style.fill = "none";
+      const pathElement = document.createElementNS(SVG_NAMESPACE, "path");
+      pathElement.setAttribute("id", "piece-" + n);
+      svgElement.appendChild(pathElement);
 
       const shape = getJigsawShapeSvgString(
         currentPiece,
-        puzzleConfig.pieceSize,
+        currentConfig.pieceSize,
         getPiecePositionBasedOnAdjacentPieces(
           currentPiece,
           piecePosition,
-          puzzleConfig.connectorSize
+          currentConfig.connectorSize
         ),
       );
       pathElement.setAttribute("d", shape);
-      // element.appendChild(pathElement)
-      if (currentPiece.numPiecesFromLeftEdge === puzzleConfig.numberOfPiecesHorizontal - 1) {
-        piecePosition.y += puzzleConfig.pieceSize;
+
+      if (currentPiece.numPiecesFromLeftEdge === currentConfig.numberOfPiecesHorizontal - 1) {
+        piecePosition.y += currentConfig.pieceSize;
         piecePosition.x = 0;
       } else {
-        piecePosition.x += puzzleConfig.pieceSize;
+        piecePosition.x += currentConfig.pieceSize;
       }
-
-      // const path = new Path2D(shape);
-      // context2d.stroke(path);
-
     }
   }
 
+  return container;
 }
 
 // exports.drawJigsawShape = drawJigsawShape;
