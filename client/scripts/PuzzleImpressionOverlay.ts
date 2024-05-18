@@ -1,17 +1,21 @@
 import RestrictedDraggable from "./RestrictedDraggable";
-import { SVG_NAMESPACE } from "./constants";
 import { getPuzzleImpressions } from "./puzzleGenerator";
-import { MovementAxis, PuzzleShapes, PuzzleSize } from "./types";
+import { MovementAxis, PuzzleConfig } from "./types";
 
 export default class PuzzleImpressionOverlay {
     svgElement: SVGSVGElement;
     draggable: RestrictedDraggable;
     targetElement: HTMLImageElement | HTMLDivElement;
     container: HTMLElement;
-    puzzleConfigs: PuzzleSize[];
-    selectedPuzzleConfig: PuzzleSize;
-    pieceSvgGroups: HTMLOrSVGElement[];
-    impressionsContainer: HTMLDivElement;
+    puzzleConfigs: {
+        rectangularPuzzleConfigs: PuzzleConfig[];
+        squarePuzzleConfigs: PuzzleConfig[];
+    };
+    selectedPuzzleConfig: PuzzleConfig;
+    rectangularImpressions: HTMLDivElement;
+    squareImpressions: HTMLDivElement;
+    // TODO enum
+    activeImpressionSetName: string;
 
     constructor({
         targetElement,
@@ -19,22 +23,35 @@ export default class PuzzleImpressionOverlay {
         puzzleConfigs,
     }: {
         targetElement: HTMLImageElement | HTMLDivElement;
-        selectedPuzzleConfig: PuzzleSize;
-        puzzleConfigs: PuzzleSize[];
+        selectedPuzzleConfig: PuzzleConfig;
+        puzzleConfigs: {
+            rectangularPuzzleConfigs: PuzzleConfig[];
+            squarePuzzleConfigs: PuzzleConfig[];
+        };
     }) {
+        console.log("targetElement", targetElement)
+        console.log("puzzle configs", puzzleConfigs)
         console.log("selected puzzle config", selectedPuzzleConfig)
         this.targetElement = targetElement;
         this.selectedPuzzleConfig = selectedPuzzleConfig;
         this.puzzleConfigs = puzzleConfigs;
         this.container = this.targetElement.parentElement as HTMLElement;
 
-        this.impressionsContainer = getPuzzleImpressions(this.puzzleConfigs);
-        console.log(this.impressionsContainer);
-        this.targetElement.appendChild(this.impressionsContainer);
+        this.rectangularImpressions = getPuzzleImpressions(
+            this.puzzleConfigs.rectangularPuzzleConfigs
+        );
+        this.squareImpressions = getPuzzleImpressions(
+            this.puzzleConfigs.squarePuzzleConfigs
+        );
+
+        // console.log(this.impressionsContainer);
+
         this.update(this.selectedPuzzleConfig);
+        this.setActiveImpressionGroup("rectangular");
+        this.setImpression("puzzle-" + this.selectedPuzzleConfig.totalNumberOfPieces);
     }
 
-    getLayout(puzzleSize: PuzzleSize) {
+    getLayout(puzzleSize: PuzzleConfig) {
         let width, height, allowedMovementAxis;
 
         // Calculate top and left position of target element, assuming it is centered
@@ -67,11 +84,12 @@ export default class PuzzleImpressionOverlay {
         return this.targetElement.offsetWidth / length;
     }
 
-    update(puzzleConfig: PuzzleSize) {
+    update(puzzleConfig: PuzzleConfig) {
         const layout = this.getLayout(puzzleConfig);
 
         if (this.draggable) {
             this.draggable.update(layout);
+            this.setImpression(`puzzle-${puzzleConfig.totalNumberOfPieces}`)
         } else {
             this.draggable = new RestrictedDraggable({
                 containerElement: this.container,
@@ -79,20 +97,39 @@ export default class PuzzleImpressionOverlay {
                 id: "puzzle-impression-overlay",
                 restrictionBoundingBox: layout
             });
-            this.draggable.element.appendChild(this.impressionsContainer)
+            this.draggable.element.appendChild(this.rectangularImpressions);
+            this.draggable.element.appendChild(this.squareImpressions);
         }
 
-        this.setImpression("puzzle-" + puzzleConfig.totalNumberOfPieces);
+    }
+
+    hideAllSets() {
+        // TODO: Need cleaner solution for this
+        this.rectangularImpressions.classList.add("js-hidden");
+        this.squareImpressions.classList.add("js-hidden");
+    }
+
+    setActiveImpressionGroup(name: string) {
+        this.activeImpressionSetName = name;
+        this.hideAllSets();
+        this.container.querySelector(`#${name}-impressions`)?.classList.remove("js-hidden");
     }
 
     setImpression(id: string) {
-        const impressions = this.impressionsContainer.getElementsByTagName("div");
-        Array.from(impressions).forEach((impression) => {
-            if (impression.id === id) {
-                impression.classList.remove("js-hidden");
-            } else {
-                impression.classList.add("js-hidden");
-            }
-        })
+        const impressions = this.container.querySelector(`#${this.activeImpressionSetName}-impressions`)?.getElementsByTagName("div");
+
+        console.log(this.activeImpressionSetName)
+        console.log("setImpression", impressions)
+        console.log(id)
+
+        if (impressions) {
+            Array.from(impressions).forEach((impression) => {
+                if (impression.id === id) {
+                    impression.classList.remove("js-hidden");
+                } else {
+                    impression.classList.add("js-hidden");
+                }
+            })
+        }
     }
 }

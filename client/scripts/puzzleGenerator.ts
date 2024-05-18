@@ -1,6 +1,6 @@
 import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SVG_NAMESPACE } from "./constants";
 import jigsawPath from "./jigsawPath";
-import { ConnectorNames, ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleSize, SideNames } from "./types";
+import { ConnectorNames, ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleConfig, SideNames } from "./types";
 import Utils from "./utils";
 
 // How big the connectors should be (how far they stick of from the piece's body), expressed as a percentage of the body of the piece
@@ -227,7 +227,7 @@ export type SkeletonPiece = Pick<
   }
 };
 
-export const generatePieces = (puzzleConfig: PuzzleSize): SkeletonPiece[] => {
+export const generatePieces = (puzzleConfig: PuzzleConfig): SkeletonPiece[] => {
   const pieces: SkeletonPiece[] = [];
   let n = 0;
 
@@ -703,11 +703,15 @@ export const getPiecePositionBasedOnAdjacentPieces = (piece: SkeletonPiece, curr
   }
 }
 
-export const getPuzzleImpressions = (puzzleConfigs: PuzzleSize[]): HTMLDivElement => {
-  const puzzleGroups: HTMLOrSVGElement[] = [];
-
-
+export const getPuzzleImpressions = (puzzleConfigs: PuzzleConfig[]): HTMLDivElement => {
   const container = document.createElement("div");
+  // Assuming config set consists of either all rectangular or all square puzzles
+  const sampleConfig = puzzleConfigs[0];
+  // TODO: Could simplify this by just adding a property to each config that explicitly names it as either rectangular or square
+  // TODO: Impression id/label should be an enum
+  const configName = sampleConfig.numberOfPiecesHorizontal !== sampleConfig.numberOfPiecesVertical ? "rectangular-impressions" : "square-impressions";
+
+  container.id = configName;
 
   for (let nConf = 0, lConf = puzzleConfigs.length; nConf < lConf; nConf++) {
     const piecePosition = {

@@ -155,7 +155,7 @@ export interface PuzzleCreatorOptions {
   isIntegration: boolean;
 }
 
-export interface PuzzleSize {
+export interface PuzzleConfig {
   numberOfPiecesHorizontal: number;
   numberOfPiecesVertical: number;
   totalNumberOfPieces: number;
@@ -174,13 +174,6 @@ export interface PuzzleSize {
    */
   imageWidth: number;
   imageHeight: number;
-  /**
-   * The width and height of the impression generated and displayed when the
-   * user first uploads their image and configures their puzzle 
-   */
-  impressionWidth: number;
-  impressionHeight: number;
-  impressionPieceSize: number;
 }
 
 export enum PuzzleAxis {
@@ -221,7 +214,7 @@ export type PuzzleGenerator = {
       y: number
     }
   ) => string;
-  puzzleSizes: PuzzleSize[];
+  puzzleSizes: PuzzleConfig[];
 };
 
 export type PuzzleCreationResponse = PuzzleCreatorOptions & {
