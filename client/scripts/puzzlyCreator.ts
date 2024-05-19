@@ -1,7 +1,7 @@
 import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SquareShapedPuzzleDefinitions } from "./constants";
 import { getConnectorDimensions } from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
-import { PuzzleAxis, PuzzleConfig } from "./types";
+import { PuzzleAxis, PuzzleConfig, PuzzleShapes } from "./types";
 
 export interface SourceImage {
   dimensions: {
@@ -30,7 +30,9 @@ export default class PuzzlyCreator {
     rectangularPuzzleConfigs: PuzzleConfig[];
     squarePuzzleConfigs: PuzzleConfig[];
   };
+  activePuzzleConfigs: PuzzleConfig[];
   selectedPuzzleConfig: PuzzleConfig;
+  selectedPuzzleShape: PuzzleShapes;
   /**
    * Puzzle target area
    * 
@@ -58,7 +60,10 @@ export default class PuzzlyCreator {
   imageUploadField: HTMLInputElement;
   newPuzzleForm: HTMLDivElement;
   startBtn: HTMLInputElement;
+  puzzleOptionsContainer: HTMLDivElement;
   puzzleSizeField: HTMLInputElement;
+  puzzleShapeInputField: HTMLInputElement;
+  puzzleShapeFieldContainer: HTMLDivElement;
   fullSizePath: string;
   imageUploadPreviewEl: HTMLImageElement & {
     naturalWidth: number;
@@ -76,12 +81,21 @@ export default class PuzzlyCreator {
       this.boardHeight = this.boardWidth;
     }
 
+    this.puzzleOptionsContainer = document.querySelector(
+      "#puzzle-setup--options"
+    ) as this["puzzleOptionsContainer"];
+
     this.puzzleSizeInputField = document.querySelector(
       "#puzzle-size-input-field"
     ) as this["puzzleSizeInputField"];
     this.puzzleSizeInputLabel = document.querySelector(
       "#puzzle-size-input-label"
     ) as this["puzzleSizeInputLabel"];
+
+    this.puzzleShapeFieldContainer = document.querySelector(
+      "#puzzle-setup--puzzle-shape .field-container"
+    ) as this["puzzleShapeFieldContainer"];
+
     this.chkHighlights = document.querySelector(
       "#chk-highlights"
     ) as this["chkHighlights"];
@@ -127,10 +141,10 @@ export default class PuzzlyCreator {
       highlightConnectingPieces: false,
     };
 
-    this.addEventListeners();
     this.showForm();
+    this.addGeneralEventListeners();
 
-    this.puzzleSizeInputField.value = 1 + "";
+    this.selectedPuzzleShape = PuzzleShapes.Rectangle;
 
     if (!this.puzzleConfigs) {
       this.puzzleSizeInputField.disabled = true;
@@ -139,28 +153,94 @@ export default class PuzzlyCreator {
     this.isIntegration = window.location.href.indexOf("isIntegration=true") > -1;
   }
 
+  setPuzzleShapeFieldValues() {
+    Object.keys(PuzzleShapes).forEach((key) => {
+      const container = document.createElement("div");
+      container.classList.add("form-radio-container");
+
+      const fieldId = `puzzle-shape-${key.toLowerCase()}-input-field`;
+
+      const fieldLabel = document.createElement("label");
+      fieldLabel.setAttribute("for", fieldId);
+      fieldLabel.textContent = key;
+
+      const fieldInput = document.createElement("input");
+      fieldInput.type = "radio";
+      fieldInput.id = fieldId;
+      fieldInput.value = key;
+      fieldInput.name = "input-puzzle_shape";
+
+      if (key === PuzzleShapes.Rectangle) {
+        fieldInput.checked = true;
+      }
+
+      this.puzzleShapeFieldContainer.appendChild(fieldLabel);
+      this.puzzleShapeFieldContainer.appendChild(fieldInput);
+
+      fieldInput.addEventListener(
+        "input",
+        function (e: InputEvent) {
+          e.preventDefault();
+          const target = e.target as HTMLInputElement;
+          this.selectedPuzzleShape = target.value;
+
+          let selectedConfigs;
+          switch (this.selectedPuzzleShape) {
+            case PuzzleShapes.Square:
+              selectedConfigs = this.puzzleConfigs.squarePuzzleConfigs;
+              break;
+            case PuzzleShapes.Rectangle:
+              selectedConfigs = this.puzzleConfigs.rectangularPuzzleConfigs;
+              break;
+          }
+
+          this.activePuzzleConfigs = this.getPuzzleConfigsForSelectedShape(target.value);
+          console.log(this.activePuzzleConfigs)
+
+          if (this.activePuzzleConfigs) {
+            this.PuzzleImpressionOverlay.setImpressions(this.activePuzzleConfigs);
+            this.PuzzleImpressionOverlay.setActiveImpression(this.activePuzzleConfigs[0]);
+            this.updatePuzzleSizeField(this.activePuzzleConfigs);
+          }
+        }.bind(this)
+      );
+    })
+  }
+
   showForm() {
     this.newPuzzleForm.style.display = "flex";
   }
 
-  addEventListeners() {
-    this.puzzleSizeInputField.addEventListener(
-      "input",
-      function (e: InputEvent) {
-        e.preventDefault();
-        const target = e.target as HTMLInputElement;
-        this.puzzleSizeInputLabel.textContent = this.selectedNumPieces =
-          SquareShapedPuzzleDefinitions[parseInt(target.value)].numPieces;
-      }.bind(this)
+  showPuzzleConfigFields() {
+    this.puzzleOptionsContainer.classList.remove("js-hidden")
+  }
+
+  addGeneralEventListeners() {
+    this.imageUploadField.addEventListener(
+      "change",
+      this.onImageUploadChange.bind(this)
     );
 
-    // this.imagePreviewTypeToggleRadio.addEventListener("change", () => {
-    //   this.imagePreviewType = "toggle";
-    // });
+    this.imageUploadPreviewEl.addEventListener(
+      "load",
+      this.onImagePreviewLoad.bind(this)
+    );
 
-    // this.imagePreviewTypeAlwaysOnRadio.addEventListener("change", () => {
-    //   this.imagePreviewType = "alwaysOn";
-    // });
+    this.startBtn.addEventListener("click", this.onStartBtnClick.bind(this));
+  }
+
+  addPuzzleOptionEventListeners() {
+    this.puzzleSizeInputField.addEventListener("input", (event: InputEvent) => {
+      const eventTarget = event.target as HTMLInputElement;
+      const value = parseInt(eventTarget.value);
+
+      const highlightedPuzzleSize: PuzzleConfig = this.activePuzzleConfigs[value - 1];
+
+      if (this.puzzleConfigs) {
+        this.puzzleSizeInputLabel.textContent = highlightedPuzzleSize.totalNumberOfPieces + "";
+        this.PuzzleImpressionOverlay.setActiveImpression(highlightedPuzzleSize);
+      }
+    })
 
     // this.chkHighlights.addEventListener(
     //   "input",
@@ -178,28 +258,7 @@ export default class PuzzlyCreator {
       }.bind(this)
     );
 
-    this.puzzleSizeField.addEventListener(
-      "change",
-      function (e: InputEvent) {
-        e.preventDefault();
-        this.selectedNumPieces =
-          SquareShapedPuzzleDefinitions[parseInt((e.target as HTMLInputElement).value)].numPieces;
-      }.bind(this)
-    );
-
-    this.imageUploadField.addEventListener(
-      "change",
-      this.onImageUploadChange.bind(this)
-    );
-
-    this.imageUploadPreviewEl.addEventListener(
-      "load",
-      this.onImagePreviewLoad.bind(this)
-    );
-
     window.addEventListener("PuzzlyPuzzleImpressionMoved", this.onOverlayMove.bind(this))
-
-    this.startBtn.addEventListener("click", this.onStartBtnClick.bind(this));
   }
 
   getPuzzleSizes(
@@ -410,40 +469,42 @@ export default class PuzzlyCreator {
     this.puzzleConfigs = {
       rectangularPuzzleConfigs,
       squarePuzzleConfigs,
-    }
+    };
 
-    this.puzzleSizeInputField.disabled = false;
-    // Default to rectangular puzzles
-    this.updatePuzzleSizeField(this.puzzleConfigs.rectangularPuzzleConfigs);
-
-    this.puzzleSizeInputField.addEventListener("input", (event: InputEvent) => {
-      const eventTarget = event.target as HTMLInputElement;
-      const value = parseInt(eventTarget.value);
-
-      const highlightedPuzzleSize: PuzzleConfig = this.puzzleConfigs.rectangularPuzzleConfigs[value - 1];
-
-      if (this.puzzleConfigs) {
-        this.puzzleSizeInputLabel.textContent = highlightedPuzzleSize.totalNumberOfPieces + "";
-        this.PuzzleImpressionOverlay.update(highlightedPuzzleSize);
-      }
-    })
+    this.activePuzzleConfigs = this.getPuzzleConfigsForSelectedShape(this.selectedPuzzleShape);
+    this.selectedPuzzleConfig = this.activePuzzleConfigs[0];
 
     const puzzleImpressionOverlayConfig = {
       targetElement: this.imageUploadPreviewEl,
-      puzzleConfigs: this.puzzleConfigs,
+      puzzleConfigs: this.activePuzzleConfigs,
       selectedPuzzleConfig: this.selectedPuzzleConfig,
-      isSquareOptionSelected: false
     };
 
     this.PuzzleImpressionOverlay = new PuzzleImpressionOverlay(puzzleImpressionOverlayConfig);
     this.imagePreviewEl.classList.remove("js-hidden");
-    // console.log("PuzzleImpressionOverlay", this.PuzzleImpressionOverlay)
+
+    this.updatePuzzleSizeField(this.getPuzzleConfigsForSelectedShape(this.selectedPuzzleShape));
+    this.puzzleSizeInputField.value = 1 + "";
+    this.puzzleSizeInputField.disabled = false;
+
+    this.setPuzzleShapeFieldValues();
+    this.addPuzzleOptionEventListeners();
+  }
+
+  getPuzzleConfigsForSelectedShape(shape: PuzzleShapes) {
+    switch (shape) {
+      case PuzzleShapes.Rectangle:
+        return this.puzzleConfigs.rectangularPuzzleConfigs;
+      case PuzzleShapes.Square:
+        return this.puzzleConfigs.squarePuzzleConfigs;
+    }
   }
 
   updatePuzzleSizeField(puzzleConfigs: PuzzleConfig[]) {
     this.selectedPuzzleConfig = puzzleConfigs[0];
     this.puzzleSizeInputField.min = 1 + "";
     this.puzzleSizeInputField.max = puzzleConfigs.length + "";
+    this.puzzleSizeInputField.value = 1 + "";
     this.puzzleSizeInputLabel.textContent = this.selectedPuzzleConfig.totalNumberOfPieces + "";
   }
 

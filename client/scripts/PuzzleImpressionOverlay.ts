@@ -7,15 +7,10 @@ export default class PuzzleImpressionOverlay {
     draggable: RestrictedDraggable;
     targetElement: HTMLImageElement | HTMLDivElement;
     container: HTMLElement;
-    puzzleConfigs: {
-        rectangularPuzzleConfigs: PuzzleConfig[];
-        squarePuzzleConfigs: PuzzleConfig[];
-    };
+    puzzleConfigs: PuzzleConfig[];
     selectedPuzzleConfig: PuzzleConfig;
-    rectangularImpressions: HTMLDivElement;
-    squareImpressions: HTMLDivElement;
-    // TODO enum
-    activeImpressionSetName: string;
+    pieceSvgGroups: HTMLOrSVGElement[];
+    impressionsContainer: HTMLDivElement;
 
     constructor({
         targetElement,
@@ -24,31 +19,24 @@ export default class PuzzleImpressionOverlay {
     }: {
         targetElement: HTMLImageElement | HTMLDivElement;
         selectedPuzzleConfig: PuzzleConfig;
-        puzzleConfigs: {
-            rectangularPuzzleConfigs: PuzzleConfig[];
-            squarePuzzleConfigs: PuzzleConfig[];
-        };
+        puzzleConfigs: PuzzleConfig[];
     }) {
-        console.log("targetElement", targetElement)
-        console.log("puzzle configs", puzzleConfigs)
-        console.log("selected puzzle config", selectedPuzzleConfig)
         this.targetElement = targetElement;
         this.selectedPuzzleConfig = selectedPuzzleConfig;
         this.puzzleConfigs = puzzleConfigs;
         this.container = this.targetElement.parentElement as HTMLElement;
 
-        this.rectangularImpressions = getPuzzleImpressions(
-            this.puzzleConfigs.rectangularPuzzleConfigs
-        );
-        this.squareImpressions = getPuzzleImpressions(
-            this.puzzleConfigs.squarePuzzleConfigs
-        );
+        const layout = this.getLayout(this.selectedPuzzleConfig);
 
-        // console.log(this.impressionsContainer);
+        this.draggable = new RestrictedDraggable({
+            containerElement: this.container,
+            layout,
+            id: "puzzle-impression-overlay",
+            restrictionBoundingBox: layout
+        });
 
-        this.update(this.selectedPuzzleConfig);
-        this.setActiveImpressionGroup("rectangular");
-        this.setImpression("puzzle-" + this.selectedPuzzleConfig.totalNumberOfPieces);
+        this.setImpressions(this.puzzleConfigs);
+        this.setActiveImpression(this.selectedPuzzleConfig);
     }
 
     getLayout(puzzleSize: PuzzleConfig) {
@@ -84,52 +72,25 @@ export default class PuzzleImpressionOverlay {
         return this.targetElement.offsetWidth / length;
     }
 
-    update(puzzleConfig: PuzzleConfig) {
-        const layout = this.getLayout(puzzleConfig);
-
-        if (this.draggable) {
-            this.draggable.update(layout);
-            this.setImpression(`puzzle-${puzzleConfig.totalNumberOfPieces}`)
-        } else {
-            this.draggable = new RestrictedDraggable({
-                containerElement: this.container,
-                layout,
-                id: "puzzle-impression-overlay",
-                restrictionBoundingBox: layout
-            });
-            this.draggable.element.appendChild(this.rectangularImpressions);
-            this.draggable.element.appendChild(this.squareImpressions);
+    setImpressions(puzzleConfigs: PuzzleConfig[]) {
+        if (this.impressionsContainer) {
+            this.impressionsContainer.remove();
         }
-
+        this.impressionsContainer = getPuzzleImpressions(puzzleConfigs);
+        this.draggable.element.appendChild(this.impressionsContainer)
     }
 
-    hideAllSets() {
-        // TODO: Need cleaner solution for this
-        this.rectangularImpressions.classList.add("js-hidden");
-        this.squareImpressions.classList.add("js-hidden");
-    }
-
-    setActiveImpressionGroup(name: string) {
-        this.activeImpressionSetName = name;
-        this.hideAllSets();
-        this.container.querySelector(`#${name}-impressions`)?.classList.remove("js-hidden");
-    }
-
-    setImpression(id: string) {
-        const impressions = this.container.querySelector(`#${this.activeImpressionSetName}-impressions`)?.getElementsByTagName("div");
-
-        console.log(this.activeImpressionSetName)
-        console.log("setImpression", impressions)
-        console.log(id)
-
-        if (impressions) {
-            Array.from(impressions).forEach((impression) => {
-                if (impression.id === id) {
-                    impression.classList.remove("js-hidden");
-                } else {
-                    impression.classList.add("js-hidden");
-                }
-            })
-        }
+    setActiveImpression(puzzleConfig: PuzzleConfig) {
+        const impressions = this.impressionsContainer.getElementsByTagName("div");
+        const id = "puzzle-" + puzzleConfig.totalNumberOfPieces;
+        Array.from(impressions).forEach((impression) => {
+            if (impression.id === id) {
+                impression.classList.remove("js-hidden");
+                const layout = this.getLayout(puzzleConfig)
+                this.draggable.update(layout);
+            } else {
+                impression.classList.add("js-hidden");
+            }
+        })
     }
 }
