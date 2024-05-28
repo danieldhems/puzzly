@@ -68,16 +68,13 @@ export default class PuzzleImpressionOverlay {
         }
     }
 
-    getScale(length: number) {
-        return this.targetElement.offsetWidth / length;
-    }
-
     setImpressions(puzzleConfigs: PuzzleConfig[]) {
         if (this.impressionsContainer) {
             this.impressionsContainer.remove();
         }
         this.impressionsContainer = getPuzzleImpressions(puzzleConfigs);
         this.draggable.element.appendChild(this.impressionsContainer)
+        this.draggable.update(this.getLayout(puzzleConfigs[0]))
     }
 
     setActiveImpression(puzzleConfig: PuzzleConfig) {
@@ -93,4 +90,6 @@ export default class PuzzleImpressionOverlay {
             }
         })
     }
+
+
 }

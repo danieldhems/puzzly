@@ -89,8 +89,8 @@ export default class Puzzly {
       ...config,
       debug: true,
       showDebugInfo: false,
-      piecesPerSideHorizontal: config.piecesPerSideHorizontal,
-      piecesPerSideVertical: config.piecesPerSideVertical,
+      piecesPerSideHorizontal: config.numberOfPiecesHorizontal,
+      piecesPerSideVertical: config.numberOfPiecesVertical,
       drawSquares: false,
     });
 
@@ -103,7 +103,7 @@ export default class Puzzly {
 
     this.puzzleId = puzzleId;
 
-    this.noDispersal = config.debugOptions.noDispersal;
+    this.noDispersal = config?.debugOptions?.noDispersal;
 
     this.currentZIndex = config.zIndex || 3;
 

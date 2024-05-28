@@ -79,11 +79,10 @@ export default class RestrictedDraggable {
     }
   }
 
-  update(layout: {
-    width: number;
-    height: number;
-  }) {
-    const { width, height } = layout;
+  update(layout: Pick<DOMRect, "top" | "left" | "width" | "height">) {
+    const { top, left, width, height } = layout;
+    this.element.style.top = top + "px";
+    this.element.style.left = left + "px";
     this.element.style.width = width + "px";
     this.element.style.height = height + "px";
   }

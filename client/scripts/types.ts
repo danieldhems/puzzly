@@ -1,6 +1,5 @@
 import GroupMovable from "./GroupMovable";
 import { PocketMovable } from "./PocketMovable";
-import { SkeletonPiece } from "./puzzleGenerator";
 import { DebugOptions } from "./puzzlyCreator";
 import SingleMovable from "./SingleMovable";
 
@@ -146,14 +145,32 @@ export enum MovementPropertyName {
 }
 
 export interface PuzzleCreatorOptions {
-  debugOptions: DebugOptions;
-  selectedNumPieces: number;
-  piecesPerSideHorizontal?: number;
-  piecesPerSideVertical?: number;
+  debugOptions?: DebugOptions;
+  numberOfPiecesHorizontal: number;
+  numberOfPiecesVertical: number;
   pieces?: JigsawPieceData[];
   connectorSize?: number;
   isIntegration: boolean;
 }
+
+
+// Using 'pieceAbove' and 'pieceBehind' won't scale for wild piece shapes:
+// adjacentPieces[] would be more flexible...
+export type SkeletonPiece = Pick<
+  JigsawPieceData,
+  "type" | "numPiecesFromLeftEdge" | "numPiecesFromTopEdge"
+> & {
+  connectorSize: number;
+  pieceAbove: {
+    type: ConnectorType[],
+  };
+  pieceBehind: {
+    type: ConnectorType[],
+  };
+  puzzleWidth: number;
+  puzzleHeight: number;
+
+};
 
 export interface PuzzleConfig {
   numberOfPiecesHorizontal: number;
@@ -196,7 +213,7 @@ export type PuzzleGenerator = {
   spriteSpacing: number;
   stageWidth: number;
   stageHeight: number;
-  debugOptions: {
+  debugOptions?: {
     noDispersal: boolean;
   };
   image: HTMLImageElement;

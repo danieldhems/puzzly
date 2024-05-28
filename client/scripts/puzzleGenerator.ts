@@ -1,6 +1,6 @@
 import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SVG_NAMESPACE } from "./constants";
 import jigsawPath from "./jigsawPath";
-import { ConnectorNames, ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleConfig, SideNames } from "./types";
+import { ConnectorNames, ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleConfig, SideNames, SkeletonPiece } from "./types";
 import Utils from "./utils";
 
 // How big the connectors should be (how far they stick of from the piece's body), expressed as a percentage of the body of the piece
@@ -21,9 +21,9 @@ const puzzleGenerator = async function (
   console.log("puzzle config", puzzleConfig);
   Generator.image = await loadImage(imagePath);
   Generator.debugOptions = puzzleConfig.debugOptions;
-  Generator.piecesPerSideHorizontal = Math.sqrt(puzzleConfig.selectedNumPieces);
-  Generator.piecesPerSideVertical = Math.sqrt(puzzleConfig.selectedNumPieces);
-  Generator.selectedNumberOfPieces = puzzleConfig.selectedNumPieces;
+  Generator.piecesPerSideHorizontal = Math.sqrt(puzzleConfig.numberOfPiecesHorizontal);
+  Generator.piecesPerSideVertical = Math.sqrt(puzzleConfig.numberOfPiecesVertical);
+  // Generator.selectedNumberOfPieces = puzzleConfig.totalNumberOfPieces;
 
   Generator.strokeWidth = STROKE_WIDTH;
   Generator.strokeColor = STROKE_COLOR;
@@ -212,20 +212,6 @@ const generateDataForPuzzlePieces = async () => {
   };
 };
 
-// Using 'pieceAbove' and 'pieceBehind' won't scale for wild piece shapes:
-// adjacentPieces[] would be more flexible...
-export type SkeletonPiece = Pick<
-  JigsawPieceData,
-  "type" | "numPiecesFromLeftEdge" | "numPiecesFromTopEdge"
-> & {
-  connectorSize: number;
-  pieceAbove: {
-    type: ConnectorType[],
-  };
-  pieceBehind: {
-    type: ConnectorType[],
-  }
-};
 
 export const generatePieces = (puzzleConfig: PuzzleConfig): SkeletonPiece[] => {
   const pieces: SkeletonPiece[] = [];
@@ -316,6 +302,29 @@ export const generatePieces = (puzzleConfig: PuzzleConfig): SkeletonPiece[] => {
   }
 
   return pieces;
+}
+
+export const addMappingDataToPieces = (pieces: SkeletonPiece[], puzzleConfig: PuzzleConfig) => {
+  const { pieceSize, connectorSize } = puzzleConfig;
+
+  return pieces.map((piece) => {
+    let xPos = pieceSize * piece.numPiecesFromLeftEdge;
+    let yPos = pieceSize * piece.numPiecesFromTopEdge;
+
+    if (piece.type[0] === 1) {
+      yPos -= connectorSize;
+    }
+
+    if (piece.type[3] === 1) {
+      xPos -= connectorSize;
+    }
+
+    return {
+      ...piece,
+      puzzleX: xPos,
+      puzzleY: yPos,
+    }
+  })
 }
 
 const createCanvas = (width: number, height: number) => {
@@ -584,10 +593,10 @@ const assignInitialPieceData = (
       spriteY: piecePositionOnSprite.y,
       spriteShadowX: piecePositionOnSprite.x,
       spriteShadowY: piecePositionOnSprite.y + Generator.spriteSpacing,
-      pageX: Generator.debugOptions.noDispersal
+      pageX: Generator.debugOptions?.noDispersal
         ? piecePositionOnSprite.x
         : randPos.x,
-      pageY: Generator.debugOptions.noDispersal
+      pageY: Generator.debugOptions?.noDispersal
         ? piecePositionOnSprite.y
         : randPos.y,
       solvedX: imgX,

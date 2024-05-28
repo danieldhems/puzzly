@@ -1,7 +1,9 @@
 import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SquareShapedPuzzleDefinitions } from "./constants";
-import { getConnectorDimensions } from "./puzzleGenerator";
+import puzzleGenerator, { addMappingDataToPieces, generatePieces, getConnectorDimensions } from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
-import { PuzzleAxis, PuzzleConfig, PuzzleShapes } from "./types";
+import Puzzly from "./Puzzly";
+import { PuzzleAxis, PuzzleConfig, PuzzleCreationResponse, PuzzleShapes } from "./types";
+import Utils from "./utils";
 
 export interface SourceImage {
   dimensions: {
@@ -239,6 +241,7 @@ export default class PuzzlyCreator {
       if (this.puzzleConfigs) {
         this.puzzleSizeInputLabel.textContent = highlightedPuzzleSize.totalNumberOfPieces + "";
         this.PuzzleImpressionOverlay.setActiveImpression(highlightedPuzzleSize);
+        this.selectedPuzzleConfig = highlightedPuzzleSize;
       }
     })
 
@@ -480,6 +483,9 @@ export default class PuzzlyCreator {
       selectedPuzzleConfig: this.selectedPuzzleConfig,
     };
 
+    const rectanglePuzzleSets = this.puzzleConfigs.rectangularPuzzleConfigs.map((config) => generatePieces(config));
+    const squarePuzzleSets = this.puzzleConfigs.squarePuzzleConfigs.map((config) => generatePieces(config));
+
     this.PuzzleImpressionOverlay = new PuzzleImpressionOverlay(puzzleImpressionOverlayConfig);
     this.imagePreviewEl.classList.remove("js-hidden");
 
@@ -616,77 +622,19 @@ export default class PuzzlyCreator {
   }
 
   async createPuzzle(options: Record<any, any> | null = null) {
-    const makePuzzleImageRequestData = {
-      ...this.sourceImage,
-      ...this.getImageDimensions(this.imageUploadPreviewEl),
-      imagePath: this.fullSizePath,
-      originalImageSize: this.sourceImage.dimensions,
-      resizeWidth: this.boardWidth,
-      resizeHeight: this.boardHeight,
+    const pieces = generatePieces(this.selectedPuzzleConfig);
+    const mappedPieces = addMappingDataToPieces(pieces, this.selectedPuzzleConfig)
+
+    console.log("mapped pieces", mappedPieces)
+
+    const data = {
+      ...this.selectedPuzzleConfig,
+      pieces: mappedPieces,
       isIntegration: this.isIntegration,
-    };
-
-    let makePuzzleImageRequest = makePuzzleImageRequestData;
-    if (options) {
-      makePuzzleImageRequest = {
-        ...makePuzzleImageRequest,
-        ...options,
-      };
     }
-    const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {
-      body: JSON.stringify(makePuzzleImageRequest),
-      method: "POST",
-      headers: {
-        "Content-Type": "Application/json",
-      },
-    });
 
-    const { puzzleImagePath } = await makePuzzleImageResponse.json();
-
-    // const puzzleCreatorOptions: PuzzleCreatorOptions = {
-
-    // }
-
-    // const generator = await puzzleGenerator(puzzleImagePath, puzzleCreatorOptions);
-
-    // const { spriteEncodedString, pieces } =
-    //   await generator.generateDataForPuzzlePieces();
-
-    // const { width, height } = puzzleData.originalImageSize;
-
-    // const img = new Image(width, height);
-    // img.src = spriteEncodedString;
-
-    // const getFormDataForImgFile = await fetch(img.src)
-    //   .then((response) => response.blob())
-    //   .then((response) => {
-    //     console.log("fetched image from base64 string", response);
-
-    //     const imgFile = new File([response], "testfile.png", {
-    //       type: "image/png",
-    //     });
-    //     const formData = new FormData();
-    //     formData.append("files[]", imgFile);
-    //     return formData;
-    //   });
-
-    // const spriteUploadResult = await fetch("api/uploadPuzzleSprite", {
-    //   method: "POST",
-    //   body: getFormDataForImgFile,
-    // });
-
-    // const puzzleData = {
-    //   spriteEncodedString,
-    //   puzzleImagePath,
-    //   pieces,
-    //   pieceSize: generator.pieceSize,
-    //   connectorSize: generator.connectorSize,
-    //   connectorDistanceFromCorner: generator.connectorDistanceFromCorner,
-    // });
-
-    /*
     fetch("/api/puzzle", {
-      body: JSON.stringify(puzzleData),
+      body: JSON.stringify(data),
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -703,7 +651,7 @@ export default class PuzzlyCreator {
           this.newPuzzleForm.style.display = "none";
 
           window.Puzzly = new Puzzly(puzzleId, {
-            ...puzzleData,
+            ...data,
             _id: response._id,
             pieceSize: response.pieceSize,
             connectorSize: response.connectorSize,
@@ -717,7 +665,6 @@ export default class PuzzlyCreator {
       .catch(function (err) {
         console.log(err);
       });
-      */
   }
 }
 
