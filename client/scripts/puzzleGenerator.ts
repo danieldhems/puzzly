@@ -304,25 +304,39 @@ export const generatePieces = (puzzleConfig: PuzzleConfig): SkeletonPiece[] => {
   return pieces;
 }
 
-export const addMappingDataToPieces = (pieces: SkeletonPiece[], puzzleConfig: PuzzleConfig) => {
+export const addPuzzleDataToPieces = (pieces: SkeletonPiece[], puzzleConfig: PuzzleConfig) => {
   const { pieceSize, connectorSize } = puzzleConfig;
 
   return pieces.map((piece) => {
     let xPos = pieceSize * piece.numPiecesFromLeftEdge;
     let yPos = pieceSize * piece.numPiecesFromTopEdge;
+    let width = puzzleConfig.pieceSize;
+    let height = puzzleConfig.pieceSize;
 
     if (piece.type[0] === 1) {
       yPos -= connectorSize;
+      height += connectorSize;
     }
 
     if (piece.type[3] === 1) {
       xPos -= connectorSize;
+      width += connectorSize;
+    }
+
+    if (piece.type[1] === 1) {
+      width += connectorSize;
+    }
+
+    if (piece.type[2] === 1) {
+      height += connectorSize;
     }
 
     return {
       ...piece,
       puzzleX: xPos,
       puzzleY: yPos,
+      width,
+      height,
     }
   })
 }
@@ -611,7 +625,7 @@ const assignInitialPieceData = (
   );
 };
 
-const getJigsawShapeSvgString = (
+export const getJigsawShapeSvgString = (
   piece: SkeletonPiece | JigsawPieceData,
   pieceSize: number,
   startingPosition?: {

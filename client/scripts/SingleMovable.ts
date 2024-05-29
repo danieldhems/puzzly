@@ -4,6 +4,7 @@ import { EVENT_TYPES, SHAPE_TYPES } from "./constants";
 import GroupMovable from "./GroupMovable";
 import GroupOperations from "./GroupOperations";
 import Pockets from "./Pockets";
+import { getJigsawShapeSvgString } from "./puzzleGenerator";
 import Puzzly from "./Puzzly";
 // import PathOperations from "./pathOperations.js";
 import {
@@ -103,33 +104,36 @@ export default class SingleMovable extends BaseMovable {
       imgY,
       imgW,
       imgH,
+      width,
+      height,
       pageY,
       pageX,
       solvedY,
       solvedX,
       zIndex,
-      spritePath,
-      spriteY,
-      spriteX,
-      spriteShadowY,
-      spriteShadowX,
+      puzzleX,
+      puzzleY,
       isInnerPiece,
       isSolved,
       numPiecesFromTopEdge,
       numPiecesFromLeftEdge,
+      piecesPerSideHorizontal,
+      piecesPerSideVertical,
       selectedNumPieces,
       pocketId,
       type,
       svgPath,
     } = this.pieceData;
 
+    console.log("SingleMovable", this.pieceData)
+
     const el = document.createElement("div");
     el.classList.add("puzzle-piece");
     el.id = "piece-" + id;
 
     el.style.position = "absolute";
-    el.style.width = imgW + "px";
-    el.style.height = imgH + "px";
+    el.style.width = width + "px";
+    el.style.height = height + "px";
 
     if (pocketId === undefined || pocketId === null) {
       el.style.top = (!!groupId ? solvedY : pageY) + "px";
@@ -149,27 +153,19 @@ export default class SingleMovable extends BaseMovable {
     el.setAttribute("data-piece-id", id + "");
     el.setAttribute("data-piece-id-in-persistence", _id);
     el.setAttribute("data-puzzle-id", puzzleId);
-    el.setAttribute("data-imgX", imgX + "");
-    el.setAttribute("data-imgy", imgY + "");
     el.setAttribute("data-solvedX", solvedX + "");
     el.setAttribute("data-solvedY", solvedY + "");
     el.setAttribute("data-pageX", pageX + "");
     el.setAttribute("data-pageY", pageY + "");
-    el.setAttribute("data-spriteX", spriteX + "");
-    el.setAttribute("data-spriteY", spriteY + "");
-    el.setAttribute("data-spriteshadowx", spriteShadowX + "");
-    el.setAttribute("data-spriteshadowy", spriteShadowY + "");
-    el.setAttribute("data-imgW", imgW + "");
-    el.setAttribute("data-imgH", imgH + "");
     el.setAttribute("data-svgPath", svgPath);
     el.setAttribute("data-is-inner-piece", isInnerPiece + "");
     el.setAttribute(
       "data-pieces-per-side-horizontal",
-      this.piecesPerSideHorizontal + ""
+      piecesPerSideHorizontal + ""
     );
     el.setAttribute(
       "data-pieces-per-side-vertical",
-      this.piecesPerSideVertical + ""
+      piecesPerSideVertical + ""
     );
     el.dataset.connectsTo = JSON.stringify(
       this.getConnectingPieceIds(this.pieceData)
@@ -186,35 +182,6 @@ export default class SingleMovable extends BaseMovable {
     el.setAttribute("data-num-puzzle-pieces", selectedNumPieces + "");
     el.setAttribute("data-is-solved", isSolved + "");
 
-    const fgEl = document.createElement("div");
-    fgEl.classList.add("puzzle-piece-fg");
-    fgEl.style.backgroundImage = `url(${spritePath}`;
-    fgEl.style.backgroundPositionX = spriteX === 0 ? "0" : "-" + spriteX + "px";
-    fgEl.style.backgroundPositionY = spriteY === 0 ? "0" : "-" + spriteY + "px";
-    fgEl.style.position = "absolute";
-    fgEl.style.width = imgW + "px";
-    fgEl.style.height = imgH + "px";
-    fgEl.style.top = 0 + "";
-    fgEl.style.left = 0 + "";
-    fgEl.style.zIndex = 2 + "";
-
-    const bgEl = document.createElement("div");
-    bgEl.classList.add("puzzle-piece-bg");
-    bgEl.style.position = "absolute";
-    bgEl.style.width = imgW + "px";
-    bgEl.style.height = imgH + "px";
-    bgEl.style.top = this.shadowOffset + "px";
-    bgEl.style.left = this.shadowOffset + "px";
-    bgEl.style.backgroundImage = `url(${spritePath}`;
-    bgEl.style.backgroundPositionX =
-      spriteShadowX === 0 ? "0" : "-" + spriteShadowX + "px";
-    bgEl.style.backgroundPositionY =
-      spriteShadowY === 0 ? "0" : "-" + spriteShadowY + "px";
-    bgEl.style.zIndex = 1 + "";
-
-    el.appendChild(fgEl);
-    el.appendChild(bgEl);
-
     this.element = el;
 
     if (groupId) {
@@ -226,6 +193,26 @@ export default class SingleMovable extends BaseMovable {
       el.setAttribute("data-pocket-id", pocketId + "");
     }
 
+    const svgns = "http://www.w3.org/2000/svg";
+
+    const { pieceSize, puzzleWidth, puzzleHeight, puzzleImagePath } = this.Puzzly;
+    const pathString = getJigsawShapeSvgString(this.pieceData, pieceSize);
+
+    const svgElementTemplate = `
+      <svg xmlns="${svgns}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+        <defs>
+          <path id="shape" class="fg" d="${pathString}"></path>
+        </defs>
+        <clipPath id="clip">
+            <use href="#shape"></use>
+        </clipPath>
+        <use href="#shape" stroke="black" stroke-width="3"></use>
+        <use href="#shape" fill="black" x="3" y="3" />
+        <image clip-path="url(#clip)" href="${puzzleImagePath}" width="${puzzleWidth}" height="${puzzleHeight}" x="-${puzzleX}" y="-${puzzleY}" />
+      </svg>
+    `;
+
+    el.innerHTML = svgElementTemplate;
     return el;
   }
 

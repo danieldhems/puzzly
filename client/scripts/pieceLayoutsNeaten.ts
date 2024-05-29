@@ -147,11 +147,9 @@ export default function arrangePiecesAroundEdge(
     const isLastPiece = i === piecesInPlay.length - 1;
 
     if (
-      shouldProceedToNextSide(
-        currentSide,
+      shouldProceedToNextSide.call(this, currentSide,
         currentPiece,
-        firstPiecesOnEachSide[sides[nextSide]] as HTMLDivElement
-      )
+        firstPiecesOnEachSide[sides[nextSide]] as HTMLDivElement)
     ) {
       // console.log("proceeding to next side", i)
       if (currentSide === SideNames.Bottom) {

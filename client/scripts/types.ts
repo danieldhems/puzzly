@@ -79,6 +79,10 @@ export interface JigsawPieceData {
   pocketId: number;
   imgX: number;
   imgY: number;
+  puzzleX: number;
+  puzzleY: number,
+  width: number;
+  height: number;
   imgW: number;
   imgH: number;
   pageX: number;
@@ -148,7 +152,7 @@ export interface PuzzleCreatorOptions {
   debugOptions?: DebugOptions;
   numberOfPiecesHorizontal: number;
   numberOfPiecesVertical: number;
-  pieces?: JigsawPieceData[];
+  pieces?: any[];
   connectorSize?: number;
   isIntegration: boolean;
 }
@@ -239,8 +243,8 @@ export type PuzzleCreationResponse = PuzzleCreatorOptions & {
   complete?: boolean;
   zIndex?: number;
   pieceSize: number;
-  spritePath: string;
   previewPath: string;
+  puzzleImagePath: string;
   connectorDistanceFromCorner: number;
 };
 

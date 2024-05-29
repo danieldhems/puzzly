@@ -42,6 +42,8 @@ export default class Puzzly {
   Zoom: Zoom;
   Sounds: Sounds;
   boardSize: number;
+  puzzleWidth: number;
+  puzzleHeight: number;
   puzzleId: string;
   pieces: JigsawPieceData[];
   groups: GroupData[];
@@ -84,7 +86,7 @@ export default class Puzzly {
   timeStarted: number;
   integration: boolean;
 
-  constructor(puzzleId: string, config: PuzzleCreationResponse) {
+  constructor(puzzleId: string, config: any) {
     Object.assign(this, {
       ...config,
       debug: true,
@@ -113,8 +115,9 @@ export default class Puzzly {
 
     this.previewImage = new Image();
     this.previewImage.src = this.puzzleImagePath;
-    this.puzzleImage = new Image();
-    this.puzzleImage.src = this.spritePath;
+    // this.puzzleImage = new Image();
+    // this.puzzleImage.src = this.puzzleImagePath;
+
     console.log(this);
 
     this.previewImageType = SolvedPuzzlePreviewType.AlwaysOn;
@@ -128,7 +131,7 @@ export default class Puzzly {
       `#${ELEMENT_IDS.PIECES_CONTAINER}`
     );
 
-    loadAssets([this.previewImage, this.puzzleImage]).then(() => {
+    loadAssets([this.previewImage]).then(() => {
       this.init();
     });
   }
@@ -215,7 +218,7 @@ export default class Puzzly {
         );
       }
     } else {
-      // console.log("pieces", this.pieces);
+      console.log("pieces", this.pieces);
       this.pieces.forEach((piece) => {
         const pieceInstance = new SingleMovable({
           puzzleData: this,

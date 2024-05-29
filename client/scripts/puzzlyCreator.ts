@@ -1,5 +1,5 @@
 import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SquareShapedPuzzleDefinitions } from "./constants";
-import puzzleGenerator, { addMappingDataToPieces, generatePieces, getConnectorDimensions } from "./puzzleGenerator";
+import puzzleGenerator, { addPuzzleDataToPieces, generatePieces, getConnectorDimensions } from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
 import Puzzly from "./Puzzly";
 import { PuzzleAxis, PuzzleConfig, PuzzleCreationResponse, PuzzleShapes } from "./types";
@@ -623,13 +623,14 @@ export default class PuzzlyCreator {
 
   async createPuzzle(options: Record<any, any> | null = null) {
     const pieces = generatePieces(this.selectedPuzzleConfig);
-    const mappedPieces = addMappingDataToPieces(pieces, this.selectedPuzzleConfig)
+    const mappedPieces = addPuzzleDataToPieces(pieces, this.selectedPuzzleConfig)
 
     console.log("mapped pieces", mappedPieces)
 
     const data = {
       ...this.selectedPuzzleConfig,
-      pieces: mappedPieces,
+      imageName: this.sourceImage.imageName,
+      // pieces: JSON.stringify(mappedPieces),
       isIntegration: this.isIntegration,
     }
 
@@ -642,7 +643,7 @@ export default class PuzzlyCreator {
     })
       .then((response) => response.json())
       .then(
-        function (response: PuzzleCreationResponse) {
+        function (response: any) {
           console.log("response", response);
           const puzzleId = response._id;
 
@@ -656,9 +657,11 @@ export default class PuzzlyCreator {
             pieceSize: response.pieceSize,
             connectorSize: response.connectorSize,
             connectorDistanceFromCorner: response.connectorDistanceFromCorner,
-            pieces: response.pieces,
-            spritePath: response.spritePath,
+            pieces: mappedPieces,
             previewPath: response.previewPath,
+            puzzleImagePath: this.fullSizePath,
+            boardWidth: this.boardWidth,
+            boardHeight: this.boardHeight,
           });
         }.bind(this)
       )
