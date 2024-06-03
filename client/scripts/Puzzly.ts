@@ -4,12 +4,14 @@ import Pockets from "./Pockets";
 import DragAndSelect from "./dragAndSelect";
 import Utils from "./utils";
 import {
+  CONNECTOR_SIZE_PERC,
   CONNECTOR_TOLERANCE_AMOUNT,
   ELEMENT_IDS,
   EVENT_TYPES,
   FLOAT_TOLERANCE_AMOUNT,
   SCREEN_MARGIN,
   SHADOW_OFFSET_RATIO,
+  SOLVING_AREA_SCREEN_PORTION,
 } from "./constants";
 import { PocketMovable } from "./PocketMovable";
 import PersistenceOperations from "./persistence";
@@ -21,6 +23,7 @@ import {
   GroupData,
   JigsawPieceData,
   MovableElement,
+  PuzzleConfig,
   PuzzleCreationResponse,
   PuzzleShapes,
   SolvedPuzzlePreviewType,
@@ -40,6 +43,7 @@ export default class Puzzly {
   PieceLayouts: PieceLayouts;
   PersistenceOperations: PersistenceOperations;
   CanvasOperations: CanvasOperations;
+  PlayBoundaryMovable: PlayBoundaryMovable;
   Zoom: Zoom;
   Sounds: Sounds;
   boardSize: number;
@@ -71,6 +75,7 @@ export default class Puzzly {
   floatTolerance: number;
   pieceInstances: SingleMovable[];
   groupInstances: GroupMovable[];
+
   complete?: boolean;
   stage: HTMLDivElement | null;
   playBoundary: HTMLDivElement | null;
@@ -93,6 +98,8 @@ export default class Puzzly {
   playBoundaryWidth: number;
   playBoundaryHeight: number;
   lengthForFullScreen: number;
+  numberOfPiecesHorizontal: number;
+  numberOfPiecesVertical: number;
 
   constructor(puzzleId: string, config: any) {
     Object.assign(this, {
@@ -106,8 +113,10 @@ export default class Puzzly {
 
     window.Puzzly = this;
 
+    this.numberOfPiecesHorizontal = config.numberOfPiecesHorizontal;
+    this.numberOfPiecesVertical = config.numberOfPiecesVertical;
+
     this.pieces = config.pieces as JigsawPieceData[];
-    this.connectorSize = config.connectorSize as number;
 
     this.complete = config.complete;
 
@@ -160,9 +169,33 @@ export default class Puzzly {
 
     this.playBoundary = document.querySelector("#play-boundary");
 
-    this.boardWidth = this.imageWidth * this.scale;
-    this.boardHeight = this.imageHeight * this.scale;
+    const bootstrap = this.bootstrap({
+      imageWidth: this.imageWidth,
+      imageHeight: this.imageHeight,
+      numberOfPiecesHorizontal: this.numberOfPiecesHorizontal,
+      numberOfPiecesVertical: this.numberOfPiecesVertical,
+    });
+
+    if (bootstrap?.width) {
+      this.boardWidth = bootstrap.width;
+    }
+
+    if (bootstrap?.height) {
+      this.boardHeight = bootstrap.height;
+    }
+
+    if (bootstrap?.pieceSize) {
+      this.pieceSize = bootstrap.pieceSize;
+    }
+
+    if (bootstrap?.connectorSize) {
+      this.connectorSize = bootstrap.connectorSize;
+    }
+
+    this.PlayBoundaryMovable = new PlayBoundaryMovable(this);
     this.setupSolvingArea();
+
+    this.Zoom = new Zoom(this);
 
     const solvingAreaBoundingBox = (
       this.solvingArea as HTMLDivElement
@@ -265,8 +298,7 @@ export default class Puzzly {
       window.location.href = "/";
     });
 
-    new PlayBoundaryMovable(this);
-    this.Zoom = new Zoom(this);
+
 
     (this.stage as HTMLDivElement).classList.add("loaded");
     window.dispatchEvent(
@@ -303,19 +335,43 @@ export default class Puzzly {
     );
   }
 
+  bootstrap(puzzleConfig: Pick<PuzzleConfig, "imageWidth" | "imageHeight" | "numberOfPiecesHorizontal" | "numberOfPiecesVertical">) {
+    const { imageWidth, imageHeight, numberOfPiecesHorizontal, numberOfPiecesVertical } = puzzleConfig;
+    const smallerLength = Math.min(imageWidth, imageHeight);
+    const largerLength = Math.max(imageWidth, imageHeight);
+    const aspectRatio = smallerLength / largerLength;
+
+    let width: number, height: number;
+    if (window.innerWidth < window.innerHeight) {
+      height = window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION;
+      return {
+        height,
+        width: height * aspectRatio,
+        pieceSize: height / numberOfPiecesVertical,
+        connectorSize: height / 100 * CONNECTOR_SIZE_PERC,
+      }
+
+    } else if (window.innerHeight < window.innerWidth) {
+      width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
+      return {
+        width,
+        height: width * aspectRatio,
+        pieceSize: width / numberOfPiecesHorizontal,
+        connectorSize: width / 100 * CONNECTOR_SIZE_PERC,
+      }
+    }
+  }
+
   setupSolvingArea() {
     console.log("set up solving area", this)
 
-
-
-
-    this.solvingArea.style.width = Utils.getPxString(this.viewportLargeEnoughForOutOfBoundsArea ? this.boardWidth : this.lengthForFullScreen);
-    this.solvingArea.style.height = Utils.getPxString(this.viewportLargeEnoughForOutOfBoundsArea ? this.boardHeight : this.lengthForFullScreen);
+    this.solvingArea.style.width = Utils.getPxString(this.boardWidth);
+    this.solvingArea.style.height = Utils.getPxString(this.boardHeight);
     this.solvingArea.style.top = Utils.getPxString(
-      this.playBoundaryHeight / 2 - this.solvingArea.offsetHeight / 2
+      this.PlayBoundaryMovable.element.offsetHeight / 2 - this.boardHeight / 2
     );
     this.solvingArea.style.left = Utils.getPxString(
-      this.playBoundaryWidth / 2 - this.solvingArea.offsetWidth / 2
+      this.PlayBoundaryMovable.element.offsetWidth / 2 - this.boardWidth / 2
     );
 
     const solvedCnvContainer = document.getElementById(

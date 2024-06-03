@@ -1,4 +1,4 @@
-import { SIDES, EVENT_TYPES } from "./constants";
+import { EVENT_TYPES } from "./constants";
 import { MovableElement, SideNames } from "./types";
 import Utils from "./utils";
 
@@ -95,6 +95,7 @@ export default function arrangePiecesAroundEdge(
   largestPieceSpan: number,
   solvingAreaElement: HTMLDivElement
 ) {
+
   const sides = [
     SideNames.Top,
     SideNames.Right,
@@ -126,7 +127,6 @@ export default function arrangePiecesAroundEdge(
     const pieceData = Utils.getPieceFromElement(currentPiece);
 
     if (currentSide === "top" && pieceData.type[0] !== 1) {
-      console.log("pushing piece down");
       // currentY += this.connectorSize;
     }
 
@@ -181,15 +181,15 @@ export default function arrangePiecesAroundEdge(
         ? Utils.getStyleBoundingBox(nextPiece as HTMLDivElement)
         : null;
 
-      if (currentSide === SIDES.TOP) {
+      if (currentSide === SideNames.Top) {
         currentX += currentPieceBoundingBox.width + spacing;
-      } else if (currentSide === SIDES.RIGHT) {
+      } else if (currentSide === SideNames.Right) {
         currentY += currentPieceBoundingBox.height + spacing;
-      } else if (currentSide === SIDES.BOTTOM) {
+      } else if (currentSide === SideNames.Bottom) {
         if (!isLastPiece && nextPieceBoundingBox) {
           currentX -= nextPieceBoundingBox.width + spacing;
         }
-      } else if (currentSide === SIDES.LEFT) {
+      } else if (currentSide === SideNames.Left) {
         if (!isLastPiece && nextPieceBoundingBox) {
           currentY -= nextPieceBoundingBox.height + spacing;
         }

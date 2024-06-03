@@ -134,7 +134,7 @@ export default class PersistenceOperations {
   }
 
   async save(data: SaveStates) {
-    console.log("saving", data);
+    // console.log("saving", data);
     const useLocalStorage = false;
 
     let endpoint;
@@ -147,8 +147,8 @@ export default class PersistenceOperations {
       requestMethod = (data as GroupMovableSaveState).remove
         ? "DELETE"
         : data._id
-        ? "PUT"
-        : "POST";
+          ? "PUT"
+          : "POST";
       endpoint = GROUPS_ENDPOINT;
     } else if (Array.isArray(data)) {
       requestMethod = "PUT";

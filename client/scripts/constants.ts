@@ -30,6 +30,8 @@ export const PUZZLE_PIECE_CLASSES = ["puzzle-piece", "puzzle-piece-fg"];
 export const PIECE_SIZE = 20;
 export const MINIMUM_NUMBER_OF_PIECES = 9;
 export const MINIMUM_NUMBER_OF_PIECES_PER_SIDE = 3;
+export const CONNECTOR_SIZE_PERC = 30;
+
 
 export const ZOOM_INTERVALS = [1, 1.5, 2.5];
 
@@ -90,3 +92,5 @@ export const PUZZLE_SIZE_PERCENTAGE_SQUARE = 40;
 export const MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED = 1024;
 
 export const SCREEN_MARGIN = 10;
+
+export const SOLVING_AREA_SCREEN_PORTION = 50;

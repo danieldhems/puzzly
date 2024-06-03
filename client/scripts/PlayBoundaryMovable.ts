@@ -45,6 +45,10 @@ export default class PlayBoundaryMovable extends BaseMovable {
     }
   }
 
+  drawSolvingArea() {
+
+  }
+
   reCenter() {
     if (this.playBoundary) {
       const stageRect = this.stage.getBoundingClientRect();

@@ -1,10 +1,9 @@
-import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SVG_NAMESPACE } from "./constants";
+import { CONNECTOR_SIZE_PERC, MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SVG_NAMESPACE } from "./constants";
 import jigsawPath from "./jigsawPath";
 import { ConnectorNames, ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleConfig, SideNames, SkeletonPiece } from "./types";
 import Utils from "./utils";
 
 // How big the connectors should be (how far they stick of from the piece's body), expressed as a percentage of the body of the piece
-const CONNECTOR_SIZE_PERC = 30;
 // How far in from the corner the connector should be.
 // This may need to be re-addressed when we approach wild shapes as we may prefer to randomise this.
 const SHOULDER_SIZE_PERC = 35;
