@@ -305,30 +305,33 @@ export const generatePieces = (puzzleConfig: PuzzleConfig): SkeletonPiece[] => {
 }
 
 export const addPuzzleDataToPieces = (pieces: SkeletonPiece[], puzzleConfig: PuzzleConfig) => {
-  const { pieceSize, connectorSize } = puzzleConfig;
+  const { pieceSize, connectorSize, scale } = puzzleConfig;
+
+  const scaledPieceSize = pieceSize * scale;
+  const scaledConnectorSize = connectorSize * scale;
 
   return pieces.map((piece) => {
-    let xPos = pieceSize * piece.numPiecesFromLeftEdge;
-    let yPos = pieceSize * piece.numPiecesFromTopEdge;
-    let width = puzzleConfig.pieceSize;
-    let height = puzzleConfig.pieceSize;
+    let xPos = (scaledPieceSize * piece.numPiecesFromLeftEdge);
+    let yPos = (scaledPieceSize * piece.numPiecesFromTopEdge);
+    let width = scaledPieceSize;
+    let height = scaledPieceSize;
 
     if (piece.type[0] === 1) {
-      yPos -= connectorSize;
-      height += connectorSize;
+      yPos -= scaledConnectorSize;
+      height += scaledConnectorSize;
     }
 
     if (piece.type[3] === 1) {
-      xPos -= connectorSize;
-      width += connectorSize;
+      xPos -= scaledConnectorSize;
+      width += scaledConnectorSize;
     }
 
     if (piece.type[1] === 1) {
-      width += connectorSize;
+      width += scaledConnectorSize;
     }
 
     if (piece.type[2] === 1) {
-      height += connectorSize;
+      height += scaledConnectorSize;
     }
 
     return {

@@ -125,7 +125,7 @@ export default class SingleMovable extends BaseMovable {
       svgPath,
     } = this.pieceData;
 
-    console.log("SingleMovable", this.pieceData)
+    // console.log("SingleMovable", this.pieceData)
 
     const el = document.createElement("div");
     el.classList.add("puzzle-piece");

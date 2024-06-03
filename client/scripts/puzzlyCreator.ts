@@ -75,13 +75,7 @@ export default class PuzzlyCreator {
   isIntegration: boolean;
 
   constructor() {
-    if (window.innerHeight < window.innerWidth) {
-      this.boardHeight = Math.ceil((window.innerHeight / 100) * 40);
-      this.boardWidth = this.boardHeight;
-    } else if (window.innerWidth < window.innerHeight) {
-      this.boardWidth = Math.ceil((window.innerWidth / 100) * 40);
-      this.boardHeight = this.boardWidth;
-    }
+
 
     this.puzzleOptionsContainer = document.querySelector(
       "#puzzle-setup--options"
@@ -153,6 +147,22 @@ export default class PuzzlyCreator {
     }
 
     this.isIntegration = window.location.href.indexOf("isIntegration=true") > -1;
+  }
+
+  setPuzzleSize(selectedShape: PuzzleShapes, imageWidth: number, imageHeight: number) {
+    switch (selectedShape) {
+      case PuzzleShapes.Square:
+        if (window.innerHeight < window.innerWidth) {
+          this.boardHeight = Math.ceil((window.innerHeight / 100) * 40);
+          this.boardWidth = this.boardHeight;
+        } else if (window.innerWidth < window.innerHeight) {
+          this.boardWidth = Math.ceil((window.innerWidth / 100) * 40);
+          this.boardHeight = this.boardWidth;
+        }
+        break;
+      case PuzzleShapes.Rectangle:
+
+    }
   }
 
   setPuzzleShapeFieldValues() {
@@ -269,6 +279,7 @@ export default class PuzzlyCreator {
     imageHeight: number,
     minimumPieceSize: number,
     minimumNumberOfPieces: number,
+    previewElement: HTMLDivElement,
   ): {
     rectangularPuzzleConfigs: PuzzleConfig[];
     squarePuzzleConfigs: PuzzleConfig[];
@@ -294,11 +305,21 @@ export default class PuzzlyCreator {
           : imageHeight / n
       );
 
+      const { offsetWidth, offsetHeight } = previewElement;
+      let scale: number;
+      if (imageWidth < offsetWidth) {
+        scale = 1
+      } else {
+        scale = offsetWidth / imageWidth;
+      }
+
       const { connectorSize } = getConnectorDimensions(divisionResult);
+
+      const puzzleConfig = {} as PuzzleConfig;
+      puzzleConfig.scale = scale;
 
       if (shortSide) {
         let numberOfPiecesOnLongSide: number;
-        const puzzleConfig = {} as PuzzleConfig;
 
         puzzleConfig.imageWidth = imageWidth;
         puzzleConfig.imageHeight = imageHeight;
@@ -357,6 +378,7 @@ export default class PuzzlyCreator {
         imageHeight,
         puzzleWidth: puzzleSize,
         puzzleHeight: puzzleSize,
+        scale,
       };
       squarePuzzleConfigs.push(config);
 
@@ -467,6 +489,7 @@ export default class PuzzlyCreator {
       height,
       PIECE_SIZE,
       MINIMUM_NUMBER_OF_PIECES,
+      this.imageUploadPreviewEl
     );
 
     this.puzzleConfigs = {
@@ -566,7 +589,7 @@ export default class PuzzlyCreator {
 
     fd.append("previewWidth", this.imagePreviewEl.offsetWidth.toString());
     fd.append("previewHeight", this.imagePreviewEl.offsetHeight.toString());
-    fd.append("boardSize", this.boardHeight.toString());
+    // fd.append("boardSize", this.boardHeight.toString());
     fd.append("integration", this.isIntegration + "");
 
     return fetch("/api/upload", {

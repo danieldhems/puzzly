@@ -1,4 +1,4 @@
-import { EVENT_TYPES, ZOOM_INTERVALS } from "./constants";
+import { EVENT_TYPES, MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED, SCREEN_MARGIN, ZOOM_INTERVALS } from "./constants";
 import Utils from "./utils";
 import BaseMovable from "./BaseMovable";
 import Puzzly from "./Puzzly";
@@ -29,12 +29,10 @@ export default class Zoom extends BaseMovable {
     this.zoomLevel = ZOOM_INTERVALS[this.currentZoomInterval];
 
     window.Zoom = this;
-
-    this.centerPlayBoundary();
+    window.Puzzly.PlayBoundaryMovable.reCenter();
 
     window.addEventListener("keydown", this.handleNormalZoom.bind(this));
     window.addEventListener("dblclick", this.handlePointerZoom.bind(this));
-    window.addEventListener("resize", this.centerPlayBoundary.bind(this));
   }
 
   handleNormalZoom(event: KeyboardEvent) {
@@ -60,7 +58,7 @@ export default class Zoom extends BaseMovable {
     // "0" Number key
     if (event.which === 48) {
       this.resetZoomLevel();
-      this.centerPlayBoundary();
+      window.Puzzly.PlayBoundaryMovable.reCenter();
     }
   }
 
@@ -113,7 +111,7 @@ export default class Zoom extends BaseMovable {
     this.currentZoomInterval = 0;
     this.zoomLevel = ZOOM_INTERVALS[this.currentZoomInterval];
     this.scalePlayBoundary(this.zoomLevel);
-    this.centerPlayBoundary();
+    window.Puzzly.PlayBoundaryMovable.reCenter();
     this.isZoomed = false;
   }
 
@@ -141,7 +139,7 @@ export default class Zoom extends BaseMovable {
 
       if (ZOOM_INTERVALS[newLevel] === ZOOM_INTERVALS[0]) {
         this.isZoomed = false;
-        this.centerPlayBoundary();
+        window.Puzzly.PlayBoundaryMovable.reCenter();
       }
     }
   }
@@ -161,19 +159,5 @@ export default class Zoom extends BaseMovable {
     }
   }
 
-  centerPlayBoundary() {
-    if (this.playBoundary) {
-      const stageRect = this.stage.getBoundingClientRect();
-      const playBoundaryRect = this.playBoundary.getBoundingClientRect();
 
-      this.playBoundary.style.top = Utils.getPxString(
-        stageRect.height / 2 - playBoundaryRect.height / 2
-      );
-      this.playBoundary.style.left = Utils.getPxString(
-        stageRect.width / 2 - playBoundaryRect.width / 2
-      );
-
-      window.dispatchEvent(new CustomEvent(EVENT_TYPES.RESIZE));
-    }
-  }
 }

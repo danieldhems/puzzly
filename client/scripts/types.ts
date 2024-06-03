@@ -108,6 +108,7 @@ export interface JigsawPieceData {
   piecesPerSideVertical: number;
   selectedNumPieces: number;
   svgPath: string;
+  scale: number;
 }
 
 export interface GroupData {
@@ -195,6 +196,7 @@ export interface PuzzleConfig {
    */
   imageWidth: number;
   imageHeight: number;
+  scale: number;
 }
 
 export enum PuzzleAxis {

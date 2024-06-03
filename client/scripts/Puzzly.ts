@@ -8,6 +8,7 @@ import {
   ELEMENT_IDS,
   EVENT_TYPES,
   FLOAT_TOLERANCE_AMOUNT,
+  SCREEN_MARGIN,
   SHADOW_OFFSET_RATIO,
 } from "./constants";
 import { PocketMovable } from "./PocketMovable";
@@ -85,6 +86,13 @@ export default class Puzzly {
   filterBtnOnLabel: HTMLSpanElement | null;
   timeStarted: number;
   integration: boolean;
+  imageWidth: number;
+  imageHeight: number;
+  scale: number;
+  viewportLargeEnoughForOutOfBoundsArea: boolean;
+  playBoundaryWidth: number;
+  playBoundaryHeight: number;
+  lengthForFullScreen: number;
 
   constructor(puzzleId: string, config: any) {
     Object.assign(this, {
@@ -120,6 +128,8 @@ export default class Puzzly {
 
     console.log(this);
 
+
+
     this.previewImageType = SolvedPuzzlePreviewType.AlwaysOn;
 
     this.stage = document.querySelector(`#${ELEMENT_IDS.STAGE}`);
@@ -150,6 +160,8 @@ export default class Puzzly {
 
     this.playBoundary = document.querySelector("#play-boundary");
 
+    this.boardWidth = this.imageWidth * this.scale;
+    this.boardHeight = this.imageHeight * this.scale;
     this.setupSolvingArea();
 
     const solvingAreaBoundingBox = (
@@ -253,8 +265,8 @@ export default class Puzzly {
       window.location.href = "/";
     });
 
-    this.Zoom = new Zoom(this);
     new PlayBoundaryMovable(this);
+    this.Zoom = new Zoom(this);
 
     (this.stage as HTMLDivElement).classList.add("loaded");
     window.dispatchEvent(
@@ -292,27 +304,18 @@ export default class Puzzly {
   }
 
   setupSolvingArea() {
-    const playBoundaryWidth =
-      window.innerWidth > window.innerHeight
-        ? window.innerHeight
-        : window.innerWidth;
-    const playBoundaryHeight =
-      window.innerHeight > window.innerWidth
-        ? window.innerWidth
-        : window.innerHeight;
+    console.log("set up solving area", this)
 
-    (this.playBoundary as HTMLDivElement).style.width =
-      Utils.getPxString(playBoundaryWidth);
-    (this.playBoundary as HTMLDivElement).style.height =
-      Utils.getPxString(playBoundaryHeight);
 
-    this.solvingArea.style.width = Utils.getPxString(this.boardWidth);
-    this.solvingArea.style.height = Utils.getPxString(this.boardHeight);
+
+
+    this.solvingArea.style.width = Utils.getPxString(this.viewportLargeEnoughForOutOfBoundsArea ? this.boardWidth : this.lengthForFullScreen);
+    this.solvingArea.style.height = Utils.getPxString(this.viewportLargeEnoughForOutOfBoundsArea ? this.boardHeight : this.lengthForFullScreen);
     this.solvingArea.style.top = Utils.getPxString(
-      playBoundaryHeight / 2 - this.solvingArea.offsetHeight / 2
+      this.playBoundaryHeight / 2 - this.solvingArea.offsetHeight / 2
     );
     this.solvingArea.style.left = Utils.getPxString(
-      playBoundaryWidth / 2 - this.solvingArea.offsetWidth / 2
+      this.playBoundaryWidth / 2 - this.solvingArea.offsetWidth / 2
     );
 
     const solvedCnvContainer = document.getElementById(
