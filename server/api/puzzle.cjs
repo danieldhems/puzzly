@@ -56,57 +56,19 @@ var api = {
         ? UPLOADS_DIR_INTEGRATION
         : UPLOADS_DIR_PROD;
 
-      // These are the paths we want the sprites to be created at - they're uploaded by the client in base64
-      const spritePath =
-        uploadDir +
-        "sprite_" +
-        imageNameWithoutExt +
-        "_" +
-        data.selectedNumPieces +
-        "_" +
-        timeStamp +
-        ".png";
+      console.log("data from client", data);
 
-      var base64Data = data.spriteEncodedString.replace(
-        /^data:image\/png;base64,/,
-        ""
-      );
-
-      try {
-        // Save to disk the puzzle sprite that the client has produced
-        fs.writeFile(spritePath, base64Data, "base64", async function (err) {
-          if (err) {
-            console.log("fs error", err);
-          }
-        });
-      } catch (e) {
-        console.log("Error!", e);
-      }
-
-      // console.log("data from client", data);
-
-      const dbPayload = {
-        ...data,
-        spritePath,
-      };
-
-      // FIX: We don't want to add these to the DB record, but we shouldn't be omitting them like this
-      delete dbPayload.spriteEncodedString;
-      delete dbPayload.pieces;
-
-      // console.log("creating puzzle", dbPayload);
-
-      const puzzleDBResponse = await puzzles.insertOne(dbPayload);
+      const puzzleDBResponse = await puzzles.insertOne(data);
       const puzzleId = puzzleDBResponse.ops[0]._id;
       // console.log("puzzle DB result", puzzleDBResponse.ops[0]._id);
 
-      data.pieces.forEach((element) => {
-        element.puzzleId = puzzleId;
-      });
+      // data.pieces.forEach((element) => {
+      //   element.puzzleId = puzzleId;
+      // });
 
       // console.log("data for pieces insertion", data.pieces);
 
-      const piecesDBResponse = await pieces.insertMany(data.pieces);
+      // const piecesDBResponse = await pieces.insertMany(data.pieces);
 
       // console.log("puzzleDBResponse", puzzleDBResponse.ops[0]);
       // console.log("piecesDBResponse", piecesDBResponse.ops);
@@ -114,7 +76,7 @@ var api = {
       res.status(200).send({
         ...puzzleDBResponse.ops[0],
         ...data,
-        pieces: piecesDBResponse.ops,
+        // pieces: piecesDBResponse.ops,
       });
     });
   },
@@ -151,7 +113,7 @@ var api = {
       res.status(200).send(result);
     });
   },
-  update: function (req, res) {},
+  update: function (req, res) { },
   destroy: async function (req, res) {
     const args = req.params || req;
 

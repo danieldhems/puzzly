@@ -304,10 +304,10 @@ export const generatePieces = (puzzleConfig: PuzzleConfig): SkeletonPiece[] => {
 }
 
 export const addPuzzleDataToPieces = (pieces: SkeletonPiece[], puzzleConfig: PuzzleConfig) => {
-  const { pieceSize, connectorSize, scale } = puzzleConfig;
+  const { pieceSize, connectorSize } = puzzleConfig;
 
-  const scaledPieceSize = pieceSize * scale;
-  const scaledConnectorSize = connectorSize * scale;
+  const scaledPieceSize = pieceSize;
+  const scaledConnectorSize = connectorSize;
 
   return pieces.map((piece) => {
     let xPos = (scaledPieceSize * piece.numPiecesFromLeftEdge);
@@ -752,8 +752,11 @@ export const getPuzzleImpressions = (puzzleConfigs: PuzzleConfig[]): HTMLDivElem
 
     const svgElement = document.createElementNS(SVG_NAMESPACE, "svg");
     svgElement.setAttribute("xmlns", SVG_NAMESPACE);
+    // svgElement.setAttribute("width", currentConfig.puzzleWidth + "");
+    // svgElement.setAttribute("height", currentConfig.puzzleHeight + "");
     svgElement.setAttribute("fill", "none");
     svgElement.setAttribute("stroke", "#000")
+    // svgElement.setAttribute("stroke-alignment", "inner")
     svgElement.setAttribute("viewBox", "0 0 " + currentConfig.puzzleWidth + " " + currentConfig.puzzleHeight);
 
     element.appendChild(svgElement)

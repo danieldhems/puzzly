@@ -196,7 +196,6 @@ export interface PuzzleConfig {
    */
   imageWidth: number;
   imageHeight: number;
-  scale: number;
 }
 
 export enum PuzzleAxis {

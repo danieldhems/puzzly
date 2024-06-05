@@ -279,7 +279,6 @@ export default class PuzzlyCreator {
     imageHeight: number,
     minimumPieceSize: number,
     minimumNumberOfPieces: number,
-    previewElement: HTMLDivElement,
   ): {
     rectangularPuzzleConfigs: PuzzleConfig[];
     squarePuzzleConfigs: PuzzleConfig[];
@@ -289,7 +288,7 @@ export default class PuzzlyCreator {
         : imageHeight < imageWidth ? PuzzleAxis.Vertical
           : null;
 
-    let n: number = minimumNumberOfPieces;
+    let n: number = Math.floor(Math.sqrt(minimumNumberOfPieces));
     let divisionResult: number;
 
     const rectangularPuzzleConfigs: PuzzleConfig[] = [];
@@ -299,24 +298,15 @@ export default class PuzzlyCreator {
       let puzzleWidth: number;
       let puzzleHeight: number;
 
-      divisionResult = Math.ceil(
+      divisionResult = Math.floor(
         shortSide === PuzzleAxis.Horizontal
           ? imageWidth / n
           : imageHeight / n
       );
 
-      const { offsetWidth, offsetHeight } = previewElement;
-      let scale: number;
-      if (imageWidth < offsetWidth) {
-        scale = 1
-      } else {
-        scale = offsetWidth / imageWidth;
-      }
-
       const { connectorSize } = getConnectorDimensions(divisionResult);
 
       const puzzleConfig = {} as PuzzleConfig;
-      puzzleConfig.scale = scale;
 
       if (shortSide) {
         let numberOfPiecesOnLongSide: number;
@@ -331,7 +321,6 @@ export default class PuzzlyCreator {
         switch (shortSide) {
           case PuzzleAxis.Horizontal:
             // Portrait puzzle
-            puzzleWidth = imageWidth;
             longSideConfig = this.getConfigForForAdjacentSideByPieceSize(
               imageHeight,
               divisionResult
@@ -341,13 +330,12 @@ export default class PuzzlyCreator {
 
             puzzleConfig.numberOfPiecesHorizontal = n;
             puzzleConfig.numberOfPiecesVertical = numberOfPiecesOnLongSide;
-            puzzleConfig.puzzleWidth = imageWidth;
-            puzzleConfig.puzzleHeight = puzzleHeight;
+            puzzleConfig.puzzleWidth = divisionResult * n;
+            puzzleConfig.puzzleHeight = divisionResult * numberOfPiecesOnLongSide;
             break;
 
           case PuzzleAxis.Vertical:
             // Landscape puzzle
-            puzzleHeight = imageHeight;
             longSideConfig = this.getConfigForForAdjacentSideByPieceSize(
               imageWidth,
               divisionResult
@@ -357,8 +345,8 @@ export default class PuzzlyCreator {
 
             puzzleConfig.numberOfPiecesHorizontal = numberOfPiecesOnLongSide;
             puzzleConfig.numberOfPiecesVertical = n;
-            puzzleConfig.puzzleWidth = puzzleWidth;
-            puzzleConfig.puzzleHeight = imageHeight;
+            puzzleConfig.puzzleWidth = divisionResult * numberOfPiecesOnLongSide;
+            puzzleConfig.puzzleHeight = divisionResult * n;
             break;
         }
 
@@ -378,13 +366,12 @@ export default class PuzzlyCreator {
         imageHeight,
         puzzleWidth: puzzleSize,
         puzzleHeight: puzzleSize,
-        scale,
       };
       squarePuzzleConfigs.push(config);
 
       n = n + 1;
 
-    } while (divisionResult > minimumPieceSize)
+    } while (divisionResult >= minimumPieceSize)
 
     return {
       rectangularPuzzleConfigs,
@@ -489,13 +476,14 @@ export default class PuzzlyCreator {
       height,
       PIECE_SIZE,
       MINIMUM_NUMBER_OF_PIECES,
-      this.imageUploadPreviewEl
     );
 
     this.puzzleConfigs = {
       rectangularPuzzleConfigs,
       squarePuzzleConfigs,
     };
+
+    console.log(rectangularPuzzleConfigs)
 
     this.activePuzzleConfigs = this.getPuzzleConfigsForSelectedShape(this.selectedPuzzleShape);
     this.selectedPuzzleConfig = this.activePuzzleConfigs[0];
