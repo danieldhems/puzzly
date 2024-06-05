@@ -355,7 +355,6 @@ export default class PuzzlyCreator {
       }
 
       // Square puzzles
-      const puzzleSize = Math.min(imageWidth, imageHeight);
       const config = {
         numberOfPiecesHorizontal: n,
         numberOfPiecesVertical: n,
@@ -364,8 +363,8 @@ export default class PuzzlyCreator {
         connectorSize,
         imageWidth,
         imageHeight,
-        puzzleWidth: puzzleSize,
-        puzzleHeight: puzzleSize,
+        puzzleWidth: divisionResult * n,
+        puzzleHeight: divisionResult * n,
       };
       squarePuzzleConfigs.push(config);
 

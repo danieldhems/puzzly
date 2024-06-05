@@ -7,7 +7,7 @@ export interface RestrictedDraggableArguments {
     left: number;
     width: number;
     height: number;
-    allowedMovementAxis: MovementAxis | undefined;
+    allowedMovementAxis?: MovementAxis;
   };
   id: string;
   restrictionBoundingBox:
@@ -110,7 +110,7 @@ export default class RestrictedDraggable {
         newXValue + this.element.offsetWidth <= this.rightBoundary;
 
       const isWithinVerticalBounds =
-        newYValue >= this.topBoundary ||
+        newYValue >= this.topBoundary &&
         newYValue + this.element.offsetHeight <= this.bottomBoundary;
 
       if (this.allowedMovementAxis === MovementAxis.X) {

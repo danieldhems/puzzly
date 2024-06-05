@@ -39,23 +39,17 @@ export default class PuzzleImpressionOverlay {
         this.setActiveImpression(this.selectedPuzzleConfig);
     }
 
-    getLayout(puzzleSize: PuzzleConfig) {
-        let width, height, allowedMovementAxis;
-
+    getLayout(puzzleConfig: PuzzleConfig) {
         // Calculate top and left position of target element, assuming it is centered
         const topBoundary = (this.container.offsetHeight - this.targetElement.offsetHeight) / 2;
         const leftBoundary = (this.container.offsetWidth - this.targetElement.offsetWidth) / 2;
         const rightBoundary = this.container.offsetWidth - leftBoundary;
         const bottomBoundary = this.container.offsetHeight - topBoundary;
 
-        width = puzzleSize.puzzleWidth;
-        height = puzzleSize.puzzleHeight;
+        const { puzzleWidth, puzzleHeight, imageWidth, imageHeight } = puzzleConfig;
 
-        const { imageWidth, imageHeight } = puzzleSize;
-        allowedMovementAxis = imageWidth < imageHeight ? MovementAxis.Y : MovementAxis.X;
-
-        const scaledWidth = (this.targetElement.offsetWidth / puzzleSize.imageWidth) * puzzleSize.puzzleWidth;
-        const scaledHeight = (this.targetElement.offsetHeight / puzzleSize.imageHeight) * puzzleSize.puzzleHeight;
+        const scaledWidth = (this.targetElement.offsetWidth / imageWidth) * puzzleWidth;
+        const scaledHeight = (this.targetElement.offsetHeight / imageHeight) * puzzleHeight;
 
         return {
             left: leftBoundary,
@@ -64,7 +58,6 @@ export default class PuzzleImpressionOverlay {
             bottom: bottomBoundary,
             width: scaledWidth,
             height: scaledHeight,
-            allowedMovementAxis,
         }
     }
 
