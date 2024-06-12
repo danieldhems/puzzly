@@ -97,6 +97,7 @@ export default class SingleMovable extends BaseMovable {
   createElement() {
     const {
       id,
+      index,
       _id,
       puzzleId,
       groupId,
@@ -195,20 +196,22 @@ export default class SingleMovable extends BaseMovable {
 
     const svgns = "http://www.w3.org/2000/svg";
 
-    const { pieceSize, puzzleWidth, puzzleHeight, puzzleImagePath } = this.Puzzly;
+    const { pieceSize, imageWidth, imageHeight, puzzleImagePath, cropData } = this.Puzzly;
     const pathString = getJigsawShapeSvgString(this.pieceData, pieceSize);
+
+    const shapeId = `shape-${index}`;
+    const clipId = `clip-${index}`;
 
     const svgElementTemplate = `
       <svg xmlns="${svgns}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
         <defs>
-          <path id="shape" class="fg" d="${pathString}"></path>
+          <path id="${shapeId}" d="${pathString}"></path>
         </defs>
-        <clipPath id="clip">
-            <use href="#shape"></use>
+        <clipPath id="${clipId}">
+            <use href="#${shapeId}"></use>
         </clipPath>
-        <use href="#shape" stroke="black" stroke-width="3"></use>
-        <use href="#shape" fill="black" x="3" y="3" />
-        <image clip-path="url(#clip)" href="${puzzleImagePath}" width="${puzzleWidth}" height="${puzzleHeight}" x="-${puzzleX}" y="-${puzzleY}" />
+        <use href="#${shapeId}" fill="none" stroke="black" stroke-width="1"></use>
+        <image clip-path="url(#${clipId})" href="${puzzleImagePath}" width="${imageWidth}" height="${imageHeight}" />
       </svg>
     `;
 

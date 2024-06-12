@@ -11,6 +11,8 @@ export default class PuzzleImpressionOverlay {
     selectedPuzzleConfig: PuzzleConfig;
     pieceSvgGroups: HTMLOrSVGElement[];
     impressionsContainer: HTMLDivElement;
+    leftBoundary: number;
+    topBoundary: number;
 
     constructor({
         targetElement,
@@ -27,6 +29,7 @@ export default class PuzzleImpressionOverlay {
         this.container = this.targetElement.parentElement as HTMLElement;
 
         const layout = this.getLayout(this.selectedPuzzleConfig);
+        this.setLayoutInternal(layout)
 
         this.draggable = new RestrictedDraggable({
             containerElement: this.container,
@@ -61,6 +64,11 @@ export default class PuzzleImpressionOverlay {
         }
     }
 
+    setLayoutInternal({ top, left }: { top: number; left: number }) {
+        this.leftBoundary = left;
+        this.topBoundary = top;
+    }
+
     setImpressions(puzzleConfigs: PuzzleConfig[]) {
         if (this.impressionsContainer) {
             this.impressionsContainer.remove();
@@ -84,5 +92,17 @@ export default class PuzzleImpressionOverlay {
         })
     }
 
-
+    getPositionAndDimensions() {
+        const { offsetLeft, offsetTop, offsetWidth, offsetHeight } = this.draggable.element;
+        const width = parseInt(this.draggable.element.style.width);
+        const height = parseInt(this.draggable.element.style.height);
+        console.log("width", width)
+        console.log("offsetWidth", offsetWidth)
+        return {
+            left: offsetLeft - this.leftBoundary,
+            top: offsetTop - this.topBoundary,
+            width,
+            height,
+        }
+    }
 }

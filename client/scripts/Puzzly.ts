@@ -93,6 +93,7 @@ export default class Puzzly {
   integration: boolean;
   imageWidth: number;
   imageHeight: number;
+  imagePreviewType: SolvedPuzzlePreviewType;
   scale: number;
   viewportLargeEnoughForOutOfBoundsArea: boolean;
   playBoundaryWidth: number;
@@ -100,6 +101,12 @@ export default class Puzzly {
   lengthForFullScreen: number;
   numberOfPiecesHorizontal: number;
   numberOfPiecesVertical: number;
+  cropData: {
+    top: number,
+    left: number,
+    width: number;
+    height: number;
+  }
 
   constructor(puzzleId: string, config: any) {
     Object.assign(this, {
@@ -203,7 +210,7 @@ export default class Puzzly {
 
     this.Pockets = new Pockets(this);
     this.DragAndSelect = new DragAndSelect(this);
-    this.SolvedPuzzlePreview = new SolvedPuzzlePreview(this.previewImageType);
+    this.SolvedPuzzlePreview = new SolvedPuzzlePreview(this);
     this.PocketMovable = new PocketMovable(this);
     this.PieceLayouts = new PieceLayouts(this);
     this.PersistenceOperations = new PersistenceOperations(this);
@@ -264,7 +271,7 @@ export default class Puzzly {
       }
     } else {
       console.log("pieces", this.pieces);
-      this.pieces.forEach((piece) => {
+      this.pieces.forEach((piece, index) => {
         const pieceInstance = new SingleMovable({
           puzzleData: this,
           pieceData: {
@@ -272,6 +279,7 @@ export default class Puzzly {
             spritePath: this.spritePath,
             piecesPerSideHorizontal: this.piecesPerSideHorizontal,
             piecesPerSideVertical: this.piecesPerSideVertical,
+            index,
           },
         });
         this.pieceInstances.push(pieceInstance);
@@ -339,6 +347,8 @@ export default class Puzzly {
     const { imageWidth, imageHeight, numberOfPiecesHorizontal, numberOfPiecesVertical } = puzzleConfig;
     const smallerLength = Math.min(imageWidth, imageHeight);
     const largerLength = Math.max(imageWidth, imageHeight);
+
+    const isSquare = numberOfPiecesHorizontal === numberOfPiecesVertical;
     const aspectRatio = smallerLength / largerLength;
 
     let width: number, height: number;
@@ -346,7 +356,7 @@ export default class Puzzly {
       height = window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION;
       return {
         height,
-        width: height * aspectRatio,
+        width: isSquare ? height : height * aspectRatio,
         pieceSize: height / numberOfPiecesVertical,
         connectorSize: height / 100 * CONNECTOR_SIZE_PERC,
       }
@@ -355,7 +365,7 @@ export default class Puzzly {
       width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
       return {
         width,
-        height: width * aspectRatio,
+        height: isSquare ? width : width * aspectRatio,
         pieceSize: width / numberOfPiecesHorizontal,
         connectorSize: width / 100 * CONNECTOR_SIZE_PERC,
       }

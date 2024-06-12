@@ -505,6 +505,7 @@ export default class PuzzlyCreator {
 
     this.setPuzzleShapeFieldValues();
     this.addPuzzleOptionEventListeners();
+    this.getCropData();
   }
 
   getPuzzleConfigsForSelectedShape(shape: PuzzleShapes) {
@@ -585,7 +586,7 @@ export default class PuzzlyCreator {
     }).then((response) => response.json());
   }
 
-  getCropData(imageEl: HTMLImageElement) {
+  getCropData() {
     let widthPercentage,
       heightPercentage,
       leftOffsetPercentage,
@@ -594,54 +595,59 @@ export default class PuzzlyCreator {
     const imageWidth = this.sourceImage.dimensions.width;
     const imageHeight = this.sourceImage.dimensions.height;
 
-    console.log("image width", imageWidth)
-    console.log("crop width", this.puzzleTargetAreaWidth)
+    const { top, left, width, height } = this.PuzzleImpressionOverlay.getPositionAndDimensions();
+    const { offsetWidth, offsetHeight } = this.imageUploadPreviewEl;
 
-    if (imageWidth > imageHeight) {
-      widthPercentage = (this.puzzleTargetAreaWidth / imageWidth) * 100;
-      leftOffsetPercentage =
-        (this.puzzleTargetAreaOffsetLeft / imageWidth) * 100;
-      topOffsetPercentage = 0;
-      heightPercentage = 100;
-    } else {
-      heightPercentage =
-        (this.puzzleTargetAreaHeight / imageHeight) * 100;
-      topOffsetPercentage =
-        (this.puzzleTargetAreaOffsetTop / imageHeight) * 100;
-      leftOffsetPercentage = 0;
-      widthPercentage = 100;
-    }
+    console.log("image width", imageWidth)
+    console.log("image height", imageHeight)
+    console.log("puzzle impression width", width)
+    console.log("puzzle impression height", height)
+
+    console.log("preview width", offsetWidth)
+    console.log("preview height", offsetHeight)
+
+    console.log("width percentage", width / offsetWidth * 100)
+    console.log("height percentage", height / offsetHeight * 100)
+
+    widthPercentage = Math.floor((width / offsetWidth) * 100);
+    heightPercentage = Math.floor((height / offsetHeight) * 100);
+    leftOffsetPercentage =
+      Math.floor(
+        (Math.abs(left) / offsetWidth) * 100
+      );
+    topOffsetPercentage =
+      Math.floor(
+        (Math.abs(top) / offsetHeight) * 100
+      );
+
+    console.log("left percentage", leftOffsetPercentage)
+    console.log("top percentage", topOffsetPercentage)
 
     return {
-      widthPercentage,
-      heightPercentage,
+      imageWidth,
+      imageHeight,
       topOffsetPercentage,
       leftOffsetPercentage,
+      widthPercentage,
+      heightPercentage
     };
-  }
-
-  getImageDimensions(imageEl: HTMLImageElement) {
-    return imageEl.offsetWidth !== imageEl.offsetHeight
-      ? this.getCropData(imageEl)
-      : {
-        topOffsetPercentage: 0,
-        leftOffsetPercentage: 0,
-        heightPercentage: 100,
-        widthPercentage: 100,
-      };
   }
 
   async createPuzzle(options: Record<any, any> | null = null) {
     const pieces = generatePieces(this.selectedPuzzleConfig);
-    const mappedPieces = addPuzzleDataToPieces(pieces, this.selectedPuzzleConfig)
+    const cropData = this.getCropData();
+    const mappedPieces = addPuzzleDataToPieces(pieces, this.selectedPuzzleConfig, cropData)
 
-    console.log("mapped pieces", mappedPieces)
+    // console.log("mapped pieces", mappedPieces)
+    // console.log("crop data", cropData)
 
     const data = {
       ...this.selectedPuzzleConfig,
       imageName: this.sourceImage.imageName,
+      noDispersal: this.debugOptions.noDispersal,
       // pieces: JSON.stringify(mappedPieces),
       isIntegration: this.isIntegration,
+      cropData,
     }
 
     fetch("/api/puzzle", {

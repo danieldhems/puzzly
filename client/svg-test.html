@@ -46,15 +46,44 @@
     <div id="piece-1" class="puzzle-piece">
         <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 80 80">
             <defs>
-                <path id="shape" class="fg" d="M 1 1 h 56 v 19.6 c 20 -8.000000000000002, 20 24.8, 1.0287033112837768 16.8 v 19.6 h -19.6 c 8.000000000000002 20, -24.799999999999997 20.000000000000004, -16.8 2.0574066225675536 h -19.6 z"></path>
+                <path id="shape-1" class="fg" d="M 0 0 h 56 v 19.6 c 20 -8.000000000000002, 20 24.8, 1.0287033112837768 16.8 v 19.6 h -19.6 c 8.000000000000002 20, -24.799999999999997 20.000000000000004, -16.8 2.0574066225675536 h -19.6 z"></path>
+                <filter id="filter-1">
+                    <feSpecularLighting
+                        result="specOut"
+                        specularExponent="100"
+                        lighting-color="#bbbbbb">
+                        <fePointLight x="50" y="5" z="200" />
+                        </feSpecularLighting>
+                        <feComposite
+                        in="SourceGraphic"
+                        in2="specOut"
+                        operator="arithmetic"
+                        k1="0"
+                        k2="1"
+                        k3="1"
+                        k4="0" />
+                </filter>
             </defs>
-            <clipPath id="clip">
-                <use href="#shape"></use>
+            <clipPath id="clip-1">
+                <use href="#shape-1"></use>
             </clipPath>
-            <use href="#shape" stroke="black" stroke-width="3"></use>
-            <use href="#shape" fill="black" x="3" y="3" />
-            <image clip-path="url(#clip)" href="hl.jpg" width="1440" height="900" x="-100" y="0" />
+            <!-- <use href="#shape-1" stroke="black" stroke-width="1"></use> -->
+            <use href="#shape-1" fill="black" x="1" y="1" />
+            <image clip-path="url(#clip-1)" filter="url(#filter-1)" href="hl.jpg" width="1440" height="900" x="-100" y="0" />
         </svg>
+
+        <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 80 80">
+            <defs>
+                <path id="shape-2" class="fg" d="M 0 0 h 45.5 c -20 47, 59 47, 39 0 h 45.5 v 45.5 c 47 -20.000000000000004, 47.00000000000001 59, 2.388061258337339e-15 39 v 45.5 h -130 v -45.5 c 47.00000000000001 19.999999999999993, 46.999999999999986 -59.00000000000001, -7.164183775012016e-15 -39 z"></path>
+            </defs>
+            <clipPath id="clip-2">
+                <use href="#shape-2"></use>
+            </clipPath>
+            <use href="#shape-2" stroke="black" stroke-width="1"></use>
+            <use href="#shape-2" fill="black" x="1" y="1" />
+            <image clip-path="url(#clip-2)" href="hl.jpg" width="1440" height="900" x="-100" y="0" />
+        </svg>
+        
         </div>
         </div>
         </body>

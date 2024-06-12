@@ -72,6 +72,7 @@ export type ConnectsTo = Record<string, number>;
 export interface JigsawPieceData {
   // This is actually the index of the piece
   id: number;
+  index: number;
   // This is the true ID for the piece in the database
   _id: string;
   puzzleId: string;

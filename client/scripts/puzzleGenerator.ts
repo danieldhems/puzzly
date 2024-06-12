@@ -303,34 +303,35 @@ export const generatePieces = (puzzleConfig: PuzzleConfig): SkeletonPiece[] => {
   return pieces;
 }
 
-export const addPuzzleDataToPieces = (pieces: SkeletonPiece[], puzzleConfig: PuzzleConfig) => {
-  const { pieceSize, connectorSize } = puzzleConfig;
+export const addPuzzleDataToPieces = (pieces: SkeletonPiece[], puzzleConfig: PuzzleConfig, cropData: { topOffsetPercentage: number; leftOffsetPercentage: number }) => {
+  const { pieceSize, imageWidth, imageHeight, connectorSize } = puzzleConfig;
+  const { topOffsetPercentage, leftOffsetPercentage } = cropData;
 
-  const scaledPieceSize = pieceSize;
-  const scaledConnectorSize = connectorSize;
+  const top = imageHeight / 100 * topOffsetPercentage;
+  const left = imageWidth / 100 * leftOffsetPercentage;
 
   return pieces.map((piece) => {
-    let xPos = (scaledPieceSize * piece.numPiecesFromLeftEdge);
-    let yPos = (scaledPieceSize * piece.numPiecesFromTopEdge);
-    let width = scaledPieceSize;
-    let height = scaledPieceSize;
+    let xPos = left + (pieceSize * piece.numPiecesFromLeftEdge);
+    let yPos = top + (pieceSize * piece.numPiecesFromTopEdge);
+    let width = pieceSize;
+    let height = pieceSize;
 
     if (piece.type[0] === 1) {
-      yPos -= scaledConnectorSize;
-      height += scaledConnectorSize;
+      yPos -= connectorSize;
+      height += connectorSize;
     }
 
     if (piece.type[3] === 1) {
-      xPos -= scaledConnectorSize;
-      width += scaledConnectorSize;
+      xPos -= connectorSize;
+      width += connectorSize;
     }
 
     if (piece.type[1] === 1) {
-      width += scaledConnectorSize;
+      width += connectorSize;
     }
 
     if (piece.type[2] === 1) {
-      height += scaledConnectorSize;
+      height += connectorSize;
     }
 
     return {
