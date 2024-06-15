@@ -303,18 +303,18 @@ export const generatePieces = (puzzleConfig: PuzzleConfig): SkeletonPiece[] => {
   return pieces;
 }
 
-export const addPuzzleDataToPieces = (pieces: SkeletonPiece[], puzzleConfig: PuzzleConfig, cropData: { topOffsetPercentage: number; leftOffsetPercentage: number }) => {
-  const { pieceSize, imageWidth, imageHeight, connectorSize } = puzzleConfig;
-  const { topOffsetPercentage, leftOffsetPercentage } = cropData;
+export const addPuzzleDataToPieces = (pieces: SkeletonPiece[], puzzleConfig: PuzzleConfig, puzzleDimensions: { width: number; height: number }) => {
+  const { connectorSize, numberOfPiecesHorizontal, numberOfPiecesVertical } = puzzleConfig;
+  const { width, height } = puzzleDimensions;
 
-  const top = imageHeight / 100 * topOffsetPercentage;
-  const left = imageWidth / 100 * leftOffsetPercentage;
+  const pieceSize = Math.min(width, height) / Math.min(numberOfPiecesHorizontal, numberOfPiecesVertical);
 
   return pieces.map((piece) => {
-    let xPos = left + (pieceSize * piece.numPiecesFromLeftEdge);
-    let yPos = top + (pieceSize * piece.numPiecesFromTopEdge);
     let width = pieceSize;
     let height = pieceSize;
+
+    let xPos = pieceSize * piece.numPiecesFromLeftEdge;
+    let yPos = pieceSize * piece.numPiecesFromTopEdge;
 
     if (piece.type[0] === 1) {
       yPos -= connectorSize;
@@ -336,6 +336,9 @@ export const addPuzzleDataToPieces = (pieces: SkeletonPiece[], puzzleConfig: Puz
 
     return {
       ...piece,
+      // TODO: Confusing to have to do this: Should 'pieceSize' be renamed in the PuzzleConfig type?
+      // Override piece size now that we know what size the puzzle is going to be
+      pieceSize,
       puzzleX: xPos,
       puzzleY: yPos,
       width,

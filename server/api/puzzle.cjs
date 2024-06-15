@@ -1,9 +1,8 @@
 var router = require("express").Router();
 // var { default: PuzzleGenerator } = require("../../common/puzzleGenerator");
-
+var Sharp = require("sharp");
 const ObjectID = require("mongodb").ObjectID;
 const assert = require("assert");
-const fs = require("fs");
 const {
   UPLOADS_DIR_INTEGRATION,
   UPLOADS_DIR_PROD,

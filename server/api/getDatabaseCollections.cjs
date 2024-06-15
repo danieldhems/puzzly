@@ -9,7 +9,7 @@ const {
 
 module.exports.default = function (db, data) {
   const collections = {};
-  console.log("getDatabaseCollections", data);
+  // console.log("getDatabaseCollections", data);
   collections.puzzles = data.integration
     ? db.collection(PUZZLES_INTEGRATION_COLLECTION)
     : db.collection(PUZZLES_PROD_COLLECTION);

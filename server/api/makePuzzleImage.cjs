@@ -1,35 +1,42 @@
 var Sharp = require("sharp");
 var router = require("express").Router();
 
-async function makeImage(data, puzzleImgPath) {
-  console.log("makeImage", data, puzzleImgPath);
-  // Create the resized and cropped puzzle preview image from the uploaded source image
-  img = Sharp(data.imagePath);
+async function makeImage(data) {
+  console.log("makeImage", data);
 
-  const imgMetadata = await img.metadata();
+  // Location of existing fulllsize image
+  const fullsizeImagePath = `./uploads/fullsize_${data.imageName}`;
+
+  // Intended location for resized image once we've generated it
+  const resizedImagePath = `./uploads/puzzle_${data.imageName}`;
+
+  img = Sharp(fullsizeImagePath);
+
+  // const imgMetadata = await img.metadata();
   const { width: origW, height: origH } = data.dimensions;
 
   const opts = {
-    left: Math.floor((origW / 100) * data.leftOffsetPercentage),
-    top: Math.floor((origH / 100) * data.topOffsetPercentage),
-    width: Math.floor((origW / 100) * data.widthPercentage),
-    height: Math.floor((origH / 100) * data.heightPercentage),
+    left: Math.ceil((origW / 100) * data.leftOffsetPercentage),
+    top: Math.ceil((origH / 100) * data.topOffsetPercentage),
+    width: Math.ceil((origW / 100) * data.widthPercentage),
+    height: Math.ceil((origH / 100) * data.heightPercentage),
   };
+
+  console.log("image extraction options", opts)
 
   img.extract(opts);
 
   // Resize the image according to the dimensions requested by the Frontend
   img.resize(data.resizeWidth, data.resizeHeight);
 
-  await img.toFile(puzzleImgPath);
-  return puzzleImgPath;
+  await img.toFile(resizedImagePath);
+  return resizedImagePath;
 }
 
 async function main(req, res) {
   const data = req.body;
 
-  const puzzleImgPath = `./uploads/puzzle_${data.imageName}`;
-  const puzzleImagePath = await makeImage(data, puzzleImgPath);
+  const puzzleImagePath = await makeImage(data);
 
   res.status(200).send({ puzzleImagePath });
 }

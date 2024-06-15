@@ -101,10 +101,6 @@ export default class SingleMovable extends BaseMovable {
       _id,
       puzzleId,
       groupId,
-      imgX,
-      imgY,
-      imgW,
-      imgH,
       width,
       height,
       pageY,
@@ -126,7 +122,7 @@ export default class SingleMovable extends BaseMovable {
       svgPath,
     } = this.pieceData;
 
-    // console.log("SingleMovable", this.pieceData)
+    console.log("SingleMovable", this.pieceData)
 
     const el = document.createElement("div");
     el.classList.add("puzzle-piece");
@@ -196,7 +192,7 @@ export default class SingleMovable extends BaseMovable {
 
     const svgns = "http://www.w3.org/2000/svg";
 
-    const { pieceSize, imageWidth, imageHeight, puzzleImagePath, cropData } = this.Puzzly;
+    const { pieceSize, boardWidth, boardHeight, puzzleImagePath } = this.Puzzly;
     const pathString = getJigsawShapeSvgString(this.pieceData, pieceSize);
 
     const shapeId = `shape-${index}`;
@@ -211,7 +207,7 @@ export default class SingleMovable extends BaseMovable {
             <use href="#${shapeId}"></use>
         </clipPath>
         <use href="#${shapeId}" fill="none" stroke="black" stroke-width="1"></use>
-        <image clip-path="url(#${clipId})" href="${puzzleImagePath}" width="${imageWidth}" height="${imageHeight}" />
+        <image clip-path="url(#${clipId})" href="${puzzleImagePath}" width="${boardWidth}" height="${boardHeight}" x="-${puzzleX}" y="-${puzzleY}" />
       </svg>
     `;
 

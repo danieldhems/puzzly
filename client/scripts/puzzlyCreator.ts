@@ -1,4 +1,4 @@
-import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SquareShapedPuzzleDefinitions } from "./constants";
+import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SOLVING_AREA_SCREEN_PORTION, SquareShapedPuzzleDefinitions } from "./constants";
 import puzzleGenerator, { addPuzzleDataToPieces, generatePieces, getConnectorDimensions } from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
 import Puzzly from "./Puzzly";
@@ -598,17 +598,6 @@ export default class PuzzlyCreator {
     const { top, left, width, height } = this.PuzzleImpressionOverlay.getPositionAndDimensions();
     const { offsetWidth, offsetHeight } = this.imageUploadPreviewEl;
 
-    console.log("image width", imageWidth)
-    console.log("image height", imageHeight)
-    console.log("puzzle impression width", width)
-    console.log("puzzle impression height", height)
-
-    console.log("preview width", offsetWidth)
-    console.log("preview height", offsetHeight)
-
-    console.log("width percentage", width / offsetWidth * 100)
-    console.log("height percentage", height / offsetHeight * 100)
-
     widthPercentage = Math.floor((width / offsetWidth) * 100);
     heightPercentage = Math.floor((height / offsetHeight) * 100);
     leftOffsetPercentage =
@@ -620,9 +609,6 @@ export default class PuzzlyCreator {
         (Math.abs(top) / offsetHeight) * 100
       );
 
-    console.log("left percentage", leftOffsetPercentage)
-    console.log("top percentage", topOffsetPercentage)
-
     return {
       imageWidth,
       imageHeight,
@@ -633,13 +619,64 @@ export default class PuzzlyCreator {
     };
   }
 
+  getPuzzleDimensions(puzzleConfig: Pick<PuzzleConfig, "imageWidth" | "imageHeight" | "numberOfPiecesHorizontal" | "numberOfPiecesVertical">) {
+    const { imageWidth, imageHeight, numberOfPiecesHorizontal, numberOfPiecesVertical } = puzzleConfig;
+    const smallerLength = Math.min(imageWidth, imageHeight);
+    const largerLength = Math.max(imageWidth, imageHeight);
+
+    const isSquare = numberOfPiecesHorizontal === numberOfPiecesVertical;
+    const aspectRatio = smallerLength / largerLength;
+
+    let width: number, height: number;
+    if (window.innerWidth < window.innerHeight) {
+      height = window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION;
+      return {
+        height,
+        width: isSquare ? height : height * aspectRatio,
+      }
+
+    } else if (window.innerHeight < window.innerWidth) {
+      width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
+      return {
+        width,
+        height: isSquare ? width : width * aspectRatio,
+      }
+    } else {
+      width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
+      return {
+        width,
+        height: width,
+      }
+    }
+  }
+
   async createPuzzle(options: Record<any, any> | null = null) {
     const pieces = generatePieces(this.selectedPuzzleConfig);
     const cropData = this.getCropData();
-    const mappedPieces = addPuzzleDataToPieces(pieces, this.selectedPuzzleConfig, cropData)
 
     // console.log("mapped pieces", mappedPieces)
     // console.log("crop data", cropData)
+
+    const puzzleDimensions = this.getPuzzleDimensions(this.selectedPuzzleConfig);
+    const mappedPieces = addPuzzleDataToPieces(pieces, this.selectedPuzzleConfig, puzzleDimensions)
+    // const leftValue =  this.sourceImage.dimensions.width / 100 * cropData.leftOffsetPercentage;
+    // const topValue =  this.sourceImage.dimensions.height / 100 * cropData.topOffsetPercentage;
+
+    const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {
+      body: JSON.stringify({
+        ...cropData,
+        dimensions: this.sourceImage.dimensions,
+        imageName: this.sourceImage.imageName,
+        resizeWidth: Math.floor(puzzleDimensions.width),
+        resizeHeight: Math.floor(puzzleDimensions.height),
+      }),
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+    });
+
+    const { puzzleImagePath } = await makePuzzleImageResponse.json();
 
     const data = {
       ...this.selectedPuzzleConfig,
@@ -647,7 +684,6 @@ export default class PuzzlyCreator {
       noDispersal: this.debugOptions.noDispersal,
       // pieces: JSON.stringify(mappedPieces),
       isIntegration: this.isIntegration,
-      cropData,
     }
 
     fetch("/api/puzzle", {
@@ -671,13 +707,12 @@ export default class PuzzlyCreator {
             ...data,
             _id: response._id,
             pieceSize: response.pieceSize,
-            connectorSize: response.connectorSize,
             connectorDistanceFromCorner: response.connectorDistanceFromCorner,
             pieces: mappedPieces,
             previewPath: response.previewPath,
-            puzzleImagePath: this.fullSizePath,
-            boardWidth: this.boardWidth,
-            boardHeight: this.boardHeight,
+            puzzleImagePath,
+            boardWidth: puzzleDimensions.width,
+            boardHeight: puzzleDimensions.height,
           });
         }.bind(this)
       )

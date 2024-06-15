@@ -137,14 +137,10 @@ export default class Puzzly {
 
     this.puzzleId = puzzleId;
 
-    this.previewImage = new Image();
-    this.previewImage.src = this.puzzleImagePath;
-    // this.puzzleImage = new Image();
-    // this.puzzleImage.src = this.puzzleImagePath;
+    this.puzzleImage = new Image();
+    this.puzzleImage.src = this.puzzleImagePath;
 
     console.log(this);
-
-
 
     this.previewImageType = SolvedPuzzlePreviewType.AlwaysOn;
 
@@ -157,7 +153,7 @@ export default class Puzzly {
       `#${ELEMENT_IDS.PIECES_CONTAINER}`
     );
 
-    loadAssets([this.previewImage]).then(() => {
+    loadAssets([this.puzzleImage]).then(() => {
       this.init();
     });
   }
