@@ -486,8 +486,11 @@ export default class SingleMovable extends BaseMovable {
 
   getDataForSave(): SingleMovableSaveState {
     return {
+      index: this.pieceData.index,
       pageX: this.element.offsetLeft,
       pageY: this.element.offsetTop,
+      puzzleX: this.pieceData.puzzleX,
+      puzzleY: this.pieceData.puzzleY,
       zIndex: parseInt(this.element.style.zIndex),
       isSolved: this.isSolved,
       groupId: this.pieceData.groupId,

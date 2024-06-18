@@ -8,6 +8,14 @@ const dbConfig = {
     password: 'GCo4jTrojM01vhRr'
 }
 
+// const dbConfig = {
+//     protocol: 'mongodb://',
+//     url: 'localhost:27017',
+//     queryParams: '',
+//     username: 'admin',
+//     password: 'admin'
+// }
+
 const url = `${dbConfig.protocol}${dbConfig.username}:${dbConfig.password}@${dbConfig.url}/?${dbConfig.queryParams}`;
 
 module.exports.default = new MongoClient(url);

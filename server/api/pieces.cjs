@@ -102,7 +102,7 @@ var api = {
           } else {
             const pieceid = new ObjectID(data._id);
             query = { _id: pieceid };
-            // console.log("saving piece", data);
+            console.log("saving piece", data);
 
             const { pageX, pageY, groupId, isSolved, pocket, zIndex } = data;
 
@@ -117,9 +117,9 @@ var api = {
               },
             };
 
-            // console.log("Single piece: update instruction", update);
-            const result = await pieces.findOneAndUpdate(query, update);
-            // console.log("piece update result", result.ops);
+            console.log("Single piece: update instruction", update);
+            const result = await pieces.updateOne(query, update);
+            console.log("piece update result", result.ops);
           }
 
           const puzzleUpdateOp = {

@@ -1,3 +1,4 @@
+import SingleMovable from "./SingleMovable";
 import { EVENT_TYPES } from "./constants";
 import { MovableElement, SideNames } from "./types";
 import Utils from "./utils";
@@ -199,7 +200,11 @@ export default function arrangePiecesAroundEdge(
     i++;
   }
 
+  const payloadForPersistence = window.Puzzly.pieceInstances.map(
+    (instance: SingleMovable) => instance.getDataForSave()
+  );
+
   window.dispatchEvent(
-    new CustomEvent(EVENT_TYPES.SAVE, { detail: piecesInPlay })
+    new CustomEvent(EVENT_TYPES.SAVE, { detail: payloadForPersistence })
   );
 }

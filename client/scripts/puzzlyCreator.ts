@@ -678,10 +678,14 @@ export default class PuzzlyCreator {
     });
 
     const { puzzleImagePath } = await makePuzzleImageResponse.json();
+    const { width, height } = puzzleDimensions;
 
     const data = {
       ...this.selectedPuzzleConfig,
+      boardWidth: width,
+      boardHeight: height,
       imageName: this.sourceImage.imageName,
+      puzzleImagePath,
       debugOptions: this.debugOptions,
       pieces: mappedPieces,
       isIntegration: this.isIntegration,
@@ -697,7 +701,7 @@ export default class PuzzlyCreator {
       .then((response) => response.json())
       .then(
         function (response: any) {
-          // console.log("response", response);
+          console.log("Puzzle creation response", response);
           const puzzleId = response._id;
 
           Utils.insertUrlParam("puzzleId", puzzleId);
@@ -706,6 +710,7 @@ export default class PuzzlyCreator {
 
           window.Puzzly = new Puzzly(puzzleId, {
             ...data,
+            pieces: response.pieces,
             _id: response._id,
             connectorDistanceFromCorner: response.connectorDistanceFromCorner,
             previewPath: response.previewPath,
