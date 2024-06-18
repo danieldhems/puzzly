@@ -123,6 +123,9 @@ export default class Puzzly {
     this.numberOfPiecesHorizontal = config.numberOfPiecesHorizontal;
     this.numberOfPiecesVertical = config.numberOfPiecesVertical;
 
+    this.boardWidth = config.boardWidth;
+    this.boardHeight = config.boardHeight;
+
     this.pieces = config.pieces as JigsawPieceData[];
 
     this.complete = config.complete;
@@ -172,28 +175,7 @@ export default class Puzzly {
 
     this.playBoundary = document.querySelector("#play-boundary");
 
-    const bootstrap = this.bootstrap({
-      imageWidth: this.imageWidth,
-      imageHeight: this.imageHeight,
-      numberOfPiecesHorizontal: this.numberOfPiecesHorizontal,
-      numberOfPiecesVertical: this.numberOfPiecesVertical,
-    });
 
-    if (bootstrap?.width) {
-      this.boardWidth = bootstrap.width;
-    }
-
-    if (bootstrap?.height) {
-      this.boardHeight = bootstrap.height;
-    }
-
-    if (bootstrap?.pieceSize) {
-      this.pieceSize = bootstrap.pieceSize;
-    }
-
-    if (bootstrap?.connectorSize) {
-      this.connectorSize = bootstrap.connectorSize;
-    }
 
     this.PlayBoundaryMovable = new PlayBoundaryMovable(this);
     this.setupSolvingArea();
@@ -205,7 +187,7 @@ export default class Puzzly {
     ).getBoundingClientRect();
 
     this.Pockets = new Pockets(this);
-    this.DragAndSelect = new DragAndSelect(this);
+    // this.DragAndSelect = new DragAndSelect(this);
     this.SolvedPuzzlePreview = new SolvedPuzzlePreview(this);
     this.PocketMovable = new PocketMovable(this);
     this.PieceLayouts = new PieceLayouts(this);
@@ -236,7 +218,7 @@ export default class Puzzly {
         this.pieceInstances.push(pieceInstance);
       });
 
-      console.log("groups from persistence", this.groups);
+      // console.log("groups from persistence", this.groups);
       if (Object.keys(this.groups).length) {
         for (let g in this.groups) {
           const group = this.groups[g];
@@ -353,7 +335,7 @@ export default class Puzzly {
       return {
         height,
         width: isSquare ? height : height * aspectRatio,
-        pieceSize: height / numberOfPiecesVertical,
+        // pieceSize: height / numberOfPiecesVertical,
         connectorSize: height / 100 * CONNECTOR_SIZE_PERC,
       }
 
@@ -362,15 +344,13 @@ export default class Puzzly {
       return {
         width,
         height: isSquare ? width : width * aspectRatio,
-        pieceSize: width / numberOfPiecesHorizontal,
+        // pieceSize: width / numberOfPiecesHorizontal,
         connectorSize: width / 100 * CONNECTOR_SIZE_PERC,
       }
     }
   }
 
   setupSolvingArea() {
-    console.log("set up solving area", this)
-
     this.solvingArea.style.width = Utils.getPxString(this.boardWidth);
     this.solvingArea.style.height = Utils.getPxString(this.boardHeight);
     this.solvingArea.style.top = Utils.getPxString(

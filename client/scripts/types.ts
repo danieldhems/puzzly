@@ -84,6 +84,8 @@ export interface JigsawPieceData {
   puzzleY: number,
   width: number;
   height: number;
+  basePieceSize?: number;
+  connectorSize: number;
   imgW: number;
   imgH: number;
   pageX: number;
@@ -175,7 +177,14 @@ export type SkeletonPiece = Pick<
   };
   puzzleWidth: number;
   puzzleHeight: number;
-
+  // Need this for generating the SVG path to the correct proportions
+  basePieceSize?: number;
+  width?: number;
+  height?: number;
+  puzzleX?: number;
+  puzzleY?: number;
+  pageX?: number;
+  pageY?: number;
 };
 
 export interface PuzzleConfig {
@@ -231,7 +240,6 @@ export type PuzzleGenerator = {
   }>;
   getJigsawShapeSvgString: (
     piece: SkeletonPiece,
-    pieceSize: number,
     position?: {
       x: number;
       y: number

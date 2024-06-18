@@ -96,8 +96,6 @@ export default class PuzzleImpressionOverlay {
         const { offsetLeft, offsetTop, offsetWidth, offsetHeight } = this.draggable.element;
         const width = parseInt(this.draggable.element.style.width);
         const height = parseInt(this.draggable.element.style.height);
-        console.log("width", width)
-        console.log("offsetWidth", offsetWidth)
         return {
             left: offsetLeft - this.leftBoundary,
             top: offsetTop - this.topBoundary,

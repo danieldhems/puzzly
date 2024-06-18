@@ -41,7 +41,7 @@ const puzzleGenerator = async function (
   Generator.spriteSpacing =
     Generator.piecesPerSideVertical * Generator.largestPieceSpan * 1.1;
 
-  console.log("Generator", Generator);
+  // console.log("Generator", Generator);
 
   return {
     ...Generator,
@@ -149,7 +149,7 @@ const generateDataForPuzzlePieces = async () => {
       i
     );
 
-    const svgPath = getJigsawShapeSvgString(currentPiece, Generator.pieceSize);
+    const svgPath = getJigsawShapeSvgString(currentPiece);
     currentPiece.svgPath = svgPath;
 
     // console.log("generated piece", currentPiece);
@@ -235,6 +235,7 @@ export const generatePieces = (puzzleConfig: PuzzleConfig): SkeletonPiece[] => {
   while (n < puzzleConfig.totalNumberOfPieces) {
     const piece = {
       connectorSize: connectorSizeValue,
+      basePieceSize: puzzleConfig.pieceSize,
     } as SkeletonPiece;
 
     if (n === 0) {
@@ -303,13 +304,31 @@ export const generatePieces = (puzzleConfig: PuzzleConfig): SkeletonPiece[] => {
   return pieces;
 }
 
-export const addPuzzleDataToPieces = (pieces: SkeletonPiece[], puzzleConfig: PuzzleConfig, puzzleDimensions: { width: number; height: number }) => {
-  const { connectorSize, numberOfPiecesHorizontal, numberOfPiecesVertical } = puzzleConfig;
-  const { width, height } = puzzleDimensions;
+export const getPieceSize = (puzzleDimensions: { width: number; height: number }, puzzleConfig: PuzzleConfig): number => {
+  const { numberOfPiecesHorizontal, numberOfPiecesVertical } = puzzleConfig;
+  const { width: puzzleWidth, height: puzzleHeight } = puzzleDimensions;
 
-  const pieceSize = Math.min(width, height) / Math.min(numberOfPiecesHorizontal, numberOfPiecesVertical);
+  let pieceSize: number;
 
-  return pieces.map((piece) => {
+  if (numberOfPiecesHorizontal < numberOfPiecesVertical) {
+    pieceSize = puzzleWidth / numberOfPiecesHorizontal;
+  } else {
+    pieceSize = puzzleHeight / numberOfPiecesVertical;
+  }
+
+  return pieceSize;
+}
+
+export const addPuzzleDataToPieces = (
+  pieces: SkeletonPiece[],
+  puzzleConfig: PuzzleConfig,
+  puzzleDimensions: { width: number; height: number }
+) => {
+  let pieceSize = getPieceSize(puzzleDimensions, puzzleConfig);
+  const cSize = pieceSize / 100 * CONNECTOR_SIZE_PERC;
+
+  return pieces.map((piece, index) => {
+    const basePieceSize = pieceSize;
     let width = pieceSize;
     let height = pieceSize;
 
@@ -317,30 +336,36 @@ export const addPuzzleDataToPieces = (pieces: SkeletonPiece[], puzzleConfig: Puz
     let yPos = pieceSize * piece.numPiecesFromTopEdge;
 
     if (piece.type[0] === 1) {
-      yPos -= connectorSize;
-      height += connectorSize;
-    }
-
-    if (piece.type[3] === 1) {
-      xPos -= connectorSize;
-      width += connectorSize;
+      yPos -= cSize;
+      height += cSize;
     }
 
     if (piece.type[1] === 1) {
-      width += connectorSize;
+      width += cSize;
     }
 
     if (piece.type[2] === 1) {
-      height += connectorSize;
+      height += cSize;
     }
+    if (piece.type[3] === 1) {
+      xPos -= cSize;
+      width += cSize;
+    }
+
+    const pageX = xPos * 2 + pieceSize;
+    const pageY = yPos * 2 + pieceSize;
+
+    const viewBox = basePieceSize + (cSize * 2);
 
     return {
       ...piece,
-      // TODO: Confusing to have to do this: Should 'pieceSize' be renamed in the PuzzleConfig type?
-      // Override piece size now that we know what size the puzzle is going to be
-      pieceSize,
+      index,
+      basePieceSize,
+      connectorSize: cSize,
       puzzleX: xPos,
       puzzleY: yPos,
+      pageX,
+      pageY,
       width,
       height,
     }
@@ -374,7 +399,7 @@ const createPuzzlePiece = async (
 
   // Using 'imgW' property for piece size assuming pieces are square-shaped
   // meaning we width and height are equal.
-  const svgPath = getJigsawShapeSvgString(data, data.imgW);
+  const svgPath = getJigsawShapeSvgString(data);
 
   if (shdCtx) {
     shdCtx.fillStyle = Generator.shadowColor;
@@ -633,7 +658,6 @@ const assignInitialPieceData = (
 
 export const getJigsawShapeSvgString = (
   piece: SkeletonPiece | JigsawPieceData,
-  pieceSize: number,
   startingPosition?: {
     x: number;
     y: number;
@@ -645,7 +669,11 @@ export const getJigsawShapeSvgString = (
   let x = startingPosition?.x || 0;
   let y = startingPosition?.y || 0;
 
-  const { connectorSize, connectorDistanceFromCorner } = getConnectorDimensions(pieceSize);
+  // TODO: Assuming all pieces are square - won't work for irregular shapes / sizes
+  const pieceSize = piece.basePieceSize;
+
+  // 
+  const { connectorSize, connectorDistanceFromCorner } = getConnectorDimensions(pieceSize as number);
   const hasTopPlug = piece.type[0] === 1;
   const hasLeftPlug = piece.type[3] === 1;
 
@@ -658,7 +686,7 @@ export const getJigsawShapeSvgString = (
     leftConnector = null;
 
   const jigsawShapes = new jigsawPath(
-    pieceSize,
+    pieceSize as number,
     connectorSize
   );
 
@@ -725,7 +753,11 @@ export const getJigsawShapeSvgString = (
   return svgString;
 };
 
-export const getPiecePositionBasedOnAdjacentPieces = (piece: SkeletonPiece, currentPosition: { x: number, y: number }, connectorSize: number): { x: number; y: number } => {
+export const getPiecePositionBasedOnAdjacentPieces = (
+  piece: SkeletonPiece,
+  currentPosition: { x: number, y: number },
+  connectorSize: number
+): { x: number; y: number } => {
   return {
     x: piece.pieceBehind?.type[1] === -1 ? currentPosition.x - connectorSize : currentPosition.x,
     y: piece.pieceAbove?.type[2] === -1 ? currentPosition.y - connectorSize : currentPosition.y,
@@ -779,7 +811,6 @@ export const getPuzzleImpressions = (puzzleConfigs: PuzzleConfig[]): HTMLDivElem
 
       const shape = getJigsawShapeSvgString(
         currentPiece,
-        currentConfig.pieceSize,
         getPiecePositionBasedOnAdjacentPieces(
           currentPiece,
           piecePosition,

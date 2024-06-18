@@ -770,19 +770,21 @@ const Utils = {
   },
 
   getPuzzlePieceElementFromEvent(e: MouseEvent): MovableElement | undefined {
+    const eventTarget = e.target;
     const classes = (e.target as HTMLDivElement)?.classList;
 
     if (!classes) return;
 
     const isPuzzlePiece = classes.contains("puzzle-piece");
-    const isPuzzlePieceLayerElement = classes.contains("puzzle-piece-fg");
+    const isPuzzlePieceLayerElement = classes.contains("svg-image");
 
     if (isPuzzlePiece) {
       return e.target as MovableElement;
     }
 
     if (isPuzzlePieceLayerElement) {
-      return (e.target as HTMLElement).parentNode as MovableElement;
+      // TODO: Get the puzzle piece div element without relying on the SVG's structure
+      return (eventTarget as SVGImageElement).parentNode?.parentNode as MovableElement;
     }
   },
 

@@ -566,7 +566,7 @@ export default class PuzzlyCreator {
     let image;
     if (files.length > 0) {
       image = files[0] as File;
-      console.log("image to upload", image);
+      // console.log("image to upload", image);
     }
 
     const fd = new FormData();
@@ -650,17 +650,18 @@ export default class PuzzlyCreator {
     }
   }
 
+
+
   async createPuzzle(options: Record<any, any> | null = null) {
     const pieces = generatePieces(this.selectedPuzzleConfig);
     const cropData = this.getCropData();
 
-    // console.log("mapped pieces", mappedPieces)
     // console.log("crop data", cropData)
 
     const puzzleDimensions = this.getPuzzleDimensions(this.selectedPuzzleConfig);
     const mappedPieces = addPuzzleDataToPieces(pieces, this.selectedPuzzleConfig, puzzleDimensions)
-    // const leftValue =  this.sourceImage.dimensions.width / 100 * cropData.leftOffsetPercentage;
-    // const topValue =  this.sourceImage.dimensions.height / 100 * cropData.topOffsetPercentage;
+    console.log("mapped pieces", mappedPieces)
+
 
     const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {
       body: JSON.stringify({
@@ -681,8 +682,8 @@ export default class PuzzlyCreator {
     const data = {
       ...this.selectedPuzzleConfig,
       imageName: this.sourceImage.imageName,
-      noDispersal: this.debugOptions.noDispersal,
-      // pieces: JSON.stringify(mappedPieces),
+      debugOptions: this.debugOptions,
+      pieces: mappedPieces,
       isIntegration: this.isIntegration,
     }
 
@@ -696,7 +697,7 @@ export default class PuzzlyCreator {
       .then((response) => response.json())
       .then(
         function (response: any) {
-          console.log("response", response);
+          // console.log("response", response);
           const puzzleId = response._id;
 
           Utils.insertUrlParam("puzzleId", puzzleId);
@@ -706,9 +707,7 @@ export default class PuzzlyCreator {
           window.Puzzly = new Puzzly(puzzleId, {
             ...data,
             _id: response._id,
-            pieceSize: response.pieceSize,
             connectorDistanceFromCorner: response.connectorDistanceFromCorner,
-            pieces: mappedPieces,
             previewPath: response.previewPath,
             puzzleImagePath,
             boardWidth: puzzleDimensions.width,
