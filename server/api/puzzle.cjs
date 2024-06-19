@@ -43,7 +43,7 @@ var api = {
 
       const { puzzles, pieces } = getDatabaseCollections(db, data);
 
-      console.log("create puzzle with data", data);
+      // console.log("create puzzle with data", data);
       data.numberOfSolvedPieces = 0;
       data.dateCreated = new Date();
       data.elapsedTime = 0;
@@ -57,18 +57,18 @@ var api = {
 
       const puzzleDBResponse = await puzzles.insertOne(data);
       const puzzleId = puzzleDBResponse.ops[0]._id;
-      console.log("puzzle DB result", puzzleDBResponse.ops[0]._id);
+      // console.log("puzzle DB result", puzzleDBResponse.ops[0]._id);
 
       data.pieces.forEach((element) => {
         element.puzzleId = puzzleId;
       });
 
-      console.log("data for pieces insertion", data.pieces);
+      console.log("Creating puzzle with pieces", data.pieces);
 
       const piecesDBResponse = await pieces.insertMany(data.pieces);
 
-      console.log("puzzleDBResponse", puzzleDBResponse.ops[0]);
-      console.log("piecesDBResponse", piecesDBResponse.ops);
+      // console.log("puzzleDBResponse", puzzleDBResponse.ops[0]);
+      // console.log("piecesDBResponse", piecesDBResponse.ops);
 
       res.status(200).send({
         ...puzzleDBResponse.ops[0],

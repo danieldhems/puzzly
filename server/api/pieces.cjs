@@ -34,7 +34,7 @@ var api = {
       const { pieces } = getDatabaseCollections(db, req.body);
 
       const data = req.body;
-      // console.log("attempting to save pieces for first time", data);
+      console.log("attempting to save pieces for first time", data);
 
       pieces.insertMany(data, function (err, result) {
         if (err) throw new Error(err);
@@ -83,17 +83,22 @@ var api = {
 
         const lastSaveDate = Date.now();
 
+        let puzzleId;
         try {
-          // console.log("data", data);
           if (Array.isArray(data)) {
+            puzzleId = data[0].puzzleId;
+            // console.log("Attempting to update collection of pieces", data);
+
             for (let i = 0, l = data.length; i < l; i++) {
-              const { _id, pageX, pageY, pocket } = data[i];
-              await pieces.findOneAndUpdate(
+              const { _id, pageX, pageY, puzzleX, puzzleY, pocket } = data[i];
+              await pieces.updateOne(
                 { _id: new ObjectID(_id) },
                 {
                   $set: {
                     pageX: pageX,
                     pageY: pageY,
+                    puzzleX: puzzleX,
+                    puzzleY: puzzleY,
                     pocket: pocket,
                   },
                 }
@@ -101,8 +106,10 @@ var api = {
             }
           } else {
             const pieceid = new ObjectID(data._id);
+            puzzleId = data.puzzle;
+
             query = { _id: pieceid };
-            console.log("saving piece", data);
+            // console.log("Single piece update requested with data", data);
 
             const { pageX, pageY, groupId, isSolved, pocket, zIndex } = data;
 
@@ -117,30 +124,31 @@ var api = {
               },
             };
 
-            console.log("Single piece: update instruction", update);
+            // console.log("Single piece update instruction", update);
             const result = await pieces.updateOne(query, update);
-            console.log("piece update result", result.ops);
+            // console.log("Single piece update result", result.ops);
           }
+
+          const puzzleUpdateQuery = {
+            _id: new ObjectID(puzzleId),
+          };
 
           const puzzleUpdateOp = {
             $set: {
-              lastSaveDate,
+              lastSaveDate: lastSaveDate,
               complete: data.isPuzzleComplete,
               zIndex: data.zIndex,
             },
           };
 
-          const puzzleUpdateQuery = {
-            _id: new ObjectID(data.puzzleId),
-          };
-
-          // console.log("Pieces: Updating puzzle with query", puzzleUpdateOp);
+          // console.log("Pieces: Updating puzzle with instruction", puzzleUpdateOp);
 
           const result = await puzzles.updateOne(
             puzzleUpdateQuery,
             puzzleUpdateOp
           );
-          // console.log("piece save result", result.ops);
+          // console.log("Pieces: puzzle update result", result)
+
           response.lastSaveDate = lastSaveDate;
 
           res.status(200).send(response);

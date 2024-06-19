@@ -287,7 +287,10 @@ export interface SingleMovableSaveState {
 }
 
 export interface GroupMovableSaveState
-  extends Omit<SingleMovableSaveState, "pocket" | "index" | "pageX" | "pageY" | "puzzleX" | "puzzleY"> {
+  extends Omit<
+    SingleMovableSaveState,
+    "pocket" | "index" | "pageX" | "pageY" | "puzzleX" | "puzzleY"
+  > {
   position: {
     top: number;
     left: number;

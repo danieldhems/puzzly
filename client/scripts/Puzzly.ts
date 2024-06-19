@@ -205,6 +205,7 @@ export default class Puzzly {
     this.groupInstances = [];
 
     if (storage && storage.pieces.length > 0) {
+      // console.log("Getting pieces from storage", storage)
       storage.pieces.forEach((p) => {
         const data = {
           ...p,

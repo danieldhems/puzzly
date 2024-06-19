@@ -96,7 +96,7 @@ export default function arrangePiecesAroundEdge(
   largestPieceSpan: number,
   solvingAreaElement: HTMLDivElement
 ) {
-
+  // console.log("Arranging pieces around edge")
   const sides = [
     SideNames.Top,
     SideNames.Right,
@@ -199,6 +199,7 @@ export default function arrangePiecesAroundEdge(
 
     i++;
   }
+
 
   const payloadForPersistence = window.Puzzly.pieceInstances.map(
     (instance: SingleMovable) => instance.getDataForSave()
