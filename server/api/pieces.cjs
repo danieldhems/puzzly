@@ -84,6 +84,8 @@ var api = {
         const lastSaveDate = Date.now();
 
         let puzzleId;
+        let queryObject = {};
+
         try {
           if (Array.isArray(data)) {
             puzzleId = data[0].puzzleId;
@@ -92,7 +94,7 @@ var api = {
             response.pieces = [];
 
             for (let i = 0, l = data.length; i < l; i++) {
-              const { _id, puzzleId, index, pageX, pageY, puzzleX, puzzleY, pocket } = data[i];
+              const { _id, puzzleId, index, pageX, pageY, puzzleX, puzzleY, type, connectorSize, pocket } = data[i];
 
               // Dynamically setting the query to be either an internal id or a
               // numeric-index-and-puzzleId combination should allow us to reliably create 
@@ -105,7 +107,6 @@ var api = {
               //
               // Once each individual piece is interacted with it'll request an update, and it
               // it at that time that we can update it with its unique ID.
-              let queryObject = {};
               if (_id) {
                 queryObject._id = new ObjectID(_id);
               } else {
@@ -116,14 +117,8 @@ var api = {
                 queryObject,
                 {
                   $set: {
-                    puzzleId: puzzleId,
-                    index: index,
-                    pageX: pageX,
-                    pageY: pageY,
-                    puzzleX: puzzleX,
-                    puzzleY: puzzleY,
-                    pocket: pocket,
                     dateCreated: Date.now(),
+                    ...data[i],
                   },
                 },
                 { upsert: true }
@@ -132,17 +127,12 @@ var api = {
               console.log("Piece update result", pieceUpdate)
               data[i]._id = pieceUpdate.upsertedId._id;
 
-              response.pieces.push(data[i]);
+              response.pieces[i] = (data[i]);
             }
           } else {
             puzzleId = data.puzzle;
 
-            if (data._id) {
-              queryObject._id = new ObjectID(data._id);
-            } else {
-              queryObject.index = data.index;
-              queryObject.puzzleId = puzzleId;
-            }
+            queryObject._id = new ObjectID(data._id);
             // console.log("Single piece update requested with data", data);
 
             const { pageX, pageY, groupId, isSolved, pocket, zIndex } = data;
@@ -158,11 +148,11 @@ var api = {
               },
             };
 
-            // console.log("Single piece update instruction", update);
-            const result = await pieces.updateOne(query, update);
+            console.log("Single piece update instruction", update);
+            const result = await pieces.updateOne(queryObject, update);
             console.log("Single piece update result", result.ops);
 
-            response._id = result.ops[0]._id;
+            // response._id = result.ops[0]._id;
           }
 
           const puzzleUpdateQuery = {

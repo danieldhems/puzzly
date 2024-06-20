@@ -84,7 +84,7 @@ export interface JigsawPieceData {
   puzzleY: number,
   width: number;
   height: number;
-  basePieceSize?: number;
+  basePieceSize: number;
   connectorSize: number;
   imgW: number;
   imgH: number;
@@ -272,11 +272,15 @@ export enum LocalStorageKeys {
 export interface SingleMovableSaveState {
   _id: string | undefined;
   index: number;
+  width: number;
+  height: number;
+  basePieceSize: number;
   groupId?: string;
   pageX: number;
   pageY: number;
   puzzleX: number;
   puzzleY: number;
+  type: ConnectorType[];
   zIndex: number;
   isSolved: boolean;
   puzzleId: string;
@@ -289,7 +293,7 @@ export interface SingleMovableSaveState {
 export interface GroupMovableSaveState
   extends Omit<
     SingleMovableSaveState,
-    "pocket" | "index" | "pageX" | "pageY" | "puzzleX" | "puzzleY"
+    "pocket" | "index" | "pageX" | "pageY" | "puzzleX" | "puzzleY" | "width" | "height" | "type" | "basePieceSize"
   > {
   position: {
     top: number;

@@ -78,7 +78,7 @@ var api = {
       const { puzzles, pieces, groups } = getDatabaseCollections(db, req.body);
 
       const puzzleQuery = { _id: new ObjectID(puzzleId) };
-      const piecesQuery = { puzzleId: new ObjectID(puzzleId) };
+      const piecesQuery = { puzzleId: puzzleId };
       const groupsQuery = { puzzleId: puzzleId };
 
       // console.log("puzzle query", puzzleQuery);
