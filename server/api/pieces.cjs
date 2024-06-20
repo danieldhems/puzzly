@@ -70,7 +70,7 @@ var api = {
   },
   update: function (req, res) {
     var data = req.body;
-    // console.log("update request", req.body);
+    console.log("Pieces: update request", req.body);
 
     dbClient.connect().then(async (client, err) => {
       if (!err) {
@@ -87,28 +87,62 @@ var api = {
         try {
           if (Array.isArray(data)) {
             puzzleId = data[0].puzzleId;
-            // console.log("Attempting to update collection of pieces", data);
+            console.log("Attempting to update collection of pieces", data);
+
+            response.pieces = [];
 
             for (let i = 0, l = data.length; i < l; i++) {
-              const { _id, pageX, pageY, puzzleX, puzzleY, pocket } = data[i];
-              await pieces.updateOne(
-                { _id: new ObjectID(_id) },
+              const { _id, puzzleId, index, pageX, pageY, puzzleX, puzzleY, pocket } = data[i];
+
+              // Dynamically setting the query to be either an internal id or a
+              // numeric-index-and-puzzleId combination should allow us to reliably create 
+              // (upsert) the pieces upon puzzle creation.
+              //
+              // If I didn't  do this, I'd be tempted to return ALL internal IDs for the
+              // pieces after this operation and update ALL pieces on the client-side so they 
+              // can request updates with their unique IDs later on, so this should mean less 
+              // work for the client.
+              //
+              // Once each individual piece is interacted with it'll request an update, and it
+              // it at that time that we can update it with its unique ID.
+              let queryObject = {};
+              if (_id) {
+                queryObject._id = new ObjectID(_id);
+              } else {
+                queryObject.index = index;
+                queryObject.puzzleId = puzzleId;
+              }
+              const pieceUpdate = await pieces.updateOne(
+                queryObject,
                 {
                   $set: {
+                    puzzleId: puzzleId,
+                    index: index,
                     pageX: pageX,
                     pageY: pageY,
                     puzzleX: puzzleX,
                     puzzleY: puzzleY,
                     pocket: pocket,
+                    dateCreated: Date.now(),
                   },
-                }
+                },
+                { upsert: true }
               );
+
+              console.log("Piece update result", pieceUpdate)
+              data[i]._id = pieceUpdate.upsertedId._id;
+
+              response.pieces.push(data[i]);
             }
           } else {
-            const pieceid = new ObjectID(data._id);
             puzzleId = data.puzzle;
 
-            query = { _id: pieceid };
+            if (data._id) {
+              queryObject._id = new ObjectID(data._id);
+            } else {
+              queryObject.index = data.index;
+              queryObject.puzzleId = puzzleId;
+            }
             // console.log("Single piece update requested with data", data);
 
             const { pageX, pageY, groupId, isSolved, pocket, zIndex } = data;
@@ -126,7 +160,9 @@ var api = {
 
             // console.log("Single piece update instruction", update);
             const result = await pieces.updateOne(query, update);
-            // console.log("Single piece update result", result.ops);
+            console.log("Single piece update result", result.ops);
+
+            response._id = result.ops[0]._id;
           }
 
           const puzzleUpdateQuery = {

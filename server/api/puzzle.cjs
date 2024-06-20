@@ -38,6 +38,7 @@ var api = {
       db = client.db(dbName);
 
       const data = req.body;
+      console.log("Puzzles: Create", req.body)
 
       let isIntegration = false;
 
@@ -55,25 +56,15 @@ var api = {
         ? UPLOADS_DIR_INTEGRATION
         : UPLOADS_DIR_PROD;
 
+      // Is the 'data too large' problem here?
+      // This will add all the pieces to a single document in the 'puzzles' collection
       const puzzleDBResponse = await puzzles.insertOne(data);
-      const puzzleId = puzzleDBResponse.ops[0]._id;
-      // console.log("puzzle DB result", puzzleDBResponse.ops[0]._id);
-
-      data.pieces.forEach((element) => {
-        element.puzzleId = puzzleId;
-      });
-
-      console.log("Creating puzzle with pieces", data.pieces);
-
-      const piecesDBResponse = await pieces.insertMany(data.pieces);
-
       // console.log("puzzleDBResponse", puzzleDBResponse.ops[0]);
       // console.log("piecesDBResponse", piecesDBResponse.ops);
 
       res.status(200).send({
         ...puzzleDBResponse.ops[0],
         ...data,
-        pieces: piecesDBResponse.ops,
       });
     });
   },
@@ -91,14 +82,14 @@ var api = {
       const groupsQuery = { puzzleId: puzzleId };
 
       // console.log("puzzle query", puzzleQuery);
-      // console.log("pieces query", piecesQuery);
+      console.log("Puzzle: read, pieces query", piecesQuery);
       // console.log("groups query", groupsQuery);
 
       const puzzle = await puzzles.findOne(puzzleQuery);
       const piecesResult = await pieces.find(piecesQuery).toArray();
       const groupsResult = await groups.find(groupsQuery).toArray();
       // console.log("puzzle found", puzzle);
-      // console.log("pieces found for puzzle", puzzleId, piecesResult);
+      console.log("pieces found for puzzle", puzzleId, piecesResult);
       // console.log("groups found for puzzle", puzzleId, groupsResult);
 
       const result = {

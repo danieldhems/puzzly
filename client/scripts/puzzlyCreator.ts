@@ -687,7 +687,6 @@ export default class PuzzlyCreator {
       imageName: this.sourceImage.imageName,
       puzzleImagePath,
       debugOptions: this.debugOptions,
-      pieces: mappedPieces,
       isIntegration: this.isIntegration,
     }
 
@@ -710,7 +709,7 @@ export default class PuzzlyCreator {
 
           window.Puzzly = new Puzzly(puzzleId, {
             ...data,
-            pieces: response.pieces,
+            pieces: mappedPieces,
             _id: response._id,
             connectorDistanceFromCorner: response.connectorDistanceFromCorner,
             previewPath: response.previewPath,

@@ -87,6 +87,10 @@ export default class SingleMovable extends BaseMovable {
       EVENT_TYPES.GROUP_CREATED,
       this.onGroupCreated.bind(this)
     );
+    window.addEventListener(
+      EVENT_TYPES.PIECE_UPDATED,
+      this.onUpdated.bind(this)
+    );
   }
 
   setPiece(pieceData: JigsawPieceData) {
@@ -211,6 +215,7 @@ export default class SingleMovable extends BaseMovable {
             <use href="#${shapeId}"></use>
         </clipPath>
         <use href="#${shapeId}" fill="none" stroke="black" stroke-width="1"></use>
+        <use href="#${shapeId}" fill="black" x="2" y="2"></use>
         <image class="svg-image" clip-path="url(#${clipId})" href="${puzzleImagePath}" width="${boardWidth}" height="${boardHeight}" x="-${puzzleX}" y="-${puzzleY}" />
       </svg>
     `;
@@ -509,5 +514,19 @@ export default class SingleMovable extends BaseMovable {
         new CustomEvent(EVENT_TYPES.SAVE, { detail: this.getDataForSave() })
       );
     }
+  }
+
+  onUpdated(event: CustomEvent) {
+    // console.log(this.pieceData.index, "Received piece_updated event", event)
+    const { index, puzzleX, puzzleY } = this.pieceData;
+    const { index: uIndex, puzzleX: uPuzzleX, puzzleY: uPuzzleY, _id: uId } = event.detail;
+    if (uIndex === index && uPuzzleX === puzzleX && uPuzzleY === puzzleY) {
+      this.setId(uId);
+    }
+  }
+
+  setId(id: string) {
+    console.log("Setting ID for piece", this.pieceData.index, id)
+    this.pieceData._id = id;
   }
 }
