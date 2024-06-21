@@ -95,3 +95,5 @@ export const MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED = 1024;
 export const SCREEN_MARGIN = 10;
 
 export const SOLVING_AREA_SCREEN_PORTION = 50;
+
+export const SVGNS = "http://www.w3.org/2000/svg";

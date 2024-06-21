@@ -1,10 +1,10 @@
 import BaseMovable from "./BaseMovable";
 import { checkConnections } from "./checkConnections";
-import { EVENT_TYPES, SHAPE_TYPES } from "./constants";
+import { EVENT_TYPES, SHAPE_TYPES, SVGNS } from "./constants";
 import GroupMovable from "./GroupMovable";
 import GroupOperations from "./GroupOperations";
 import Pockets from "./Pockets";
-import { getJigsawShapeSvgString } from "./puzzleGenerator";
+import { getJigsawShapeSvgString } from "./svg";
 import Puzzly from "./Puzzly";
 // import PathOperations from "./pathOperations.js";
 import {
@@ -195,8 +195,6 @@ export default class SingleMovable extends BaseMovable {
       el.setAttribute("data-pocket-id", pocketId + "");
     }
 
-    const svgns = "http://www.w3.org/2000/svg";
-
     const { boardWidth, boardHeight, puzzleImagePath } = this.Puzzly;
     // console.log("piece size", pieceSize)
     const pathString = getJigsawShapeSvgString(this.pieceData);
@@ -207,7 +205,7 @@ export default class SingleMovable extends BaseMovable {
     const viewBox = Math.max(width, height);
 
     const svgElementTemplate = `
-      <svg xmlns="${svgns}" width="${viewBox}" height="${viewBox}" viewBox="0 0 ${width} ${height}" class="puzzle-piece-svg">
+      <svg xmlns="${SVGNS}" width="${viewBox}" height="${viewBox}" viewBox="0 0 ${width} ${height}" class="puzzle-piece-svg">
         <defs>
           <path id="${shapeId}" d="${pathString}"></path>
         </defs>
@@ -290,9 +288,9 @@ export default class SingleMovable extends BaseMovable {
   }
 
   getConnectingPieceIds(
-    data: Pick<JigsawPieceData, "id" | "piecesPerSideHorizontal" | "type">
+    data: Pick<JigsawPieceData, "index" | "piecesPerSideHorizontal" | "type">
   ) {
-    const id = data.id;
+    const id = data.index;
     const pieceAboveId = id - data.piecesPerSideHorizontal;
     const pieceBelowId = id + data.piecesPerSideHorizontal;
 
@@ -389,7 +387,7 @@ export default class SingleMovable extends BaseMovable {
           this.pocketId = parseInt(pocket.id.split("-")[1]);
         }
       } else {
-        console.log("solving area box", this.getSolvingAreaBoundingBox());
+        // console.log("solving area box", this.getSolvingAreaBoundingBox());
         this.connection = checkConnections(
           this.element,
           this.getSolvingAreaBoundingBox(),

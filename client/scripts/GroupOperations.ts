@@ -2,6 +2,8 @@ import CanvasOperations from "./CanvasOperations";
 import { ConnectorType, MovableElement } from "./types";
 import Utils from "./utils";
 import SingleMovable from "./SingleMovable";
+import { getJigsawShapeSvgString } from "./svg";
+import { getSvg } from "./svg";
 
 export interface GroupOperationsProperties {
   width: number;
@@ -145,6 +147,7 @@ export default class GroupOperations implements GroupOperationsProperties {
   createGroup(sourceInstance: SingleMovable, targetInstance: SingleMovable) {
     console.log("target style top", parseInt(targetInstance.element.style.top));
     console.log("target solved top", targetInstance.pieceData.solvedY);
+
     const leftPos =
       parseInt(targetInstance.element.style.left) -
       targetInstance.pieceData.solvedX;
@@ -153,7 +156,24 @@ export default class GroupOperations implements GroupOperationsProperties {
       targetInstance.pieceData.solvedY;
 
     const container = this.createGroupContainer();
-    const newCanvas = this.CanvasOperations.makeCanvas();
+
+    const { width: boardWidth, height: boardHeight, puzzleImage } = this;
+
+
+    // console.log("piece size", pieceSize)
+    const sourceInstancePathString = getJigsawShapeSvgString(
+      sourceInstance.pieceData,
+      {
+        x: sourceInstance.pieceData.puzzleX,
+        y: sourceInstance.pieceData.puzzleY
+      });
+    const targetInstancePathString = getJigsawShapeSvgString(
+      targetInstance.pieceData,
+      {
+        x: targetInstance.pieceData.puzzleX,
+        y: targetInstance.pieceData.puzzleY
+      });
+
 
     console.log("createGroup", targetInstance.pieceData.solvedX);
     console.log("createGroup", targetInstance.pieceData.solvedY);
@@ -174,12 +194,13 @@ export default class GroupOperations implements GroupOperationsProperties {
     sourceInstance.element.classList.add("grouped");
     targetInstance.element.classList.add("grouped");
 
-    this.CanvasOperations.drawMovableInstancesOntoCanvas(
-      newCanvas,
-      [sourceInstance, targetInstance],
-      this.puzzleImage,
-      this.shadowOffset
-    );
+    const svgTemplateString = getSvg(
+      "1234",
+      [sourceInstance.pieceData, targetInstance.pieceData],
+      boardWidth,
+      boardHeight,
+      this.puzzleImage.src
+    )
 
     // TODO: Refactor Util methods to expect type array only, not piece object containing it.
     // Not sure if this logic is entirely applicable...
@@ -198,7 +219,9 @@ export default class GroupOperations implements GroupOperationsProperties {
       left: leftPos,
     });
 
-    container.appendChild(newCanvas);
+    container.innerHTML = svgTemplateString;
+    container.appendChild(sourceInstance.element);
+    container.appendChild(targetInstance.element);
 
     return { container, position: { top: topPos, left: leftPos } };
   }
