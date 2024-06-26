@@ -1,6 +1,5 @@
 import { SVGNS } from "./constants";
 import jigsawPath from "./jigsawPath";
-import { getConnectorDimensions } from "./puzzleGenerator";
 import { JigsawPieceData, SkeletonPiece } from "./types";
 
 export function getSvg(
@@ -16,21 +15,22 @@ export function getSvg(
     return `
       <svg xmlns="${SVGNS}" width="${boardWidth}" height="${boardHeight}" viewBox="0 0 ${boardWidth} ${boardHeight}" class="puzzle-piece-group-svg">
         <defs>
-            ${pieceInfo.map(info => (
-        `<path id="${info.shapeId}" d="${info.pathString}"></path>`
-    ))}
+            ${pieceInfo.map(
+        (info) =>
+            `<path id="${info.shapeId}" d="${info.pathString}"></path>`
+    )}
         </defs>
         <clipPath id="${clipId}">
-            ${pieceInfo.map(info => (
-        `<use href="#${info.shapeId}"></use>`
-    ))}
+            ${pieceInfo.map((info) => `<use href="#${info.shapeId}"></use>`)}
         </clipPath>
-        ${pieceInfo.map(info => (
-        `<use href="#${info.shapeId}" fill="none" stroke="black" stroke-width="1"></use>`
-    ))}
-        ${pieceInfo.map(info => (
-        `<use href="#${info.shapeId}" fill="black" x="2" y="2"></use>`
-    ))}
+            ${pieceInfo.map(
+        (info) =>
+            `<use href="#${info.shapeId}" fill="none" stroke="black" stroke-width="1"></use>`
+    )}
+            ${pieceInfo.map(
+        (info) =>
+            `<use href="#${info.shapeId}" fill="black" x="2" y="2"></use>`
+    )}
         <image class="svg-image" clip-path="url(#${id})" href="${imagePath}" width="${boardWidth}" height="${boardHeight}" />
       </svg>
     `;
@@ -44,7 +44,7 @@ export function getAttributesForPiece(piece: JigsawPieceData) {
         pathString: getJigsawShapeSvgString(piece, { x: puzzleX, y: puzzleY }),
         puzzleX,
         puzzleY,
-    }
+    };
 }
 
 export const getJigsawShapeSvgString = (
@@ -54,7 +54,6 @@ export const getJigsawShapeSvgString = (
         y: number;
     }
 ) => {
-
     let svgString = "";
 
     let x = startingPosition?.x || 0;
@@ -63,8 +62,7 @@ export const getJigsawShapeSvgString = (
     // TODO: Assuming all pieces are square - won't work for irregular shapes / sizes
     const pieceSize = piece.basePieceSize;
 
-    // 
-    const { connectorSize, connectorDistanceFromCorner } = getConnectorDimensions(pieceSize as number);
+    const { connectorSize, connectorDistanceFromCorner } = piece;
     const hasTopPlug = piece.type[0] === 1;
     const hasLeftPlug = piece.type[3] === 1;
 
@@ -76,10 +74,7 @@ export const getJigsawShapeSvgString = (
         bottomConnector = null,
         leftConnector = null;
 
-    const jigsawShapes = new jigsawPath(
-        pieceSize as number,
-        connectorSize
-    );
+    const jigsawShapes = new jigsawPath(pieceSize as number, connectorSize);
 
     const getRotatedConnector = jigsawShapes.getRotatedConnector;
 

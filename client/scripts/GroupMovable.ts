@@ -106,7 +106,7 @@ export default class GroupMovable extends BaseMovable {
       if (this.isSolved) {
         this.solve();
       } else {
-        this.restoreFromPersistence();
+        // this.restoreFromPersistence();
       }
     }
 
@@ -214,7 +214,7 @@ export default class GroupMovable extends BaseMovable {
       instance.setGroupIdAcrossInstance(this._id + "")
     );
     this.attachElements();
-    this.redrawCanvas();
+    // this.redrawCanvas();
     await this.save(true);
   }
 

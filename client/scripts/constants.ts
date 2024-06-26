@@ -27,11 +27,22 @@ export const LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY =
 
 export const PUZZLE_PIECE_CLASSES = ["puzzle-piece", "puzzle-piece-fg"];
 
+// How big the connectors should be (how far they stick of from the piece's body), expressed as a percentage of the body of the piece
+// How far in from the corner the connector should be.
+// This may need to be re-addressed when we approach wild shapes as we may prefer to randomise this.
+export const SHOULDER_SIZE_PERC = 35;
+export const SHADOW_COLOR = "#353836";
+export const STROKE_COLOR = "#000";
+export const STROKE_WIDTH = 1;
+
 export const PIECE_SIZE = 20;
 export const MINIMUM_NUMBER_OF_PIECES = 9;
 export const MINIMUM_NUMBER_OF_PIECES_PER_SIDE = 3;
 export const CONNECTOR_SIZE_PERC = 30;
+export const CONNECTOR_TOLERANCE_AMOUNT = 50;
 
+export const CONNECTOR_DIVISOR_FOR_CONTROL_POINT_HANDLE = 2;
+export const CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE = 1.2;
 
 export const ZOOM_INTERVALS = [1, 1.5, 2.5];
 
@@ -86,7 +97,6 @@ export const SHAPE_TYPES = {
 };
 
 export const SHADOW_OFFSET_RATIO = 0.025;
-export const CONNECTOR_TOLERANCE_AMOUNT = 40;
 export const FLOAT_TOLERANCE_AMOUNT = 20;
 
 export const PUZZLE_SIZE_PERCENTAGE_SQUARE = 40;

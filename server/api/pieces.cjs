@@ -94,19 +94,11 @@ var api = {
             response.pieces = [];
 
             for (let i = 0, l = data.length; i < l; i++) {
-              const { _id, puzzleId, index, pageX, pageY, puzzleX, puzzleY, type, connectorSize, pocket } = data[i];
+              const { _id, puzzleId, index } = data[i];
 
               // Dynamically setting the query to be either an internal id or a
               // numeric-index-and-puzzleId combination should allow us to reliably create 
               // (upsert) the pieces upon puzzle creation.
-              //
-              // If I didn't  do this, I'd be tempted to return ALL internal IDs for the
-              // pieces after this operation and update ALL pieces on the client-side so they 
-              // can request updates with their unique IDs later on, so this should mean less 
-              // work for the client.
-              //
-              // Once each individual piece is interacted with it'll request an update, and it
-              // it at that time that we can update it with its unique ID.
               if (_id) {
                 queryObject._id = new ObjectID(_id);
               } else {
@@ -133,18 +125,11 @@ var api = {
             puzzleId = data.puzzle;
 
             queryObject._id = new ObjectID(data._id);
-            // console.log("Single piece update requested with data", data);
-
-            const { pageX, pageY, groupId, isSolved, pocket, zIndex } = data;
+            console.log("Single piece update requested with data", data);
 
             update = {
               $set: {
-                pageX,
-                pageY,
-                zIndex,
-                groupId,
-                isSolved,
-                pocket,
+                ...data,
               },
             };
 

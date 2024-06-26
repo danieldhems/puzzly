@@ -34,7 +34,7 @@ export function checkConnections(
     connectsTo: element.dataset.connectsTo,
   };
 
-  // console.log("checkConnections", piece);
+  console.log("checkConnections", piece);
 
   const shouldCompare = (targetPiece: Partial<JigsawPieceData>) =>
     (piece.group === undefined && targetPiece.groupId === undefined) ||
@@ -89,7 +89,7 @@ export function checkConnections(
   const connectsTo = JSON.parse(element.dataset.connectsTo as string);
 
   Object.keys(connectsTo).some((key: SideNames) => {
-    // console.log("key", key);
+    console.log("key", key);
     const targetElement = Utils.getElementByPieceId(connectsTo[key]);
 
     if (targetElement) {
@@ -115,17 +115,17 @@ export function checkConnections(
           oppositeConnection as SideNames
         ) as DomBox;
 
-        // console.log("source element", element);
-        // console.log("target element", targetElement);
+        console.log("source element", element);
+        console.log("target element", targetElement);
 
-        // console.log(
-        //   `checking ${key}`,
-        //   thisPieceConnectorBoundingBox,
-        //   targetPieceConnectorBoundingBox
-        // );
+        console.log(
+          `checking ${key}`,
+          thisPieceConnectorBoundingBox,
+          targetPieceConnectorBoundingBox
+        );
 
-        // Utils.drawBox(thisPieceConnectorBoundingBox);
-        // Utils.drawBox(targetPieceConnectorBoundingBox, null, "blue");
+        Utils.drawBox(thisPieceConnectorBoundingBox);
+        Utils.drawBox(targetPieceConnectorBoundingBox, null, "blue");
 
         if (
           Utils.hasCollision(

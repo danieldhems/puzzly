@@ -1,16 +1,11 @@
-import { CONNECTOR_SIZE_PERC, MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SVG_NAMESPACE } from "./constants";
+import { LargeNumberLike } from "crypto";
+import { CONNECTOR_SIZE_PERC, CONNECTOR_TOLERANCE_AMOUNT, MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SHADOW_COLOR, SHOULDER_SIZE_PERC, STROKE_COLOR, STROKE_WIDTH, SVG_NAMESPACE } from "./constants";
 import jigsawPath from "./jigsawPath";
 import { getJigsawShapeSvgString } from "./svg";
 import { ConnectorNames, ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleConfig, SideNames, SkeletonPiece } from "./types";
 import Utils from "./utils";
 
-// How big the connectors should be (how far they stick of from the piece's body), expressed as a percentage of the body of the piece
-// How far in from the corner the connector should be.
-// This may need to be re-addressed when we approach wild shapes as we may prefer to randomise this.
-const SHOULDER_SIZE_PERC = 35;
-const SHADOW_COLOR = "#353836";
-const STROKE_COLOR = "#000";
-const STROKE_WIDTH = 1;
+
 
 const Generator = {} as PuzzleGenerator;
 
@@ -29,6 +24,7 @@ const puzzleGenerator = async function (
   Generator.strokeColor = STROKE_COLOR;
   Generator.shadowColor = SHADOW_COLOR;
 
+  // TODO: Deprecated?
   Generator.connectorDistanceFromCorner =
     (Generator.pieceSize / 100) * SHOULDER_SIZE_PERC;
 
@@ -50,11 +46,16 @@ const puzzleGenerator = async function (
   };
 };
 
-export const getConnectorDimensions = (pieceSize: number) => {
-  return {
-    connectorDistanceFromCorner: (pieceSize / 100) * SHOULDER_SIZE_PERC,
-    connectorSize: (pieceSize / 100) * CONNECTOR_SIZE_PERC,
-  }
+export const getConnectorSize = (pieceSize: number) => {
+  return pieceSize / 100 * CONNECTOR_SIZE_PERC;
+}
+
+export const getConnectorDistanceFromCorner = (pieceSize: number) => {
+  return pieceSize / 100 * SHOULDER_SIZE_PERC;
+}
+
+export const getConnectorTolerance = (connectorSize: number) => {
+  return connectorSize / 100 * CONNECTOR_TOLERANCE_AMOUNT;
 }
 
 const loadImage = (path: string): Promise<HTMLImageElement> => {
@@ -224,18 +225,24 @@ export const generatePieces = (puzzleConfig: PuzzleConfig): SkeletonPiece[] => {
   let leftConnector: ConnectorType;
   let topConnector: ConnectorType;
 
-  const { totalNumberOfPieces, numberOfPiecesHorizontal } = puzzleConfig;
+  const { totalNumberOfPieces, numberOfPiecesHorizontal, numberOfPiecesVertical } = puzzleConfig;
   const connectorChoices = [-1, 1];
 
-  const { connectorSize: connectorSizeValue } = getConnectorDimensions(puzzleConfig.pieceSize);
+  const connectorSize = getConnectorSize(puzzleConfig.pieceSize);
+  const connectorTolerance = getConnectorTolerance(connectorSize);
+  const connectorDistanceFromCorner = getConnectorDistanceFromCorner(puzzleConfig.pieceSize);
 
   let currentIndexFromLeftEdge = 0;
   let currentIndexFromTopEdge = 0;
 
   while (n < puzzleConfig.totalNumberOfPieces) {
     const piece = {
-      connectorSize: connectorSizeValue,
+      connectorSize,
+      connectorDistanceFromCorner,
+      connectorTolerance,
       basePieceSize: puzzleConfig.pieceSize,
+      numberOfPiecesHorizontal,
+      numberOfPiecesVertical,
     } as SkeletonPiece;
 
     if (n === 0) {
@@ -322,13 +329,21 @@ export const getPieceSize = (puzzleDimensions: { width: number; height: number }
 export const addPuzzleDataToPieces = (
   pieces: SkeletonPiece[],
   puzzleConfig: PuzzleConfig,
-  puzzleDimensions: { width: number; height: number }
+  puzzleDimensions: {
+    pieceSize: number;
+    connectorSize: number;
+    connectorDistanceFromCorner: number;
+    connectorTolerance: number;
+  }
 ) => {
-  let pieceSize = getPieceSize(puzzleDimensions, puzzleConfig);
-  const cSize = pieceSize / 100 * CONNECTOR_SIZE_PERC;
+  const {
+    pieceSize,
+    connectorSize,
+    connectorDistanceFromCorner,
+    connectorTolerance,
+  } = puzzleDimensions;
 
   return pieces.map((piece, index) => {
-    const basePieceSize = pieceSize;
     let width = pieceSize;
     let height = pieceSize;
 
@@ -336,32 +351,32 @@ export const addPuzzleDataToPieces = (
     let yPos = pieceSize * piece.numPiecesFromTopEdge;
 
     if (piece.type[0] === 1) {
-      yPos -= cSize;
-      height += cSize;
+      yPos -= connectorSize;
+      height += connectorSize;
     }
 
     if (piece.type[1] === 1) {
-      width += cSize;
+      width += connectorSize;
     }
 
     if (piece.type[2] === 1) {
-      height += cSize;
+      height += connectorSize;
     }
     if (piece.type[3] === 1) {
-      xPos -= cSize;
-      width += cSize;
+      xPos -= connectorSize;
+      width += connectorSize;
     }
 
     const pageX = xPos * 2 + pieceSize;
     const pageY = yPos * 2 + pieceSize;
 
-    const viewBox = basePieceSize + (cSize * 2);
-
     return {
       ...piece,
       index,
-      basePieceSize,
-      connectorSize: cSize,
+      basePieceSize: pieceSize,
+      connectorSize,
+      connectorTolerance,
+      connectorDistanceFromCorner,
       puzzleX: xPos,
       puzzleY: yPos,
       pageX,
@@ -669,8 +684,10 @@ export const getPiecePositionBasedOnAdjacentPieces = (
 
 export const getPuzzleImpressions = (puzzleConfigs: PuzzleConfig[]): HTMLDivElement => {
   const container = document.createElement("div");
+
   // Assuming config set consists of either all rectangular or all square puzzles
   const sampleConfig = puzzleConfigs[0];
+
   // TODO: Could simplify this by just adding a property to each config that explicitly names it as either rectangular or square
   // TODO: Impression id/label should be an enum
   const configName = sampleConfig.numberOfPiecesHorizontal !== sampleConfig.numberOfPiecesVertical ? "rectangular-impressions" : "square-impressions";

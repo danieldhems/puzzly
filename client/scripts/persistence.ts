@@ -134,7 +134,7 @@ export default class PersistenceOperations {
   }
 
   async save(data: SaveStates) {
-    console.log("saving", data);
+    // console.log("saving", data);
     const useLocalStorage = false;
 
     let endpoint;

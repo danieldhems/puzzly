@@ -1,4 +1,4 @@
-import { ELEMENT_IDS, PUZZLE_PIECE_CLASSES } from "./constants";
+import { CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE, ELEMENT_IDS, PUZZLE_PIECE_CLASSES } from "./constants";
 import {
   ConnectorType,
   DomBox,
@@ -231,7 +231,7 @@ const Utils = {
   },
 
   getElementByPieceId(id: number) {
-    return document.querySelector(`[data-piece-id='${id}']`) as HTMLDivElement;
+    return document.querySelector(`[data-piece-index='${id}']`) as HTMLDivElement;
   },
 
   getPxString(value: number) {
@@ -412,77 +412,87 @@ const Utils = {
   },
 
   getConnectorBoundingBox(element: HTMLDivElement, side: SideNames) {
+    console.log("getConnectorBoundingBox", element)
     const piece = {
       type: Utils.getPieceType(element),
     };
     const hasLeftPlug = piece.type[3] === 1;
     const hasTopPlug = piece.type[0] === 1;
 
-    const tolerance: number = parseInt(
-      element.dataset.connectorTolerance as string
-    );
+    // const tolerance: number = parseInt(
+    //   element.dataset.connectorTolerance as string
+    // );
+    const tolerance = 0;
     const connectorDistanceFromCorner = parseInt(
       element.dataset.connectorDistanceFromCorner as string
     );
     const connectorSize = parseInt(element.dataset.connectorSize as string);
-    const shadowOffset = parseInt(element.dataset.shadowOffset as string);
+    const basePieceSize = parseInt(element.dataset.basePieceSize as string);
 
     let box;
 
-    // console.log("connectorsize", connectorSize);
-    // console.log("tolerance setting", connectorTolerance);
-
-    const topBoundary = hasTopPlug
-      ? connectorDistanceFromCorner + connectorSize
-      : connectorDistanceFromCorner;
-    const leftBoundary = hasLeftPlug
-      ? connectorDistanceFromCorner + connectorSize
-      : connectorDistanceFromCorner;
+    console.log("connectorsize", connectorSize);
+    console.log("tolerance", tolerance);
+    console.log("connectorDistanceFromCorner", connectorDistanceFromCorner);
 
     // const elementBoundingBox = element.getBoundingClientRect();
-    const elementBoundingBox = Utils.getElementBoundingBox(element);
+    const elementBoundingBox = Utils.getStyleBoundingBox(element);
+
+    const topBoundary = hasTopPlug
+      ? elementBoundingBox.top + connectorSize + (connectorSize * CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE)
+      : elementBoundingBox.top;
+    const leftBoundary = hasLeftPlug
+      ? elementBoundingBox.left + connectorSize + (connectorSize * CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE)
+      : elementBoundingBox.left;
+
+    const isTopSidePiece = piece.type[0] === 0;
+    const isLeftSidePiece = piece.type[3] === 0;
 
     // console.log("elementBoundingBox", elementBoundingBox);
 
+    const halfSideLength = basePieceSize / 2;
+    const halfConnectorSize = connectorSize / 2
+
     switch (side) {
       case SideNames.Left:
+        console.log("Getting box for left side")
         box = {
-          top: elementBoundingBox.top + topBoundary + tolerance,
-          right: elementBoundingBox.left + connectorSize - tolerance,
+          top: topBoundary + connectorSize,
+          right: leftBoundary + connectorSize,
           bottom:
-            elementBoundingBox.top + topBoundary + connectorSize - tolerance,
-          left: elementBoundingBox.left + tolerance,
+            topBoundary + connectorSize,
+          left: leftBoundary,
         };
         break;
       case SideNames.Right:
+        console.log("Getting box for right side")
         box = {
-          top: elementBoundingBox.top + topBoundary + tolerance,
-          right: elementBoundingBox.right - tolerance,
+          top: topBoundary + halfSideLength - halfConnectorSize,
+          right: elementBoundingBox.right,
           bottom:
-            elementBoundingBox.top + topBoundary + connectorSize - tolerance,
-          left: elementBoundingBox.right - connectorSize + tolerance,
+            topBoundary + halfSideLength - halfConnectorSize + connectorSize,
+          left: elementBoundingBox.right - connectorSize,
         };
         break;
       case SideNames.Bottom:
+        console.log("Getting box for bottom side")
         box = {
           top:
-            elementBoundingBox.bottom -
-            connectorSize +
-            tolerance -
-            shadowOffset,
+            elementBoundingBox.bottom - connectorSize,
           right:
-            elementBoundingBox.left + leftBoundary + connectorSize - tolerance,
-          bottom: elementBoundingBox.bottom - tolerance - shadowOffset,
-          left: elementBoundingBox.left + leftBoundary + tolerance,
+            leftBoundary + halfSideLength - (connectorSize / 2),
+          bottom: elementBoundingBox.bottom,
+          left: leftBoundary + halfSideLength - (connectorSize / 2),
         };
         break;
       case SideNames.Top:
+        console.log("Getting box for top side")
         box = {
-          top: elementBoundingBox.top + tolerance,
+          top: topBoundary,
           right:
-            elementBoundingBox.left + leftBoundary + connectorSize - tolerance,
-          bottom: elementBoundingBox.top + connectorSize - tolerance,
-          left: elementBoundingBox.left + leftBoundary + tolerance,
+            leftBoundary + connectorSize,
+          bottom: topBoundary + connectorSize,
+          left: leftBoundary,
         };
         break;
     }
@@ -666,6 +676,9 @@ const Utils = {
     container?: HTMLDivElement | null,
     borderColor?: string
   ) {
+    const width = box.width || box.right - box.left;
+    const height = box.height || box.bottom - box.top;
+
     const div = document.createElement("div");
     div.classList.add("bounding-box-indicator");
     div.style.position = "absolute";
@@ -673,9 +686,9 @@ const Utils = {
     div.style.top = box.top + "px";
     div.style.left = box.left + "px";
 
-    div.style.width = box.width + "px";
-    div.style.height = box.height + "px";
-    div.style.border = `5px solid ${borderColor || "green"}`;
+    div.style.width = width + "px";
+    div.style.height = height + "px";
+    div.style.border = `3px solid ${borderColor || "green"}`;
     div.style.pointerEvents = "none";
     if (container) {
       container.appendChild(div);
@@ -923,6 +936,102 @@ const Utils = {
     };
 
     // alert("" + xl + " " + xh + " " + yl + " " + yh);
+  },
+
+  //For cubic bezier.
+  //(x0,y0) is start point; (x1,y1),(x2,y2) is control points; (x3,y3) is end point.
+  cubicBezierMinMax(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number) {
+    var tArr = [], xArr = [x0, x3], yArr = [y0, y3],
+      a, b, c, t, t1, t2, b2ac, sqrt_b2ac;
+    for (var i = 0; i < 2; ++i) {
+      if (i == 0) {
+        b = 6 * x0 - 12 * x1 + 6 * x2;
+        a = -3 * x0 + 9 * x1 - 9 * x2 + 3 * x3;
+        c = 3 * x1 - 3 * x0;
+      } else {
+        b = 6 * y0 - 12 * y1 + 6 * y2;
+        a = -3 * y0 + 9 * y1 - 9 * y2 + 3 * y3;
+        c = 3 * y1 - 3 * y0;
+      }
+      if (Math.abs(a) < 1e-12) {
+        if (Math.abs(b) < 1e-12) {
+          continue;
+        }
+        t = -c / b;
+        if (0 < t && t < 1) {
+          tArr.push(t);
+        }
+        continue;
+      }
+      b2ac = b * b - 4 * c * a;
+      if (b2ac < 0) {
+        if (Math.abs(b2ac) < 1e-12) {
+          t = -b / (2 * a);
+          if (0 < t && t < 1) {
+            tArr.push(t);
+          }
+        }
+        continue;
+      }
+      sqrt_b2ac = Math.sqrt(b2ac);
+      t1 = (-b + sqrt_b2ac) / (2 * a);
+      if (0 < t1 && t1 < 1) {
+        tArr.push(t1);
+      }
+      t2 = (-b - sqrt_b2ac) / (2 * a);
+      if (0 < t2 && t2 < 1) {
+        tArr.push(t2);
+      }
+    }
+
+    var j = tArr.length, mt;
+    while (j--) {
+      t = tArr[j];
+      mt = 1 - t;
+      xArr[j] = (mt * mt * mt * x0) + (3 * mt * mt * t * x1) + (3 * mt * t * t * x2) + (t * t * t * x3);
+      yArr[j] = (mt * mt * mt * y0) + (3 * mt * mt * t * y1) + (3 * mt * t * t * y2) + (t * t * t * y3);
+    }
+
+    return {
+      min: { x: Math.min.apply(0, xArr), y: Math.min.apply(0, yArr) },
+      max: { x: Math.max.apply(0, xArr), y: Math.max.apply(0, yArr) }
+    };
+  },
+
+  /**
+   * Borrowed from https://stackoverflow.com/questions/24809978/calculating-the-bounding-box-of-cubic-bezier-curve
+   * 
+   * First control point
+   * @param x0 
+   * @param y0 
+   * Second control point
+   * @param x1 
+   * @param y1 
+   * Destination
+   * @param x2 
+   * @param y2 
+   * 
+   * @returns 
+   */
+  //For quadratic bezier.
+  //(x0,y0) is start point; (x1,y1) is control points; (x2,y2) is end point.
+  quadraticBezierMinMax(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number) {
+    var xArr = [x0, x2], yArr = [y0, y2], a, b, c, t;
+    for (var i = 0; i < 2; ++i) {
+      a = i == 0 ? x0 - 2 * x1 + x2 : y0 - 2 * y1 + y2;
+      b = i == 0 ? -2 * x0 + 2 * x1 : -2 * y0 + 2 * y1;
+      c = i == 0 ? x0 : y0;
+      if (Math.abs(a) > 1e-12) {
+        t = -b / (2 * a);
+        if (0 < t && t < 1) {
+          [xArr, yArr][i].push(a * t * t + b * t + c);
+        }
+      }
+    }
+    return {
+      min: { x: Math.min.apply(0, xArr), y: Math.min.apply(0, yArr) },
+      max: { x: Math.max.apply(0, xArr), y: Math.max.apply(0, yArr) }
+    };
   },
 
   getOppositeConnector(connector: ConnectorType) {

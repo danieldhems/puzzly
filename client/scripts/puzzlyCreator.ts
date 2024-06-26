@@ -1,8 +1,8 @@
-import { MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SOLVING_AREA_SCREEN_PORTION, SquareShapedPuzzleDefinitions } from "./constants";
-import puzzleGenerator, { addPuzzleDataToPieces, generatePieces, getConnectorDimensions } from "./puzzleGenerator";
+import { CONNECTOR_SIZE_PERC, CONNECTOR_TOLERANCE_AMOUNT, SHOULDER_SIZE_PERC, MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SOLVING_AREA_SCREEN_PORTION } from "./constants";
+import { addPuzzleDataToPieces, generatePieces, getConnectorDistanceFromCorner, getConnectorSize } from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
 import Puzzly from "./Puzzly";
-import { PuzzleAxis, PuzzleConfig, PuzzleCreationResponse, PuzzleShapes } from "./types";
+import { PuzzleAxis, PuzzleConfig, PuzzleShapes } from "./types";
 import Utils from "./utils";
 
 export interface SourceImage {
@@ -304,7 +304,8 @@ export default class PuzzlyCreator {
           : imageHeight / n
       );
 
-      const { connectorSize } = getConnectorDimensions(divisionResult);
+      const connectorSize = getConnectorSize(divisionResult);
+      const connectorDistanceFromCorner = getConnectorDistanceFromCorner(divisionResult);
 
       const puzzleConfig = {} as PuzzleConfig;
 
@@ -315,6 +316,7 @@ export default class PuzzlyCreator {
         puzzleConfig.imageHeight = imageHeight;
         puzzleConfig.pieceSize = divisionResult;
         puzzleConfig.connectorSize = connectorSize;
+        puzzleConfig.connectorDistanceFromCorner = connectorDistanceFromCorner;
 
         let longSideConfig;
 
@@ -361,6 +363,7 @@ export default class PuzzlyCreator {
         totalNumberOfPieces: n * n,
         pieceSize: divisionResult,
         connectorSize,
+        connectorDistanceFromCorner,
         imageWidth,
         imageHeight,
         puzzleWidth: divisionResult * n,
@@ -627,30 +630,53 @@ export default class PuzzlyCreator {
     const isSquare = numberOfPiecesHorizontal === numberOfPiecesVertical;
     const aspectRatio = smallerLength / largerLength;
 
-    let width: number, height: number;
+    let width: number;
+    let height: number;
+    let pieceSize: number;
+    let connectorSize: number;
+    let connectorDistanceFromCorner: number;
+    let connectorTolerance: number;
+
     if (window.innerWidth < window.innerHeight) {
       height = window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION;
-      return {
-        height,
-        width: isSquare ? height : height * aspectRatio,
-      }
-
+      width = isSquare ? height : height * aspectRatio;
     } else if (window.innerHeight < window.innerWidth) {
       width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
-      return {
-        width,
-        height: isSquare ? width : width * aspectRatio,
-      }
+      height = isSquare ? width : width * aspectRatio;
     } else {
       width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
-      return {
-        width,
-        height: width,
+      height = width;
+    }
+
+    if (isSquare) {
+      // For square puzzles use either width or height to dervice piece size from
+      // as both are equal
+      pieceSize = height / numberOfPiecesVertical;
+    } else {
+      if (numberOfPiecesHorizontal < numberOfPiecesVertical) {
+        pieceSize = width / numberOfPiecesHorizontal;
+      } else {
+        pieceSize = height / numberOfPiecesVertical;
       }
     }
+
+
+    console.log("getPuzzleDimensions: puzzle config", puzzleConfig)
+    console.log("getPuzzleDimensions: pieceSize", pieceSize)
+
+    connectorSize = pieceSize / 100 * CONNECTOR_SIZE_PERC;
+    connectorDistanceFromCorner = pieceSize / 100 * SHOULDER_SIZE_PERC;
+    connectorTolerance = connectorSize / 100 * CONNECTOR_TOLERANCE_AMOUNT;
+
+    return {
+      width,
+      height,
+      pieceSize,
+      connectorSize,
+      connectorDistanceFromCorner,
+      connectorTolerance,
+    }
   }
-
-
 
   async createPuzzle(options: Record<any, any> | null = null) {
     const pieces = generatePieces(this.selectedPuzzleConfig);
@@ -711,7 +737,6 @@ export default class PuzzlyCreator {
             ...data,
             pieces: mappedPieces,
             _id: response._id,
-            connectorDistanceFromCorner: response.connectorDistanceFromCorner,
             previewPath: response.previewPath,
             puzzleImagePath,
             boardWidth: puzzleDimensions.width,

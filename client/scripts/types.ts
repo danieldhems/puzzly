@@ -85,7 +85,9 @@ export interface JigsawPieceData {
   width: number;
   height: number;
   basePieceSize: number;
+  connectorDistanceFromCorner: number;
   connectorSize: number;
+  connectorTolerance: number;
   imgW: number;
   imgH: number;
   pageX: number;
@@ -107,8 +109,8 @@ export interface JigsawPieceData {
   connectsTo: ConnectsTo;
   numPiecesFromTopEdge: number;
   numPiecesFromLeftEdge: number;
-  piecesPerSideHorizontal: number;
-  piecesPerSideVertical: number;
+  numberOfPiecesHorizontal: number;
+  numberOfPiecesVertical: number;
   selectedNumPieces: number;
   svgPath: string;
   scale: number;
@@ -168,7 +170,11 @@ export type SkeletonPiece = Pick<
   JigsawPieceData,
   "type" | "numPiecesFromLeftEdge" | "numPiecesFromTopEdge"
 > & {
+  connectorDistanceFromCorner: number;
   connectorSize: number;
+  connectorTolerance: number;
+  numberOfPiecesHorizontal: number;
+  numberOfPiecesVertical: number;
   pieceAbove: {
     type: ConnectorType[],
   };
@@ -192,6 +198,7 @@ export interface PuzzleConfig {
   numberOfPiecesVertical: number;
   totalNumberOfPieces: number;
   pieceSize: number;
+  connectorDistanceFromCorner: number;
   connectorSize: number;
   /** 
    * Width and height of the puzzle based on how much of the image it includes
@@ -275,6 +282,9 @@ export interface SingleMovableSaveState {
   width: number;
   height: number;
   basePieceSize: number;
+  connectorSize: number;
+  connectorTolerance: number;
+  connectorDistanceFromCorner: number;
   groupId?: string;
   pageX: number;
   pageY: number;
@@ -293,7 +303,7 @@ export interface SingleMovableSaveState {
 export interface GroupMovableSaveState
   extends Omit<
     SingleMovableSaveState,
-    "pocket" | "index" | "pageX" | "pageY" | "puzzleX" | "puzzleY" | "width" | "height" | "type" | "basePieceSize"
+    "pocket" | "index" | "pageX" | "pageY" | "puzzleX" | "puzzleY" | "width" | "height" | "type" | "basePieceSize" | "connectorSize" | "connectorDistanceFromCorner" | "connectorTolerance"
   > {
   position: {
     top: number;

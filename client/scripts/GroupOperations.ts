@@ -100,7 +100,7 @@ export default class GroupOperations implements GroupOperationsProperties {
     );
     const candidates: MovableElement[] = [];
     const totalNumberOfPieces = parseInt(
-      elementsInGroup[0].dataset.numPuzzlePieces as string
+      elementsInGroup[0].dataset.totalNumberOfPieces as string
     );
     if (elementsInGroup.length === totalNumberOfPieces) {
       return [Utils.getElementByPieceId(0)];

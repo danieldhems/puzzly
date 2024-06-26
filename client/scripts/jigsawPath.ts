@@ -1,3 +1,4 @@
+import { CONNECTOR_DIVISOR_FOR_CONTROL_POINT_HANDLE, CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE } from "./constants";
 import { ConnectorControlPoints } from "./types";
 
 export default class JigsawPath {
@@ -9,8 +10,8 @@ export default class JigsawPath {
   constructor(pieceSize: number, connectorSize: number) {
     this.pieceSize = pieceSize;
     this.connectorSize = connectorSize;
-    this.humpSize = parseInt((this.connectorSize * 1.2).toFixed());
-    this.halfConnectorSize = parseInt((this.connectorSize / 2).toFixed());
+    this.humpSize = parseInt((this.connectorSize * CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE).toFixed());
+    this.halfConnectorSize = parseInt((this.connectorSize / CONNECTOR_DIVISOR_FOR_CONTROL_POINT_HANDLE).toFixed());
 
     // console.log("connectorSize", this.connectorSize);
     // console.log("humpSize", this.humpSize);

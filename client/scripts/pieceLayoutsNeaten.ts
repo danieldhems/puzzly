@@ -120,12 +120,19 @@ export default function arrangePiecesAroundEdge(
   const piecesInPlay = Utils.shuffleArray(Utils.getIndividualPiecesOnCanvas());
 
   let currentX: number = this.solvingArea.offsetLeft;
-  let currentY: number = this.solvingArea.offsetTop - this.largestPieceSpan;
+  let currentY: number = this.solvingArea.offsetTop;
   let verticalSpace = currentY;
 
   while (i < piecesInPlay.length) {
     const currentPiece = piecesInPlay[i] as MovableElement;
     const pieceData = Utils.getPieceFromElement(currentPiece);
+
+    const top = parseInt(currentPiece.style.top);
+    const height = currentPiece.offsetHeight;
+
+    if (top < currentY) {
+      currentY = top;
+    }
 
     if (currentSide === "top" && pieceData.type[0] !== 1) {
       // currentY += this.connectorSize;

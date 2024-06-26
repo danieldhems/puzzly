@@ -123,6 +123,9 @@ export default class Puzzly {
     this.numberOfPiecesHorizontal = config.numberOfPiecesHorizontal;
     this.numberOfPiecesVertical = config.numberOfPiecesVertical;
 
+    // TODO: Rename this to avoid confusion
+    this.selectedNumPieces = config.totalNumberOfPieces;
+
     this.boardWidth = config.boardWidth;
     this.boardHeight = config.boardHeight;
 
@@ -255,9 +258,6 @@ export default class Puzzly {
           puzzleData: this,
           pieceData: {
             ...piece,
-            spritePath: this.spritePath,
-            piecesPerSideHorizontal: this.piecesPerSideHorizontal,
-            piecesPerSideVertical: this.piecesPerSideVertical,
             index,
           },
         });

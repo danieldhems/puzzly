@@ -6,7 +6,8 @@ import GroupOperations from "./GroupOperations";
 import Pockets from "./Pockets";
 import { getJigsawShapeSvgString } from "./svg";
 import Puzzly from "./Puzzly";
-// import PathOperations from "./pathOperations.js";
+import PathOperations from "./pathOperations";
+
 import {
   DomBox,
   InstanceTypes,
@@ -26,6 +27,7 @@ export default class SingleMovable extends BaseMovable {
   GroupOperations: GroupOperations;
   piecesPerSideHorizontal: number;
   piecesPerSideVertical: number;
+  totalNumberOfPieces: number;
   isSolved: boolean;
   Puzzly: Puzzly;
   pocketId?: number;
@@ -53,10 +55,11 @@ export default class SingleMovable extends BaseMovable {
     this.Puzzly = puzzleData;
     this.puzzleId = this.Puzzly.puzzleId;
     this._id = pieceData._id;
+    this.totalNumberOfPieces = this.Puzzly.selectedNumPieces;
 
     this.piecesPerSideHorizontal = this.Puzzly.piecesPerSideHorizontal;
     this.shadowOffset = puzzleData.shadowOffset;
-    this.connectorTolerance = puzzleData.connectorTolerance;
+    this.connectorDistanceFromCorner = puzzleData.connectorDistanceFromCorner;
     this.pocketId = pieceData.pocketId;
     this.Pockets = this.Puzzly.Pockets;
 
@@ -100,14 +103,15 @@ export default class SingleMovable extends BaseMovable {
 
   createElement() {
     const {
-      id,
       index,
       _id,
-      puzzleId,
       groupId,
       width,
       height,
+      basePieceSize,
+      connectorDistanceFromCorner,
       connectorSize,
+      connectorTolerance,
       pageY,
       pageX,
       solvedY,
@@ -119,9 +123,8 @@ export default class SingleMovable extends BaseMovable {
       isSolved,
       numPiecesFromTopEdge,
       numPiecesFromLeftEdge,
-      piecesPerSideHorizontal,
-      piecesPerSideVertical,
-      selectedNumPieces,
+      numberOfPiecesHorizontal,
+      numberOfPiecesVertical,
       pocketId,
       type,
       svgPath,
@@ -147,27 +150,28 @@ export default class SingleMovable extends BaseMovable {
     el.setAttribute("data-jigsaw-type", type.join(","));
     el.setAttribute(
       "data-connector-distance-from-corner",
-      this.connectorDistanceFromCorner + ""
+      connectorDistanceFromCorner + ""
     );
-    el.setAttribute("data-connector-tolerance", this.connectorTolerance + "");
+    el.setAttribute("data-connector-tolerance", connectorTolerance + "");
     el.setAttribute("data-connector-size", connectorSize + "");
+    el.setAttribute("data-base-piece-size", basePieceSize + "");
     el.setAttribute("data-shadow-offset", this.shadowOffset + "");
     el.setAttribute("data-piece-index", index + "");
     el.setAttribute("data-piece-id-in-persistence", _id);
-    el.setAttribute("data-puzzle-id", puzzleId);
-    el.setAttribute("data-solvedX", solvedX + "");
-    el.setAttribute("data-solvedY", solvedY + "");
+    el.setAttribute("data-puzzle-id", this.puzzleId);
+    el.setAttribute("data-solvedX", puzzleX + "");
+    el.setAttribute("data-solvedY", puzzleY + "");
     el.setAttribute("data-pageX", pageX + "");
     el.setAttribute("data-pageY", pageY + "");
     el.setAttribute("data-svgPath", svgPath);
     el.setAttribute("data-is-inner-piece", isInnerPiece + "");
     el.setAttribute(
       "data-pieces-per-side-horizontal",
-      piecesPerSideHorizontal + ""
+      numberOfPiecesHorizontal + ""
     );
     el.setAttribute(
       "data-pieces-per-side-vertical",
-      piecesPerSideVertical + ""
+      numberOfPiecesVertical + ""
     );
     el.dataset.connectsTo = JSON.stringify(
       this.getConnectingPieceIds(this.pieceData)
@@ -181,7 +185,7 @@ export default class SingleMovable extends BaseMovable {
       "data-num-pieces-from-left-edge",
       numPiecesFromLeftEdge + ""
     );
-    el.setAttribute("data-num-puzzle-pieces", selectedNumPieces + "");
+    el.setAttribute("data-total-number-of-pieces", this.totalNumberOfPieces + "");
     el.setAttribute("data-is-solved", isSolved + "");
 
     this.element = el;
@@ -199,13 +203,18 @@ export default class SingleMovable extends BaseMovable {
     // console.log("piece size", pieceSize)
     const pathString = getJigsawShapeSvgString(this.pieceData);
 
+    const result = PathOperations.extractPathParts(pathString);
+    console.log("path extraction result", result);
+    const curves = PathOperations.getCurvesFromPathParts(result);
+    console.log("curves", curves)
+
     const shapeId = `shape-${index}`;
     const clipId = `clip-${index}`;
 
     const viewBox = Math.max(width, height);
 
     const svgElementTemplate = `
-      <svg xmlns="${SVGNS}" width="${viewBox}" height="${viewBox}" viewBox="0 0 ${width} ${height}" class="puzzle-piece-svg">
+      <svg xmlns="${SVGNS}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" class="puzzle-piece-svg">
         <defs>
           <path id="${shapeId}" d="${pathString}"></path>
         </defs>
@@ -288,11 +297,11 @@ export default class SingleMovable extends BaseMovable {
   }
 
   getConnectingPieceIds(
-    data: Pick<JigsawPieceData, "index" | "piecesPerSideHorizontal" | "type">
+    data: Pick<JigsawPieceData, "index" | "numberOfPiecesHorizontal" | "type">
   ) {
     const id = data.index;
-    const pieceAboveId = id - data.piecesPerSideHorizontal;
-    const pieceBelowId = id + data.piecesPerSideHorizontal;
+    const pieceAboveId = id - data.numberOfPiecesHorizontal;
+    const pieceBelowId = id + data.numberOfPiecesHorizontal;
 
     if (Utils.isTopLeftCorner(data.type)) {
       return {
@@ -491,6 +500,9 @@ export default class SingleMovable extends BaseMovable {
     return {
       index: this.pieceData.index,
       basePieceSize: this.pieceData.basePieceSize,
+      connectorSize: this.pieceData.connectorSize,
+      connectorTolerance: this.pieceData.connectorTolerance,
+      connectorDistanceFromCorner: this.pieceData.connectorDistanceFromCorner,
       width: this.pieceData.width,
       height: this.pieceData.height,
       pageX: this.element.offsetLeft,
@@ -528,7 +540,8 @@ export default class SingleMovable extends BaseMovable {
   }
 
   setId(id: string) {
-    console.log("Setting ID for piece", this.pieceData.index, id)
+    // console.log("Setting ID for piece", this.pieceData.index, id)
     this.pieceData._id = id;
+    this.element.setAttribute("data-piece-id-in-persistence", id);
   }
 }
