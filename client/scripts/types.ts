@@ -315,6 +315,16 @@ export interface GroupMovableSaveState
 
 export type SaveStates = SingleMovableSaveState | GroupMovableSaveState;
 
+export type PathPartHorizontalRelative = `h ${number}`;
+export type PathPartVerticalRelative = `v ${number}`;
+export type PathPartBezierControlPointRelative = `c ${PathPartControlPoint} ${PathPartControlPoint} ${PathPartControlPoint}`;
+export type PathPartControlPoint = `${number} ${number}`;
+export type PathParts =
+  PathPartHorizontalRelative
+  | PathPartVerticalRelative
+  | PathPartBezierControlPointRelative
+  | "";
+
 export enum Orientation {
   Landscape = "Landscape",
   Portrait = "Portrait",

@@ -205,7 +205,7 @@ export default class SingleMovable extends BaseMovable {
 
     const result = PathOperations.extractPathParts(pathString);
     console.log("path extraction result", result);
-    const curves = PathOperations.getCurvesFromPathParts(result);
+    const curves = PathOperations.getCurveControlPointsFromPathParts(result);
     console.log("curves", curves)
 
     const shapeId = `shape-${index}`;

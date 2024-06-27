@@ -1,4 +1,5 @@
 import { SHAPE_TYPES } from "./constants.js";
+import { PathParts } from "./types.js";
 import Utils from "./utils.js";
 
 export default class PathOperations {
@@ -15,21 +16,21 @@ export default class PathOperations {
   // c -44 19.000000000000007, -44.00000000000001 -55.99999999999999, -6.79678973526781e-15 -37
   // z
 
-  static extractPathParts(path: string) {
+  static extractPathParts(path: string): PathParts[] {
     let currIndex = 0;
-    let currPart = "";
+    let currPart: PathParts = "";
 
-    const result = [];
-    const stringParts = path.split(" ");
+    const result: PathParts[] = [];
+    const stringParts = path.split(" ") as unknown as PathParts;
 
     while (currIndex < stringParts.length) {
       if (/[Mhvcz]/.test(stringParts[currIndex])) {
 
-        if (currPart !== "") {
-          result.push(currPart);
+        if (currPart.length > 0) {
+          result.push(currPart as PathParts);
         }
 
-        currPart = stringParts[currIndex].trim();
+        currPart = stringParts[currIndex].trim() as PathParts;
 
         // FIX: This loop omits the last element in the array, so ensure it gets added
         if (stringParts[currIndex] === "z") {
@@ -45,23 +46,63 @@ export default class PathOperations {
     return result;
   }
 
-  static getCurvesFromPathParts(pathParts: string[]) {
+  static getCurveControlPointsFromPathParts(pathParts: PathParts[]) {
     // Bounding boxes need to be absolute values to be useful
     // so extract the "M" part for a point of reference
     // and derive all curve coords from this
-    const startingPoint = pathParts[0].substring(2).split(", ");
+    const startingPoint = pathParts[0].substring(2).split(", ")[0].split(" ");
+    const startX = parseFloat(startingPoint[0]);
+    const startY = parseFloat(startingPoint[1]);
+
+    let currentX: number = startX;
+    let currentY: number = startY;;
+
+    // console.log("starting point", startingPoint)
+    // console.log("start x", startX);
+    // console.log("start y", startY);
 
     const curves = [];
     let currentPart: string;
 
     for (let n = 0, l = pathParts.length; n < l; n++) {
       currentPart = pathParts[n];
+
+      if (currentPart === "") {
+        return;
+      }
+
       const firstChar = currentPart[0];
+
+      if (firstChar === "h") {
+        currentX += parseFloat(currentPart.split(" ")[1]);
+      }
+
+      if (firstChar === "v") {
+        currentY += parseFloat(currentPart.split(" ")[1]);
+      }
 
       if (firstChar === "c") {
         // Strip the "c " and take the rest of the curve as an
         // array for space-separated coordinate pairs
-        curves.push(currentPart.substring(2).split(", "));
+        const coordStrings = currentPart.substring(2).split(", ")
+        // console.log("coordStrings", coordStrings)
+        const parsed = coordStrings.map(str => str.split(" ").map(str => parseFloat(str)))
+        // console.log("coords as numbers", parsed)
+
+        const absoluteValues: { x: number, y: number }[] = [];
+        absoluteValues.push({ x: currentX, y: currentY })
+
+        for (let c = 0, length = parsed.length; c < length; c++) {
+          currentX += parsed[c][0];
+          currentY += parsed[c][1];
+          const coords = {
+            x: currentX,
+            y: currentY,
+          }
+          absoluteValues.push(coords)
+        }
+
+        curves.push(absoluteValues);
       }
     }
 
