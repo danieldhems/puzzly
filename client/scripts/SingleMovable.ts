@@ -14,6 +14,7 @@ import {
   JigsawPieceData,
   MovableElement,
   SingleMovableSaveState,
+  XYCoordinate,
 } from "./types";
 import Utils from "./utils";
 
@@ -208,6 +209,8 @@ export default class SingleMovable extends BaseMovable {
     const curves = PathOperations.getCurveControlPointsFromPathParts(result);
     console.log("curves", curves)
 
+    el.setAttribute("data-connector-control-points", JSON.stringify(curves));
+
     const shapeId = `shape-${index}`;
     const clipId = `clip-${index}`;
 
@@ -248,27 +251,27 @@ export default class SingleMovable extends BaseMovable {
       this.solve();
     } else {
       this.addToStage.call(this);
+
+      const connectors: Array<XYCoordinate[]> = JSON.parse(
+        this.element.getAttribute("data-connector-control-points") as string
+      );
+
+      console.log("piece type", this.pieceData.type);
+      console.log("Connectors", connectors)
+
+      const firstConnector: XYCoordinate[] = connectors[0];
+
+      const points: DomBox[] = firstConnector.map((c: XYCoordinate) => ({
+        left: this.element.offsetLeft + c.x,
+        right: this.element.offsetLeft + c.x + 2,
+        width: 2,
+        top: this.element.offsetTop + c.y,
+        bottom: this.element.offsetTop + c.y + 2,
+        height: 2,
+      }))
+
+      points.forEach((point: DomBox) => Utils.drawBox(point))
     }
-
-    // const connectorIndices = this.pieceData.type
-    //   .map((val, index) => val !== 0 && index)
-    //   .filter((val) => Number.isInteger(val));
-
-    // console.log("connectorIndices", connectorIndices);
-
-    // let i = 0;
-    // while (i < connectorIndices.length) {
-    //   const connectorBoundingBox =
-    //     PathOperations.getConnectorBoundingBoxFromPath(
-    //       i,
-    //       this.pieceData,
-    //       this.shapeType
-    //     );
-
-    //   console.log("bounding box for connector", connectorBoundingBox);
-    //   Utils.drawBox(connectorBoundingBox, this.element);
-    //   i++;
-    // }
   }
 
   isElementOwned(element: MovableElement) {

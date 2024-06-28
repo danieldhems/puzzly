@@ -325,6 +325,8 @@ export type PathParts =
   | PathPartBezierControlPointRelative
   | "";
 
+export type XYCoordinate = Record<"x" | "y", number>;
+
 export enum Orientation {
   Landscape = "Landscape",
   Portrait = "Portrait",

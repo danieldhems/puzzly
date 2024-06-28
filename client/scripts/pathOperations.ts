@@ -74,11 +74,21 @@ export default class PathOperations {
       const firstChar = currentPart[0];
 
       if (firstChar === "h") {
-        currentX += parseFloat(currentPart.split(" ")[1]);
+        const nextX = parseInt(currentPart.split(" ")[1]);
+        if (nextX < currentX) {
+          currentX += nextX;
+        } else {
+          currentX -= nextX;
+        }
       }
 
       if (firstChar === "v") {
-        currentY += parseFloat(currentPart.split(" ")[1]);
+        const nextY = parseInt(currentPart.split(" ")[1]);
+        if (nextY < currentY) {
+          currentY -= nextY;
+        } else {
+          currentY += nextY;
+        }
       }
 
       if (firstChar === "c") {
@@ -93,12 +103,30 @@ export default class PathOperations {
         absoluteValues.push({ x: currentX, y: currentY })
 
         for (let c = 0, length = parsed.length; c < length; c++) {
-          currentX += parsed[c][0];
-          currentY += parsed[c][1];
+          const nextX = parsed[c][0];
+          const nextY = parsed[c][1];
+
+          if (nextX !== currentX) {
+            if (nextX < currentX) {
+              currentX -= nextX;
+            } else {
+              currentX += nextX;
+            }
+          }
+
+          if (nextY !== currentY) {
+            if (nextY < currentY) {
+              currentY -= nextY;
+            } else {
+              currentY += nextY;
+            }
+          }
+
           const coords = {
             x: currentX,
             y: currentY,
           }
+
           absoluteValues.push(coords)
         }
 

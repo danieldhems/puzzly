@@ -62,7 +62,8 @@ export const getJigsawShapeSvgString = (
     // TODO: Assuming all pieces are square - won't work for irregular shapes / sizes
     const pieceSize = piece.basePieceSize;
 
-    const { connectorSize, connectorDistanceFromCorner } = piece;
+    const { connectorSize, connectorDistanceFromCorner: unroundeConnectorDistanceFromCorner } = piece;
+    const connectorDistanceFromCorner = Math.floor(unroundeConnectorDistanceFromCorner);
     const hasTopPlug = piece.type[0] === 1;
     const hasLeftPlug = piece.type[3] === 1;
 
@@ -78,7 +79,7 @@ export const getJigsawShapeSvgString = (
 
     const getRotatedConnector = jigsawShapes.getRotatedConnector;
 
-    svgString += `M ${leftBoundary} ${topBoundary} `;
+    svgString += `M ${Math.floor(leftBoundary)} ${Math.floor(topBoundary)} `;
 
     if (piece.type[0] === 1) {
         topConnector = getRotatedConnector(jigsawShapes.getPlug(), 0);
