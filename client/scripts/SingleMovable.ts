@@ -262,15 +262,15 @@ export default class SingleMovable extends BaseMovable {
       const firstConnector: XYCoordinate[] = connectors[0];
 
       const points: DomBox[] = firstConnector.map((c: XYCoordinate) => ({
-        left: this.element.offsetLeft + c.x,
-        right: this.element.offsetLeft + c.x + 2,
+        left: c.x,
+        right: c.x + 2,
         width: 2,
-        top: this.element.offsetTop + c.y,
-        bottom: this.element.offsetTop + c.y + 2,
+        top: c.y,
+        bottom: c.y + 2,
         height: 2,
       }))
 
-      points.forEach((point: DomBox) => Utils.drawBox(point))
+      points.forEach((point: DomBox) => Utils.drawBox(point, this.element))
     }
   }
 

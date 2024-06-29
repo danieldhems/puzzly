@@ -55,11 +55,11 @@ export default class PathOperations {
     const startY = parseFloat(startingPoint[1]);
 
     let currentX: number = startX;
-    let currentY: number = startY;;
+    let currentY: number = startY;
 
     // console.log("starting point", startingPoint)
-    // console.log("start x", startX);
-    // console.log("start y", startY);
+    console.log("start x", startX);
+    console.log("start y", startY);
 
     const curves = [];
     let currentPart: string;
@@ -71,60 +71,54 @@ export default class PathOperations {
         return;
       }
 
+      console.log("currentPart", currentPart)
       const firstChar = currentPart[0];
 
       if (firstChar === "h") {
         const nextX = parseInt(currentPart.split(" ")[1]);
+        console.log("x is currently", currentX)
+        console.log("next horizontal coord", nextX)
         if (nextX < currentX) {
-          currentX += nextX;
-        } else {
           currentX -= nextX;
+        } else if (nextX > currentX) {
+          currentX += nextX;
         }
+        console.log("x is now", currentX)
       }
 
       if (firstChar === "v") {
         const nextY = parseInt(currentPart.split(" ")[1]);
+        console.log("y is currently", currentY)
+        console.log("next vertical coord", nextY)
         if (nextY < currentY) {
           currentY -= nextY;
-        } else {
+        } else if (nextY > currentY) {
           currentY += nextY;
         }
+        console.log("y is now", currentY)
       }
 
       if (firstChar === "c") {
         // Strip the "c " and take the rest of the curve as an
-        // array for space-separated coordinate pairs
+        // array of space-separated coordinate pairs
         const coordStrings = currentPart.substring(2).split(", ")
         // console.log("coordStrings", coordStrings)
         const parsed = coordStrings.map(str => str.split(" ").map(str => parseFloat(str)))
         // console.log("coords as numbers", parsed)
 
         const absoluteValues: { x: number, y: number }[] = [];
-        absoluteValues.push({ x: currentX, y: currentY })
+
+        // Origin for curve
+        const curveOrigin = { x: currentX, y: currentY };
+        absoluteValues.push(curveOrigin);
 
         for (let c = 0, length = parsed.length; c < length; c++) {
           const nextX = parsed[c][0];
           const nextY = parsed[c][1];
 
-          if (nextX !== currentX) {
-            if (nextX < currentX) {
-              currentX -= nextX;
-            } else {
-              currentX += nextX;
-            }
-          }
-
-          if (nextY !== currentY) {
-            if (nextY < currentY) {
-              currentY -= nextY;
-            } else {
-              currentY += nextY;
-            }
-          }
-
           const coords = {
-            x: currentX,
-            y: currentY,
+            x: curveOrigin.x + nextX,
+            y: curveOrigin.y + nextY,
           }
 
           absoluteValues.push(coords)
