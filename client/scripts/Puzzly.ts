@@ -23,6 +23,7 @@ import {
   GroupData,
   JigsawPieceData,
   MovableElement,
+  MovableInstance,
   PuzzleConfig,
   PuzzleCreationResponse,
   PuzzleShapes,

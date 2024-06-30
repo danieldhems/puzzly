@@ -1,3 +1,4 @@
+import BaseMovable from "./BaseMovable";
 import {
   Connection,
   DomBox,
@@ -24,6 +25,7 @@ export function checkConnections(
   solvingAreaBox: DomBox,
   connectorTolerance: number
 ) {
+  const baseMovable = new BaseMovable(window.Puzzly);
   let connection: Connection | undefined;
 
   const piece = {
@@ -89,7 +91,7 @@ export function checkConnections(
   const connectsTo = JSON.parse(element.dataset.connectsTo as string);
 
   Object.keys(connectsTo).some((key: SideNames) => {
-    console.log("key", key);
+    // console.log("key", key);
     const targetElement = Utils.getElementByPieceId(connectsTo[key]);
 
     if (targetElement) {
@@ -103,36 +105,37 @@ export function checkConnections(
       let thisPieceConnectorBoundingBox;
 
       if (shouldCompare(targetPiece)) {
-        thisPieceConnectorBoundingBox = Utils.getConnectorBoundingBox(
-          element,
-          key
-        ) as DomBox;
+        const thisPieceInstance = baseMovable.getMovableInstanceFromElement(element);
+        const thisPieceConnectorBoundingBoxes = thisPieceInstance.getConnectorBoundingBoxes();
 
-        const oppositeConnection = getOppositeSide(key);
+        const targetPieceInstance = baseMovable.getMovableInstanceFromElement(targetElement);
+        const targetPieceConnectorBoundingBoxes = targetPieceInstance.getConnectorBoundingBoxes();
 
-        const targetPieceConnectorBoundingBox = Utils.getConnectorBoundingBox(
-          targetElement,
-          oppositeConnection as SideNames
-        ) as DomBox;
+        // console.log("source element", element);
+        // console.log("target element", targetElement);
 
-        console.log("source element", element);
-        console.log("target element", targetElement);
+        // console.log(
+        // `checking ${key}`,
+        // thisPieceConnectorBoundingBox,
+        // targetPieceConnectorBoundingBox
+        // );
 
-        console.log(
-          `checking ${key}`,
-          thisPieceConnectorBoundingBox,
-          targetPieceConnectorBoundingBox
-        );
+        // Utils.drawBox(thisPieceConnectorBoundingBox);
+        // Utils.drawBox(targetPieceConnectorBoundingBox, null, "blue");
 
-        Utils.drawBox(thisPieceConnectorBoundingBox);
-        Utils.drawBox(targetPieceConnectorBoundingBox, null, "blue");
+        let collisionDetected = false;
 
-        if (
-          Utils.hasCollision(
-            thisPieceConnectorBoundingBox,
-            targetPieceConnectorBoundingBox
-          )
-        ) {
+        while (!collisionDetected) {
+          thisPieceConnectorBoundingBoxes.forEach(sourceBox => {
+            targetPieceConnectorBoundingBoxes.forEach(targetBox => {
+              if (Utils.hasCollision(sourceBox, targetBox)) {
+                collisionDetected = true;
+              }
+            })
+          })
+        }
+
+        if (collisionDetected) {
           connection = {
             type: key,
             sourceElement: element,

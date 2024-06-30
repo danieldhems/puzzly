@@ -1,6 +1,6 @@
 import BaseMovable from "./BaseMovable";
 import { checkConnections } from "./checkConnections";
-import { EVENT_TYPES, SHAPE_TYPES, SVGNS } from "./constants";
+import { EVENT_TYPES, HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, SHAPE_TYPES, SVGNS } from "./constants";
 import GroupMovable from "./GroupMovable";
 import GroupOperations from "./GroupOperations";
 import Pockets from "./Pockets";
@@ -42,7 +42,7 @@ export default class SingleMovable extends BaseMovable {
     pieceData: JigsawPieceData;
   }) {
     super(puzzleData);
-    // console.log("SingleMovable constructor:", pieceData);
+    console.log("SingleMovable constructor:", pieceData);
 
     this.GroupOperations = new GroupOperations({
       width: this.Puzzly.boardWidth,
@@ -204,7 +204,7 @@ export default class SingleMovable extends BaseMovable {
     // console.log("piece size", pieceSize)
 
     const pathString = getJigsawShapeSvgString(this.pieceData);
-    el.setAttribute("data-svg-path-string", pathString);
+    el.setAttribute(HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, pathString);
 
     const shapeId = `shape-${index}`;
     const clipId = `clip-${index}`;
@@ -249,50 +249,38 @@ export default class SingleMovable extends BaseMovable {
   }
 
   setConnectorBoundingBoxes() {
-    console.log("piece type", this.pieceData.type);
-
-    const pathString = this.element.getAttribute("data-svg-path-string") as string;
+    const pathString = this.element.getAttribute(HTML_ATTRIBUTE_NAME_SVG_PATH_STRING) as string;
     const result = PathOperations.extractPathParts(pathString);
-    console.log("path extraction result", result);
     const connectors = PathOperations.getCurveControlPointsFromPathParts(result) as XYCoordinate[][];
-    // console.log("curves", connectors)
 
-    const connectorBoundingBoxes: DomBox[] = connectors.map((connector) => {
+    const connectorBoundingBoxes: {
+      top: number; left: number; width: number; height: number
+    }[] = connectors.map((connector) => {
       const [...points] = connector;
 
-      connector.forEach(c => {
-        // console.log("coordinate", c)
-        const box = { top: c.y, left: c.x };
-        // console.log("box", box)
-        Utils.drawBox(box, this.element)
-      })
-
-      const lowestY = Math.min(...points.map(p => p.y));
-      const highestY = Math.max(...points.map(p => p.y));
-      const lowestX = Math.min(...points.map(p => p.x));
-      const highestX = Math.max(...points.map(p => p.x));
+      const allXValues = points.map(p => p.x);
+      const allYValues = points.map(p => p.y);
+      const lowestY = Math.min(...allYValues);
+      const highestY = Math.max(...allYValues);
+      const lowestX = Math.min(...allXValues);
+      const highestX = Math.max(...allXValues);
 
       const box = {
         top: lowestY,
         left: lowestX,
         width: highestX - lowestX,
         height: highestY - lowestY,
-        right: highestX - lowestX,
-        bottom: highestY - lowestY,
       };
-
-      // console.log("box", box)
 
       // Utils.drawBox(box, this.element)
 
       return box;
     });
 
-    const parsed = connectorBoundingBoxes.map((
-      box: Omit<DomBox, "right" | "bottom">
-    ) => JSON.stringify(box));
-
-    this.element.setAttribute("data-connector-bounding-boxes", parsed.join(""))
+    this.element.setAttribute(
+      "data-connector-bounding-boxes",
+      JSON.stringify(connectorBoundingBoxes)
+    )
   }
 
   isElementOwned(element: MovableElement) {
@@ -567,5 +555,6 @@ export default class SingleMovable extends BaseMovable {
     // console.log("Setting ID for piece", this.pieceData.index, id)
     this.pieceData._id = id;
     this.element.setAttribute("data-piece-id-in-persistence", id);
+    this._id = id;
   }
 }
