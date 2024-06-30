@@ -202,19 +202,12 @@ export default class SingleMovable extends BaseMovable {
 
     const { boardWidth, boardHeight, puzzleImagePath } = this.Puzzly;
     // console.log("piece size", pieceSize)
+
     const pathString = getJigsawShapeSvgString(this.pieceData);
-
-    const result = PathOperations.extractPathParts(pathString);
-    console.log("path extraction result", result);
-    const curves = PathOperations.getCurveControlPointsFromPathParts(result);
-    console.log("curves", curves)
-
-    el.setAttribute("data-connector-control-points", JSON.stringify(curves));
+    el.setAttribute("data-svg-path-string", pathString);
 
     const shapeId = `shape-${index}`;
     const clipId = `clip-${index}`;
-
-    const viewBox = Math.max(width, height);
 
     const svgElementTemplate = `
       <svg xmlns="${SVGNS}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" class="puzzle-piece-svg">
@@ -251,27 +244,55 @@ export default class SingleMovable extends BaseMovable {
       this.solve();
     } else {
       this.addToStage.call(this);
-
-      const connectors: Array<XYCoordinate[]> = JSON.parse(
-        this.element.getAttribute("data-connector-control-points") as string
-      );
-
-      console.log("piece type", this.pieceData.type);
-      console.log("Connectors", connectors)
-
-      const firstConnector: XYCoordinate[] = connectors[0];
-
-      const points: DomBox[] = firstConnector.map((c: XYCoordinate) => ({
-        left: c.x,
-        right: c.x + 2,
-        width: 2,
-        top: c.y,
-        bottom: c.y + 2,
-        height: 2,
-      }))
-
-      points.forEach((point: DomBox) => Utils.drawBox(point, this.element))
+      this.setConnectorBoundingBoxes()
     }
+  }
+
+  setConnectorBoundingBoxes() {
+    console.log("piece type", this.pieceData.type);
+
+    const pathString = this.element.getAttribute("data-svg-path-string") as string;
+    const result = PathOperations.extractPathParts(pathString);
+    console.log("path extraction result", result);
+    const connectors = PathOperations.getCurveControlPointsFromPathParts(result) as XYCoordinate[][];
+    // console.log("curves", connectors)
+
+    const connectorBoundingBoxes: DomBox[] = connectors.map((connector) => {
+      const [...points] = connector;
+
+      connector.forEach(c => {
+        // console.log("coordinate", c)
+        const box = { top: c.y, left: c.x };
+        // console.log("box", box)
+        Utils.drawBox(box, this.element)
+      })
+
+      const lowestY = Math.min(...points.map(p => p.y));
+      const highestY = Math.max(...points.map(p => p.y));
+      const lowestX = Math.min(...points.map(p => p.x));
+      const highestX = Math.max(...points.map(p => p.x));
+
+      const box = {
+        top: lowestY,
+        left: lowestX,
+        width: highestX - lowestX,
+        height: highestY - lowestY,
+        right: highestX - lowestX,
+        bottom: highestY - lowestY,
+      };
+
+      // console.log("box", box)
+
+      // Utils.drawBox(box, this.element)
+
+      return box;
+    });
+
+    const parsed = connectorBoundingBoxes.map((
+      box: Omit<DomBox, "right" | "bottom">
+    ) => JSON.stringify(box));
+
+    this.element.setAttribute("data-connector-bounding-boxes", parsed.join(""))
   }
 
   isElementOwned(element: MovableElement) {

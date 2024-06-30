@@ -58,8 +58,6 @@ export default class PathOperations {
     let currentY: number = startY;
 
     // console.log("starting point", startingPoint)
-    console.log("start x", startX);
-    console.log("start y", startY);
 
     const curves = [];
     let currentPart: string;
@@ -71,31 +69,33 @@ export default class PathOperations {
         return;
       }
 
-      console.log("currentPart", currentPart)
+      // console.log("currentPart", currentPart)
       const firstChar = currentPart[0];
 
       if (firstChar === "h") {
         const nextX = parseInt(currentPart.split(" ")[1]);
-        console.log("x is currently", currentX)
-        console.log("next horizontal coord", nextX)
-        if (nextX < currentX) {
-          currentX -= nextX;
-        } else if (nextX > currentX) {
-          currentX += nextX;
-        }
-        console.log("x is now", currentX)
+        // console.log("x is currently", currentX)
+        // console.log("next horizontal coord", nextX)
+        // if (nextX < currentX) {
+        //   currentX -= nextX;
+        // } else if (nextX >= currentX) {
+        //   currentX += nextX;
+        // }
+        currentX += nextX;
+        // console.log("x is now", currentX)
       }
 
       if (firstChar === "v") {
         const nextY = parseInt(currentPart.split(" ")[1]);
-        console.log("y is currently", currentY)
-        console.log("next vertical coord", nextY)
-        if (nextY < currentY) {
-          currentY -= nextY;
-        } else if (nextY > currentY) {
-          currentY += nextY;
-        }
-        console.log("y is now", currentY)
+        // console.log("y is currently", currentY)
+        // console.log("next vertical coord", nextY)
+        // if (nextY < currentY) {
+        //   currentY -= nextY;
+        // } else if (nextY >= currentY) {
+        //   currentY += nextY;
+        // }
+        currentY += nextY;
+        // console.log("y is now", currentY)
       }
 
       if (firstChar === "c") {
@@ -123,6 +123,10 @@ export default class PathOperations {
 
           absoluteValues.push(coords)
         }
+
+        const destinationCoord = absoluteValues[absoluteValues.length - 1];
+        currentX = destinationCoord.x;
+        currentY = destinationCoord.y;
 
         curves.push(absoluteValues);
       }
