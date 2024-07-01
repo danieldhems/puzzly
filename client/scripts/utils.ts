@@ -29,14 +29,18 @@ const Utils = {
   },
 
   hasCollision(
-    source: DomBoxWithoutDimensions,
-    target: DomBoxWithoutDimensions
+    source: DomBox,
+    target: DomBox
   ): boolean {
+    const sourceRight = source.right || source.left + source.width;
+    const sourceBottom = source.bottom || source.top + source.height;
+    const targetRight = target.right || target.left + target.width;
+    const targetBottom = target.bottom || target.top + target.height;
     return !(
-      source.left >= target.right ||
-      source.top >= target.bottom ||
-      source.right <= target.left ||
-      source.bottom <= target.top
+      source.left >= targetRight ||
+      source.top >= targetBottom ||
+      sourceRight <= target.left ||
+      sourceBottom <= target.top
     );
   },
 
@@ -267,7 +271,7 @@ const Utils = {
       parent = document.querySelector("#solved-puzzle-area");
     }
 
-    let boundingBox = {} as DomBoxWithoutDimensions;
+    let boundingBox = {} as DomBox;
 
     if (parent) {
       const parentElement = parent as HTMLDivElement;
@@ -285,7 +289,9 @@ const Utils = {
         parseInt(parentElement.style.left) + parseInt(element.style.left);
     } else {
       boundingBox.top = parseInt(element.style.top);
+      boundingBox.width = parseInt(element.style.left) + element.offsetWidth;
       boundingBox.right = parseInt(element.style.left) + element.offsetWidth;
+      boundingBox.height = parseInt(element.style.top) + element.offsetHeight;
       boundingBox.bottom = parseInt(element.style.top) + element.offsetHeight;
       boundingBox.left = parseInt(element.style.left);
     }
@@ -753,7 +759,7 @@ const Utils = {
   },
 
   getPocketByCollision(
-    box: DomBoxWithoutDimensions
+    box: DomBox
   ): HTMLDivElement | undefined {
     let i = 0;
     const pockets = document.querySelectorAll(".pocket");
@@ -766,12 +772,14 @@ const Utils = {
     }
   },
 
-  getEventBox(e: MouseEvent): DomBoxWithoutDimensions {
+  getEventBox(e: MouseEvent): DomBox {
     return {
       top: e.clientY,
-      right: e.clientX,
-      bottom: e.clientY,
+      width: 1,
+      height: 1,
       left: e.clientX,
+      right: e.clientX + 1,
+      bottom: e.clientY + 1,
     };
   },
 

@@ -157,26 +157,7 @@ export default class GroupOperations implements GroupOperationsProperties {
 
     const container = this.createGroupContainer();
 
-    const { width: boardWidth, height: boardHeight, puzzleImage } = this;
-
-
-    // console.log("piece size", pieceSize)
-    const sourceInstancePathString = getJigsawShapeSvgString(
-      sourceInstance.pieceData,
-      {
-        x: sourceInstance.pieceData.puzzleX,
-        y: sourceInstance.pieceData.puzzleY
-      });
-    const targetInstancePathString = getJigsawShapeSvgString(
-      targetInstance.pieceData,
-      {
-        x: targetInstance.pieceData.puzzleX,
-        y: targetInstance.pieceData.puzzleY
-      });
-
-
-    console.log("createGroup", targetInstance.pieceData.solvedX);
-    console.log("createGroup", targetInstance.pieceData.solvedY);
+    const { width: boardWidth, height: boardHeight } = this;
 
     sourceInstance.element.style.left = Utils.getPxString(
       sourceInstance.pieceData.solvedX
@@ -195,7 +176,7 @@ export default class GroupOperations implements GroupOperationsProperties {
     targetInstance.element.classList.add("grouped");
 
     const svgTemplateString = getSvg(
-      "1234",
+      "a1234",
       [sourceInstance.pieceData, targetInstance.pieceData],
       boardWidth,
       boardHeight,

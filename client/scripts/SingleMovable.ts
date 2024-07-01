@@ -42,7 +42,7 @@ export default class SingleMovable extends BaseMovable {
     pieceData: JigsawPieceData;
   }) {
     super(puzzleData);
-    console.log("SingleMovable constructor:", pieceData);
+    // console.log("SingleMovable constructor:", pieceData);
 
     this.GroupOperations = new GroupOperations({
       width: this.Puzzly.boardWidth,

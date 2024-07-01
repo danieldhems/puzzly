@@ -4,7 +4,6 @@ import { EVENT_TYPES } from "./constants";
 import Utils from "./utils";
 import BaseMovable from "./BaseMovable";
 import SingleMovable from "./SingleMovable";
-import CanvasOperations from "./CanvasOperations";
 import PersistenceOperations from "./persistence";
 import {
   DomBox,
@@ -18,12 +17,11 @@ import Puzzly from "./Puzzly";
 export default class GroupMovable extends BaseMovable {
   instanceType = InstanceTypes.GroupMovable;
   _id?: string;
-  canvas: HTMLCanvasElement;
+  svg: HTMLOrSVGElement;
   piecesInGroup: SingleMovable[];
   elementsInGroup: MovableElement[];
   Puzzly: Puzzly;
   GroupOperations: GroupOperations;
-  CanvasOperations: CanvasOperations;
   PersistenceOperations: PersistenceOperations;
   position: {
     top: number;
@@ -57,7 +55,6 @@ export default class GroupMovable extends BaseMovable {
 
     this.Puzzly = Puzzly;
 
-    console.log("GroupMovable constructor");
     console.log("GroupMovable constructor _id", _id);
     console.log("GroupMovable constructor pieces", pieces);
 
@@ -86,7 +83,6 @@ export default class GroupMovable extends BaseMovable {
       this.isSolved = isSolved;
     }
 
-    this.CanvasOperations = new CanvasOperations(this);
     this.PersistenceOperations = new PersistenceOperations(this);
     console.log("this.Puzzly", this.Puzzly);
     this.GroupOperations = new GroupOperations({
@@ -134,7 +130,7 @@ export default class GroupMovable extends BaseMovable {
     );
 
     this.element = container;
-    this.canvas = container.querySelector("canvas") as HTMLCanvasElement;
+    this.svg = container.querySelector("svg") as HTMLOrSVGElement;
 
     this.setLastPosition(position);
     this.attachElements();
@@ -144,8 +140,6 @@ export default class GroupMovable extends BaseMovable {
 
   restoreFromPersistence() {
     const container = this.GroupOperations.createGroupContainer(this._id);
-    const canvas = this.CanvasOperations.makeCanvas();
-    container.prepend(canvas);
 
     const elementsForGroup = this.GroupOperations.getElementsForGroup(
       this._id as string
@@ -153,14 +147,7 @@ export default class GroupMovable extends BaseMovable {
     elementsForGroup.forEach((element) => container.appendChild(element));
 
     GroupOperations.setIdForGroupElements(container, this._id as string);
-    this.CanvasOperations.drawMovableElementsOntoCanvas(
-      canvas,
-      elementsForGroup,
-      this.puzzleImage,
-      this.shadowOffset
-    );
     this.element = container;
-    this.canvas = canvas;
     this.attachElements();
     this.render();
   }
@@ -219,15 +206,8 @@ export default class GroupMovable extends BaseMovable {
   }
 
   redrawCanvas() {
-    const canvas = this.canvas;
     const elements = this.piecesInGroup.map(
       (piece: SingleMovable) => piece.element
-    );
-    this.CanvasOperations.drawMovableElementsOntoCanvas(
-      canvas,
-      elements,
-      this.puzzleImage,
-      this.shadowOffset
     );
   }
 
@@ -377,10 +357,6 @@ export default class GroupMovable extends BaseMovable {
 
     this.element.dataset.groupId = this._id + "";
 
-    if (this.canvas) {
-      this.canvas.dataset.groupId = this._id + "";
-    }
-
     this.piecesInGroup.forEach((pieceInstance) => {
       // We may not need to update ALL pieces with the group id.
       // This depends on whether the group is new or being merged with another
@@ -463,7 +439,6 @@ export default class GroupMovable extends BaseMovable {
   }
 
   detachElements() {
-    this.canvas.remove();
     this.element.remove();
   }
 

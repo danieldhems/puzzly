@@ -1,4 +1,4 @@
-import { ELEMENT_IDS, EVENT_TYPES, HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, PUZZLE_PIECE_CLASSES } from "./constants";
+import { ELEMENT_IDS, EVENT_TYPES, PUZZLE_PIECE_CLASSES } from "./constants";
 import Utils from "./utils";
 import GroupOperations from "./GroupOperations";
 import {
@@ -120,7 +120,6 @@ export default class BaseMovable {
         )
       ) as GroupMovable;
     } else {
-      console.log("piece instances", this.Puzzly.pieceInstances)
       return this.Puzzly.pieceInstances.find(
         (instance: SingleMovable) =>
           instance._id === element.dataset.pieceIdInPersistence
@@ -177,7 +176,7 @@ export default class BaseMovable {
     return false;
   }
 
-  getPocketByCollision(box: DomBoxWithoutDimensions) {
+  getPocketByCollision(box: DomBox) {
     let i = 0;
     while (i <= this.pockets.length) {
       const pocket = this.pockets[i];
@@ -205,7 +204,7 @@ export default class BaseMovable {
 
   hasCollision(
     targetElement: HTMLDivElement,
-    source?: DomBoxWithoutDimensions
+    source?: DomBox
   ) {
     const targetBoundingBox = targetElement.getBoundingClientRect();
     const thisBoundingBox = source || Utils.getStyleBoundingBox(this.element);

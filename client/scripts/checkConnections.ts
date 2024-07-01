@@ -26,7 +26,6 @@ export function checkConnections(
   connectorTolerance: number
 ) {
   const baseMovable = new BaseMovable(window.Puzzly);
-  let connection: Connection | undefined;
 
   const piece = {
     id: parseInt(element.dataset.pieceId as string),
@@ -36,7 +35,7 @@ export function checkConnections(
     connectsTo: element.dataset.connectsTo,
   };
 
-  console.log("checkConnections", piece);
+  // console.log("checkConnections", piece);
 
   const shouldCompare = (targetPiece: Partial<JigsawPieceData>) =>
     (piece.group === undefined && targetPiece.groupId === undefined) ||
@@ -48,25 +47,16 @@ export function checkConnections(
     const cornerToCheck = Utils.getCornerNameForPiece(piece.type);
 
     const elementBoundingBox = Utils.getElementBoundingBox(element);
-    const elementBoundingBoxToTolerance = Utils.narrowBoundingBoxToTolerance(
-      elementBoundingBox,
-      connectorTolerance
-    );
 
     const cornerBoundingBox = Utils.getCornerBoundingBox(
       cornerToCheck as SideNames,
       { width: element.offsetWidth, height: element.offsetHeight },
       solvingAreaBox
-    ) as DomBoxWithoutDimensions;
-
-    const cornerBoundingBoxToTolerance = Utils.narrowBoundingBoxToTolerance(
-      cornerBoundingBox,
-      connectorTolerance
-    );
+    ) as DomBox;
 
     // console.log("checking corner", cornerToCheck);
-    // console.log("elBBWithinTolerance", elementBoundingBoxToTolerance);
-    // console.log("cornerBoundingBox", cornerBoundingBoxToTolerance);
+    // console.log("elBBWithinTolerance", elementBoundingBox);
+    // console.log("cornerBoundingBox", cornerBoundingBox);
 
     // Utils.drawBox({
     //   width: element.offsetWidth,
@@ -76,8 +66,8 @@ export function checkConnections(
 
     if (
       Utils.hasCollision(
-        elementBoundingBoxToTolerance,
-        cornerBoundingBoxToTolerance
+        elementBoundingBox,
+        cornerBoundingBox
       )
     ) {
       return {
@@ -88,6 +78,7 @@ export function checkConnections(
     }
   }
 
+  let connection: Connection | undefined;
   const connectsTo = JSON.parse(element.dataset.connectsTo as string);
 
   Object.keys(connectsTo).some((key: SideNames) => {
@@ -102,8 +93,6 @@ export function checkConnections(
         isSolved: isSolved === "true",
       };
 
-      let thisPieceConnectorBoundingBox;
-
       if (shouldCompare(targetPiece)) {
         const thisPieceInstance = baseMovable.getMovableInstanceFromElement(element);
         const thisPieceConnectorBoundingBoxes = thisPieceInstance.getConnectorBoundingBoxes();
@@ -111,29 +100,22 @@ export function checkConnections(
         const targetPieceInstance = baseMovable.getMovableInstanceFromElement(targetElement);
         const targetPieceConnectorBoundingBoxes = targetPieceInstance.getConnectorBoundingBoxes();
 
-        // console.log("source element", element);
-        // console.log("target element", targetElement);
-
-        // console.log(
-        // `checking ${key}`,
-        // thisPieceConnectorBoundingBox,
-        // targetPieceConnectorBoundingBox
-        // );
-
-        // Utils.drawBox(thisPieceConnectorBoundingBox);
-        // Utils.drawBox(targetPieceConnectorBoundingBox, null, "blue");
-
         let collisionDetected = false;
 
-        while (!collisionDetected) {
-          thisPieceConnectorBoundingBoxes.forEach(sourceBox => {
-            targetPieceConnectorBoundingBoxes.forEach(targetBox => {
-              if (Utils.hasCollision(sourceBox, targetBox)) {
-                collisionDetected = true;
-              }
-            })
+        // console.log("source bounding boxes", thisPieceConnectorBoundingBoxes.length)
+        // console.log("target bounding boxes", targetPieceConnectorBoundingBoxes.length)
+
+        collisionDetected = thisPieceConnectorBoundingBoxes.some(sourceBox => {
+          // Utils.drawBox(sourceBox)
+          return targetPieceConnectorBoundingBoxes.some(targetBox => {
+            // Utils.drawBox(targetBox)
+            // console.log("compare", sourceBox, targetBox)
+            if (Utils.hasCollision(sourceBox, targetBox)) {
+              // console.log("collision detected")
+              return true;
+            }
           })
-        }
+        })
 
         if (collisionDetected) {
           connection = {
@@ -147,6 +129,5 @@ export function checkConnections(
     }
   });
 
-  console.log("connection result", connection);
-  if (connection) return connection;
+  return connection;
 }
