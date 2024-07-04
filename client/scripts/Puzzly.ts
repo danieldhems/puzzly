@@ -269,6 +269,11 @@ export default class Puzzly {
           this.largestPieceSpan,
           this.solvingArea as HTMLDivElement
         );
+      } else {
+        // NOTE: Initial save once all pieces have been rendered
+        // Only necessary when loading puzzle without disperal (for debug)
+        // else the save would be called elsewhere
+        window.dispatchEvent(new CustomEvent(EVENT_TYPES.SAVE));
       }
     }
 

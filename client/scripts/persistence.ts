@@ -1,5 +1,6 @@
 import { EVENT_TYPES } from "./constants";
 import Puzzly from "./Puzzly";
+import SingleMovable from "./SingleMovable";
 import {
   GroupData,
   GroupMovableSaveState,
@@ -133,9 +134,13 @@ export default class PersistenceOperations {
     return urlParams.get("integration") === "true";
   }
 
-  async save(data: SaveStates) {
+  async save(dataToSave: SaveStates) {
     // console.log("saving", data);
     const useLocalStorage = false;
+
+    const data = dataToSave || window.Puzzly.pieceInstances.map(
+      (instance: SingleMovable) => instance.getDataForSave()
+    );
 
     let endpoint;
     let requestMethod;

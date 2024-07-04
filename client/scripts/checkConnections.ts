@@ -2,7 +2,6 @@ import BaseMovable from "./BaseMovable";
 import {
   Connection,
   DomBox,
-  DomBoxWithoutDimensions,
   JigsawPieceData,
   MovableElement,
   SideNames,
@@ -23,8 +22,8 @@ export const getOppositeSide = (sideName: SideNames) => {
 export function checkConnections(
   element: MovableElement,
   solvingAreaBox: DomBox,
-  connectorTolerance: number
 ) {
+  console.log("element", element)
   const baseMovable = new BaseMovable(window.Puzzly);
 
   const piece = {
@@ -47,7 +46,6 @@ export function checkConnections(
     const cornerToCheck = Utils.getCornerNameForPiece(piece.type);
 
     const elementBoundingBox = Utils.getElementBoundingBox(element);
-
     const cornerBoundingBox = Utils.getCornerBoundingBox(
       cornerToCheck as SideNames,
       { width: element.offsetWidth, height: element.offsetHeight },

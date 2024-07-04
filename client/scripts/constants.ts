@@ -96,7 +96,7 @@ export const SHAPE_TYPES = {
   NATURAL: 2,
 };
 
-export const SHADOW_OFFSET_RATIO = 0.025;
+export const SHADOW_OFFSET_RATIO = 1;
 export const FLOAT_TOLERANCE_AMOUNT = 20;
 
 export const PUZZLE_SIZE_PERCENTAGE_SQUARE = 40;

@@ -207,12 +207,5 @@ export default function arrangePiecesAroundEdge(
     i++;
   }
 
-
-  const payloadForPersistence = window.Puzzly.pieceInstances.map(
-    (instance: SingleMovable) => instance.getDataForSave()
-  );
-
-  window.dispatchEvent(
-    new CustomEvent(EVENT_TYPES.SAVE, { detail: payloadForPersistence })
-  );
+  window.dispatchEvent(new CustomEvent(EVENT_TYPES.SAVE));
 }

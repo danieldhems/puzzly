@@ -146,42 +146,31 @@ export default class GroupOperations implements GroupOperationsProperties {
 
   createGroup(sourceInstance: SingleMovable, targetInstance: SingleMovable) {
     console.log("target style top", parseInt(targetInstance.element.style.top));
-    console.log("target solved top", targetInstance.pieceData.solvedY);
+    console.log("target style left", parseInt(targetInstance.element.style.left));
+    console.log("target solved top", targetInstance.pieceData.puzzleY);
+    console.log("target solved left", targetInstance.pieceData.puzzleX);
 
     const leftPos =
       parseInt(targetInstance.element.style.left) -
-      targetInstance.pieceData.solvedX;
+      targetInstance.pieceData.puzzleX;
     const topPos =
       parseInt(targetInstance.element.style.top) -
-      targetInstance.pieceData.solvedY;
+      targetInstance.pieceData.puzzleY;
 
-    const container = this.createGroupContainer();
+    const position = { top: topPos, left: leftPos };
 
-    const { width: boardWidth, height: boardHeight } = this;
-
-    sourceInstance.element.style.left = Utils.getPxString(
-      sourceInstance.pieceData.solvedX
-    );
-    sourceInstance.element.style.top = Utils.getPxString(
-      sourceInstance.pieceData.solvedY
-    );
-    targetInstance.element.style.left = Utils.getPxString(
-      targetInstance.pieceData.solvedX
-    );
-    targetInstance.element.style.top = Utils.getPxString(
-      targetInstance.pieceData.solvedY
-    );
+    const container = this.createGroupContainer(position);
 
     sourceInstance.element.classList.add("grouped");
     targetInstance.element.classList.add("grouped");
 
-    const svgTemplateString = getSvg(
-      "a1234",
-      [sourceInstance.pieceData, targetInstance.pieceData],
-      boardWidth,
-      boardHeight,
-      this.puzzleImage.src
-    )
+    // const svgTemplateString = getSvg(
+    //   "a1234",
+    //   [sourceInstance.pieceData, targetInstance.pieceData],
+    //   boardWidth,
+    //   boardHeight,
+    //   this.puzzleImage.src
+    // )
 
     // TODO: Refactor Util methods to expect type array only, not piece object containing it.
     // Not sure if this logic is entirely applicable...
@@ -195,19 +184,18 @@ export default class GroupOperations implements GroupOperationsProperties {
     }
 
     this.updateConnections([sourceInstance.element, targetInstance.element]);
-    this.setGroupContainerPosition(container, {
-      top: topPos,
-      left: leftPos,
-    });
 
-    container.innerHTML = svgTemplateString;
+    // container.innerHTML = svgTemplateString;
     container.appendChild(sourceInstance.element);
     container.appendChild(targetInstance.element);
 
-    return { container, position: { top: topPos, left: leftPos } };
+    return { container };
   }
 
-  createGroupContainer(groupId?: string): MovableElement {
+  createGroupContainer(
+    position: { top: number; left: number },
+    groupId?: string
+  ): MovableElement {
     const container = document.createElement("div");
     container.classList.add("group-container");
 
@@ -215,8 +203,8 @@ export default class GroupOperations implements GroupOperationsProperties {
       container.id = `group-container-${groupId}`;
     }
 
-    container.style.top = this.position?.top + "px";
-    container.style.left = this.position?.left + "px";
+    container.style.top = position?.top + "px";
+    container.style.left = position?.left + "px";
     container.style.width = this.width + "px";
     container.style.height = this.height + "px";
     container.style.zIndex = this.zIndex + "";

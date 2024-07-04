@@ -47,6 +47,12 @@ export function getAttributesForPiece(piece: JigsawPieceData) {
     };
 }
 
+/**
+ * 
+ * @param piece 
+ * @param startingPosition 
+ * @returns 
+ */
 export const getJigsawShapeSvgString = (
     piece: SkeletonPiece | JigsawPieceData,
     startingPosition?: {
@@ -59,7 +65,7 @@ export const getJigsawShapeSvgString = (
     let x = startingPosition?.x || 0;
     let y = startingPosition?.y || 0;
 
-    // TODO: Assuming all pieces are square - won't work for irregular shapes / sizes
+    // TODO: Assuming all pieces are square - might not work for irregular shapes / sizes
     const pieceSize = piece.basePieceSize;
 
     const { connectorSize, connectorDistanceFromCorner: unroundeConnectorDistanceFromCorner } = piece;

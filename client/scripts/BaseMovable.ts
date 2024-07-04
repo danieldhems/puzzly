@@ -188,6 +188,7 @@ export default class BaseMovable {
   }
 
   getConnectorBoundingBoxes(): DomBox[] {
+    console.log("getConnectorBoundingBoxes", this.element)
     const position = Utils.getStyleBoundingBox(this.element);
     const stagePosition = Utils.getStyleBoundingBox(this.playBoundary as HTMLDivElement);
     const relativeBoundingBoxes = JSON.parse(

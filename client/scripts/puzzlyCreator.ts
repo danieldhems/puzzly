@@ -1,4 +1,4 @@
-import { CONNECTOR_SIZE_PERC, CONNECTOR_TOLERANCE_AMOUNT, SHOULDER_SIZE_PERC, MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SOLVING_AREA_SCREEN_PORTION } from "./constants";
+import { CONNECTOR_SIZE_PERC, CONNECTOR_TOLERANCE_AMOUNT, SHOULDER_SIZE_PERC, MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SOLVING_AREA_SCREEN_PORTION, SHADOW_OFFSET_RATIO } from "./constants";
 import { addPuzzleDataToPieces, generatePieces, getConnectorDistanceFromCorner, getConnectorSize } from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
 import Puzzly from "./Puzzly";
@@ -636,6 +636,7 @@ export default class PuzzlyCreator {
     let connectorSize: number;
     let connectorDistanceFromCorner: number;
     let connectorTolerance: number;
+    let shadowOffset: number;
 
     if (window.innerWidth < window.innerHeight) {
       height = window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION;
@@ -660,13 +661,15 @@ export default class PuzzlyCreator {
       }
     }
 
-
     console.log("getPuzzleDimensions: puzzle config", puzzleConfig)
     console.log("getPuzzleDimensions: pieceSize", pieceSize)
 
-    connectorSize = pieceSize / 100 * CONNECTOR_SIZE_PERC;
-    connectorDistanceFromCorner = pieceSize / 100 * SHOULDER_SIZE_PERC;
-    connectorTolerance = connectorSize / 100 * CONNECTOR_TOLERANCE_AMOUNT;
+    const onePercent = pieceSize / 100;
+
+    connectorSize = onePercent * CONNECTOR_SIZE_PERC;
+    connectorDistanceFromCorner = onePercent * SHOULDER_SIZE_PERC;
+    connectorTolerance = onePercent * CONNECTOR_TOLERANCE_AMOUNT;
+    shadowOffset = onePercent * SHADOW_OFFSET_RATIO;
 
     return {
       width,
@@ -675,6 +678,7 @@ export default class PuzzlyCreator {
       connectorSize,
       connectorDistanceFromCorner,
       connectorTolerance,
+      shadowOffset,
     }
   }
 

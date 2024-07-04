@@ -160,8 +160,8 @@ export default class SingleMovable extends BaseMovable {
     el.setAttribute("data-piece-index", index + "");
     el.setAttribute("data-piece-id-in-persistence", _id);
     el.setAttribute("data-puzzle-id", this.puzzleId);
-    el.setAttribute("data-solvedX", puzzleX + "");
-    el.setAttribute("data-solvedY", puzzleY + "");
+    el.setAttribute("data-puzzle-x", puzzleX + "");
+    el.setAttribute("data-puzzle-y", puzzleY + "");
     el.setAttribute("data-pageX", pageX + "");
     el.setAttribute("data-pageY", pageY + "");
     el.setAttribute("data-svgPath", svgPath);
@@ -241,7 +241,7 @@ export default class SingleMovable extends BaseMovable {
     }
 
     if (isSolved) {
-      this.solve();
+      // this.solve();
     } else {
       this.addToStage.call(this);
       this.setConnectorBoundingBoxes()
@@ -407,12 +407,12 @@ export default class SingleMovable extends BaseMovable {
           this.Pockets.addSingleToPocket(pocket, this);
           this.pocketId = parseInt(pocket.id.split("-")[1]);
         }
-      } else {
+      } else if (!this.groupId) {
+        // If this element is not in a group we can check for a connection with another piece
         // console.log("solving area box", this.getSolvingAreaBoundingBox());
         this.connection = checkConnections(
           this.element,
           this.getSolvingAreaBoundingBox(),
-          this.connectorTolerance
         );
         console.log("connection", this.connection);
       }
@@ -476,18 +476,19 @@ export default class SingleMovable extends BaseMovable {
 
   onGroupCreated(event: CustomEvent) {
     const { groupId, elementIds } = event.detail;
-    if (elementIds.includes(this.element.dataset.pieceId)) {
+    if (elementIds.includes(this.element.dataset.pieceIndex)) {
       this.setGroupIdAcrossInstance(groupId);
     }
   }
 
   setPositionAsGrouped() {
-    this.element.style.top = this.pieceData.solvedY + "px";
-    this.element.style.left = this.pieceData.solvedX + "px";
+    console.log("set element position as grouped", this.pieceData)
+    this.element.style.top = this.pieceData.puzzleY + "px";
+    this.element.style.left = this.pieceData.puzzleX + "px";
   }
 
   joinTo(targetInstance: GroupMovable | SingleMovable) {
-    console.log("SingleInstance", this, "joinTo()", targetInstance);
+    // console.log("SingleInstance", this, "joinTo()", targetInstance);
     if (targetInstance.instanceType === InstanceTypes.SingleMovable) {
       this.Puzzly.groupInstances.push(
         new GroupMovable({
@@ -497,7 +498,7 @@ export default class SingleMovable extends BaseMovable {
       );
     } else {
       const instance = targetInstance as GroupMovable;
-      console.log("SingleMovable joining to", instance);
+      // console.log("SingleMovable joining to", instance);
       this.setGroupIdAcrossInstance(instance._id + "");
       this.element.classList.add("grouped");
       // TDOD: Encapsulate in single method on target instance?

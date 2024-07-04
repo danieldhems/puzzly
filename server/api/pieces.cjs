@@ -127,6 +127,7 @@ var api = {
             queryObject._id = new ObjectID(data._id);
             console.log("Single piece update requested with data", data);
 
+            delete data["_id"];
             update = {
               $set: {
                 ...data,
@@ -135,7 +136,7 @@ var api = {
 
             console.log("Single piece update instruction", update);
             const result = await pieces.updateOne(queryObject, update);
-            console.log("Single piece update result", result.ops);
+            console.log("Single piece update result", result);
 
             // response._id = result.ops[0]._id;
           }

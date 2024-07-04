@@ -334,6 +334,7 @@ export const addPuzzleDataToPieces = (
     connectorSize: number;
     connectorDistanceFromCorner: number;
     connectorTolerance: number;
+    shadowOffset: number;
   }
 ) => {
   const {
@@ -341,6 +342,7 @@ export const addPuzzleDataToPieces = (
     connectorSize,
     connectorDistanceFromCorner,
     connectorTolerance,
+    shadowOffset,
   } = puzzleDimensions;
 
   return pieces.map((piece, index) => {
@@ -379,6 +381,7 @@ export const addPuzzleDataToPieces = (
       connectorDistanceFromCorner,
       puzzleX: xPos,
       puzzleY: yPos,
+      shadowOffset,
       pageX,
       pageY,
       width,

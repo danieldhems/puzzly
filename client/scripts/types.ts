@@ -88,6 +88,7 @@ export interface JigsawPieceData {
   connectorDistanceFromCorner: number;
   connectorSize: number;
   connectorTolerance: number;
+  shadowOffset: number;
   imgW: number;
   imgH: number;
   pageX: number;

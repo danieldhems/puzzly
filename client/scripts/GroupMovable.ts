@@ -55,8 +55,8 @@ export default class GroupMovable extends BaseMovable {
 
     this.Puzzly = Puzzly;
 
-    console.log("GroupMovable constructor _id", _id);
-    console.log("GroupMovable constructor pieces", pieces);
+    // console.log("GroupMovable constructor _id", _id);
+    // console.log("GroupMovable constructor pieces", pieces);
 
     if (_id) {
       this._id = _id;
@@ -84,7 +84,6 @@ export default class GroupMovable extends BaseMovable {
     }
 
     this.PersistenceOperations = new PersistenceOperations(this);
-    console.log("this.Puzzly", this.Puzzly);
     this.GroupOperations = new GroupOperations({
       width: this.Puzzly.boardWidth,
       height: this.Puzzly.boardHeight,
@@ -124,22 +123,37 @@ export default class GroupMovable extends BaseMovable {
   }
 
   initiateGroup() {
-    const { container, position } = this.GroupOperations.createGroup(
-      this.piecesInGroup[0],
-      this.piecesInGroup[1]
-    );
+    const sourcePiece = this.piecesInGroup[0];
+    const targetPiece = this.piecesInGroup[1];
 
-    this.element = container;
-    this.svg = container.querySelector("svg") as HTMLOrSVGElement;
+    const targetPiecePuzzleX = targetPiece.pieceData.puzzleX;
+    const targetPiecePuzzleY = targetPiece.pieceData.puzzleY;
 
-    this.setLastPosition(position);
-    this.attachElements();
+    const targetPieceCurrentPosition = Utils.getStyleBoundingBox(targetPiece.element);
+
+    const groupInitialPosition = {
+      top: targetPieceCurrentPosition.top - targetPiecePuzzleY,
+      left: targetPieceCurrentPosition.left - targetPiecePuzzleX,
+    };
+
+    const groupContainer = this.GroupOperations.createGroupContainer(groupInitialPosition);
+
+    sourcePiece.setPositionAsGrouped();
+    targetPiece.setPositionAsGrouped();
+    groupContainer.appendChild(sourcePiece.element);
+    groupContainer.appendChild(targetPiece.element);
+
+    this.element = groupContainer;
+
+    // this.svg = container.querySelector("svg") as HTMLOrSVGElement;
+
+    this.setLastPosition(groupInitialPosition);
     this.render();
     this.save();
   }
 
   restoreFromPersistence() {
-    const container = this.GroupOperations.createGroupContainer(this._id);
+    const container = this.GroupOperations.createGroupContainer(this.position, this._id);
 
     const elementsForGroup = this.GroupOperations.getElementsForGroup(
       this._id as string
@@ -226,7 +240,7 @@ export default class GroupMovable extends BaseMovable {
       if (piece.element.parentNode !== this.element) {
         this.element.appendChild(piece.element);
       } else {
-        console.info(`Piece ${piece.pieceData.id} already attached to group`);
+        console.info(`Piece ${piece.pieceData.index} already attached to group`);
       }
     });
   }
@@ -274,7 +288,6 @@ export default class GroupMovable extends BaseMovable {
       const connection = checkConnections(
         collisionCandidates[i],
         this.getSolvingAreaBoundingBox(),
-        this.connectorTolerance
       );
       if (connection) return connection;
       i++;
@@ -368,7 +381,7 @@ export default class GroupMovable extends BaseMovable {
 
   onSaveResponse(event: CustomEvent) {
     const response = event.detail;
-    console.log("GroupMovable save response", response);
+    // console.log("GroupMovable save response", response);
     if (this.isServerResponseForThisGroup(response.data)) {
       if (!this._id) {
         this.setGroupIdAcrossInstance(response.data._id);
