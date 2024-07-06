@@ -1,23 +1,33 @@
+import SingleMovable from "./SingleMovable";
 import { SVGNS } from "./constants";
 import jigsawPath from "./jigsawPath";
-import { JigsawPieceData, SkeletonPiece } from "./types";
+import { ConnectorType, JigsawPieceData, SkeletonPiece } from "./types";
 
 export function getSvg(
     id: string,
     pieces: JigsawPieceData[],
-    boardWidth: number,
-    boardHeight: number,
+    puzzleWidth: number,
+    puzzleHeight: number,
     imagePath: string
 ): string {
     const pieceInfo = pieces.map(getAttributesForPiece);
     const clipId = `clip-${id}`;
 
+    const totalWidth = pieceInfo.reduce((accumulator, current) => {
+        return accumulator + current.width
+    }, 0);
+    const totalHeight = pieceInfo.reduce((accumulator, current) => {
+        return accumulator + current.height
+    }, 0);
+
+    const imageX = Math.min(...pieceInfo.map(info => info.puzzleX));
+    const imageY = Math.min(...pieceInfo.map(info => info.puzzleY));
+
     return `
-      <svg xmlns="${SVGNS}" width="${boardWidth}" height="${boardHeight}" viewBox="0 0 ${boardWidth} ${boardHeight}" class="puzzle-piece-group-svg">
+      <svg xmlns="${SVGNS}" width="${totalWidth}" height="${totalHeight}" viewBox="0 0 ${totalWidth} ${totalHeight}" class="puzzle-piece-group-svg">
         <defs>
-            ${pieceInfo.map(
-        (info) =>
-            `<path id="${info.shapeId}" d="${info.pathString}"></path>`
+            ${pieceInfo.map((info) =>
+        `<path id="${info.shapeId}" d="${info.pathString}"></path>`
     )}
         </defs>
         <clipPath id="${clipId}">
@@ -25,26 +35,43 @@ export function getSvg(
         </clipPath>
             ${pieceInfo.map(
         (info) =>
-            `<use href="#${info.shapeId}" fill="none" stroke="black" stroke-width="1"></use>`
+            `<use href="#${info.shapeId}" fill="black" x="1" y="1"></use>`
     )}
+            <image 
+                class="svg-image" 
+                clip-path="url(#${clipId})" 
+                href="${imagePath}" 
+                width="${puzzleWidth}" 
+                height="${puzzleHeight}"
+                x="-${imageX}"
+                y="-${imageY}"
+            />
             ${pieceInfo.map(
         (info) =>
-            `<use href="#${info.shapeId}" fill="black" x="2" y="2"></use>`
+            `<use href="#${info.shapeId}" fill="none" stroke="black" stroke-width="1" x="1" y="1"></use>`
     )}
-        <image class="svg-image" clip-path="url(#${id})" href="${imagePath}" width="${boardWidth}" height="${boardHeight}" />
       </svg>
     `;
 }
 
 export function getAttributesForPiece(piece: JigsawPieceData) {
-    const { index, puzzleX, puzzleY } = piece;
+    const { index, puzzleX, puzzleY, width, height } = piece;
     return {
         shapeId: `shape-${index}`,
         clipId: `clip-${index}`,
         pathString: getJigsawShapeSvgString(piece, { x: puzzleX, y: puzzleY }),
         puzzleX,
         puzzleY,
+        width,
+        height,
     };
+}
+
+export function getSvgStringPart(
+    startPosition: { x: number, y: number },
+    connector: ConnectorType,
+) {
+
 }
 
 /**
@@ -92,7 +119,6 @@ export const getJigsawShapeSvgString = (
     } else if (piece.type[0] === -1) {
         topConnector = getRotatedConnector(jigsawShapes.getSocket(), 0);
     }
-    // console.log(Generator.connectorDistanceFromCorner);
 
     if (topConnector) {
         svgString += `h ${connectorDistanceFromCorner} `;
@@ -145,3 +171,34 @@ export const getJigsawShapeSvgString = (
 
     return svgString;
 };
+
+// export const getShapeForGroupPerimeter = (pieces: SingleMovable[]): string => {
+//     let pathString: string;
+
+//     const lowestIndex = Math.min(...pieces.map(piece => piece.pieceData.index));
+//     const firstPiece = pieces.find(piece => piece.pieceData.index === lowestIndex) as SingleMovable;
+
+//     const firstPiecePosition = {
+//         y: firstPiece?.pieceData.puzzleY,
+//         x: firstPiece?.pieceData.puzzleX,
+//     };
+
+//     const firstPieceType = firstPiece.pieceData.type;
+//     const firstPieceConnectorSize = firstPiece.pieceData.connectorSize;
+
+//     const startPosition = {
+//         y: firstPieceType[0] === 1 ? firstPiecePosition.y : firstPiecePosition.y + firstPieceConnectorSize,
+//         x: firstPieceType[3] === 1 ? firstPiecePosition.x : firstPiecePosition.x + firstPieceConnectorSize,
+//     };
+
+//     pathString = `M ${startPosition.x} ${startPosition.y}`;
+
+//     pieces.forEach(piece => {
+//         const pieceData = piece.pieceData;
+//         if (pieceData.type[0] === 1) {
+
+//         }
+//     });
+
+//     return pathString;
+// }

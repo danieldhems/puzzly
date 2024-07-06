@@ -89,6 +89,8 @@ export interface JigsawPieceData {
   connectorSize: number;
   connectorTolerance: number;
   shadowOffset: number;
+  puzzleWidth: number;
+  puzzleHeight: number;
   imgW: number;
   imgH: number;
   pageX: number;
@@ -253,6 +255,10 @@ export type PuzzleGenerator = {
       y: number
     }
   ) => string;
+  generatePuzzleSprite: (
+    imagePath: string,
+    pieces: JigsawPieceData[]
+  ) => Promise<HTMLImageElement>;
   puzzleSizes: PuzzleConfig[];
 };
 

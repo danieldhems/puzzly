@@ -72,8 +72,7 @@ const loadImage = (path: string): Promise<HTMLImageElement> => {
   });
 };
 
-
-
+// Deprecated?
 const generateDataForPuzzlePieces = async () => {
   const pieces: JigsawPieceData[] = [];
 
@@ -158,7 +157,7 @@ const generateDataForPuzzlePieces = async () => {
     pieces.push(currentPiece);
 
     if (ctx) {
-      await createPuzzlePiece(currentPiece, ctx);
+      // await createPuzzlePiece(currentPiece, ctx);
     }
 
     // reached last piece, start next row
@@ -211,7 +210,6 @@ const generateDataForPuzzlePieces = async () => {
     pieces,
   };
 };
-
 
 export const generatePieces = (puzzleConfig: PuzzleConfig): SkeletonPiece[] => {
   const pieces: SkeletonPiece[] = [];
@@ -328,12 +326,13 @@ export const getPieceSize = (puzzleDimensions: { width: number; height: number }
 
 export const addPuzzleDataToPieces = (
   pieces: SkeletonPiece[],
-  puzzleConfig: PuzzleConfig,
   puzzleDimensions: {
     pieceSize: number;
     connectorSize: number;
     connectorDistanceFromCorner: number;
     connectorTolerance: number;
+    puzzleWidth: number;
+    puzzleHeight: number;
     shadowOffset: number;
   }
 ) => {
@@ -343,6 +342,8 @@ export const addPuzzleDataToPieces = (
     connectorDistanceFromCorner,
     connectorTolerance,
     shadowOffset,
+    puzzleWidth,
+    puzzleHeight,
   } = puzzleDimensions;
 
   return pieces.map((piece, index) => {
@@ -381,6 +382,8 @@ export const addPuzzleDataToPieces = (
       connectorDistanceFromCorner,
       puzzleX: xPos,
       puzzleY: yPos,
+      puzzleWidth,
+      puzzleHeight,
       shadowOffset,
       pageX,
       pageY,
@@ -390,16 +393,37 @@ export const addPuzzleDataToPieces = (
   })
 }
 
-const createCanvas = (width: number, height: number) => {
+const createCanvas = (width: number, height: number, id?: string) => {
   const el = document.createElement("canvas");
+  if (id) {
+    el.id = id;
+  }
   el.width = width;
   el.height = height;
   return el;
 };
 
+export async function generatePuzzleSprite(imagePath: string, pieces: SkeletonPiece[]) {
+  const image = await loadImage(imagePath);
+  const referencePiece = pieces[0];
+  const { puzzleWidth, puzzleHeight } = referencePiece;
+
+  const puzzleCanvas = createCanvas(puzzleWidth, puzzleHeight, "puzzle-canvas");
+  const puzzleCtx = puzzleCanvas.getContext("2d");
+
+  if (puzzleCtx) {
+    pieces.forEach(async (piece) => {
+      await createPuzzlePiece(piece, puzzleCtx, image);
+    })
+  }
+
+  return await loadImage(puzzleCanvas.toDataURL());
+}
+
 const createPuzzlePiece = async (
-  data: JigsawPieceData,
-  ctxForSprite: CanvasRenderingContext2D
+  data: SkeletonPiece,
+  ctxForSprite: CanvasRenderingContext2D,
+  puzzleImage: HTMLImageElement,
 ) => {
   /**
    * TODO: What if we don't need to use the canvas to create pieces?
@@ -410,10 +434,21 @@ const createPuzzlePiece = async (
    * 
    * Could this make the pieces look better AND speed up puzzle generation?
    */
-  const shadowCnv = createCanvas(data.imgW, data.imgH);
+
+  const pieceWidth = data.width as number;
+  const pieceHeight = data.height as number;
+  const puzzleX = data.puzzleX as number;
+  const puzzleY = data.puzzleY as number;
+  const numPiecesFromLeftEdge = data.numPiecesFromLeftEdge;
+  const numPiecesFromTopEdge = data.numPiecesFromTopEdge;
+
+  const shadowCnv = createCanvas(pieceWidth as number, pieceHeight as number);
   const shdCtx = shadowCnv.getContext("2d");
-  shadowCnv.width = data.imgW;
-  shadowCnv.height = data.imgH;
+  shadowCnv.width = pieceWidth;
+  shadowCnv.height = pieceHeight;
+
+  const quarterWidth = pieceWidth / 4;
+  const quarterHeight = pieceHeight / 4;
 
   // Using 'imgW' property for piece size assuming pieces are square-shaped
   // meaning we width and height are equal.
@@ -424,42 +459,50 @@ const createPuzzlePiece = async (
     const path = new Path2D(svgPath);
     shdCtx.fill(path);
 
-    const shadowImgData = shdCtx.getImageData(0, 0, data.imgW, data.imgH);
-    ctxForSprite.putImageData(
-      shadowImgData,
-      data.spriteShadowX,
-      data.spriteShadowY
-    );
+    const shadowPosX = puzzleX === 0 ? 0 : numPiecesFromLeftEdge + quarterWidth + pieceWidth;
+    const shadowPosY = puzzleY === 0 ? pieceHeight + quarterHeight : numPiecesFromTopEdge + pieceHeight + quarterHeight;
+
+    const shadowImgData = shdCtx.getImageData(0, 0, pieceWidth, pieceHeight);
+    // ctxForSprite.putImageData(
+    //   shadowImgData,
+    //   shadowPosX,
+    //   shadowPosY
+    // );
   }
 
-  const tmpCnv = createCanvas(data.imgW, data.imgH);
+  const tmpCnv = createCanvas(pieceWidth, pieceHeight);
   const tmpCtx = tmpCnv.getContext("2d");
 
   if (tmpCtx) {
-    tmpCtx.strokeStyle = Generator.strokeColor;
-    tmpCtx.lineWidth = Generator.strokeWidth;
-    tmpCnv.width = data.imgW;
-    tmpCnv.height = data.imgH;
+    tmpCtx.strokeStyle = STROKE_COLOR;
+    tmpCtx.lineWidth = STROKE_WIDTH;
+    tmpCnv.width = pieceWidth;
+    tmpCnv.height = pieceHeight;
 
     const p = new Path2D(svgPath);
     tmpCtx.clip(p);
     tmpCtx.drawImage(
-      Generator.image,
-      data.imgX,
-      data.imgY,
-      data.imgW,
-      data.imgH,
+      puzzleImage,
+      puzzleX,
+      puzzleY,
+      pieceWidth,
+      pieceHeight,
       0,
       0,
-      data.imgW,
-      data.imgH
+      pieceWidth,
+      pieceHeight
     );
     tmpCtx.stroke(p);
   }
 
+  document.body.prepend(tmpCnv);
+
   const img = await loadImage(tmpCnv.toDataURL());
 
-  ctxForSprite.drawImage(img, data.spriteX, data.spriteY);
+  const posX = puzzleX === 0 ? 0 : numPiecesFromLeftEdge + quarterWidth;
+  const posY = puzzleY === 0 ? 0 : numPiecesFromTopEdge + quarterHeight;
+
+  ctxForSprite.drawImage(img, posX, posY);
 };
 
 const widthAndHeightWithConnectors = (piece: JigsawPieceData) => {

@@ -62,6 +62,7 @@ export default class Puzzly {
   Pockets: Pockets;
   pocketId: number;
   puzzleImage: HTMLImageElement;
+  puzzleSprite: HTMLImageElement;
   previewImage: HTMLImageElement;
   previewImageType: SolvedPuzzlePreviewType;
   puzzleImagePath: string;
@@ -180,7 +181,6 @@ export default class Puzzly {
     this.playBoundary = document.querySelector("#play-boundary");
 
 
-
     this.PlayBoundaryMovable = new PlayBoundaryMovable(this);
     this.setupSolvingArea();
 
@@ -291,9 +291,8 @@ export default class Puzzly {
       window.location.href = "/";
     });
 
-
-
     (this.stage as HTMLDivElement).classList.add("loaded");
+
     window.dispatchEvent(
       new CustomEvent(EVENT_TYPES.PUZZLE_LOADED, { detail: this })
     );

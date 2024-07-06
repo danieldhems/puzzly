@@ -4,7 +4,7 @@ import { EVENT_TYPES, HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, SHAPE_TYPES, SVGNS } 
 import GroupMovable from "./GroupMovable";
 import GroupOperations from "./GroupOperations";
 import Pockets from "./Pockets";
-import { getJigsawShapeSvgString } from "./svg";
+import { getJigsawShapeSvgString, getSvg } from "./svg";
 import Puzzly from "./Puzzly";
 import PathOperations from "./pathOperations";
 
@@ -120,6 +120,8 @@ export default class SingleMovable extends BaseMovable {
       zIndex,
       puzzleX,
       puzzleY,
+      puzzleWidth,
+      puzzleHeight,
       isInnerPiece,
       isSolved,
       numPiecesFromTopEdge,
@@ -131,7 +133,7 @@ export default class SingleMovable extends BaseMovable {
       svgPath,
     } = this.pieceData;
 
-    // console.log("SingleMovable", this.pieceData)
+    console.log("SingleMovable", this.pieceData)
 
     const el = document.createElement("div");
     el.classList.add("puzzle-piece");
@@ -209,6 +211,10 @@ export default class SingleMovable extends BaseMovable {
     const shapeId = `shape-${index}`;
     const clipId = `clip-${index}`;
 
+    const groupClipId = `piece-${this.pieceData.index}-clip`;
+    const groupShadowId = `piece-${this.pieceData.index}-shadow`;
+    const groupStrokeId = `piece-${this.pieceData.index}-stroke`;
+
     const svgElementTemplate = `
       <svg xmlns="${SVGNS}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" class="puzzle-piece-svg">
         <defs>
@@ -217,13 +223,21 @@ export default class SingleMovable extends BaseMovable {
         <clipPath id="${clipId}">
             <use href="#${shapeId}"></use>
         </clipPath>
+        <use href="#${shapeId}" x="1" y="1"></use>
+        <image class="svg-image" clip-path="url(#${clipId})" href="${puzzleImagePath}" width="${width}" height="${height}" x="-${puzzleX}" y="-${puzzleY}" />
         <use href="#${shapeId}" fill="none" stroke="black" stroke-width="1"></use>
-        <use href="#${shapeId}" fill="black" x="2" y="2"></use>
-        <image class="svg-image" clip-path="url(#${clipId})" href="${puzzleImagePath}" width="${boardWidth}" height="${boardHeight}" x="-${puzzleX}" y="-${puzzleY}" />
-      </svg>
+        </svg>
     `;
 
-    el.innerHTML = svgElementTemplate;
+    el.innerHTML = getSvg(
+      `piece-${this.pieceData.index}`,
+      [this.pieceData],
+      puzzleWidth,
+      puzzleHeight,
+      puzzleImagePath
+    );
+
+    // el.innerHTML = svgElementTemplate;
     return el;
   }
 

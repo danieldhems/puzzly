@@ -1,5 +1,6 @@
+import loadAssets from "./assetLoader";
 import { CONNECTOR_SIZE_PERC, CONNECTOR_TOLERANCE_AMOUNT, SHOULDER_SIZE_PERC, MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SOLVING_AREA_SCREEN_PORTION, SHADOW_OFFSET_RATIO } from "./constants";
-import { addPuzzleDataToPieces, generatePieces, getConnectorDistanceFromCorner, getConnectorSize } from "./puzzleGenerator";
+import puzzleGenerator, { addPuzzleDataToPieces, generatePieces, generatePuzzleSprite, getConnectorDistanceFromCorner, getConnectorSize } from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
 import Puzzly from "./Puzzly";
 import { PuzzleAxis, PuzzleConfig, PuzzleShapes } from "./types";
@@ -672,8 +673,8 @@ export default class PuzzlyCreator {
     shadowOffset = onePercent * SHADOW_OFFSET_RATIO;
 
     return {
-      width,
-      height,
+      puzzleWidth: width,
+      puzzleHeight: height,
       pieceSize,
       connectorSize,
       connectorDistanceFromCorner,
@@ -689,17 +690,16 @@ export default class PuzzlyCreator {
     // console.log("crop data", cropData)
 
     const puzzleDimensions = this.getPuzzleDimensions(this.selectedPuzzleConfig);
-    const mappedPieces = addPuzzleDataToPieces(pieces, this.selectedPuzzleConfig, puzzleDimensions)
+    const mappedPieces = addPuzzleDataToPieces(pieces, puzzleDimensions)
     console.log("mapped pieces", mappedPieces)
-
 
     const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {
       body: JSON.stringify({
         ...cropData,
         dimensions: this.sourceImage.dimensions,
         imageName: this.sourceImage.imageName,
-        resizeWidth: Math.floor(puzzleDimensions.width),
-        resizeHeight: Math.floor(puzzleDimensions.height),
+        resizeWidth: Math.floor(puzzleDimensions.puzzleWidth),
+        resizeHeight: Math.floor(puzzleDimensions.puzzleHeight),
       }),
       method: "POST",
       headers: {
@@ -708,17 +708,19 @@ export default class PuzzlyCreator {
     });
 
     const { puzzleImagePath } = await makePuzzleImageResponse.json();
-    const { width, height } = puzzleDimensions;
+    const { puzzleWidth, puzzleHeight } = puzzleDimensions;
 
     const data = {
       ...this.selectedPuzzleConfig,
-      boardWidth: width,
-      boardHeight: height,
+      boardWidth: puzzleWidth,
+      boardHeight: puzzleHeight,
       imageName: this.sourceImage.imageName,
-      puzzleImagePath,
+      // puzzleImagePath,
       debugOptions: this.debugOptions,
       isIntegration: this.isIntegration,
     }
+
+    // const puzzleSprite = await generatePuzzleSprite(puzzleImagePath, mappedPieces);
 
     fetch("/api/puzzle", {
       body: JSON.stringify(data),
@@ -742,9 +744,10 @@ export default class PuzzlyCreator {
             pieces: mappedPieces,
             _id: response._id,
             previewPath: response.previewPath,
+            // puzzleSprite,
             puzzleImagePath,
-            boardWidth: puzzleDimensions.width,
-            boardHeight: puzzleDimensions.height,
+            boardWidth: puzzleDimensions.puzzleWidth,
+            boardHeight: puzzleDimensions.puzzleHeight,
           });
         }.bind(this)
       )

@@ -138,6 +138,7 @@ export default class GroupMovable extends BaseMovable {
 
     const groupContainer = this.GroupOperations.createGroupContainer(groupInitialPosition);
 
+
     sourcePiece.setPositionAsGrouped();
     targetPiece.setPositionAsGrouped();
     groupContainer.appendChild(sourcePiece.element);
