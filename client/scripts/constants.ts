@@ -34,6 +34,7 @@ export const SHOULDER_SIZE_PERC = 35;
 export const SHADOW_COLOR = "#353836";
 export const STROKE_COLOR = "#000";
 export const STROKE_WIDTH = 1;
+export const STROKE_OFFSET = 2;
 
 export const PIECE_SIZE = 20;
 export const MINIMUM_NUMBER_OF_PIECES = 9;

@@ -13,11 +13,14 @@ import {
   GroupMovableSaveState,
 } from "./types";
 import Puzzly from "./Puzzly";
+import { getSvg } from "./svg";
 
 export default class GroupMovable extends BaseMovable {
   instanceType = InstanceTypes.GroupMovable;
   _id?: string;
   svg: HTMLOrSVGElement;
+  puzzleWidth: number;
+  puzzleHeight: number;
   piecesInGroup: SingleMovable[];
   elementsInGroup: MovableElement[];
   Puzzly: Puzzly;
@@ -70,6 +73,8 @@ export default class GroupMovable extends BaseMovable {
 
     this.puzzleId = Puzzly.puzzleId;
     this.puzzleImage = Puzzly.puzzleImage;
+    this.puzzleWidth = Puzzly.boardWidth;
+    this.puzzleHeight = Puzzly.boardHeight;
 
     this.width = Puzzly.boardWidth;
     this.height = Puzzly.boardHeight;
@@ -138,7 +143,6 @@ export default class GroupMovable extends BaseMovable {
 
     const groupContainer = this.GroupOperations.createGroupContainer(groupInitialPosition);
 
-
     sourcePiece.setPositionAsGrouped();
     targetPiece.setPositionAsGrouped();
     groupContainer.appendChild(sourcePiece.element);
@@ -146,7 +150,9 @@ export default class GroupMovable extends BaseMovable {
 
     this.element = groupContainer;
 
-    // this.svg = container.querySelector("svg") as HTMLOrSVGElement;
+    const elements = this.piecesInGroup.map(piece => piece.pieceData);
+    const svgElementTemplate = getSvg("", elements, this.Puzzly.puzzleWidth, this.Puzzly.puzzleHeight, this.puzzleImage.src);
+    this.element.innerHTML = svgElementTemplate;
 
     this.setLastPosition(groupInitialPosition);
     this.render();

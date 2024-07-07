@@ -1,6 +1,6 @@
 import BaseMovable from "./BaseMovable";
 import { checkConnections } from "./checkConnections";
-import { EVENT_TYPES, HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, SHAPE_TYPES, SVGNS } from "./constants";
+import { EVENT_TYPES, HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, SHAPE_TYPES, STROKE_OFFSET, SVGNS } from "./constants";
 import GroupMovable from "./GroupMovable";
 import GroupOperations from "./GroupOperations";
 import Pockets from "./Pockets";
@@ -140,8 +140,8 @@ export default class SingleMovable extends BaseMovable {
     el.id = "piece-" + index;
 
     el.style.position = "absolute";
-    el.style.width = width + "px";
-    el.style.height = height + "px";
+    el.style.width = width + STROKE_OFFSET + "px";
+    el.style.height = height + STROKE_OFFSET + "px";
 
     if (pocketId === undefined || pocketId === null) {
       el.style.top = (!!groupId ? solvedY : pageY) + "px";
@@ -202,9 +202,9 @@ export default class SingleMovable extends BaseMovable {
       el.setAttribute("data-pocket-id", pocketId + "");
     }
 
-    const { boardWidth, boardHeight, puzzleImagePath } = this.Puzzly;
-    // console.log("piece size", pieceSize)
+    const { puzzleImagePath } = this.Puzzly;
 
+    // TODO: svg.ts is already generating and rendering the svg string so this might not be needed, and could be confusing.
     const pathString = getJigsawShapeSvgString(this.pieceData);
     el.setAttribute(HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, pathString);
 

@@ -505,7 +505,7 @@ label, input[type=checkbox] {
 
 svg {
     position: relative;
-    pointer-events: none;
+    /* pointer-events: none; */
 }
 
 svg g {
@@ -515,11 +515,11 @@ svg g {
 }
 
 .svg-image {
-    pointer-events: none;
+    /* pointer-events: none; */
 }
 
 use {
-    pointer-events: none;
+    /* pointer-events: none; */
 }
 
 @media only screen and (min-width: 800px) and (min-height: 800px){
