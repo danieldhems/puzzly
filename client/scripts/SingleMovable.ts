@@ -229,12 +229,24 @@ export default class SingleMovable extends BaseMovable {
         </svg>
     `;
 
+    const svgWidth = width + STROKE_OFFSET;
+    const svgHeight = height + STROKE_OFFSET;
+
+    const svgOptions = {
+      svgWidth,
+      svgHeight,
+      imagePosition: {
+        x: puzzleX,
+        y: puzzleY,
+      },
+      viewbox: `0 0 ${width + STROKE_OFFSET} ${height + STROKE_OFFSET}`,
+    }
+
     el.innerHTML = getSvg(
       `piece-${this.pieceData.index}`,
       [this.pieceData],
-      puzzleWidth,
-      puzzleHeight,
-      puzzleImagePath
+      puzzleImagePath,
+      svgOptions,
     );
 
     // el.innerHTML = svgElementTemplate;
@@ -499,6 +511,10 @@ export default class SingleMovable extends BaseMovable {
     console.log("set element position as grouped", this.pieceData)
     this.element.style.top = this.pieceData.puzzleY + "px";
     this.element.style.left = this.pieceData.puzzleX + "px";
+  }
+
+  hide() {
+    this.element.style.visibility = "hidden";
   }
 
   joinTo(targetInstance: GroupMovable | SingleMovable) {

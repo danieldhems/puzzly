@@ -1,6 +1,6 @@
 import GroupOperations from "./GroupOperations";
 import { checkConnections } from "./checkConnections";
-import { EVENT_TYPES } from "./constants";
+import { EVENT_TYPES, STROKE_OFFSET } from "./constants";
 import Utils from "./utils";
 import BaseMovable from "./BaseMovable";
 import SingleMovable from "./SingleMovable";
@@ -145,14 +145,39 @@ export default class GroupMovable extends BaseMovable {
 
     sourcePiece.setPositionAsGrouped();
     targetPiece.setPositionAsGrouped();
+
     groupContainer.appendChild(sourcePiece.element);
     groupContainer.appendChild(targetPiece.element);
+    sourcePiece.hide();
+    targetPiece.hide();
 
     this.element = groupContainer;
 
-    const elements = this.piecesInGroup.map(piece => piece.pieceData);
-    const svgElementTemplate = getSvg("", elements, this.Puzzly.puzzleWidth, this.Puzzly.puzzleHeight, this.puzzleImage.src);
-    this.element.innerHTML = svgElementTemplate;
+    const pieces = this.piecesInGroup.map(piece => piece.pieceData);
+
+    const puzzleWidth = this.Puzzly.boardWidth;
+    const puzzleHeight = this.Puzzly.boardHeight;
+
+    const svgWidth = puzzleWidth + STROKE_OFFSET;
+    const svgHeight = puzzleHeight + STROKE_OFFSET;
+
+    const svgOptions = {
+      svgWidth: svgWidth,
+      svgHeight: svgHeight,
+      viewbox: `0 0 ${svgWidth} ${svgHeight}`,
+      isGroup: true,
+    }
+
+    const svgElementTemplate = getSvg(
+      `${Date.now()}`,
+      pieces,
+      this.puzzleImage.src,
+      svgOptions,
+    );
+
+    const svgContainer = document.createElement("div");
+    svgContainer.innerHTML = svgElementTemplate;
+    this.element.appendChild(svgContainer)
 
     this.setLastPosition(groupInitialPosition);
     this.render();

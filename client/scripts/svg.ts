@@ -6,65 +6,98 @@ import { ConnectorType, JigsawPieceData, SkeletonPiece } from "./types";
 export function getSvg(
     id: string,
     pieces: JigsawPieceData[],
-    puzzleWidth: number,
-    puzzleHeight: number,
-    imagePath: string
+    imagePath: string,
+    options: {
+        svgWidth: number,
+        svgHeight: number,
+        svgPosition?: {
+            x: number;
+            y: number;
+        },
+        isGroup?: boolean;
+        viewbox: string,
+        imagePosition?: {
+            x: number;
+            y: number;
+        },
+    }
 ): string {
+    const {
+        svgWidth,
+        svgHeight,
+        svgPosition,
+        viewbox,
+        imagePosition,
+    } = options;
+
+    const imgPosition = {
+        x: imagePosition?.x || 0,
+        y: imagePosition?.y || 0,
+    };
+
+    const initialPiece = pieces[0];
+
+    const imageWidth = initialPiece.puzzleWidth;
+    const imageHeight = initialPiece.puzzleHeight;
+
     // TODO Bad name
-    const pieceInfo = pieces.map(getAttributesForPiece);
+    const pieceInfo = pieces.map(piece => getAttributesForPiece(piece));
+
     const clipId = `clip-${id}`;
 
-    const totalWidth = pieceInfo.reduce((accumulator, current) => {
-        return accumulator + current.width
-    }, 0);
-    const totalHeight = pieceInfo.reduce((accumulator, current) => {
-        return accumulator + current.height
-    }, 0);
+    let pathElementsForDefs: string = "";
+    let useElementsForClip: string = "";
+    let useElementsForShadow: string = "";
+    let useElementsForStroke: string = "";
 
-    const imageX = Math.min(...pieceInfo.map(info => info.puzzleX));
-    const imageY = Math.min(...pieceInfo.map(info => info.puzzleY));
+    pieceInfo.map((info) => {
+        const xPosition = options.isGroup ? info.puzzleX : 0;
+        const yPosition = options.isGroup ? info.puzzleY : 0;
+
+        pathElementsForDefs += `<path id="${info.shapeId}" d="${info.pathString}"></path>`;
+        useElementsForClip += `<use href="#${info.shapeId}" x="${xPosition}" y="${yPosition}"></use>`;
+        useElementsForShadow += `<use href="#${info.shapeId}" x="${xPosition + STROKE_OFFSET}" y="${yPosition + STROKE_OFFSET}"></use>`
+        useElementsForStroke += `<use href="#${info.shapeId}" fill="none" stroke="black" stroke-width="1" x="${xPosition}" y="${yPosition}"></use>`
+
+    }).join("");
 
     return `
-      <svg xmlns="${SVGNS}" width="${totalWidth + STROKE_OFFSET}" height="${totalHeight + STROKE_OFFSET}" viewBox="0 0 ${totalWidth + STROKE_OFFSET} ${totalHeight + STROKE_OFFSET}" class="puzzle-piece-group-svg">
+      <svg xmlns="${SVGNS}" width="${svgWidth}" height="${svgHeight}" viewBox="${viewbox}" class="puzzle-piece-group-svg">
         <defs>
-            ${pieceInfo.map((info) =>
-        `<path id="${info.shapeId}" d="${info.pathString}"></path>`
-    )}
+            ${pathElementsForDefs}
         </defs>
         <clipPath id="${clipId}">
-            ${pieceInfo.map((info) => `<use href="#${info.shapeId}"></use>`)}
+            ${useElementsForClip}
         </clipPath>
-            ${pieceInfo.map(
-        (info) =>
-            `<use href="#${info.shapeId}" x="${STROKE_OFFSET}" y="${STROKE_OFFSET}"></use>`
-    )}
-            <image 
-                class="svg-image" 
-                clip-path="url(#${clipId})" 
-                href="${imagePath}" 
-                width="${puzzleWidth}" 
-                height="${puzzleHeight}"
-                x="-${imageX}"
-                y="-${imageY}"
-            />
-            ${pieceInfo.map(
-        (info) =>
-            `<use href="#${info.shapeId}" fill="none" stroke="black" stroke-width="1"></use>`
-    )}
+        ${useElementsForShadow}
+        <image 
+            class="svg-image" 
+            clip-path="url(#${clipId})" 
+            href="${imagePath}" 
+            width="${imageWidth}" 
+            height="${imageHeight}"
+            x="-${imgPosition?.x}"
+            y="-${imgPosition?.y}"
+        />
+        ${useElementsForStroke}
       </svg>
     `;
 }
 
-export function getAttributesForPiece(piece: JigsawPieceData) {
-    const { index, puzzleX, puzzleY, width, height, groupId } = piece;
-    const svgStartPosition = {
-        x: groupId ? puzzleX : 0,
-        y: groupId ? puzzleY : 0,
+export function getAttributesForPiece(
+    piece: JigsawPieceData,
+    isGroup?: boolean,
+) {
+    const { index, puzzleX, puzzleY, width, height } = piece;
+
+    const pathStartPosition = {
+        x: isGroup ? piece.puzzleX : 0,
+        y: isGroup ? piece.puzzleY : 0,
     };
+
     return {
         shapeId: `shape-${index}`,
-        clipId: `clip-${index}`,
-        pathString: getJigsawShapeSvgString(piece, svgStartPosition),
+        pathString: getJigsawShapeSvgString(piece, pathStartPosition),
         puzzleX,
         puzzleY,
         width,
