@@ -128,6 +128,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   initiateGroup() {
+    console.log("initiating group")
     const sourcePiece = this.piecesInGroup[0];
     const targetPiece = this.piecesInGroup[1];
 
@@ -305,6 +306,26 @@ export default class GroupMovable extends BaseMovable {
         super.onPickup.call(this, event);
       }
     }
+  }
+
+  getConnectorBoundingBoxes() {
+    console.log("getConnectorBoundingBoxes", this.element)
+    const position = Utils.getStyleBoundingBox(this.element);
+    const stagePosition = Utils.getStyleBoundingBox(this.playBoundary as HTMLDivElement);
+
+    const elements = this.piecesInGroup.map(instance => instance.element);
+    const relativeBoundingBoxes = JSON.parse(
+      elements.map(element => element.getAttribute("data-connector-bounding-boxes") as string).join("")
+    );
+
+    console.log("Group bounding boxes", relativeBoundingBoxes)
+
+    return relativeBoundingBoxes.map((box: DomBox) => ({
+      top: box.top + position.top + stagePosition.top,
+      left: box.left + position.left + stagePosition.left,
+      width: box.width,
+      height: box.height,
+    }))
   }
 
   getConnection() {

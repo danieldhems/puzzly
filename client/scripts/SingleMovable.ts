@@ -25,6 +25,7 @@ export default class SingleMovable extends BaseMovable {
   puzzleId: string;
   _id: string;
   groupId: string;
+  groupInstance: GroupMovable;
   GroupOperations: GroupOperations;
   piecesPerSideHorizontal: number;
   piecesPerSideVertical: number;
@@ -309,6 +310,28 @@ export default class SingleMovable extends BaseMovable {
     )
   }
 
+  getConnectorBoundingBoxes(): DomBox[] {
+    const position = Utils.getStyleBoundingBox(this.element);
+    const stagePosition = Utils.getStyleBoundingBox(this.playBoundary as HTMLDivElement);
+    const relativeBoundingBoxes = JSON.parse(
+      this.element.getAttribute("data-connector-bounding-boxes") as string
+    );
+
+    const groupInstance = this.groupId && this.getGroupInstanceFromElement(this.element);
+    if (groupInstance) {
+      const groupBoundingBox = Utils.getStyleBoundingBox(groupInstance.element);
+      position.top += groupBoundingBox.top;
+      position.left += groupBoundingBox.left;
+    }
+
+    return relativeBoundingBoxes.map((box: DomBox) => ({
+      top: box.top + position.top + stagePosition.top,
+      left: box.left + position.left + stagePosition.left,
+      width: box.width,
+      height: box.height,
+    }))
+  }
+
   isElementOwned(element: MovableElement) {
     return element.dataset.pieceIdInPersistence === this.pieceData._id;
   }
@@ -518,14 +541,13 @@ export default class SingleMovable extends BaseMovable {
   }
 
   joinTo(targetInstance: GroupMovable | SingleMovable) {
-    // console.log("SingleInstance", this, "joinTo()", targetInstance);
+    console.log("SingleInstance", this, "joinTo()", targetInstance);
     if (targetInstance.instanceType === InstanceTypes.SingleMovable) {
-      this.Puzzly.groupInstances.push(
-        new GroupMovable({
-          Puzzly: this.Puzzly,
-          pieces: [this, targetInstance as SingleMovable],
-        })
-      );
+      const newGroup = new GroupMovable({
+        Puzzly: this.Puzzly,
+        pieces: [this, targetInstance as SingleMovable],
+      });
+      this.Puzzly.groupInstances.push(newGroup);
     } else {
       const instance = targetInstance as GroupMovable;
       // console.log("SingleMovable joining to", instance);
@@ -533,7 +555,6 @@ export default class SingleMovable extends BaseMovable {
       this.element.classList.add("grouped");
       // TDOD: Encapsulate in single method on target instance?
       instance.addPieces([this]);
-      instance.redrawCanvas();
       this.setPositionAsGrouped();
       instance.save(true);
     }

@@ -818,6 +818,8 @@ const Utils = {
 
     if (!classes) return;
 
+    // NOTE: Be mindful when removing pointer events from SVG elements via CSS
+    // because it can cause this function to break
     const isPuzzlePiece = classes.contains("puzzle-piece");
     const isPuzzlePieceLayerElement = classes.contains("svg-image");
 

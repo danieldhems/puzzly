@@ -179,9 +179,9 @@ export class PocketMovable extends BaseMovable {
       element.setAttribute("data-pocket-id", "");
       element.style.pointerEvents = "auto";
 
-      const instance = this.getMovableInstanceFromElement(
+      const instance = this.getSingleInstanceFromElement(
         element
-      ) as SingleMovable;
+      );
       instance.pocketId = undefined;
 
       // Events.notify(EVENT_TYPES.RETURN_TO_CANVAS, element);

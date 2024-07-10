@@ -1,4 +1,5 @@
 import BaseMovable from "./BaseMovable";
+import GroupMovable from "./GroupMovable";
 import {
   Connection,
   DomBox,
@@ -82,6 +83,7 @@ export function checkConnections(
   Object.keys(connectsTo).some((key: SideNames) => {
     // console.log("key", key);
     const targetElement = Utils.getElementByPieceId(connectsTo[key]);
+    console.log("target element", targetElement)
 
     if (targetElement) {
       const { pieceId, groupId, isSolved } = targetElement.dataset;
@@ -92,10 +94,13 @@ export function checkConnections(
       };
 
       if (shouldCompare(targetPiece)) {
-        const thisPieceInstance = baseMovable.getMovableInstanceFromElement(element);
+        const thisPieceInstance = baseMovable.getSingleInstanceFromElement(element);
+        console.log("this piece instance", thisPieceInstance)
         const thisPieceConnectorBoundingBoxes = thisPieceInstance.getConnectorBoundingBoxes();
 
-        const targetPieceInstance = baseMovable.getMovableInstanceFromElement(targetElement);
+        const targetPieceInstance = baseMovable.getSingleInstanceFromElement(targetElement);
+        console.log("target piece instance", targetPieceInstance)
+
         const targetPieceConnectorBoundingBoxes = targetPieceInstance.getConnectorBoundingBoxes();
 
         let collisionDetected = false;

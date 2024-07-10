@@ -110,20 +110,33 @@ export default class BaseMovable {
       window.Puzzly.currentZIndex + 1;
   }
 
-  getMovableInstanceFromElement(
+  getMovableInstanceFromElement(element: MovableElement): SingleMovable | GroupMovable | undefined {
+    if (element.dataset.groupId) {
+      return this.getGroupInstanceFromElement(element);
+    } else {
+      return this.getSingleInstanceFromElement(element);
+    }
+  }
+
+  getSingleInstanceFromElement(
     element: MovableElement
-  ): SingleMovable | GroupMovable {
+  ): SingleMovable {
+    return this.Puzzly.pieceInstances.find(
+      (instance: SingleMovable) =>
+        instance._id === element.dataset.pieceIdInPersistence
+    ) as SingleMovable;
+  }
+
+  getGroupInstanceFromElement(
+    element: MovableElement
+  ): GroupMovable | undefined {
     if (element.dataset.groupId) {
       return this.Puzzly.groupInstances.find((instance: GroupMovable) =>
+        // TODO: Need more efficient way to match IDs
         instance.piecesInGroup.some(
           (piece) => piece.groupId === element.dataset.groupId
         )
       ) as GroupMovable;
-    } else {
-      return this.Puzzly.pieceInstances.find(
-        (instance: SingleMovable) =>
-          instance._id === element.dataset.pieceIdInPersistence
-      ) as SingleMovable;
     }
   }
 
@@ -185,22 +198,6 @@ export default class BaseMovable {
       }
       i++;
     }
-  }
-
-  getConnectorBoundingBoxes(): DomBox[] {
-    console.log("getConnectorBoundingBoxes", this.element)
-    const position = Utils.getStyleBoundingBox(this.element);
-    const stagePosition = Utils.getStyleBoundingBox(this.playBoundary as HTMLDivElement);
-    const relativeBoundingBoxes = JSON.parse(
-      this.element.getAttribute("data-connector-bounding-boxes") as string
-    );
-
-    return relativeBoundingBoxes.map((box: DomBox) => ({
-      top: box.top + position.top + stagePosition.top,
-      left: box.left + position.left + stagePosition.left,
-      width: box.width,
-      height: box.height,
-    }))
   }
 
   hasCollision(
@@ -310,7 +307,7 @@ export default class BaseMovable {
     const { sourceElement, targetElement, isSolving } = this
       .connection as Connection;
 
-    const sourceInstance = this.getMovableInstanceFromElement(sourceElement);
+    const sourceInstance = this.getMovableInstanceFromElement(sourceElement) as SingleMovable;
 
     if (isSolving) {
       sourceInstance.solve({ save: true });
