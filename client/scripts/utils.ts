@@ -812,25 +812,21 @@ const Utils = {
     );
   },
 
+  getPuzzlePieceFromChild(element: HTMLElement): MovableElement | undefined {
+    console.log("checking child element", element)
+    if (element.dataset.pieceIndex) {
+      return document.querySelector(`.puzzle-piece#piece-${element.dataset.pieceIndex}`) as HTMLDivElement;
+    } else if (element.nodeName === "body") {
+      return;
+    } else {
+      return Utils.getPuzzlePieceFromChild(element.parentNode as HTMLElement);
+    }
+  },
+
   getPuzzlePieceElementFromEvent(e: MouseEvent): MovableElement | undefined {
-    const eventTarget = e.target;
-    const classes = (e.target as HTMLDivElement)?.classList;
-
-    if (!classes) return;
-
-    // NOTE: Be mindful when removing pointer events from SVG elements via CSS
-    // because it can cause this function to break
-    const isPuzzlePiece = classes.contains("puzzle-piece");
-    const isPuzzlePieceLayerElement = classes.contains("svg-image");
-
-    if (isPuzzlePiece) {
-      return e.target as MovableElement;
-    }
-
-    if (isPuzzlePieceLayerElement) {
-      // TODO: Get the puzzle piece div element without relying on the SVG's structure
-      return (eventTarget as SVGImageElement).parentNode?.parentNode as MovableElement;
-    }
+    const eventTarget = e.target as HTMLElement;
+    console.log("event target", eventTarget)
+    return Utils.getPuzzlePieceFromChild(eventTarget);
   },
 
   elementIsInDragContainer(element: HTMLDivElement) {

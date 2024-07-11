@@ -32,6 +32,7 @@ import {
 import PieceLayouts from "./PieceLayouts";
 import loadAssets from "./assetLoader";
 import Sounds from "./Sounds";
+import SolvingArea from "./SolvingArea";
 /**
  * Puzzly
  *
@@ -45,6 +46,7 @@ export default class Puzzly {
   PersistenceOperations: PersistenceOperations;
   CanvasOperations: CanvasOperations;
   PlayBoundaryMovable: PlayBoundaryMovable;
+  SolvingArea: SolvingArea;
   Zoom: Zoom;
   Sounds: Sounds;
   boardSize: number;
@@ -87,7 +89,6 @@ export default class Puzzly {
   noDispersal?: boolean;
   currentZIndex?: number;
   solvedCnv: HTMLCanvasElement | null;
-  solvingArea: HTMLDivElement;
   filterBtn: HTMLSpanElement | null;
   filterBtnOffLabel: HTMLSpanElement | null;
   filterBtnOnLabel: HTMLSpanElement | null;
@@ -154,9 +155,6 @@ export default class Puzzly {
 
     this.stage = document.querySelector(`#${ELEMENT_IDS.STAGE}`);
     this.playBoundary = document.querySelector(`#${ELEMENT_IDS.PLAY_BOUNDARY}`);
-    this.solvingArea = document.querySelector(
-      `#${ELEMENT_IDS.SOLVED_PUZZLE_AREA}`
-    ) as HTMLDivElement;
     this.piecesContainer = document.querySelector(
       `#${ELEMENT_IDS.PIECES_CONTAINER}`
     );
@@ -180,15 +178,10 @@ export default class Puzzly {
 
     this.playBoundary = document.querySelector("#play-boundary");
 
-
     this.PlayBoundaryMovable = new PlayBoundaryMovable(this);
-    this.setupSolvingArea();
+    this.SolvingArea = new SolvingArea(this.boardWidth, this.boardHeight, this.puzzleImage.src)
 
     this.Zoom = new Zoom(this);
-
-    const solvingAreaBoundingBox = (
-      this.solvingArea as HTMLDivElement
-    ).getBoundingClientRect();
 
     this.Pockets = new Pockets(this);
     // this.DragAndSelect = new DragAndSelect(this);
@@ -267,7 +260,7 @@ export default class Puzzly {
       if (!this.noDispersal) {
         this.PieceLayouts.arrangePiecesAroundEdge(
           this.largestPieceSpan,
-          this.solvingArea as HTMLDivElement
+          this.SolvingArea.element as HTMLDivElement
         );
       } else {
         // NOTE: Initial save once all pieces have been rendered
@@ -354,42 +347,6 @@ export default class Puzzly {
         connectorSize: width / 100 * CONNECTOR_SIZE_PERC,
       }
     }
-  }
-
-  setupSolvingArea() {
-    this.solvingArea.style.width = Utils.getPxString(this.boardWidth);
-    this.solvingArea.style.height = Utils.getPxString(this.boardHeight);
-    this.solvingArea.style.top = Utils.getPxString(
-      this.PlayBoundaryMovable.element.offsetHeight / 2 - this.boardHeight / 2
-    );
-    this.solvingArea.style.left = Utils.getPxString(
-      this.PlayBoundaryMovable.element.offsetWidth / 2 - this.boardWidth / 2
-    );
-
-    const solvedCnvContainer = document.getElementById(
-      `group-container-${this.solvedGroupId}`
-    ) as HTMLDivElement;
-    solvedCnvContainer.style.pointerEvents = "none";
-    solvedCnvContainer.style.width = Utils.getPxString(
-      this.boardWidth + this.shadowOffset
-    );
-    solvedCnvContainer.style.height = Utils.getPxString(
-      this.boardHeight + this.shadowOffset
-    );
-
-    this.solvedCnv = document.getElementById(
-      `group-canvas-${this.solvedGroupId}`
-    ) as HTMLCanvasElement;
-    // solvedCnv.style.pointerEvents = 'none';
-    const solvingAreaBox = Utils.getStyleBoundingBox(this.solvingArea);
-    this.solvedCnv.width = solvingAreaBox.width + this.shadowOffset;
-    this.solvedCnv.height = solvingAreaBox.height + this.shadowOffset;
-    this.solvedCnv.style.width = Utils.getPxString(
-      solvingAreaBox.width + this.shadowOffset
-    );
-    this.solvedCnv.style.height = Utils.getPxString(
-      solvingAreaBox.height + this.shadowOffset
-    );
   }
 
   updateElapsedTime(isComplete = false) {

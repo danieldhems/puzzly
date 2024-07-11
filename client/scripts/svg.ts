@@ -1,5 +1,5 @@
 import SingleMovable from "./SingleMovable";
-import { STROKE_OFFSET, SVGNS } from "./constants";
+import { STROKE_OFFSET, STROKE_WIDTH, SVGNS } from "./constants";
 import jigsawPath from "./jigsawPath";
 import { ConnectorType, JigsawPieceData, SkeletonPiece } from "./types";
 
@@ -25,7 +25,6 @@ export function getSvg(
     const {
         svgWidth,
         svgHeight,
-        svgPosition,
         viewbox,
         imagePosition,
     } = options;
@@ -54,10 +53,10 @@ export function getSvg(
         const xPosition = options.isGroup ? info.puzzleX : 0;
         const yPosition = options.isGroup ? info.puzzleY : 0;
 
-        pathElementsForDefs += `<path id="${info.shapeId}" d="${info.pathString}"></path>`;
-        useElementsForClip += `<use href="#${info.shapeId}" x="${xPosition}" y="${yPosition}"></use>`;
-        useElementsForShadow += `<use href="#${info.shapeId}" x="${xPosition + STROKE_OFFSET}" y="${yPosition + STROKE_OFFSET}"></use>`
-        useElementsForStroke += `<use href="#${info.shapeId}" fill="none" stroke="black" stroke-width="1" x="${xPosition}" y="${yPosition}"></use>`
+        pathElementsForDefs += `<path id="path-${info.shapeId}" d="${info.pathString}"></path>`;
+        useElementsForClip += `<use href="#path-${info.shapeId}" x="${xPosition}" y="${yPosition}"></use>`;
+        useElementsForShadow += `<use href="#path-${info.shapeId}" x="${xPosition + STROKE_OFFSET}" y="${yPosition + STROKE_OFFSET}"></use>`
+        useElementsForStroke += `<use href="#path-${info.shapeId}" fill="none" stroke="black" stroke-width="1" x="${xPosition}" y="${yPosition}" pointer-events="visibleFill" data-piece-index="${info.index}"></use>`
 
     }).join("");
 
@@ -96,6 +95,7 @@ export function getAttributesForPiece(
     };
 
     return {
+        index,
         shapeId: `shape-${index}`,
         pathString: getJigsawShapeSvgString(piece, pathStartPosition),
         puzzleX,
@@ -103,13 +103,6 @@ export function getAttributesForPiece(
         width,
         height,
     };
-}
-
-export function getSvgStringPart(
-    startPosition: { x: number, y: number },
-    connector: ConnectorType,
-) {
-
 }
 
 /**
@@ -131,7 +124,7 @@ export const getJigsawShapeSvgString = (
     let y = startingPosition?.y || 0;
 
     // TODO: Assuming all pieces are square - might not work for irregular shapes / sizes
-    const pieceSize = piece.basePieceSize;
+    const pieceSize = piece.basePieceSize as number;
 
     const { connectorSize, connectorDistanceFromCorner: unroundedConnectorDistanceFromCorner } = piece;
     const connectorDistanceFromCorner = Math.floor(unroundedConnectorDistanceFromCorner);
@@ -189,9 +182,9 @@ export const getJigsawShapeSvgString = (
     if (bottomConnector) {
         svgString += `h -${connectorDistanceFromCorner} `;
         svgString += `c ${bottomConnector.cp1.x} ${bottomConnector.cp1.y}, ${bottomConnector.cp2.x} ${bottomConnector.cp2.y}, ${bottomConnector.dest.x} ${bottomConnector.dest.y} `;
-        svgString += `h -${connectorDistanceFromCorner} `;
+        svgString += `h -${connectorDistanceFromCorner - (STROKE_WIDTH * 2)} `;
     } else {
-        svgString += `h -${pieceSize} `;
+        svgString += `h -${pieceSize - (STROKE_WIDTH * 2)} `;
     }
 
     if (piece.type[3] === 1) {

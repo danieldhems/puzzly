@@ -148,7 +148,7 @@ export default class SingleMovable extends BaseMovable {
       el.style.top = (!!groupId ? solvedY : pageY) + "px";
       el.style.left = (!!groupId ? solvedX : pageX) + "px";
     }
-    el.style.pointerEvents = "auto";
+    el.style.pointerEvents = "none";
     el.style.zIndex = (zIndex || 1) + "";
 
     el.setAttribute("data-jigsaw-type", type.join(","));
@@ -556,6 +556,7 @@ export default class SingleMovable extends BaseMovable {
       // TDOD: Encapsulate in single method on target instance?
       instance.addPieces([this]);
       this.setPositionAsGrouped();
+      this.hide();
       instance.save(true);
     }
   }

@@ -1,22 +1,23 @@
 import arrangePiecesAroundEdge from "./pieceLayoutsNeaten";
 import randomisePiecePositions from "./pieceLayoutsShuffle";
 import Pockets from "./Pockets";
+import SolvingArea from "./SolvingArea";
 import { MovableElement, PieceSectors } from "./types";
 import Utils from "./utils";
 
 export interface PieceLayoutsProperties {
   largestPieceSpan: number;
   selectedNumPieces: number;
-  solvingArea: HTMLDivElement | null;
+  SolvingArea: SolvingArea;
   playBoundary: HTMLDivElement | null;
   Pockets: Pockets;
 }
 
-export default interface PieceLayouts extends PieceLayoutsProperties {}
+export default interface PieceLayouts extends PieceLayoutsProperties { }
 
 export default class PieceLayouts {
   playBoundary: HTMLDivElement | null;
-  solvingArea: HTMLDivElement | null;
+  solvingArea: SolvingArea;
   selectedNumberOfPieces: number;
   pieceSectors: PieceSectors;
   sendToEdgeNeatenBtn: HTMLSpanElement | null;
@@ -40,12 +41,12 @@ export default class PieceLayouts {
   constructor({
     largestPieceSpan,
     selectedNumPieces,
-    solvingArea,
+    SolvingArea,
     playBoundary,
     Pockets,
   }: PieceLayoutsProperties) {
     this.largestPieceSpan = largestPieceSpan;
-    this.solvingArea = solvingArea;
+    this.SolvingArea = SolvingArea;
     this.playBoundary = playBoundary;
     this.selectedNumberOfPieces = selectedNumPieces;
 
@@ -67,16 +68,16 @@ export default class PieceLayouts {
   getSolvingAreaBoundingBox() {
     if (this.solvingArea) {
       return {
-        top: parseInt(this.solvingArea.style.top),
-        left: parseInt(this.solvingArea.style.left),
+        top: parseInt(this.solvingArea.element.style.top),
+        left: parseInt(this.solvingArea.element.style.left),
         right:
-          parseInt(this.solvingArea.style.left) +
-          parseInt(this.solvingArea.style.width),
+          parseInt(this.solvingArea.element.style.left) +
+          parseInt(this.solvingArea.element.style.width),
         bottom:
-          parseInt(this.solvingArea.style.top) +
-          parseInt(this.solvingArea.style.height),
-        width: parseInt(this.solvingArea.style.width),
-        height: parseInt(this.solvingArea.style.height),
+          parseInt(this.solvingArea.element.style.top) +
+          parseInt(this.solvingArea.element.style.height),
+        width: parseInt(this.solvingArea.element.style.width),
+        height: parseInt(this.solvingArea.element.style.height),
       };
     }
   }
@@ -162,7 +163,7 @@ export default class PieceLayouts {
   onArrangePiecesAroundEdge() {
     arrangePiecesAroundEdge(
       this.largestPieceSpan,
-      this.solvingArea as HTMLDivElement
+      this.solvingArea.element as HTMLDivElement
     );
     this.onControlsHandleClick();
   }

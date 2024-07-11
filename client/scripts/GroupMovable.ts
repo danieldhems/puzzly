@@ -106,7 +106,7 @@ export default class GroupMovable extends BaseMovable {
       if (this.isSolved) {
         this.solve();
       } else {
-        // this.restoreFromPersistence();
+        this.restoreFromPersistence();
       }
     }
 
@@ -154,48 +154,21 @@ export default class GroupMovable extends BaseMovable {
 
     this.element = groupContainer;
 
-    const pieces = this.piecesInGroup.map(piece => piece.pieceData);
-
-    const puzzleWidth = this.Puzzly.boardWidth;
-    const puzzleHeight = this.Puzzly.boardHeight;
-
-    const svgWidth = puzzleWidth + STROKE_OFFSET;
-    const svgHeight = puzzleHeight + STROKE_OFFSET;
-
-    const svgOptions = {
-      svgWidth: svgWidth,
-      svgHeight: svgHeight,
-      viewbox: `0 0 ${svgWidth} ${svgHeight}`,
-      isGroup: true,
-    }
-
-    const svgElementTemplate = getSvg(
-      `${Date.now()}`,
-      pieces,
-      this.puzzleImage.src,
-      svgOptions,
-    );
-
-    const svgContainer = document.createElement("div");
-    svgContainer.innerHTML = svgElementTemplate;
-    this.element.appendChild(svgContainer)
+    this.render();
 
     this.setLastPosition(groupInitialPosition);
-    this.render();
+    this.addToStage(this.element);
     this.save();
   }
 
   restoreFromPersistence() {
     const container = this.GroupOperations.createGroupContainer(this.position, this._id);
-
-    const elementsForGroup = this.GroupOperations.getElementsForGroup(
-      this._id as string
-    );
-    elementsForGroup.forEach((element) => container.appendChild(element));
-
     GroupOperations.setIdForGroupElements(container, this._id as string);
+
     this.element = container;
-    this.attachElements();
+
+    this.addPieces(this.piecesInGroup);
+    this.addToStage(this.element);
     this.render();
   }
 
@@ -207,6 +180,7 @@ export default class GroupMovable extends BaseMovable {
       instance = movableInstance as SingleMovable;
       this.alignWith(instance);
       this.addPieces([instance]);
+      this.render();
       instance.setPositionAsGrouped();
       instance.setGroupIdAcrossInstance(this._id + "");
       // TODO: This should be done by the movable instance
@@ -248,7 +222,7 @@ export default class GroupMovable extends BaseMovable {
       instance.setGroupIdAcrossInstance(this._id + "")
     );
     this.attachElements();
-    // this.redrawCanvas();
+    this.render();
     await this.save(true);
   }
 
@@ -279,7 +253,37 @@ export default class GroupMovable extends BaseMovable {
   }
 
   render() {
-    this.addToStage(this.element);
+    const pieces = this.piecesInGroup.map(piece => piece.pieceData);
+
+    const puzzleWidth = this.Puzzly.boardWidth;
+    const puzzleHeight = this.Puzzly.boardHeight;
+
+    const svgWidth = puzzleWidth + STROKE_OFFSET;
+    const svgHeight = puzzleHeight + STROKE_OFFSET;
+
+    const svgOptions = {
+      svgWidth: svgWidth,
+      svgHeight: svgHeight,
+      viewbox: `0 0 ${svgWidth} ${svgHeight}`,
+      isGroup: true,
+    }
+
+    const svgElementTemplate = getSvg(
+      `${Date.now()}`,
+      pieces,
+      this.puzzleImage.src,
+      svgOptions,
+    );
+
+    const existingSvgElement = this.element.querySelector(".group-svg-container");
+    if (existingSvgElement) {
+      existingSvgElement.remove();
+    }
+
+    const svgContainer = document.createElement("div");
+    svgContainer.classList.add("group-svg-container");
+    svgContainer.innerHTML = svgElementTemplate;
+    this.element.appendChild(svgContainer)
   }
 
   isPuzzlePieceInThisGroup(element: MovableElement) {
@@ -291,6 +295,7 @@ export default class GroupMovable extends BaseMovable {
       const element = Utils.getPuzzlePieceElementFromEvent(
         event
       ) as MovableElement;
+      console.log("group onmousedown", element)
       if (
         element &&
         BaseMovable.isGroupedPiece(element) &&
