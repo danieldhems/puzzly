@@ -1,6 +1,7 @@
 import SingleMovable from "./SingleMovable";
 import { ELEMENT_IDS, STROKE_OFFSET } from "./constants";
 import { getSvg } from "./svg";
+import { JigsawPieceData } from "./types";
 import Utils from "./utils";
 
 export default class SolvingArea {
@@ -9,6 +10,7 @@ export default class SolvingArea {
     width: number;
     height: number;
     imagePath: string;
+    pieces: JigsawPieceData[] = [];
 
     constructor(boardWidth: number, boardHeight: number, imagePath: string) {
         this.element = document.querySelector(
@@ -35,30 +37,30 @@ export default class SolvingArea {
             this.playBoundary.offsetWidth / 2 - this.width / 2
         );
 
-        const backgroundElement = document.createElement("div");
-        backgroundElement.style.width = this.width + "px";
-        backgroundElement.style.height = this.height + "px";
-        backgroundElement.style.background = `url(${this.imagePath}) no-repeat`;
-        backgroundElement.style.opacity = ".3";
-        this.element.appendChild(backgroundElement);
+        this.render()
     }
 
-    render(pieceInstances: SingleMovable[]) {
-        const pieces = pieceInstances.map(piece => piece.pieceData);
+    add(pieces: SingleMovable[]) {
+        this.pieces.push(...pieces.map((piece: SingleMovable) => piece.pieceData))
+        this.render();
+    }
 
+    render() {
         const svgWidth = this.width + STROKE_OFFSET;
         const svgHeight = this.height + STROKE_OFFSET;
 
         const svgOptions = {
             svgWidth: svgWidth,
             svgHeight: svgHeight,
+            imageWidth: this.width,
+            imageHeight: this.height,
             viewbox: `0 0 ${svgWidth} ${svgHeight}`,
             isGroup: true,
         }
 
         const svgElementTemplate = getSvg(
             `svg-${Date.now()}`,
-            pieces,
+            this.pieces,
             this.imagePath,
             svgOptions,
         );

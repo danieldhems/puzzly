@@ -14,6 +14,7 @@ import {
 } from "./types";
 import Puzzly from "./Puzzly";
 import { getSvg } from "./svg";
+import SolvingArea from "./SolvingArea";
 
 export default class GroupMovable extends BaseMovable {
   instanceType = InstanceTypes.GroupMovable;
@@ -26,6 +27,7 @@ export default class GroupMovable extends BaseMovable {
   Puzzly: Puzzly;
   GroupOperations: GroupOperations;
   PersistenceOperations: PersistenceOperations;
+  SolvingArea: SolvingArea;
   position: {
     top: number;
     left: number;
@@ -100,6 +102,8 @@ export default class GroupMovable extends BaseMovable {
       position: this.position,
     });
 
+    this.SolvingArea = this.Puzzly.SolvingArea;
+
     if (!_id) {
       this.initiateGroup();
     } else {
@@ -173,7 +177,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   async joinTo(movableInstance: SingleMovable | GroupMovable) {
-    // console.log("GroupMovable joining to", movableInstance);
+    console.log("GroupMovable joining to", movableInstance);
 
     let instance: SingleMovable | GroupMovable;
     if (movableInstance.instanceType === InstanceTypes.SingleMovable) {
@@ -198,15 +202,16 @@ export default class GroupMovable extends BaseMovable {
   }
 
   alignWith(movableInstance: SingleMovable | GroupMovable) {
+    console.log("group alignwith", movableInstance)
     const position = { top: 0, left: 0 };
 
     if (movableInstance instanceof SingleMovable) {
       const { top, left } = movableInstance.getPosition();
-      const { solvedX, solvedY } = movableInstance.pieceData;
+      const { puzzleX, puzzleY } = movableInstance.pieceData;
 
       // console.log(top, solvedY, left, solvedX);
-      position.top = top - solvedY;
-      position.left = left - solvedX;
+      position.top = top - puzzleY;
+      position.left = left - puzzleX;
     } else if (movableInstance instanceof GroupMovable) {
     }
 
@@ -264,6 +269,8 @@ export default class GroupMovable extends BaseMovable {
     const svgOptions = {
       svgWidth: svgWidth,
       svgHeight: svgHeight,
+      imageWidth: this.puzzleWidth,
+      imageHeight: this.puzzleHeight,
       viewbox: `0 0 ${svgWidth} ${svgHeight}`,
       isGroup: true,
     }
@@ -386,16 +393,12 @@ export default class GroupMovable extends BaseMovable {
 
   solve() {
     this.piecesInGroup.forEach((instance) => {
-      this.solvedContainer.appendChild(instance.element);
-      instance.element.dataset.isSolved = "true";
-      instance.isSolved = true;
-      instance.element.style.visibility = "hidden";
-      instance.element.style.pointerEvents = "none";
+      instance.markAsSolved();
     });
 
     this.isSolved = true;
 
-    this.Puzzly.updateSolvedCanvas();
+    this.SolvingArea.add(this.piecesInGroup);
 
     // this.save(true);
     this.destroy();

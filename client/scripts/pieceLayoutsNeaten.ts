@@ -50,8 +50,9 @@ function getPositionForFirstPieceOnNextSide(
   firstPieceOnNextSideFromPreviousIteration: MovableElement,
   spacing: number,
   largestPieceSpan: number,
-  solvingArea: HTMLDivElement
 ) {
+  const solvingArea = window.Puzzly.SolvingArea.element;
+
   const targetBox = firstPieceOnNextSideFromPreviousIteration
     ? Utils.getStyleBoundingBox(firstPieceOnNextSideFromPreviousIteration)
     : Utils.getStyleBoundingBox(solvingArea);
@@ -94,8 +95,9 @@ function getPositionForFirstPieceOnNextSide(
 
 export default function arrangePiecesAroundEdge(
   largestPieceSpan: number,
-  solvingAreaElement: HTMLDivElement
 ) {
+  const solvingArea = window.Puzzly.SolvingArea.element;
+
   // console.log("Arranging pieces around edge")
   const sides = [
     SideNames.Top,
@@ -119,8 +121,8 @@ export default function arrangePiecesAroundEdge(
 
   const piecesInPlay = Utils.shuffleArray(Utils.getIndividualPiecesOnCanvas());
 
-  let currentX: number = this.solvingArea.offsetLeft;
-  let currentY: number = this.solvingArea.offsetTop;
+  let currentX: number = solvingArea.offsetLeft;
+  let currentY: number = solvingArea.offsetTop;
   let verticalSpace = currentY;
 
   while (i < piecesInPlay.length) {
@@ -171,7 +173,6 @@ export default function arrangePiecesAroundEdge(
         firstPiecesOnEachSide[sides[nextSide]] as HTMLDivElement,
         spacing,
         largestPieceSpan,
-        solvingAreaElement
       );
 
       sideIndex = nextSide;

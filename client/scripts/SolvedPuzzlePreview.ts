@@ -34,7 +34,7 @@ export default class SolvedPuzzlePreview {
     }
 
     if (!this.isControlAvailable) {
-      (this.fullImageViewerEl as HTMLDivElement).style.opacity = 0.5 + "";
+      (this.fullImageViewerEl as HTMLDivElement).style.opacity = 0.2 + "";
     } else {
       (this.fullImageViewerEl as HTMLDivElement).style.display = "none";
     }

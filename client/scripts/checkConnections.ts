@@ -78,8 +78,30 @@ export function checkConnections(
   }
 
   let connection: Connection | undefined;
-  const connectsTo = JSON.parse(element.dataset.connectsTo as string);
 
+  const thisPieceInstance = baseMovable.getSingleInstanceFromElement(element);
+  console.log("this piece instance", thisPieceInstance)
+  const thisPieceConnectorBoundingBoxes = thisPieceInstance.getConnectorBoundingBoxes();
+
+  // Check for solving connection
+  const solvedBoundingBoxes = thisPieceInstance.getSolvedBoundingBoxes();
+  const solvingConnection = solvedBoundingBoxes.some((solvedBox: DomBox) => {
+    return thisPieceConnectorBoundingBoxes.some((elementBox: DomBox) => {
+      if (Utils.hasCollision(solvedBox, elementBox)) {
+        return true;
+      }
+    })
+  })
+
+  if (solvingConnection) {
+    return {
+      sourceElement: element,
+      isSolving: true,
+    }
+  }
+
+  // CHeck for connection with adjacent pieces
+  const connectsTo = JSON.parse(element.dataset.connectsTo as string);
   Object.keys(connectsTo).some((key: SideNames) => {
     // console.log("key", key);
     const targetElement = Utils.getElementByPieceId(connectsTo[key]);
@@ -94,39 +116,37 @@ export function checkConnections(
       };
 
       if (shouldCompare(targetPiece)) {
-        const thisPieceInstance = baseMovable.getSingleInstanceFromElement(element);
-        console.log("this piece instance", thisPieceInstance)
-        const thisPieceConnectorBoundingBoxes = thisPieceInstance.getConnectorBoundingBoxes();
-
         const targetPieceInstance = baseMovable.getSingleInstanceFromElement(targetElement);
         console.log("target piece instance", targetPieceInstance)
 
-        const targetPieceConnectorBoundingBoxes = targetPieceInstance.getConnectorBoundingBoxes();
+        if (targetPieceInstance) {
+          const targetPieceConnectorBoundingBoxes = targetPieceInstance.getConnectorBoundingBoxes();
 
-        let collisionDetected = false;
+          let collisionDetected = false;
 
-        // console.log("source bounding boxes", thisPieceConnectorBoundingBoxes.length)
-        // console.log("target bounding boxes", targetPieceConnectorBoundingBoxes.length)
+          // console.log("source bounding boxes", thisPieceConnectorBoundingBoxes.length)
+          // console.log("target bounding boxes", targetPieceConnectorBoundingBoxes.length)
 
-        collisionDetected = thisPieceConnectorBoundingBoxes.some(sourceBox => {
-          // Utils.drawBox(sourceBox)
-          return targetPieceConnectorBoundingBoxes.some(targetBox => {
-            // Utils.drawBox(targetBox)
-            // console.log("compare", sourceBox, targetBox)
-            if (Utils.hasCollision(sourceBox, targetBox)) {
-              // console.log("collision detected")
-              return true;
-            }
+          collisionDetected = thisPieceConnectorBoundingBoxes.some(sourceBox => {
+            // Utils.drawBox(sourceBox)
+            return targetPieceConnectorBoundingBoxes.some(targetBox => {
+              // Utils.drawBox(targetBox)
+              // console.log("compare", sourceBox, targetBox)
+              if (Utils.hasCollision(sourceBox, targetBox)) {
+                // console.log("collision detected")
+                return true;
+              }
+            })
           })
-        })
 
-        if (collisionDetected) {
-          connection = {
-            type: key,
-            sourceElement: element,
-            targetElement,
-            isSolving: targetElement.dataset.isSolved === "true",
-          };
+          if (collisionDetected) {
+            connection = {
+              type: key,
+              sourceElement: element,
+              targetElement,
+              isSolving: targetElement.dataset.isSolved === "true",
+            };
+          }
         }
       }
     }

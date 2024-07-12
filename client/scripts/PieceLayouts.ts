@@ -163,7 +163,6 @@ export default class PieceLayouts {
   onArrangePiecesAroundEdge() {
     arrangePiecesAroundEdge(
       this.largestPieceSpan,
-      this.solvingArea.element as HTMLDivElement
     );
     this.onControlsHandleClick();
   }

@@ -30,8 +30,8 @@ export type MovableElement =
 export type MovableInstance = SingleMovable | GroupMovable | PocketMovable;
 
 export interface Connection {
-  type: SideNames | undefined;
   sourceElement: HTMLDivElement;
+  type?: SideNames | undefined;
   targetElement?: HTMLDivElement;
   isSolving: boolean;
 }

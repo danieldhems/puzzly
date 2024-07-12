@@ -1,7 +1,6 @@
-import SingleMovable from "./SingleMovable";
 import { STROKE_OFFSET, STROKE_WIDTH, SVGNS } from "./constants";
 import jigsawPath from "./jigsawPath";
-import { ConnectorType, JigsawPieceData, SkeletonPiece } from "./types";
+import { JigsawPieceData, SkeletonPiece } from "./types";
 
 export function getSvg(
     id: string,
@@ -10,6 +9,8 @@ export function getSvg(
     options: {
         svgWidth: number,
         svgHeight: number,
+        imageWidth: number;
+        imageHeight: number;
         svgPosition?: {
             x: number;
             y: number;
@@ -22,9 +23,13 @@ export function getSvg(
         },
     }
 ): string {
+    if (pieces.length < 1) return "";
+
     const {
         svgWidth,
         svgHeight,
+        imageWidth,
+        imageHeight,
         viewbox,
         imagePosition,
     } = options;
@@ -33,11 +38,6 @@ export function getSvg(
         x: imagePosition?.x || 0,
         y: imagePosition?.y || 0,
     };
-
-    const initialPiece = pieces[0];
-
-    const imageWidth = initialPiece.puzzleWidth;
-    const imageHeight = initialPiece.puzzleHeight;
 
     // TODO Bad name
     const pieceInfo = pieces.map(piece => getAttributesForPiece(piece));
@@ -182,9 +182,9 @@ export const getJigsawShapeSvgString = (
     if (bottomConnector) {
         svgString += `h -${connectorDistanceFromCorner} `;
         svgString += `c ${bottomConnector.cp1.x} ${bottomConnector.cp1.y}, ${bottomConnector.cp2.x} ${bottomConnector.cp2.y}, ${bottomConnector.dest.x} ${bottomConnector.dest.y} `;
-        svgString += `h -${connectorDistanceFromCorner - (STROKE_WIDTH * 2)} `;
+        svgString += `h -${connectorDistanceFromCorner - STROKE_WIDTH} `;
     } else {
-        svgString += `h -${pieceSize - (STROKE_WIDTH * 2)} `;
+        svgString += `h -${pieceSize - STROKE_WIDTH} `;
     }
 
     if (piece.type[3] === 1) {

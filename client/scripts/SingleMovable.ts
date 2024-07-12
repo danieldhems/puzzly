@@ -17,6 +17,7 @@ import {
   XYCoordinate,
 } from "./types";
 import Utils from "./utils";
+import SolvingArea from "./SolvingArea";
 
 export default class SingleMovable extends BaseMovable {
   instanceType = InstanceTypes.SingleMovable;
@@ -34,6 +35,7 @@ export default class SingleMovable extends BaseMovable {
   Puzzly: Puzzly;
   pocketId?: number;
   Pockets: Pockets;
+  SolvingArea: SolvingArea;
 
   constructor({
     puzzleData,
@@ -64,6 +66,8 @@ export default class SingleMovable extends BaseMovable {
     this.connectorDistanceFromCorner = puzzleData.connectorDistanceFromCorner;
     this.pocketId = pieceData.pocketId;
     this.Pockets = this.Puzzly.Pockets;
+
+    this.SolvingArea = puzzleData.SolvingArea;
 
     if (pieceData.groupId) {
       this.groupId = pieceData.groupId;
@@ -236,6 +240,8 @@ export default class SingleMovable extends BaseMovable {
     const svgOptions = {
       svgWidth,
       svgHeight,
+      imageWidth: this.pieceData.puzzleWidth,
+      imageHeight: this.pieceData.puzzleHeight,
       imagePosition: {
         x: puzzleX,
         y: puzzleY,
@@ -268,7 +274,7 @@ export default class SingleMovable extends BaseMovable {
     }
 
     if (isSolved) {
-      // this.solve();
+      this.solve();
     } else {
       this.addToStage.call(this);
       this.setConnectorBoundingBoxes()
@@ -332,6 +338,24 @@ export default class SingleMovable extends BaseMovable {
     }))
   }
 
+  getSolvedBoundingBoxes(): DomBox[] {
+    const stagePosition = Utils.getStyleBoundingBox(this.playBoundary as HTMLDivElement);
+    const solvingAreaPosition = Utils.getStyleBoundingBox(this.SolvingArea.element as HTMLDivElement);
+    const relativeBoundingBoxes = JSON.parse(
+      this.element.getAttribute("data-connector-bounding-boxes") as string
+    );
+
+    const anchorTop = stagePosition.top + solvingAreaPosition.top + this.pieceData.puzzleY;
+    const anchorLeft = stagePosition.left + solvingAreaPosition.left + this.pieceData.puzzleX;
+
+    return relativeBoundingBoxes.map((box: DomBox) => ({
+      top: anchorTop,
+      left: anchorLeft,
+      width: anchorLeft + box.width,
+      height: anchorTop + box.height,
+    }))
+  }
+
   isElementOwned(element: MovableElement) {
     return element.dataset.pieceIdInPersistence === this.pieceData._id;
   }
@@ -351,10 +375,6 @@ export default class SingleMovable extends BaseMovable {
 
   isOutOfBounds(event: MouseEvent) {
     return !this.isInsidePlayArea() && !this.isOverPockets(event);
-  }
-
-  markAsSolved() {
-    this.element.dataset.isSolved = "true";
   }
 
   getConnectingPieceIds(
@@ -499,22 +519,23 @@ export default class SingleMovable extends BaseMovable {
 
   solve(options?: { save: boolean } | undefined) {
     console.log("SingleInstance", this, "solve()");
-    this.solvedContainer.appendChild(this.element);
-    this.element.classList.add("grouped");
-    this.element.dataset.isSolved = "true";
     this.setPositionAsGrouped();
-    this.element.style.visibility = "hidden";
+    this.hide();
+    // TODO: Should this be part of the hide() behaviour?
     this.element.style.pointerEvents = "none";
-    this.isSolved = true;
 
-    setTimeout(() => {
-      this.Puzzly.updateSolvedCanvas();
-    }, 0);
+    this.SolvingArea.add([this]);
 
     // Are we using this?
     if (options?.save) {
       this.save(true);
     }
+  }
+
+  markAsSolved() {
+    this.isSolved = true;
+    this.element.dataset.isSolved = "true";
+    this.element.classList.add("grouped");
   }
 
   setGroupIdAcrossInstance(groupId: string) {
@@ -531,7 +552,6 @@ export default class SingleMovable extends BaseMovable {
   }
 
   setPositionAsGrouped() {
-    console.log("set element position as grouped", this.pieceData)
     this.element.style.top = this.pieceData.puzzleY + "px";
     this.element.style.left = this.pieceData.puzzleX + "px";
   }

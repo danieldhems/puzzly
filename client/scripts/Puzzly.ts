@@ -260,7 +260,6 @@ export default class Puzzly {
       if (!this.noDispersal) {
         this.PieceLayouts.arrangePiecesAroundEdge(
           this.largestPieceSpan,
-          this.SolvingArea.element as HTMLDivElement
         );
       } else {
         // NOTE: Initial save once all pieces have been rendered
@@ -299,19 +298,6 @@ export default class Puzzly {
       parseInt((this.playBoundary as HTMLDivElement).style.left) / 2 + "px";
     integrationTestDragHelper.style.width = "100px";
     integrationTestDragHelper.style.height = "100px";
-  }
-
-  updateSolvedCanvas() {
-    const solvedPieces = this.pieceInstances.filter(
-      (instance) => instance.isSolved
-    );
-    console.log("updateSolvedCanvas with solved pieces", solvedPieces);
-    this.CanvasOperations.drawMovableInstancesOntoCanvas(
-      this.solvedCnv as HTMLCanvasElement,
-      solvedPieces,
-      this.puzzleImage,
-      this.shadowOffset
-    );
   }
 
   removeGroupInstance(groupInstance: GroupMovable) {
