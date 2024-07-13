@@ -293,7 +293,7 @@ export default class BaseMovable {
 
   onMouseUp(event: MouseEvent) {
     if (this.connection) {
-      console.log("connection", this.connection);
+      // console.log("connection", this.connection);
       this.handleConnection();
     }
 

@@ -138,7 +138,7 @@ export default class SingleMovable extends BaseMovable {
       svgPath,
     } = this.pieceData;
 
-    console.log("SingleMovable", this.pieceData)
+    // console.log("SingleMovable", this.pieceData)
 
     const el = document.createElement("div");
     el.classList.add("puzzle-piece");
@@ -212,27 +212,6 @@ export default class SingleMovable extends BaseMovable {
     // TODO: svg.ts is already generating and rendering the svg string so this might not be needed, and could be confusing.
     const pathString = getJigsawShapeSvgString(this.pieceData);
     el.setAttribute(HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, pathString);
-
-    const shapeId = `shape-${index}`;
-    const clipId = `clip-${index}`;
-
-    const groupClipId = `piece-${this.pieceData.index}-clip`;
-    const groupShadowId = `piece-${this.pieceData.index}-shadow`;
-    const groupStrokeId = `piece-${this.pieceData.index}-stroke`;
-
-    const svgElementTemplate = `
-      <svg xmlns="${SVGNS}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" class="puzzle-piece-svg">
-        <defs>
-          <path id="${shapeId}" d="${pathString}"></path>
-        </defs>
-        <clipPath id="${clipId}">
-            <use href="#${shapeId}"></use>
-        </clipPath>
-        <use href="#${shapeId}" x="1" y="1"></use>
-        <image class="svg-image" clip-path="url(#${clipId})" href="${puzzleImagePath}" width="${width}" height="${height}" x="-${puzzleX}" y="-${puzzleY}" />
-        <use href="#${shapeId}" fill="none" stroke="black" stroke-width="1"></use>
-        </svg>
-    `;
 
     const svgWidth = width + STROKE_OFFSET;
     const svgHeight = height + STROKE_OFFSET;
@@ -349,10 +328,10 @@ export default class SingleMovable extends BaseMovable {
     const anchorLeft = stagePosition.left + solvingAreaPosition.left + this.pieceData.puzzleX;
 
     return relativeBoundingBoxes.map((box: DomBox) => ({
-      top: anchorTop,
-      left: anchorLeft,
-      width: anchorLeft + box.width,
-      height: anchorTop + box.height,
+      top: anchorTop + box.top,
+      left: anchorLeft + box.left,
+      width: box.width,
+      height: box.height,
     }))
   }
 
@@ -481,7 +460,6 @@ export default class SingleMovable extends BaseMovable {
         // console.log("solving area box", this.getSolvingAreaBoundingBox());
         this.connection = checkConnections(
           this.element,
-          this.getSolvingAreaBoundingBox(),
         );
         console.log("connection", this.connection);
       }

@@ -352,7 +352,6 @@ export default class GroupMovable extends BaseMovable {
     while (i < collisionCandidates.length) {
       const connection = checkConnections(
         collisionCandidates[i],
-        this.getSolvingAreaBoundingBox(),
       );
       if (connection) return connection;
       i++;

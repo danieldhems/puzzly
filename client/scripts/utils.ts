@@ -813,7 +813,6 @@ const Utils = {
   },
 
   getPuzzlePieceFromChild(element: HTMLElement): MovableElement | undefined {
-    console.log("checking child element", element)
     if (element.dataset.pieceIndex) {
       return document.querySelector(`.puzzle-piece#piece-${element.dataset.pieceIndex}`) as HTMLDivElement;
     } else if (element.nodeName === "body") {
@@ -825,7 +824,6 @@ const Utils = {
 
   getPuzzlePieceElementFromEvent(e: MouseEvent): MovableElement | undefined {
     const eventTarget = e.target as HTMLElement;
-    console.log("event target", eventTarget)
     return Utils.getPuzzlePieceFromChild(eventTarget);
   },
 

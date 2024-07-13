@@ -1,5 +1,4 @@
 import BaseMovable from "./BaseMovable";
-import GroupMovable from "./GroupMovable";
 import {
   Connection,
   DomBox,
@@ -9,22 +8,10 @@ import {
 } from "./types";
 import Utils from "./utils";
 
-export const getOppositeSide = (sideName: SideNames) => {
-  const map: Partial<Record<SideNames, SideNames>> = {
-    [SideNames.Top]: SideNames.Bottom,
-    [SideNames.Right]: SideNames.Left,
-    [SideNames.Bottom]: SideNames.Top,
-    [SideNames.Left]: SideNames.Right,
-  };
-
-  return map[sideName];
-};
-
 export function checkConnections(
   element: MovableElement,
-  solvingAreaBox: DomBox,
 ) {
-  console.log("element", element)
+  // console.log("element", element)
   const baseMovable = new BaseMovable(window.Puzzly);
 
   const piece = {
@@ -41,71 +28,34 @@ export function checkConnections(
     (piece.group === undefined && targetPiece.groupId === undefined) ||
     piece.group !== targetPiece.groupId;
 
-  if (Utils.isCornerPiece(piece.type)) {
-    // console.log("piece is corner", piece);
-
-    const cornerToCheck = Utils.getCornerNameForPiece(piece.type);
-
-    const elementBoundingBox = Utils.getElementBoundingBox(element);
-    const cornerBoundingBox = Utils.getCornerBoundingBox(
-      cornerToCheck as SideNames,
-      { width: element.offsetWidth, height: element.offsetHeight },
-      solvingAreaBox
-    ) as DomBox;
-
-    // console.log("checking corner", cornerToCheck);
-    // console.log("elBBWithinTolerance", elementBoundingBox);
-    // console.log("cornerBoundingBox", cornerBoundingBox);
-
-    // Utils.drawBox({
-    //   width: element.offsetWidth,
-    //   height: element.offsetHeight,
-    //   ...elementBoundingBoxToTolerance,
-    // });
-
-    if (
-      Utils.hasCollision(
-        elementBoundingBox,
-        cornerBoundingBox
-      )
-    ) {
-      return {
-        type: cornerToCheck,
-        sourceElement: element,
-        isSolving: true,
-      };
-    }
-  }
-
   let connection: Connection | undefined;
 
   const thisPieceInstance = baseMovable.getSingleInstanceFromElement(element);
-  console.log("this piece instance", thisPieceInstance)
+  // console.log("this piece instance", thisPieceInstance)
   const thisPieceConnectorBoundingBoxes = thisPieceInstance.getConnectorBoundingBoxes();
 
   // Check for solving connection
   const solvedBoundingBoxes = thisPieceInstance.getSolvedBoundingBoxes();
-  const solvingConnection = solvedBoundingBoxes.some((solvedBox: DomBox) => {
-    return thisPieceConnectorBoundingBoxes.some((elementBox: DomBox) => {
-      if (Utils.hasCollision(solvedBox, elementBox)) {
-        return true;
+
+  solvedBoundingBoxes.forEach((solvedBox: DomBox, sN: number) => {
+    if (Utils.hasCollision(solvedBox, thisPieceConnectorBoundingBoxes[sN])) {
+      connection = {
+        sourceElement: element,
+        isSolving: true,
       }
-    })
+    }
   })
 
-  if (solvingConnection) {
-    return {
-      sourceElement: element,
-      isSolving: true,
-    }
+  if (connection) {
+    return connection;
   }
 
-  // CHeck for connection with adjacent pieces
+  // Check for connection with adjacent pieces
   const connectsTo = JSON.parse(element.dataset.connectsTo as string);
   Object.keys(connectsTo).some((key: SideNames) => {
     // console.log("key", key);
     const targetElement = Utils.getElementByPieceId(connectsTo[key]);
-    console.log("target element", targetElement)
+    // console.log("target element", targetElement)
 
     if (targetElement) {
       const { pieceId, groupId, isSolved } = targetElement.dataset;
@@ -117,7 +67,7 @@ export function checkConnections(
 
       if (shouldCompare(targetPiece)) {
         const targetPieceInstance = baseMovable.getSingleInstanceFromElement(targetElement);
-        console.log("target piece instance", targetPieceInstance)
+        // console.log("target piece instance", targetPieceInstance)
 
         if (targetPieceInstance) {
           const targetPieceConnectorBoundingBoxes = targetPieceInstance.getConnectorBoundingBoxes();

@@ -625,11 +625,10 @@ export default class PuzzlyCreator {
 
   getPuzzleDimensions(puzzleConfig: Pick<PuzzleConfig, "imageWidth" | "imageHeight" | "numberOfPiecesHorizontal" | "numberOfPiecesVertical">) {
     const { imageWidth, imageHeight, numberOfPiecesHorizontal, numberOfPiecesVertical } = puzzleConfig;
-    const smallerLength = Math.min(imageWidth, imageHeight);
-    const largerLength = Math.max(imageWidth, imageHeight);
+
+    console.log("getPuzzleDimensions", imageWidth, imageHeight)
 
     const isSquare = numberOfPiecesHorizontal === numberOfPiecesVertical;
-    const aspectRatio = smallerLength / largerLength;
 
     let width: number;
     let height: number;
@@ -641,10 +640,10 @@ export default class PuzzlyCreator {
 
     if (window.innerWidth < window.innerHeight) {
       height = window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION;
-      width = isSquare ? height : height * aspectRatio;
+      width = isSquare ? height : (imageWidth / imageHeight) * height;
     } else if (window.innerHeight < window.innerWidth) {
       width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
-      height = isSquare ? width : width * aspectRatio;
+      height = isSquare ? width : (imageHeight / imageWidth) * width;
     } else {
       width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
       height = width;
@@ -655,6 +654,8 @@ export default class PuzzlyCreator {
       // as both are equal
       pieceSize = height / numberOfPiecesVertical;
     } else {
+      console.log("width and height", width, height)
+
       if (numberOfPiecesHorizontal < numberOfPiecesVertical) {
         pieceSize = width / numberOfPiecesHorizontal;
       } else {
