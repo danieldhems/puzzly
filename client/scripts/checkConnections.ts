@@ -31,7 +31,7 @@ export function checkConnections(
   let connection: Connection | undefined;
 
   const thisPieceInstance = baseMovable.getSingleInstanceFromElement(element);
-  // console.log("this piece instance", thisPieceInstance)
+  console.log("this piece instance", thisPieceInstance)
   const thisPieceConnectorBoundingBoxes = thisPieceInstance.getConnectorBoundingBoxes();
 
   // Check for solving connection

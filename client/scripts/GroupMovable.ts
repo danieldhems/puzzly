@@ -142,7 +142,7 @@ export default class GroupMovable extends BaseMovable {
     const targetPieceCurrentPosition = Utils.getStyleBoundingBox(targetPiece.element);
 
     const groupInitialPosition = {
-      top: targetPieceCurrentPosition.top - targetPiecePuzzleY,
+      top: targetPieceCurrentPosition.top - targetPiecePuzzleY + STROKE_OFFSET,
       left: targetPieceCurrentPosition.left - targetPiecePuzzleX,
     };
 
@@ -275,9 +275,14 @@ export default class GroupMovable extends BaseMovable {
       isGroup: true,
     }
 
+    // TODO: Enforce sequential order for piece rendering to prevent overlap issues
+    // i.e. render in order 1, 2, 3, 4
+
+    const orderedPieces: JigsawPieceData[] = pieces.sort((a, b) => a.index - b.index);
+
     const svgElementTemplate = getSvg(
       `${Date.now()}`,
-      pieces,
+      orderedPieces,
       this.puzzleImage.src,
       svgOptions,
     );

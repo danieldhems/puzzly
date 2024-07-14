@@ -2,7 +2,7 @@ import { LargeNumberLike } from "crypto";
 import { CONNECTOR_SIZE_PERC, CONNECTOR_TOLERANCE_AMOUNT, MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SHADOW_COLOR, SHOULDER_SIZE_PERC, STROKE_COLOR, STROKE_WIDTH, SVG_NAMESPACE } from "./constants";
 import jigsawPath from "./jigsawPath";
 import { getJigsawShapeSvgString } from "./svg";
-import { ConnectorNames, ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleConfig, SideNames, SkeletonPiece } from "./types";
+import { ConnectorNames, ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleConfig, SideNames, SkeletonPiece, PuzzleImpression } from "./types";
 import Utils from "./utils";
 
 
@@ -728,8 +728,13 @@ export const getPiecePositionBasedOnAdjacentPieces = (
   }
 }
 
-export const getPuzzleImpressions = (puzzleConfigs: PuzzleConfig[]): HTMLDivElement => {
+export const getPuzzleImpressions = (puzzleConfigs: PuzzleConfig[]): {
+  container: HTMLDivElement;
+  impressions: PuzzleImpression[];
+} => {
   const container = document.createElement("div");
+
+  const impressions = [];
 
   // Assuming config set consists of either all rectangular or all square puzzles
   const sampleConfig = puzzleConfigs[0];
@@ -749,6 +754,7 @@ export const getPuzzleImpressions = (puzzleConfigs: PuzzleConfig[]): HTMLDivElem
     const pieces = generatePieces(currentConfig);
 
     const element = document.createElement("div");
+    element.dataset.impressionIndex = nConf + '';
     element.id = "puzzle-" + currentConfig.totalNumberOfPieces;
     // element.classList.add("js-hidden");
 
@@ -792,9 +798,18 @@ export const getPuzzleImpressions = (puzzleConfigs: PuzzleConfig[]): HTMLDivElem
         piecePosition.x += currentConfig.pieceSize;
       }
     }
+
+    impressions.push({
+      index: nConf,
+      puzzleConfig: currentConfig,
+      pieces,
+    })
   }
 
-  return container;
+  return {
+    container,
+    impressions,
+  }
 }
 
 // exports.drawJigsawShape = drawJigsawShape;

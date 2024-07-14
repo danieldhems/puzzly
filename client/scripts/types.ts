@@ -352,3 +352,11 @@ export enum SolvedPuzzlePreviewType {
   AlwaysOn = "AlwaysOn",
   Toggle = "Toggle",
 }
+
+export type PuzzleImpression = {
+  index: number;
+  puzzleConfig: PuzzleConfig;
+  impressionWidth?: number;
+  impressionHeight?: number;
+  pieces: SkeletonPiece[]
+};

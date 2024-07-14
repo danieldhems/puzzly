@@ -3,7 +3,7 @@ import { CONNECTOR_SIZE_PERC, CONNECTOR_TOLERANCE_AMOUNT, SHOULDER_SIZE_PERC, MI
 import puzzleGenerator, { addPuzzleDataToPieces, generatePieces, generatePuzzleSprite, getConnectorDistanceFromCorner, getConnectorSize } from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
 import Puzzly from "./Puzzly";
-import { PuzzleAxis, PuzzleConfig, PuzzleShapes } from "./types";
+import { PuzzleAxis, PuzzleConfig, PuzzleImpression, PuzzleShapes } from "./types";
 import Utils from "./utils";
 
 export interface SourceImage {
@@ -623,10 +623,9 @@ export default class PuzzlyCreator {
     };
   }
 
-  getPuzzleDimensions(puzzleConfig: Pick<PuzzleConfig, "imageWidth" | "imageHeight" | "numberOfPiecesHorizontal" | "numberOfPiecesVertical">) {
-    const { imageWidth, imageHeight, numberOfPiecesHorizontal, numberOfPiecesVertical } = puzzleConfig;
-
-    console.log("getPuzzleDimensions", imageWidth, imageHeight)
+  getPuzzleDimensions(puzzleConfig: Pick<PuzzleConfig, "imageWidth" | "imageHeight" | "numberOfPiecesHorizontal" | "numberOfPiecesVertical">, activeImpression: PuzzleImpression) {
+    const { numberOfPiecesHorizontal, numberOfPiecesVertical } = puzzleConfig;
+    const { impressionWidth, impressionHeight } = activeImpression;
 
     const isSquare = numberOfPiecesHorizontal === numberOfPiecesVertical;
 
@@ -638,12 +637,15 @@ export default class PuzzlyCreator {
     let connectorTolerance: number;
     let shadowOffset: number;
 
+    const impressionW = impressionWidth as number;
+    const impressionH = impressionHeight as number;
+
     if (window.innerWidth < window.innerHeight) {
       height = window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION;
-      width = isSquare ? height : (imageWidth / imageHeight) * height;
+      width = isSquare ? height : (impressionW / impressionH) * height;
     } else if (window.innerHeight < window.innerWidth) {
       width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
-      height = isSquare ? width : (imageHeight / imageWidth) * width;
+      height = isSquare ? width : (impressionH / impressionW) * width;
     } else {
       width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
       height = width;
@@ -690,8 +692,11 @@ export default class PuzzlyCreator {
 
     // console.log("crop data", cropData)
 
-    const puzzleDimensions = this.getPuzzleDimensions(this.selectedPuzzleConfig);
-    const mappedPieces = addPuzzleDataToPieces(pieces, puzzleDimensions)
+    const activeImpression = this.PuzzleImpressionOverlay.getActiveImpression();
+    console.log("active impression", activeImpression)
+    console.log("selected puzzle config", this.selectedPuzzleConfig)
+    const puzzleDimensions = this.getPuzzleDimensions(this.selectedPuzzleConfig, activeImpression);
+    const mappedPieces = addPuzzleDataToPieces(activeImpression.pieces, puzzleDimensions)
     console.log("mapped pieces", mappedPieces)
 
     const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {

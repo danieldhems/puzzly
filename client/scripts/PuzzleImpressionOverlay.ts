@@ -1,6 +1,6 @@
 import RestrictedDraggable from "./RestrictedDraggable";
 import { getPuzzleImpressions } from "./puzzleGenerator";
-import { MovementAxis, PuzzleConfig } from "./types";
+import { PuzzleConfig, PuzzleImpression, SkeletonPiece } from "./types";
 
 export default class PuzzleImpressionOverlay {
     svgElement: SVGSVGElement;
@@ -11,6 +11,8 @@ export default class PuzzleImpressionOverlay {
     selectedPuzzleConfig: PuzzleConfig;
     pieceSvgGroups: HTMLOrSVGElement[];
     impressionsContainer: HTMLDivElement;
+    impressions: PuzzleImpression[];
+    activeImpression: PuzzleImpression;
     leftBoundary: number;
     topBoundary: number;
 
@@ -73,23 +75,40 @@ export default class PuzzleImpressionOverlay {
         if (this.impressionsContainer) {
             this.impressionsContainer.remove();
         }
-        this.impressionsContainer = getPuzzleImpressions(puzzleConfigs);
+
+        const { container, impressions } = getPuzzleImpressions(puzzleConfigs);
+
+        console.log("impressions", impressions)
+        this.impressionsContainer = container;
+        this.impressions = impressions;
         this.draggable.element.appendChild(this.impressionsContainer)
         this.draggable.update(this.getLayout(puzzleConfigs[0]))
     }
 
     setActiveImpression(puzzleConfig: PuzzleConfig) {
-        const impressions = this.impressionsContainer.getElementsByTagName("div");
+        const impressionElements = this.impressionsContainer.getElementsByTagName("div");
         const id = "puzzle-" + puzzleConfig.totalNumberOfPieces;
-        Array.from(impressions).forEach((impression) => {
-            if (impression.id === id) {
-                impression.classList.remove("js-hidden");
+        Array.from(impressionElements).forEach((impressionElement) => {
+            if (impressionElement.id === id) {
+                impressionElement.classList.remove("js-hidden");
                 const layout = this.getLayout(puzzleConfig)
                 this.draggable.update(layout);
+                const impressiongIndex = parseInt(impressionElement.dataset.impressionIndex as string);
+                this.activeImpression = this.impressions.find((impression: PuzzleImpression) =>
+                    impression.index === impressiongIndex
+                ) as PuzzleImpression;
             } else {
-                impression.classList.add("js-hidden");
+                impressionElement.classList.add("js-hidden");
             }
         })
+    }
+
+    getActiveImpression() {
+        return {
+            ...this.activeImpression,
+            impressionWidth: this.draggable.element.offsetWidth,
+            impressionHeight: this.draggable.element.offsetHeight,
+        };
     }
 
     getPositionAndDimensions() {
