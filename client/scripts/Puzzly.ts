@@ -200,21 +200,26 @@ export default class Puzzly {
 
     this.pieceInstances = [];
     this.groupInstances = [];
+    const solvedPieces: SingleMovable[] = [];
 
     if (storage && storage.pieces.length > 0) {
       // console.log("Getting pieces from storage", storage)
       storage.pieces.forEach((p) => {
-        const data = {
-          ...p,
-          spritePath: this.spritePath,
-        };
         const pieceInstance = new SingleMovable({
           puzzleData: this,
-          pieceData: data,
+          pieceData: p,
         });
 
         this.pieceInstances.push(pieceInstance);
+
+        if (p.isSolved) {
+          solvedPieces.push(pieceInstance);
+        }
       });
+
+      if (solvedPieces.length > 0) {
+        this.SolvingArea.add(solvedPieces);
+      }
 
       // console.log("groups from persistence", this.groups);
       if (Object.keys(this.groups).length) {
@@ -238,12 +243,7 @@ export default class Puzzly {
       }
 
       if (this.complete) {
-        this.CanvasOperations.drawMovableInstancesOntoCanvas(
-          this.solvedCnv as HTMLCanvasElement,
-          this.pieceInstances,
-          this.puzzleImage,
-          this.shadowOffset
-        );
+        this.SolvingArea.add(this.pieceInstances)
       }
     } else {
       console.log("pieces", this.pieces);

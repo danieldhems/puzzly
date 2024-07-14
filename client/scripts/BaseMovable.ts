@@ -310,7 +310,7 @@ export default class BaseMovable {
     const sourceInstance = this.getMovableInstanceFromElement(sourceElement) as SingleMovable;
 
     if (isSolving) {
-      sourceInstance.solve({ save: true });
+      sourceInstance.solve();
     } else if (targetElement) {
       const targetInstance = this.getMovableInstanceFromElement(
         targetElement

@@ -297,6 +297,8 @@ export interface SingleMovableSaveState {
   pageY: number;
   puzzleX: number;
   puzzleY: number;
+  puzzleWidth: number;
+  puzzleHeight: number;
   type: ConnectorType[];
   zIndex: number;
   isSolved: boolean;

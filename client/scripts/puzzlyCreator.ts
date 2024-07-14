@@ -721,7 +721,7 @@ export default class PuzzlyCreator {
       boardWidth: puzzleWidth,
       boardHeight: puzzleHeight,
       imageName: this.sourceImage.imageName,
-      // puzzleImagePath,
+      puzzleImagePath,
       debugOptions: this.debugOptions,
       isIntegration: this.isIntegration,
     }

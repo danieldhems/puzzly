@@ -477,6 +477,8 @@ export default class GroupMovable extends BaseMovable {
       _id: this._id || undefined,
       pieces: this.getAllPieceData(),
       puzzleId: this.puzzleId,
+      puzzleWidth: this.puzzleWidth,
+      puzzleHeight: this.puzzleHeight,
       position: elementPosition,
       zIndex: parseInt(this.element.style.zIndex),
       instanceType: this.instanceType,

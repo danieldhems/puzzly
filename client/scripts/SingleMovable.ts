@@ -499,6 +499,7 @@ export default class SingleMovable extends BaseMovable {
     console.log("SingleInstance", this, "solve()");
     this.setPositionAsGrouped();
     this.hide();
+    this.markAsSolved();
     // TODO: Should this be part of the hide() behaviour?
     this.element.style.pointerEvents = "none";
 
@@ -506,7 +507,7 @@ export default class SingleMovable extends BaseMovable {
 
     // Are we using this?
     if (options?.save) {
-      this.save(true);
+      // this.save(true);
     }
   }
 
@@ -572,6 +573,8 @@ export default class SingleMovable extends BaseMovable {
       pageY: this.element.offsetTop,
       puzzleX: this.pieceData.puzzleX,
       puzzleY: this.pieceData.puzzleY,
+      puzzleWidth: this.pieceData.puzzleWidth,
+      puzzleHeight: this.pieceData.puzzleHeight,
       type: this.pieceData.type,
       zIndex: parseInt(this.element.style.zIndex),
       isSolved: this.isSolved,
