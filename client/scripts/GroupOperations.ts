@@ -139,9 +139,6 @@ export default class GroupOperations implements GroupOperationsProperties {
     Array.from(groupContainerElement.querySelectorAll(".puzzle-piece")).forEach(
       (element: MovableElement) => (element.dataset.groupId = idAsString)
     );
-    (
-      groupContainerElement.querySelector("canvas") as HTMLCanvasElement
-    ).dataset.groupId = idAsString;
   }
 
   createGroup(sourceInstance: SingleMovable, targetInstance: SingleMovable) {

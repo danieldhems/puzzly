@@ -62,6 +62,7 @@ export default class GroupMovable extends BaseMovable {
 
     // console.log("GroupMovable constructor _id", _id);
     // console.log("GroupMovable constructor pieces", pieces);
+    console.log("new group", position)
 
     if (_id) {
       this._id = _id;
@@ -172,6 +173,7 @@ export default class GroupMovable extends BaseMovable {
     this.element = container;
 
     this.addPieces(this.piecesInGroup);
+    this.attachElements();
     this.addToStage(this.element);
     this.render();
   }
@@ -223,9 +225,10 @@ export default class GroupMovable extends BaseMovable {
     // console.log("pieces currently in group", this.piecesInGroup);
     this.piecesInGroup.push(...pieceInstances);
     // console.log("pieces in group after add", this.piecesInGroup);
-    this.piecesInGroup.forEach((instance) =>
-      instance.setGroupIdAcrossInstance(this._id + "")
-    );
+    this.piecesInGroup.forEach((instance) => {
+      instance.setGroupIdAcrossInstance(this._id + "");
+      instance.setPositionAsGrouped();
+    });
     this.attachElements();
     this.render();
     await this.save(true);
@@ -246,7 +249,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   attachElements() {
-    // console.log("attachElements", this.piecesInGroup);
+    console.log("attachElements", this.piecesInGroup);
     Array.from(this.piecesInGroup).forEach((piece) => {
       // console.log("attaching piece", piece);
       if (piece.element.parentNode !== this.element) {
@@ -295,7 +298,7 @@ export default class GroupMovable extends BaseMovable {
     const svgContainer = document.createElement("div");
     svgContainer.classList.add("group-svg-container");
     svgContainer.innerHTML = svgElementTemplate;
-    this.element.appendChild(svgContainer)
+    this.element.appendChild(svgContainer);
   }
 
   isPuzzlePieceInThisGroup(element: MovableElement) {
@@ -446,7 +449,7 @@ export default class GroupMovable extends BaseMovable {
 
   onSaveResponse(event: CustomEvent) {
     const response = event.detail;
-    // console.log("GroupMovable save response", response);
+    console.log("GroupMovable save response", response);
     if (this.isServerResponseForThisGroup(response.data)) {
       if (!this._id) {
         this.setGroupIdAcrossInstance(response.data._id);
@@ -498,12 +501,13 @@ export default class GroupMovable extends BaseMovable {
     // TODO: Still seeing duplicate saves
     // console.log("group save called", this);
     if (force || this.active || !this._id) {
-      return await this.PersistenceOperations.save(this.getDataForSave());
+      const response = await this.PersistenceOperations.save(this.getDataForSave());
     }
   }
 
   onSaveSuccess(event: CustomEvent) {
     const data = event.detail;
+    console.log("group saved", data)
   }
 
   delete() {
