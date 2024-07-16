@@ -31,7 +31,7 @@ export function checkConnections(
   let connection: Connection | undefined;
 
   const thisPieceInstance = baseMovable.getSingleInstanceFromElement(element);
-  console.log("this piece instance", thisPieceInstance)
+  // console.log("this piece instance", thisPieceInstance)
   const thisPieceConnectorBoundingBoxes = thisPieceInstance.getConnectorBoundingBoxes();
 
   // Check for solving connection
@@ -80,7 +80,7 @@ export function checkConnections(
           collisionDetected = thisPieceConnectorBoundingBoxes.some(sourceBox => {
             // Utils.drawBox(sourceBox)
             return targetPieceConnectorBoundingBoxes.some(targetBox => {
-              // Utils.drawBox(targetBox)
+              // Utils.drawBox(targetBox, null, "blue")
               // console.log("compare", sourceBox, targetBox)
               if (Utils.hasCollision(sourceBox, targetBox)) {
                 // console.log("collision detected")

@@ -164,6 +164,11 @@ export default class PersistenceOperations {
 
     data.integration = this.isIntegration();
 
+    const { solvedCount, totalNumberOfPieces } = window.Puzzly;
+    if (solvedCount === totalNumberOfPieces) {
+      data.isComplete = true;
+    }
+
     if (useLocalStorage) {
     } else {
       // const isFirstSave = !payload[0]?._id;

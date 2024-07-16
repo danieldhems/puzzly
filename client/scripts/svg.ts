@@ -1,4 +1,4 @@
-import { STROKE_OFFSET, STROKE_WIDTH, SVGNS } from "./constants";
+import { SHADOW_OFFSET, STROKE_WIDTH, SVGNS } from "./constants";
 import jigsawPath from "./jigsawPath";
 import { JigsawPieceData, SkeletonPiece } from "./types";
 
@@ -55,7 +55,7 @@ export function getSvg(
 
         pathElementsForDefs += `<path id="path-${info.shapeId}" d="${info.pathString}"></path>`;
         useElementsForClip += `<use href="#path-${info.shapeId}" x="${xPosition}" y="${yPosition}"></use>`;
-        useElementsForShadow += `<use href="#path-${info.shapeId}" x="${xPosition + STROKE_OFFSET}" y="${yPosition + STROKE_OFFSET}"></use>`
+        useElementsForShadow += `<use href="#path-${info.shapeId}" x="${xPosition + SHADOW_OFFSET}" y="${yPosition + SHADOW_OFFSET}"></use>`
         useElementsForStroke += `<use href="#path-${info.shapeId}" fill="none" stroke="black" stroke-width="1" x="${xPosition}" y="${yPosition}" pointer-events="visibleFill" data-piece-index="${info.index}"></use>`
 
     }).join("");

@@ -1,6 +1,6 @@
 import GroupOperations from "./GroupOperations";
 import { checkConnections } from "./checkConnections";
-import { EVENT_TYPES, STROKE_OFFSET } from "./constants";
+import { EVENT_TYPES, SHADOW_OFFSET } from "./constants";
 import Utils from "./utils";
 import BaseMovable from "./BaseMovable";
 import SingleMovable from "./SingleMovable";
@@ -143,7 +143,7 @@ export default class GroupMovable extends BaseMovable {
     const targetPieceCurrentPosition = Utils.getStyleBoundingBox(targetPiece.element);
 
     const groupInitialPosition = {
-      top: targetPieceCurrentPosition.top - targetPiecePuzzleY + STROKE_OFFSET,
+      top: targetPieceCurrentPosition.top - targetPiecePuzzleY,
       left: targetPieceCurrentPosition.left - targetPiecePuzzleX,
     };
 
@@ -172,7 +172,7 @@ export default class GroupMovable extends BaseMovable {
 
     this.element = container;
 
-    this.addPieces(this.piecesInGroup);
+    this.addPieces(this.piecesInGroup, { save: false });
     this.attachElements();
     this.addToStage(this.element);
     this.render();
@@ -185,20 +185,15 @@ export default class GroupMovable extends BaseMovable {
     if (movableInstance.instanceType === InstanceTypes.SingleMovable) {
       instance = movableInstance as SingleMovable;
       this.alignWith(instance);
-      this.addPieces([instance]);
+      this.addPieces([instance], { save: true });
       this.render();
       instance.setPositionAsGrouped();
       instance.setGroupIdAcrossInstance(this._id + "");
       // TODO: This should be done by the movable instance
       instance.element.classList.add("grouped");
-      this.save(true);
     } else if (movableInstance.instanceType === InstanceTypes.GroupMovable) {
       instance = movableInstance as GroupMovable;
-      if (instance.isSolved) {
-        this.solve();
-      } else {
-        await instance.addPieces(this.piecesInGroup);
-      }
+      await instance.addPieces(this.piecesInGroup, { save: true });
       this.destroy();
     }
   }
@@ -221,7 +216,7 @@ export default class GroupMovable extends BaseMovable {
     this.element.style.left = position.left + "px";
   }
 
-  async addPieces(pieceInstances: SingleMovable[]) {
+  async addPieces(pieceInstances: SingleMovable[], options?: { save: boolean; }) {
     // console.log("pieces currently in group", this.piecesInGroup);
     this.piecesInGroup.push(...pieceInstances);
     // console.log("pieces in group after add", this.piecesInGroup);
@@ -231,7 +226,10 @@ export default class GroupMovable extends BaseMovable {
     });
     this.attachElements();
     this.render();
-    await this.save(true);
+
+    if (options?.save) {
+      await this.save(true);
+    }
   }
 
   redrawCanvas() {
@@ -266,8 +264,8 @@ export default class GroupMovable extends BaseMovable {
     const puzzleWidth = this.Puzzly.boardWidth;
     const puzzleHeight = this.Puzzly.boardHeight;
 
-    const svgWidth = puzzleWidth + STROKE_OFFSET;
-    const svgHeight = puzzleHeight + STROKE_OFFSET;
+    const svgWidth = puzzleWidth + SHADOW_OFFSET;
+    const svgHeight = puzzleHeight + SHADOW_OFFSET;
 
     const svgOptions = {
       svgWidth: svgWidth,
@@ -380,8 +378,8 @@ export default class GroupMovable extends BaseMovable {
   }
 
   onMoveFinished() {
-    if (this.active) {
-      console.log("GroupMovable onMoveFinished");
+    console.log("GroupMovable onMoveFinished", this);
+    if (this.active && !this.connection) {
       this.setLastPosition();
       this.save();
     }
@@ -406,8 +404,6 @@ export default class GroupMovable extends BaseMovable {
     this.isSolved = true;
 
     this.SolvingArea.add(this.piecesInGroup);
-
-    // this.save(true);
     this.destroy();
   }
 
@@ -486,7 +482,6 @@ export default class GroupMovable extends BaseMovable {
       zIndex: parseInt(this.element.style.zIndex),
       instanceType: this.instanceType,
       isSolved: this.isSolved,
-      isPuzzleComplete: this.isPuzzleComplete(),
     };
   }
 

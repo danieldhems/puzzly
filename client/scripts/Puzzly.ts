@@ -79,8 +79,8 @@ export default class Puzzly {
   floatTolerance: number;
   pieceInstances: SingleMovable[];
   groupInstances: GroupMovable[];
-
   complete?: boolean;
+  solvedCount: number;
   stage: HTMLDivElement | null;
   playBoundary: HTMLDivElement | null;
   piecesContainer: HTMLDivElement | null;
@@ -191,6 +191,8 @@ export default class Puzzly {
     this.PersistenceOperations = new PersistenceOperations(this);
     this.Sounds = new Sounds();
     this.CanvasOperations = new CanvasOperations(this);
+
+    this.solvedCount = 0;
 
     const storage = this.PersistenceOperations.getPersistence(
       this.pieces,

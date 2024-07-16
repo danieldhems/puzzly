@@ -226,12 +226,6 @@ export default class BaseMovable {
     (this.piecesContainer as HTMLDivElement).prepend(elementToAdd);
   }
 
-  isPuzzleComplete() {
-    const numbrOfSolvedPieces =
-      this.solvedAreaElement.querySelectorAll(".puzzle-piece").length;
-    return this.Puzzly.selectedNumPieces === numbrOfSolvedPieces;
-  }
-
   // Lifecycle method called when a movable is picked up i.e. the user has begun interacting with it
   onPickup(event: MouseEvent) {
     const mousePosition = {

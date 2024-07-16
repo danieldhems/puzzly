@@ -1,5 +1,5 @@
 import SingleMovable from "./SingleMovable";
-import { ELEMENT_IDS, STROKE_OFFSET } from "./constants";
+import { ELEMENT_IDS, SHADOW_OFFSET } from "./constants";
 import { getSvg } from "./svg";
 import { JigsawPieceData } from "./types";
 import Utils from "./utils";
@@ -43,11 +43,12 @@ export default class SolvingArea {
     add(pieces: SingleMovable[]) {
         this.pieces.push(...pieces.map((piece: SingleMovable) => piece.pieceData))
         this.render();
+        window.Puzzly.solvedCount += pieces.length;
     }
 
     render() {
-        const svgWidth = this.width + STROKE_OFFSET;
-        const svgHeight = this.height + STROKE_OFFSET;
+        const svgWidth = this.width + SHADOW_OFFSET;
+        const svgHeight = this.height + SHADOW_OFFSET;
 
         const svgOptions = {
             svgWidth: svgWidth,

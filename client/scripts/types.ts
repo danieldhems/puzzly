@@ -299,20 +299,21 @@ export interface SingleMovableSaveState {
   puzzleY: number;
   puzzleWidth: number;
   puzzleHeight: number;
+  numberOfPiecesHorizontal: number;
+  numberOfPiecesVertical: number;
   type: ConnectorType[];
   zIndex: number;
   isSolved: boolean;
   puzzleId: string;
   pocket: number;
   instanceType: InstanceTypes;
-  isPuzzleComplete: boolean;
   integration?: boolean;
 }
 
 export interface GroupMovableSaveState
   extends Omit<
     SingleMovableSaveState,
-    "pocket" | "index" | "pageX" | "pageY" | "puzzleX" | "puzzleY" | "width" | "height" | "type" | "basePieceSize" | "connectorSize" | "connectorDistanceFromCorner" | "connectorTolerance"
+    "pocket" | "index" | "pageX" | "pageY" | "puzzleX" | "puzzleY" | "width" | "height" | "type" | "basePieceSize" | "connectorSize" | "connectorDistanceFromCorner" | "connectorTolerance" | "numberOfPiecesHorizontal" | "numberOfPiecesVertical"
   > {
   position: {
     top: number;
@@ -322,7 +323,7 @@ export interface GroupMovableSaveState
   pieces: SingleMovableSaveState[];
 }
 
-export type SaveStates = SingleMovableSaveState | GroupMovableSaveState;
+export type SaveStates = (SingleMovableSaveState | GroupMovableSaveState) & { isComplete?: boolean; };
 
 export type PathPartHorizontalRelative = `h ${number}`;
 export type PathPartVerticalRelative = `v ${number}`;

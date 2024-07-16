@@ -1,6 +1,6 @@
 import BaseMovable from "./BaseMovable";
 import { checkConnections } from "./checkConnections";
-import { EVENT_TYPES, HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, SHAPE_TYPES, STROKE_OFFSET, SVGNS } from "./constants";
+import { EVENT_TYPES, HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, SHAPE_TYPES, SHADOW_OFFSET, SVGNS } from "./constants";
 import GroupMovable from "./GroupMovable";
 import GroupOperations from "./GroupOperations";
 import Pockets from "./Pockets";
@@ -125,8 +125,6 @@ export default class SingleMovable extends BaseMovable {
       zIndex,
       puzzleX,
       puzzleY,
-      puzzleWidth,
-      puzzleHeight,
       isInnerPiece,
       isSolved,
       numPiecesFromTopEdge,
@@ -145,8 +143,8 @@ export default class SingleMovable extends BaseMovable {
     el.id = "piece-" + index;
 
     el.style.position = "absolute";
-    el.style.width = width + STROKE_OFFSET + "px";
-    el.style.height = height + STROKE_OFFSET + "px";
+    el.style.width = width + SHADOW_OFFSET + "px";
+    el.style.height = height + SHADOW_OFFSET + "px";
 
     if (pocketId === undefined || pocketId === null) {
       el.style.top = (!!groupId ? solvedY : pageY) + "px";
@@ -213,8 +211,8 @@ export default class SingleMovable extends BaseMovable {
     const pathString = getJigsawShapeSvgString(this.pieceData);
     el.setAttribute(HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, pathString);
 
-    const svgWidth = width + STROKE_OFFSET;
-    const svgHeight = height + STROKE_OFFSET;
+    const svgWidth = width + SHADOW_OFFSET;
+    const svgHeight = height + SHADOW_OFFSET;
 
     const svgOptions = {
       svgWidth,
@@ -225,7 +223,7 @@ export default class SingleMovable extends BaseMovable {
         x: puzzleX,
         y: puzzleY,
       },
-      viewbox: `0 0 ${width + STROKE_OFFSET} ${height + STROKE_OFFSET}`,
+      viewbox: `0 0 ${width + SHADOW_OFFSET} ${height + SHADOW_OFFSET}`,
     }
 
     el.innerHTML = getSvg(
@@ -252,9 +250,7 @@ export default class SingleMovable extends BaseMovable {
       return;
     }
 
-    if (isSolved) {
-      this.solve();
-    } else {
+    if (!isSolved) {
       this.addToStage.call(this);
       this.setConnectorBoundingBoxes()
     }
@@ -463,6 +459,10 @@ export default class SingleMovable extends BaseMovable {
         );
         console.log("connection", this.connection);
       }
+
+      if (!this.connection) {
+        this.save();
+      }
     }
 
     super.onMouseUp(event);
@@ -481,34 +481,30 @@ export default class SingleMovable extends BaseMovable {
 
   onMoveFinished() {
     if (this.active) {
+      console.log("onMoveFinished", this)
       if (!BaseMovable.isGroupedPiece(this.element)) {
         this.setLastPosition({
           left: this.element.offsetLeft,
           top: this.element.offsetTop,
         });
 
-        // Only save if this piece isn't in a group
-        // (If it is in a group, the group will notify this piece to save once group operations are complete)
-        this.save(true);
         this.active = false;
       }
     }
   }
 
-  solve(options?: { save: boolean } | undefined) {
-    console.log("SingleInstance", this, "solve()");
+  solve() {
+    // console.log("SingleInstance", this, "solve()");
     this.setPositionAsGrouped();
     this.hide();
     this.markAsSolved();
+
     // TODO: Should this be part of the hide() behaviour?
     this.element.style.pointerEvents = "none";
 
     this.SolvingArea.add([this]);
 
-    // Are we using this?
-    if (options?.save) {
-      // this.save(true);
-    }
+    this.save(true);
   }
 
   markAsSolved() {
@@ -556,7 +552,6 @@ export default class SingleMovable extends BaseMovable {
       instance.addPieces([this]);
       this.setPositionAsGrouped();
       this.hide();
-      instance.save(true);
     }
   }
 
@@ -571,6 +566,8 @@ export default class SingleMovable extends BaseMovable {
       height: this.pieceData.height,
       pageX: this.element.offsetLeft,
       pageY: this.element.offsetTop,
+      numberOfPiecesHorizontal: this.pieceData.numberOfPiecesHorizontal,
+      numberOfPiecesVertical: this.pieceData.numberOfPiecesVertical,
       puzzleX: this.pieceData.puzzleX,
       puzzleY: this.pieceData.puzzleY,
       puzzleWidth: this.pieceData.puzzleWidth,
@@ -583,7 +580,6 @@ export default class SingleMovable extends BaseMovable {
       _id: this.pieceData._id,
       pocket: this.pocketId as number,
       instanceType: this.instanceType,
-      isPuzzleComplete: this.isPuzzleComplete(),
     };
   }
 
