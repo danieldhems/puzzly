@@ -813,6 +813,10 @@ const Utils = {
   },
 
   getPuzzlePieceFromChild(element: HTMLElement): MovableElement | undefined {
+    if (!element) {
+      return;
+    }
+
     if (element.dataset?.pieceIndex) {
       return document.querySelector(`.puzzle-piece#piece-${element.dataset.pieceIndex}`) as HTMLDivElement;
     } else if (element.nodeName === "body") {

@@ -136,6 +136,7 @@ export default class PersistenceOperations {
 
   async save(dataToSave: SaveStates) {
     // console.log("saving", data);
+    // console.trace()
     const useLocalStorage = false;
 
     const data = dataToSave || window.Puzzly.pieceInstances.map(

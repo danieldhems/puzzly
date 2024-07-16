@@ -62,7 +62,7 @@ export default class GroupMovable extends BaseMovable {
 
     // console.log("GroupMovable constructor _id", _id);
     // console.log("GroupMovable constructor pieces", pieces);
-    console.log("new group", position)
+    // console.log("new group", position)
 
     if (_id) {
       this._id = _id;
@@ -133,7 +133,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   initiateGroup() {
-    console.log("initiating group")
+    // console.log("initiating group")
     const sourcePiece = this.piecesInGroup[0];
     const targetPiece = this.piecesInGroup[1];
 
@@ -232,20 +232,6 @@ export default class GroupMovable extends BaseMovable {
     }
   }
 
-  redrawCanvas() {
-    const elements = this.piecesInGroup.map(
-      (piece: SingleMovable) => piece.element
-    );
-  }
-
-  removeCanvas() {
-    const canvas = this.element.querySelector("canvas");
-    // Typeguard: The canvas should always exist in a group
-    if (canvas) {
-      canvas.remove();
-    }
-  }
-
   attachElements() {
     console.log("attachElements", this.piecesInGroup);
     Array.from(this.piecesInGroup).forEach((piece) => {
@@ -308,7 +294,7 @@ export default class GroupMovable extends BaseMovable {
       const element = Utils.getPuzzlePieceElementFromEvent(
         event
       ) as MovableElement;
-      console.log("group onmousedown", element)
+      // console.log("group onmousedown", element)
       if (
         element &&
         BaseMovable.isGroupedPiece(element) &&
@@ -327,7 +313,7 @@ export default class GroupMovable extends BaseMovable {
   }
 
   getConnectorBoundingBoxes() {
-    console.log("getConnectorBoundingBoxes", this.element)
+    // console.log("getConnectorBoundingBoxes", this.element)
     const position = Utils.getStyleBoundingBox(this.element);
     const stagePosition = Utils.getStyleBoundingBox(this.playBoundary as HTMLDivElement);
 
@@ -336,7 +322,7 @@ export default class GroupMovable extends BaseMovable {
       elements.map(element => element.getAttribute("data-connector-bounding-boxes") as string).join("")
     );
 
-    console.log("Group bounding boxes", relativeBoundingBoxes)
+    // console.log("Group bounding boxes", relativeBoundingBoxes)
 
     return relativeBoundingBoxes.map((box: DomBox) => ({
       top: box.top + position.top + stagePosition.top,

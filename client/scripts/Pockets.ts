@@ -93,17 +93,17 @@ export default class Pockets {
         if (this.isCollapsed) {
           window
             .move(this.ui)
-            [axisToAnimate]((window as any)[windowPropForDepth] - depth)
+          [axisToAnimate]((window as any)[windowPropForDepth] - depth)
             .duration(this.animationDuration)
             .end();
           this.isCollapsed = false;
         } else {
           window
             .move(this.ui)
-            [axisToAnimate](
-              (window as any)[windowPropForDepth] -
-                (this.pocketsHandle as HTMLDivElement).offsetWidth
-            )
+          [axisToAnimate](
+            (window as any)[windowPropForDepth] -
+            (this.pocketsHandle as HTMLDivElement).offsetWidth
+          )
             .duration(this.animationDuration)
             .end();
           this.isCollapsed = true;
@@ -134,8 +134,8 @@ export default class Pockets {
     return window.innerWidth > window.innerHeight
       ? Orientation.Landscape
       : window.innerHeight > window.innerWidth
-      ? Orientation.Portrait
-      : null;
+        ? Orientation.Portrait
+        : null;
   }
 
   hasOrientationChanged() {
@@ -195,9 +195,9 @@ export default class Pockets {
     console.log("el.parentNode", element?.parentNode?.parentNode);
     return (
       (element?.parentNode as HTMLDivElement).id ===
-        ELEMENT_IDS.PIECES_CONTAINER ||
+      ELEMENT_IDS.PIECES_CONTAINER ||
       (element?.parentNode?.parentNode as HTMLDivElement).id ===
-        ELEMENT_IDS.PIECES_CONTAINER
+      ELEMENT_IDS.PIECES_CONTAINER
     );
   }
 
@@ -281,6 +281,7 @@ export default class Pockets {
     );
   }
 
+  // TODO Duplicate method also exists on PocketMovable
   // Create a container for all the pieces in a given pocket with the pieces arranged in a grid.
   // This container will be set as the movingElement.
   getMovingElementForActivePocket(e: MouseEvent) {
@@ -491,8 +492,9 @@ export default class Pockets {
 
   addManyToPocket(
     pocket: HTMLDivElement | number,
-    movableOrArrayOfElements: PocketMovable | NodeListOf<ChildNode>
+    movableOrArrayOfElements: PocketMovable | NodeListOf<HTMLDivElement>
   ) {
+    console.log("addManyToPocket", pocket, movableOrArrayOfElements)
     if (!movableOrArrayOfElements) return;
 
     let pocketId, pocketEl;
@@ -506,15 +508,18 @@ export default class Pockets {
     }
 
     // Allow for either a movable instance or an array of elements to be added
-    let pieces: PocketMovable | NodeListOf<ChildNode>;
+    let pieces: Array<HTMLDivElement>;
     if (movableOrArrayOfElements instanceof NodeList) {
-      pieces = movableOrArrayOfElements;
-      Array.from(pieces).forEach((element) => {
-        const pieceInstance = this.BaseMovable.getMovableInstanceFromElement(
-          element as HTMLDivElement
-        );
-        this.addSingleToPocket(pocket, pieceInstance as SingleMovable);
-      });
+      pieces = Array.from(movableOrArrayOfElements);
+    } else {
+      pieces = Array.from(movableOrArrayOfElements.piecesInPocket);
     }
+
+    pieces.forEach((element) => {
+      const pieceInstance = this.BaseMovable.getMovableInstanceFromElement(
+        element
+      ) as SingleMovable;
+      this.addSingleToPocket(pocket, pieceInstance);
+    });
   }
 }
