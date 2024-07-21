@@ -60,8 +60,6 @@ export const ELEMENT_IDS = {
   POCKET_DRAG_CONTAINER: "active-pieces-container",
 };
 
-export const SOLVING_AREA_SIZE_PERCENTAGE = 15;
-
 export const EVENT_TYPES = {
   PIECE_PICKUP: "PIECE_PICKUP",
   PIECE_DROP: "PIECE_DROP",
@@ -106,8 +104,22 @@ export const MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED = 1024;
 
 export const SCREEN_MARGIN = 10;
 
-export const SOLVING_AREA_SCREEN_PORTION = 50;
+// What percentage of the viewport width/height the puzzle occupies
+// This is the percentage of the shorter side of the viewport
+//
+// e.g.
+// For a viewport who's width is greater than its height:
+// The puzzle's height will be this percentage of the total available height
+// For a viewport who's height is greater than its width:
+// The puzzle's width will be this percentage of the total available width
+export const SOLVING_AREA_SCREEN_PORTION_WITH_OUTOFBOUNDS_AREA = 60;
+export const SOLVING_AREA_SCREEN_PORTION_WITHOUT_OUTOFBOUNDS_AREA = 50;
+
+export const PLAY_BOUNDARY_SCREEN_PORTION = 60;
 
 export const SVGNS = "http://www.w3.org/2000/svg";
 
 export const HTML_ATTRIBUTE_NAME_SVG_PATH_STRING = "data-svg-path-string";
+
+// Percentage of viewport size to use as spacing between pieces when they are neatened
+export const LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE = 5;

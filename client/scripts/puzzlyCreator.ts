@@ -1,6 +1,5 @@
-import loadAssets from "./assetLoader";
-import { CONNECTOR_SIZE_PERC, CONNECTOR_TOLERANCE_AMOUNT, SHOULDER_SIZE_PERC, MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SOLVING_AREA_SCREEN_PORTION, SHADOW_OFFSET_RATIO } from "./constants";
-import puzzleGenerator, { addPuzzleDataToPieces, generatePieces, generatePuzzleSprite, getConnectorDistanceFromCorner, getConnectorSize } from "./puzzleGenerator";
+import { CONNECTOR_SIZE_PERC, CONNECTOR_TOLERANCE_AMOUNT, SHOULDER_SIZE_PERC, MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SHADOW_OFFSET_RATIO } from "./constants";
+import { addPuzzleDataToPieces, generatePieces, getConnectorDistanceFromCorner, getConnectorSize } from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
 import Puzzly from "./Puzzly";
 import { PuzzleAxis, PuzzleConfig, PuzzleImpression, PuzzleShapes } from "./types";
@@ -641,13 +640,13 @@ export default class PuzzlyCreator {
     const impressionH = impressionHeight as number;
 
     if (window.innerWidth < window.innerHeight) {
-      height = window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION;
+      height = Utils.getSolvingAreaHeight();
       width = isSquare ? height : (impressionW / impressionH) * height;
     } else if (window.innerHeight < window.innerWidth) {
-      width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
+      width = Utils.getSolvingAreaWidth();
       height = isSquare ? width : (impressionH / impressionW) * width;
     } else {
-      width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
+      width = Utils.getSolvingAreaWidth();
       height = width;
     }
 

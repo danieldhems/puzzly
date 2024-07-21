@@ -508,18 +508,17 @@ export default class Pockets {
     }
 
     // Allow for either a movable instance or an array of elements to be added
-    let pieces: Array<HTMLDivElement>;
+    let pieces: SingleMovable[];
     if (movableOrArrayOfElements instanceof NodeList) {
-      pieces = Array.from(movableOrArrayOfElements);
+      pieces = Array.from(movableOrArrayOfElements).map(
+        element => this.BaseMovable.getMovableInstanceFromElement(element)
+      ) as SingleMovable[];
     } else {
       pieces = Array.from(movableOrArrayOfElements.piecesInPocket);
     }
 
-    pieces.forEach((element) => {
-      const pieceInstance = this.BaseMovable.getMovableInstanceFromElement(
-        element
-      ) as SingleMovable;
-      this.addSingleToPocket(pocket, pieceInstance);
+    pieces.forEach((instance) => {
+      this.addSingleToPocket(pocket, instance);
     });
   }
 }

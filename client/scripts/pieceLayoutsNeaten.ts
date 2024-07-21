@@ -1,5 +1,4 @@
-import SingleMovable from "./SingleMovable";
-import { EVENT_TYPES } from "./constants";
+import { EVENT_TYPES, LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE } from "./constants";
 import { MovableElement, SideNames } from "./types";
 import Utils from "./utils";
 
@@ -7,37 +6,39 @@ import Utils from "./utils";
 function shouldProceedToNextSide(
   currentSide: SideNames,
   element: MovableElement,
-  firstPieceOnNextSide: MovableElement
+  firstPieceOnNextSide: MovableElement,
+  solvingAreaElement: HTMLDivElement,
 ) {
   // console.log("shouldProceedToNextSide()", currentSide, element, firstPieceOnNextSide)
   let targetBox;
 
   targetBox = firstPieceOnNextSide
     ? Utils.getStyleBoundingBox(firstPieceOnNextSide)
-    : Utils.getStyleBoundingBox(this.solvingArea);
+    : Utils.getStyleBoundingBox(solvingAreaElement);
 
   const box = Utils.getStyleBoundingBox(element);
+  const connectorSize = parseInt(element.dataset.connectorSize as string);
 
   switch (currentSide) {
     case SideNames.Top:
       return (
         box.left > targetBox.right ||
-        box.right - this.connectorSize > targetBox.right
+        box.right - connectorSize > targetBox.right
       );
     case SideNames.Right:
       return (
         box.top > targetBox.bottom ||
-        box.bottom - this.connectorSize > targetBox.bottom
+        box.bottom - connectorSize > targetBox.bottom
       );
     case SideNames.Bottom:
       return (
         box.right < targetBox.left ||
-        box.left + this.connectorSize < targetBox.left
+        box.left + connectorSize < targetBox.left
       );
     case SideNames.Left:
       return (
-        box.bottom < targetBox.top - this.largestPieceSpan ||
-        box.top + this.connectorSize < targetBox.top
+        box.bottom < targetBox.top - targetBox.height ||
+        box.top + connectorSize < targetBox.top
       );
   }
 }
@@ -48,8 +49,6 @@ function getPositionForFirstPieceOnNextSide(
   nextElement: MovableElement | null,
   currentSide: SideNames,
   firstPieceOnNextSideFromPreviousIteration: MovableElement,
-  spacing: number,
-  largestPieceSpan: number,
 ) {
   const solvingArea = window.Puzzly.SolvingArea.element;
 
@@ -72,33 +71,31 @@ function getPositionForFirstPieceOnNextSide(
   switch (currentSide) {
     case SideNames.Top:
       return {
-        x: targetBox.right + spacing,
-        y: box.bottom + spacing,
+        x: targetBox.right + LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE,
+        y: box.bottom + LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE,
       };
     case SideNames.Right:
       return {
-        x: box.left - nextElementWidth - spacing,
-        y: targetBox.bottom + spacing,
+        x: box.left - nextElementWidth - LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE,
+        y: targetBox.bottom + LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE,
       };
     case SideNames.Bottom:
       return {
-        x: targetBox.left - largestPieceSpan - spacing,
-        y: box.top - nextElementHeight - spacing,
+        x: targetBox.left - targetBox.width - LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE,
+        y: box.top - nextElementHeight - LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE,
       };
     case SideNames.Left:
       return {
-        x: box.right + spacing,
-        y: targetBox.top - largestPieceSpan - spacing,
+        x: box.right + LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE,
+        y: targetBox.top - targetBox.height - LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE,
       };
   }
 }
 
-export default function arrangePiecesAroundEdge(
-  largestPieceSpan: number,
-) {
+export default function arrangePiecesAroundEdge() {
   const solvingArea = window.Puzzly.SolvingArea.element;
+  const playBoundary = window.Puzzly.playBoundary;
 
-  // console.log("Arranging pieces around edge")
   const sides = [
     SideNames.Top,
     SideNames.Right,
@@ -117,30 +114,84 @@ export default function arrangePiecesAroundEdge(
     left: null,
   } as Record<string, MovableElement | null>;
 
-  const spacing = (this.largestPieceSpan / 100) * 5;
+  const piecesInPlay: MovableElement[] = Utils.shuffleArray(Utils.getIndividualPiecesOnCanvas()) as MovableElement[];
+  // console.log("arrangePiecesAroundEdge", piecesInPlay)
 
-  const piecesInPlay = Utils.shuffleArray(Utils.getIndividualPiecesOnCanvas());
+  const solvingAreaXPosition = parseInt(solvingArea.style.left);
+  const solvingAreaYPosition = parseInt(solvingArea.style.top);
 
-  let currentX: number = solvingArea.offsetLeft;
-  let currentY: number = solvingArea.offsetTop;
-  let verticalSpace = currentY;
+  let currentX: number = solvingAreaXPosition;
+  let currentY: number = solvingAreaYPosition - piecesInPlay[0].offsetHeight - LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE;
+
+  const spacing = Math.max(window.innerWidth, window.innerHeight) / 100 * LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE;
+
+  let baseTop = solvingAreaYPosition - spacing;
+  let baseRight = solvingAreaXPosition + solvingArea.offsetWidth + spacing;
+  let baseBottom = solvingAreaYPosition + solvingArea.offsetHeight + spacing;
+  let baseLeft = solvingAreaXPosition - spacing;
+
+  // As we wrap pieces around the edge, keep track of the furthest reach of all pieces
+  // in each direction. We can use this as the baseline for the next row.
+  let perimeterTop = baseTop;
+  let perimeterRight = baseRight;
+  let perimeterBottom = baseBottom;
+  let perimeterLeft = baseLeft;
+
+  let iterations = 0;
+  let currentIteration = 0;
 
   while (i < piecesInPlay.length) {
+    console.log("current iteration", currentIteration)
+    console.log("total iterations", iterations)
     const currentPiece = piecesInPlay[i] as MovableElement;
-    const pieceData = Utils.getPieceFromElement(currentPiece);
 
-    const top = parseInt(currentPiece.style.top);
-    const height = currentPiece.offsetHeight;
-
-    if (top < currentY) {
-      currentY = top;
-    }
-
-    if (currentSide === "top" && pieceData.type[0] !== 1) {
-      // currentY += this.connectorSize;
-    }
-
+    const currentPieceBoundingBox = Utils.getStyleBoundingBox(currentPiece);
     const nextPiece = piecesInPlay[i + 1];
+
+    const isLastPiece = i === piecesInPlay.length - 1;
+
+    if (currentSide === "top") {
+      if (iterations > currentIteration) {
+        currentIteration++;
+        baseTop = perimeterTop;
+        baseRight = perimeterRight;
+        baseBottom = perimeterBottom;
+        baseLeft = perimeterLeft;
+      }
+
+      const nextY = baseTop - currentPiece.offsetHeight
+      currentY = nextY;
+
+      // Update perimeter if necessary
+      if (nextY < perimeterTop) {
+        perimeterTop = nextY;
+      }
+    } else if (currentSide === "right") {
+      currentX = baseRight;
+      const distanceX = currentX + currentPiece.offsetWidth;
+
+      // Update perimeter if necessary
+      if (distanceX > perimeterRight) {
+        perimeterRight = distanceX;
+      }
+    } else if (currentSide === "bottom") {
+      currentY = baseBottom;
+      const distanceBottom = baseBottom + currentPiece.offsetHeight;
+
+      // Update perimeter if necessary
+      if (distanceBottom > perimeterBottom) {
+        perimeterBottom = distanceBottom;
+      }
+
+    } else if (currentSide === "left") {
+      const nextX = baseLeft - currentPiece.offsetWidth;
+      currentX = nextX;
+
+      // Update perimeter if necessary
+      if (nextX < perimeterLeft) {
+        perimeterLeft = nextX;
+      }
+    }
 
     window
       .move(currentPiece)
@@ -149,60 +200,47 @@ export default function arrangePiecesAroundEdge(
       .duration(this.animationDuration)
       .end();
 
-    if (i === 0) {
-      firstPiecesOnEachSide[currentSide] = currentPiece;
+    // Need to update the currentX / currentY to push the next piece along once the current piece's position has been set
+    if (currentSide === SideNames.Top) {
+      currentX += currentPieceBoundingBox.width + LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE;
+    } else if (currentSide === SideNames.Right) {
+      currentY += currentPieceBoundingBox.height + LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE;
+    } else if (currentSide === SideNames.Bottom) {
+      currentX -= (currentPiece.offsetWidth + LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE);
+    } else if (currentSide === SideNames.Left) {
+      currentY -= (currentPiece.offsetHeight + LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE);
     }
 
     const nextSide = sideIndex < 3 ? sideIndex + 1 : 0;
-    const isLastPiece = i === piecesInPlay.length - 1;
 
     if (
-      shouldProceedToNextSide.call(this, currentSide,
+      shouldProceedToNextSide(currentSide,
         currentPiece,
-        firstPiecesOnEachSide[sides[nextSide]] as HTMLDivElement)
+        firstPiecesOnEachSide[sides[nextSide]] as HTMLDivElement,
+        solvingArea
+      )
     ) {
-      // console.log("proceeding to next side", i)
+      console.log("proceeding to next side", i)
       if (currentSide === SideNames.Bottom) {
-        verticalSpace += this.largestPieceSpan + spacing;
+        iterations++;
       }
 
-      const nextPos = getPositionForFirstPieceOnNextSide(
-        currentPiece,
-        !isLastPiece ? (nextPiece as HTMLDivElement) : null,
-        currentSide,
-        firstPiecesOnEachSide[sides[nextSide]] as HTMLDivElement,
-        spacing,
-        largestPieceSpan,
-      );
+      // const nextPos = getPositionForFirstPieceOnNextSide(
+      //   currentPiece,
+      //   !isLastPiece ? (nextPiece as HTMLDivElement) : null,
+      //   currentSide,
+      //   firstPiecesOnEachSide[sides[nextSide]] as HTMLDivElement,
+      // );
 
       sideIndex = nextSide;
       currentSide = sides[nextSide];
 
-      firstPiecesOnEachSide[currentSide] = nextPiece as HTMLDivElement;
-
-      if (nextPos) {
-        currentX = nextPos.x;
-        currentY = nextPos.y;
-      }
+      // if (nextPos) {
+      // currentX = nextPos.x;
+      // currentY = nextPos.y;
+      // }
     } else {
-      const currentPieceBoundingBox = Utils.getStyleBoundingBox(currentPiece);
-      const nextPieceBoundingBox = nextPiece
-        ? Utils.getStyleBoundingBox(nextPiece as HTMLDivElement)
-        : null;
 
-      if (currentSide === SideNames.Top) {
-        currentX += currentPieceBoundingBox.width + spacing;
-      } else if (currentSide === SideNames.Right) {
-        currentY += currentPieceBoundingBox.height + spacing;
-      } else if (currentSide === SideNames.Bottom) {
-        if (!isLastPiece && nextPieceBoundingBox) {
-          currentX -= nextPieceBoundingBox.width + spacing;
-        }
-      } else if (currentSide === SideNames.Left) {
-        if (!isLastPiece && nextPieceBoundingBox) {
-          currentY -= nextPieceBoundingBox.height + spacing;
-        }
-      }
     }
 
     i++;

@@ -161,9 +161,7 @@ export default class PieceLayouts {
   }
 
   onArrangePiecesAroundEdge() {
-    arrangePiecesAroundEdge(
-      this.largestPieceSpan,
-    );
+    arrangePiecesAroundEdge();
     this.onControlsHandleClick();
   }
 

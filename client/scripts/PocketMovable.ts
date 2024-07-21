@@ -8,7 +8,7 @@ import Utils from "./utils";
 
 export class PocketMovable extends BaseMovable {
   instanceType = InstanceTypes.PocketMovable;
-  piecesInPocket: MovableElement[];
+  piecesInPocket: SingleMovable[];
   activePocket?: HTMLDivElement;
   activePocketInnerElement = null;
   Pockets: Pockets;
@@ -33,7 +33,7 @@ export class PocketMovable extends BaseMovable {
         this.activePocket = this.getPocketByCollision(Utils.getEventBox(event));
         if (this.activePocket) {
           this.piecesInPocket =
-            this.getPiecesInActivePocket() as HTMLDivElement[];
+            this.getPiecesInActivePocket();
           if (this.piecesInPocket.length > 0) {
             this.element = this.getMovingElementForActivePocket(event);
             (
@@ -83,10 +83,11 @@ export class PocketMovable extends BaseMovable {
       maxY = 0,
       nextRowY = 0;
 
-    let firstPieceOnRow = this.piecesInPocket[0];
+    let firstPieceOnRow = this.piecesInPocket[0].element;
 
+    console.log("pieces in active pocket", this.piecesInPocket)
     for (let i = 0, l = this.piecesInPocket.length; i < l; i++) {
-      const el = this.piecesInPocket[i];
+      const el = this.piecesInPocket[i].element;
 
       //   // move(el).x(currX * this.zoomLevel).y(currY * this.zoomLevel).duration(this.animationDuration).end();
       el.style.top = currY + "px";
@@ -152,15 +153,20 @@ export class PocketMovable extends BaseMovable {
   }
 
   getPiecesInActivePocket() {
-    return Array.from(
-      (this.activePocket as HTMLDivElement).querySelectorAll(
-        ".pocket-inner .puzzle-piece"
-      )
+    const pieceElements = (this.activePocket as HTMLDivElement).querySelectorAll(
+      ".pocket-inner .puzzle-piece"
     );
+
+    const instances = Array
+      .from(pieceElements)
+      .map(el => this.getMovableInstanceFromElement(el as MovableElement)) as SingleMovable[];
+
+    return instances;
   }
 
   addToStage() {
-    this.piecesInPocket.forEach((element) => {
+    this.piecesInPocket.forEach((instance: SingleMovable) => {
+      const element = instance.element;
       const playboundaryRect = (
         this.piecesContainer as HTMLDivElement
       ).getBoundingClientRect();
@@ -179,9 +185,6 @@ export class PocketMovable extends BaseMovable {
       element.setAttribute("data-pocket-id", "");
       element.style.pointerEvents = "auto";
 
-      const instance = this.getSingleInstanceFromElement(
-        element
-      );
       instance.pocketId = undefined;
 
       // Events.notify(EVENT_TYPES.RETURN_TO_CANVAS, element);
@@ -189,13 +192,7 @@ export class PocketMovable extends BaseMovable {
   }
 
   getDataForSave() {
-    return this.piecesInPocket.map((element) => ({
-      pageX: element.offsetLeft,
-      pageY: element.offsetTop,
-      _id: element.dataset._id,
-      pocket: element.dataset.pocketId,
-      instanceType: this.instanceType,
-    }));
+    return this.piecesInPocket.map((instance: SingleMovable) => instance.getDataForSave());
   }
 
   save() {

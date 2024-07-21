@@ -2,16 +2,16 @@ import SingleMovable from "./SingleMovable";
 import GroupMovable from "./GroupMovable";
 import Pockets from "./Pockets";
 import DragAndSelect from "./dragAndSelect";
-import Utils from "./utils";
 import {
   CONNECTOR_SIZE_PERC,
   CONNECTOR_TOLERANCE_AMOUNT,
   ELEMENT_IDS,
   EVENT_TYPES,
   FLOAT_TOLERANCE_AMOUNT,
-  SCREEN_MARGIN,
+  MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED,
   SHADOW_OFFSET_RATIO,
-  SOLVING_AREA_SCREEN_PORTION,
+  SOLVING_AREA_SCREEN_PORTION_WITH_OUTOFBOUNDS_AREA,
+  SOLVING_AREA_SCREEN_PORTION_WITHOUT_OUTOFBOUNDS_AREA,
 } from "./constants";
 import { PocketMovable } from "./PocketMovable";
 import PersistenceOperations from "./persistence";
@@ -23,16 +23,14 @@ import {
   GroupData,
   JigsawPieceData,
   MovableElement,
-  MovableInstance,
   PuzzleConfig,
-  PuzzleCreationResponse,
-  PuzzleShapes,
   SolvedPuzzlePreviewType,
 } from "./types";
 import PieceLayouts from "./PieceLayouts";
 import loadAssets from "./assetLoader";
 import Sounds from "./Sounds";
 import SolvingArea from "./SolvingArea";
+import Utils from "./utils";
 /**
  * Puzzly
  *
@@ -260,9 +258,7 @@ export default class Puzzly {
         this.pieceInstances.push(pieceInstance);
       });
       if (!this.noDispersal) {
-        this.PieceLayouts.arrangePiecesAroundEdge(
-          this.largestPieceSpan,
-        );
+        this.PieceLayouts.arrangePiecesAroundEdge();
       } else {
         // NOTE: Initial save once all pieces have been rendered
         // Only necessary when loading puzzle without disperal (for debug)
@@ -316,9 +312,8 @@ export default class Puzzly {
     const isSquare = numberOfPiecesHorizontal === numberOfPiecesVertical;
     const aspectRatio = smallerLength / largerLength;
 
-    let width: number, height: number;
     if (window.innerWidth < window.innerHeight) {
-      height = window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION;
+      const height = Utils.getSolvingAreaHeight();
       return {
         height,
         width: isSquare ? height : height * aspectRatio,
@@ -327,7 +322,7 @@ export default class Puzzly {
       }
 
     } else if (window.innerHeight < window.innerWidth) {
-      width = window.innerWidth / 100 * SOLVING_AREA_SCREEN_PORTION;
+      const width = Utils.getSolvingAreaWidth();
       return {
         width,
         height: isSquare ? width : width * aspectRatio,
