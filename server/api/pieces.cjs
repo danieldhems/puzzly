@@ -89,12 +89,13 @@ var api = {
         try {
           if (Array.isArray(data)) {
             puzzleId = data[0].puzzleId;
-            console.log("Attempting to update collection of pieces", data);
+            // console.log("Attempting to update collection of pieces", data);
 
             response.pieces = [];
 
             for (let i = 0, l = data.length; i < l; i++) {
-              const { _id, puzzleId, index } = data[i];
+              const currentPiece = data[i];
+              const { _id, puzzleId, index } = currentPiece;
 
               // Dynamically setting the query to be either an internal id or a
               // numeric-index-and-puzzleId combination should allow us to reliably create 
@@ -105,29 +106,36 @@ var api = {
                 queryObject.index = index;
                 queryObject.puzzleId = puzzleId;
               }
+
+              // Remove the '_id' field so the piece can be updated
+              delete currentPiece._id;
+
               const pieceUpdate = await pieces.updateOne(
                 queryObject,
                 {
                   $set: {
                     dateCreated: Date.now(),
-                    ...data[i],
+                    ...currentPiece,
                   },
                 },
                 { upsert: true }
               );
 
-              console.log("Piece update result", pieceUpdate)
-              data[i]._id = pieceUpdate.upsertedId._id;
+              // console.log("Piece update result", pieceUpdate)
 
-              response.pieces[i] = (data[i]);
+              if (pieceUpdate.upsertedId) {
+                currentPiece._id = pieceUpdate.upsertedId._id;
+              }
+
+              response.pieces[i] = currentPiece;
             }
           } else {
             puzzleId = data.puzzle;
 
             queryObject._id = new ObjectID(data._id);
-            console.log("Single piece update requested with data", data);
+            // console.log("Single piece update requested with data", data);
 
-            delete data["_id"];
+            delete data._id;
             update = {
               $set: {
                 ...data,
@@ -136,9 +144,7 @@ var api = {
 
             console.log("Single piece update instruction", update);
             const result = await pieces.updateOne(queryObject, update);
-            console.log("Single piece update result", result);
-
-            // response._id = result.ops[0]._id;
+            console.log("Single piece update result", result.result);
           }
 
           const puzzleUpdateQuery = {
