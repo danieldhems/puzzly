@@ -1,5 +1,5 @@
 import SingleMovable from "./SingleMovable";
-import { ELEMENT_IDS, SHADOW_OFFSET } from "./constants";
+import { ELEMENT_IDS, SHADOW_OFFSET, SHADOW_OFFSET_RATIO } from "./constants";
 import { getSvg } from "./svg";
 import { JigsawPieceData } from "./types";
 import Utils from "./utils";
@@ -50,6 +50,8 @@ export default class SolvingArea {
         const svgWidth = this.width + SHADOW_OFFSET;
         const svgHeight = this.height + SHADOW_OFFSET;
 
+        const shadowOffset = this.pieces[0]?.width / 100 * SHADOW_OFFSET_RATIO || 0;
+
         const svgOptions = {
             svgWidth: svgWidth,
             svgHeight: svgHeight,
@@ -57,6 +59,7 @@ export default class SolvingArea {
             imageHeight: this.height,
             viewbox: `0 0 ${svgWidth} ${svgHeight}`,
             isGroup: true,
+            shadowOffset,
         }
 
         const svgElementTemplate = getSvg(

@@ -1,4 +1,4 @@
-import { EVENT_TYPES, LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE } from "./constants";
+import { EVENT_TYPES, LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_AMOUNT, LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE } from "./constants";
 import { MovableElement, SideNames } from "./types";
 import Utils from "./utils";
 
@@ -123,7 +123,7 @@ export default function arrangePiecesAroundEdge() {
   let currentX: number = solvingAreaXPosition;
   let currentY: number = solvingAreaYPosition - piecesInPlay[0].offsetHeight - LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE;
 
-  const spacing = Math.max(window.innerWidth, window.innerHeight) / 100 * LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE;
+  const spacing = LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_AMOUNT;
 
   let baseTop = solvingAreaYPosition - spacing;
   let baseRight = solvingAreaXPosition + solvingArea.offsetWidth + spacing;

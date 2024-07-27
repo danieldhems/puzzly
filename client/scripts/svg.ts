@@ -15,6 +15,7 @@ export function getSvg(
             x: number;
             y: number;
         },
+        shadowOffset: number;
         isGroup?: boolean;
         viewbox: string,
         imagePosition?: {
@@ -32,6 +33,7 @@ export function getSvg(
         imageHeight,
         viewbox,
         imagePosition,
+        shadowOffset,
     } = options;
 
     const imgPosition = {
@@ -55,7 +57,7 @@ export function getSvg(
 
         pathElementsForDefs += `<path id="path-${info.shapeId}" d="${info.pathString}"></path>`;
         useElementsForClip += `<use href="#path-${info.shapeId}" x="${xPosition}" y="${yPosition}"></use>`;
-        useElementsForShadow += `<use href="#path-${info.shapeId}" x="${xPosition + SHADOW_OFFSET}" y="${yPosition + SHADOW_OFFSET}"></use>`
+        useElementsForShadow += `<use href="#path-${info.shapeId}" x="${xPosition + shadowOffset}" y="${yPosition + shadowOffset}"></use>`
         useElementsForStroke += `<use href="#path-${info.shapeId}" fill="none" stroke="black" stroke-width="1" x="${xPosition}" y="${yPosition}" pointer-events="visibleFill" data-piece-index="${info.index}"></use>`
 
     }).join("");

@@ -1,6 +1,6 @@
 import BaseMovable from "./BaseMovable";
 import { checkConnections } from "./checkConnections";
-import { EVENT_TYPES, HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, SHAPE_TYPES, SHADOW_OFFSET, SVGNS } from "./constants";
+import { EVENT_TYPES, HTML_ATTRIBUTE_NAME_SVG_PATH_STRING, SHAPE_TYPES, SHADOW_OFFSET, SVGNS, SHADOW_OFFSET_RATIO } from "./constants";
 import GroupMovable from "./GroupMovable";
 import GroupOperations from "./GroupOperations";
 import Pockets from "./Pockets";
@@ -223,6 +223,7 @@ export default class SingleMovable extends BaseMovable {
         x: puzzleX,
         y: puzzleY,
       },
+      shadowOffset: width / 100 * SHADOW_OFFSET_RATIO,
       viewbox: `0 0 ${width + SHADOW_OFFSET} ${height + SHADOW_OFFSET}`,
     }
 

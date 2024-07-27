@@ -1,6 +1,6 @@
 import GroupOperations from "./GroupOperations";
 import { checkConnections } from "./checkConnections";
-import { EVENT_TYPES, SHADOW_OFFSET } from "./constants";
+import { EVENT_TYPES, SHADOW_OFFSET, SHADOW_OFFSET_RATIO } from "./constants";
 import Utils from "./utils";
 import BaseMovable from "./BaseMovable";
 import SingleMovable from "./SingleMovable";
@@ -253,6 +253,8 @@ export default class GroupMovable extends BaseMovable {
     const svgWidth = puzzleWidth + SHADOW_OFFSET;
     const svgHeight = puzzleHeight + SHADOW_OFFSET;
 
+    const shadowOffset = this.piecesInGroup[0].pieceData.width / 100 * SHADOW_OFFSET_RATIO;
+
     const svgOptions = {
       svgWidth: svgWidth,
       svgHeight: svgHeight,
@@ -260,6 +262,7 @@ export default class GroupMovable extends BaseMovable {
       imageHeight: this.puzzleHeight,
       viewbox: `0 0 ${svgWidth} ${svgHeight}`,
       isGroup: true,
+      shadowOffset,
     }
 
     // TODO: Enforce sequential order for piece rendering to prevent overlap issues

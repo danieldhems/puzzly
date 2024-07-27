@@ -36,7 +36,7 @@ export const STROKE_COLOR = "#000";
 export const STROKE_WIDTH = 1;
 export const SHADOW_OFFSET = 2;
 
-export const PIECE_SIZE = 20;
+export const MINIMUM_PIECE_SIZE = 50;
 export const MINIMUM_NUMBER_OF_PIECES = 9;
 export const MINIMUM_NUMBER_OF_PIECES_PER_SIDE = 3;
 export const CONNECTOR_SIZE_PERC = 30;
@@ -106,14 +106,7 @@ export const SCREEN_MARGIN = 10;
 
 // What percentage of the viewport width/height the puzzle occupies
 // This is the percentage of the shorter side of the viewport
-//
-// e.g.
-// For a viewport who's width is greater than its height:
-// The puzzle's height will be this percentage of the total available height
-// For a viewport who's height is greater than its width:
-// The puzzle's width will be this percentage of the total available width
-export const SOLVING_AREA_SCREEN_PORTION_WITH_OUTOFBOUNDS_AREA = 60;
-export const SOLVING_AREA_SCREEN_PORTION_WITHOUT_OUTOFBOUNDS_AREA = 50;
+export const SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT = 50;
 
 export const PLAY_BOUNDARY_SCREEN_PORTION = 60;
 
@@ -123,3 +116,4 @@ export const HTML_ATTRIBUTE_NAME_SVG_PATH_STRING = "data-svg-path-string";
 
 // Percentage of viewport size to use as spacing between pieces when they are neatened
 export const LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE = 5;
+export const LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_AMOUNT = 5;

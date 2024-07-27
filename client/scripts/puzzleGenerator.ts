@@ -1,5 +1,5 @@
 import { LargeNumberLike } from "crypto";
-import { CONNECTOR_SIZE_PERC, CONNECTOR_TOLERANCE_AMOUNT, MINIMUM_NUMBER_OF_PIECES, PIECE_SIZE, SHADOW_COLOR, SHOULDER_SIZE_PERC, STROKE_COLOR, STROKE_WIDTH, SVG_NAMESPACE } from "./constants";
+import { CONNECTOR_SIZE_PERC, CONNECTOR_TOLERANCE_AMOUNT, SHADOW_COLOR, SHOULDER_SIZE_PERC, STROKE_COLOR, STROKE_WIDTH, SVG_NAMESPACE } from "./constants";
 import jigsawPath from "./jigsawPath";
 import { getJigsawShapeSvgString } from "./svg";
 import { ConnectorNames, ConnectorType, JigsawPieceData, PuzzleAxis, PuzzleCreatorOptions, PuzzleGenerator, PuzzleConfig, SideNames, SkeletonPiece, PuzzleImpression } from "./types";
@@ -326,15 +326,7 @@ export const getPieceSize = (puzzleDimensions: { width: number; height: number }
 
 export const addPuzzleDataToPieces = (
   pieces: SkeletonPiece[],
-  puzzleDimensions: {
-    pieceSize: number;
-    connectorSize: number;
-    connectorDistanceFromCorner: number;
-    connectorTolerance: number;
-    puzzleWidth: number;
-    puzzleHeight: number;
-    shadowOffset: number;
-  }
+  puzzleConfig: PuzzleConfig,
 ) => {
   const {
     pieceSize,
@@ -344,7 +336,7 @@ export const addPuzzleDataToPieces = (
     shadowOffset,
     puzzleWidth,
     puzzleHeight,
-  } = puzzleDimensions;
+  } = puzzleConfig;
 
   return pieces.map((piece, index) => {
     let width = pieceSize;
