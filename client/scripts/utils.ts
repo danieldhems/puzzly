@@ -1,4 +1,7 @@
-import { CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE, ELEMENT_IDS, MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED, PUZZLE_PIECE_CLASSES, SOLVING_AREA_SCREEN_PORTION_WITH_OUTOFBOUNDS_AREA, SOLVING_AREA_SCREEN_PORTION_WITHOUT_OUTOFBOUNDS_AREA } from "./constants";
+import {
+  CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE, ELEMENT_IDS, PUZZLE_PIECE_CLASSES,
+  SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT
+} from "./constants";
 import {
   ConnectorType,
   DomBox,
@@ -976,20 +979,12 @@ const Utils = {
 
   // TODO: This doesn't belong here
   getSolvingAreaWidth() {
-    if (window.innerWidth < MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED) {
-      return window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION_WITHOUT_OUTOFBOUNDS_AREA;
-    } else {
-      return window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION_WITH_OUTOFBOUNDS_AREA;
-    }
+    return window.innerHeight / 100 * SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT;
   },
 
   // TODO: This doesn't belong here
   getSolvingAreaHeight() {
-    if (window.innerHeight < MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED) {
-      return window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION_WITHOUT_OUTOFBOUNDS_AREA;
-    } else {
-      return window.innerHeight / 100 * SOLVING_AREA_SCREEN_PORTION_WITH_OUTOFBOUNDS_AREA;
-    }
+    return window.innerHeight / 100 * SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT;
   }
 };
 

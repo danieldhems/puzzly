@@ -5,7 +5,8 @@ import {
   MINIMUM_NUMBER_OF_PIECES,
   MINIMUM_PIECE_SIZE,
   SHADOW_OFFSET_RATIO,
-  SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT
+  SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT,
+  SCREEN_MARGIN
 } from "./constants";
 import { addPuzzleDataToPieces, generatePieces, getConnectorDistanceFromCorner, getConnectorSize } from "./puzzleGenerator";
 import PuzzleImpressionOverlay from "./PuzzleImpressionOverlay";
@@ -475,6 +476,19 @@ export default class PuzzlyCreator {
 
       this.sourceImage.dimensions.width = response.data.width;
       this.sourceImage.dimensions.height = response.data.height;
+
+      if (window.innerHeight < window.innerWidth) {
+        const playBoundaryHeight = window.innerHeight / 2 - (SCREEN_MARGIN * 2);
+        const solvingAreaHeight = playBoundaryHeight / 100 * SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT;
+
+        const aspectRatio = response.data.width / response.data.height;
+        console.log("aspect ratio", aspectRatio)
+        const puzzleWidth = solvingAreaHeight * aspectRatio;
+        const puzzleHeight = puzzleWidth * aspectRatio;
+
+        console.log("puzzle width", puzzleWidth);
+        console.log("puzzle height", puzzleHeight);
+      }
     }
   }
 
