@@ -1,6 +1,6 @@
 import BaseMovable from "./BaseMovable";
 import Puzzly from "./Puzzly";
-import { EVENT_TYPES, MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED, PLAY_BOUNDARY_SCREEN_PORTION, SCREEN_MARGIN } from "./constants";
+import { EVENT_TYPES, MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED, SCREEN_MARGIN, PLAY_BOUNDARY_SIZE_IN_VIEWPORT_PERCENTAGE } from "./constants";
 import { InstanceTypes } from "./types";
 import Utils from "./utils";
 
@@ -32,16 +32,16 @@ export default class PlayBoundaryMovable extends BaseMovable {
       if (window.innerWidth < MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED) {
         this.element.style.width = window.innerWidth - (SCREEN_MARGIN * 2) + "px";
       } else {
-        const screenPortion = window.innerWidth / 100 * PLAY_BOUNDARY_SCREEN_PORTION;
+        const screenPortion = window.innerWidth / 100 * PLAY_BOUNDARY_SIZE_IN_VIEWPORT_PERCENTAGE;
         this.element.style.width = screenPortion + "px";
       }
-    } else if (window.innerWidth < window.innerHeight) {
+    } else if (window.innerWidth < window.innerHeight) {  
       this.element.style.width = window.innerWidth - (SCREEN_MARGIN * 2) + "px";
 
       if (window.innerHeight < MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED) {
         this.element.style.height = window.innerHeight - (SCREEN_MARGIN * 2) + "px";
       } else {
-        const screenPortion = window.innerWidth / 100 * PLAY_BOUNDARY_SCREEN_PORTION;
+        const screenPortion = window.innerWidth / 100 * PLAY_BOUNDARY_SIZE_IN_VIEWPORT_PERCENTAGE;
         this.element.style.height = screenPortion + "px";
       }
     }

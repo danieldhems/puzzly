@@ -1,4 +1,4 @@
-import { SHADOW_OFFSET, STROKE_WIDTH, SVGNS } from "./constants";
+import { STROKE_WIDTH, SVG_NAMESPACE } from "./constants";
 import jigsawPath from "./jigsawPath";
 import { JigsawPieceData, SkeletonPiece } from "./types";
 
@@ -63,7 +63,7 @@ export function getSvg(
     }).join("");
 
     return `
-      <svg xmlns="${SVGNS}" width="${svgWidth}" height="${svgHeight}" viewBox="${viewbox}" class="puzzle-piece-group-svg">
+      <svg xmlns="${SVG_NAMESPACE}" width="${svgWidth}" height="${svgHeight}" viewBox="${viewbox}" class="puzzle-piece-group-svg">
         <defs>
             ${pathElementsForDefs}
         </defs>

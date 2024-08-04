@@ -4,7 +4,7 @@ const clipId = `clip-${index}`;
 const viewBox = Math.max(width, height);
 
 const svgElementTemplate = `
-  <svg xmlns="${svgns}" width="${viewBox}" height="${viewBox}" viewBox="0 0 ${viewBox} ${viewBox}" class="puzzle-piece-svg">
+  <svg xmlns="" width="${viewBox}" height="${viewBox}" viewBox="0 0 ${viewBox} ${viewBox}" class="puzzle-piece-svg">
     <defs>
       <path id="${shapeId}" d="${pathString}"></path>
     </defs>

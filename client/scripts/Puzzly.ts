@@ -8,10 +8,7 @@ import {
   ELEMENT_IDS,
   EVENT_TYPES,
   FLOAT_TOLERANCE_AMOUNT,
-  MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED,
   SHADOW_OFFSET_RATIO,
-  SOLVING_AREA_SCREEN_PORTION_WITH_OUTOFBOUNDS_AREA,
-  SOLVING_AREA_SCREEN_PORTION_WITHOUT_OUTOFBOUNDS_AREA,
 } from "./constants";
 import { PocketMovable } from "./PocketMovable";
 import PersistenceOperations from "./persistence";
