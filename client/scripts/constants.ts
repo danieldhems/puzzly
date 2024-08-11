@@ -39,7 +39,7 @@ export const MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED = 1024;
 // How much of the viewport a given element occupies, expressed as a percentage of the shorter side
 // (Depending on the viewport size, this value will be a percentage of either window.innerWidth or window.innerHeight)
 export const PLAY_BOUNDARY_SIZE_IN_VIEWPORT_PERCENTAGE = 60;
-export const SOLVING_AREA_SIZE_IN_VIEWPORT_PERCENTAGE = 40;
+export const SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT = 40;
 
 // Percentage of viewport size to use as spacing between pieces when they are neatened
 export const LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_PERCENTAGE = 5;
@@ -49,14 +49,14 @@ export const LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_AMOUNT = 5;
  * Puzzle pieces
  */
 
- // How big the connectors should be (how far they stick of from the piece's body), expressed as a percentage of the body of the piece
+// How big the connectors should be (how far they stick of from the piece's body), expressed as a percentage of the body of the piece
 // This may need to be re-addressed when we approach wild shapes as we may prefer to randomise this.
 export const CONNECTOR_SIZE_PERC = 30;
 // How far in from the corner the connector should be.
 export const SHOULDER_SIZE_PERC = 35;
 export const SHADOW_COLOR = "#353836";
 export const STROKE_COLOR = "#000";
-export const STROKE_WIDTH = 1;
+export const STROKE_WIDTH = 3;
 export const SHADOW_OFFSET = 2;
 
 export const CONNECTOR_TOLERANCE_AMOUNT = 50;
@@ -72,8 +72,6 @@ export const LOCAL_STORAGE_PUZZLY_LAST_SAVE_KEY =
 // HTML classes
 // TODO: Check whether array is still necessary for this
 export const PUZZLE_PIECE_CLASSES = ["puzzle-piece"];
-
-
 
 export const ZOOM_INTERVALS = [1, 1.5, 2.5];
 
@@ -135,9 +133,6 @@ export const FLOAT_TOLERANCE_AMOUNT = 20;
 
 export const SCREEN_MARGIN = 10;
 
-
-
 export const SVGNS = "http://www.w3.org/2000/svg";
 
 export const HTML_ATTRIBUTE_NAME_SVG_PATH_STRING = "data-svg-path-string";
-

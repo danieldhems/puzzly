@@ -1,4 +1,9 @@
-import { CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE, ELEMENT_IDS, MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED, PUZZLE_PIECE_CLASSES, SOLVING_AREA_SIZE_IN_VIEWPORT_PERCENTAGE } from "./constants";
+import {
+  CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE,
+  ELEMENT_IDS,
+  PUZZLE_PIECE_CLASSES,
+  SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT,
+} from "./constants";
 import {
   ConnectorType,
   DomBox,
@@ -28,10 +33,7 @@ const Utils = {
     return document.querySelectorAll(".puzzle-piece");
   },
 
-  hasCollision(
-    source: DomBox,
-    target: DomBox
-  ): boolean {
+  hasCollision(source: DomBox, target: DomBox): boolean {
     const sourceRight = source.right || source.left + source.width;
     const sourceBottom = source.bottom || source.top + source.height;
     const targetRight = target.right || target.left + target.width;
@@ -71,8 +73,8 @@ const Utils = {
       window.location.search.replace(
         new RegExp(
           "^(?:.*[&\\?]" +
-          encodeURIComponent(key).replace(/[\.\+\*]/g, "\\$&") +
-          "(?:\\=([^&]*))?)?.*$",
+            encodeURIComponent(key).replace(/[\.\+\*]/g, "\\$&") +
+            "(?:\\=([^&]*))?)?.*$",
           "i"
         ),
         "$1"
@@ -235,7 +237,9 @@ const Utils = {
   },
 
   getElementByPieceId(id: number) {
-    return document.querySelector(`[data-piece-index='${id}']`) as HTMLDivElement;
+    return document.querySelector(
+      `[data-piece-index='${id}']`
+    ) as HTMLDivElement;
   },
 
   getPxString(value: number) {
@@ -418,7 +422,7 @@ const Utils = {
   },
 
   getConnectorBoundingBox(element: HTMLDivElement, side: SideNames) {
-    console.log("getConnectorBoundingBox", element)
+    console.log("getConnectorBoundingBox", element);
     const piece = {
       type: Utils.getPieceType(element),
     };
@@ -445,10 +449,14 @@ const Utils = {
     const elementBoundingBox = Utils.getStyleBoundingBox(element);
 
     const topBoundary = hasTopPlug
-      ? elementBoundingBox.top + connectorSize + (connectorSize * CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE)
+      ? elementBoundingBox.top +
+        connectorSize +
+        connectorSize * CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE
       : elementBoundingBox.top;
     const leftBoundary = hasLeftPlug
-      ? elementBoundingBox.left + connectorSize + (connectorSize * CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE)
+      ? elementBoundingBox.left +
+        connectorSize +
+        connectorSize * CONNECTOR_MULTIPLIER_FOR_HUMP_SIZE
       : elementBoundingBox.left;
 
     const isTopSidePiece = piece.type[0] === 0;
@@ -457,21 +465,20 @@ const Utils = {
     // console.log("elementBoundingBox", elementBoundingBox);
 
     const halfSideLength = basePieceSize / 2;
-    const halfConnectorSize = connectorSize / 2
+    const halfConnectorSize = connectorSize / 2;
 
     switch (side) {
       case SideNames.Left:
-        console.log("Getting box for left side")
+        console.log("Getting box for left side");
         box = {
           top: topBoundary + connectorSize,
           right: leftBoundary + connectorSize,
-          bottom:
-            topBoundary + connectorSize,
+          bottom: topBoundary + connectorSize,
           left: leftBoundary,
         };
         break;
       case SideNames.Right:
-        console.log("Getting box for right side")
+        console.log("Getting box for right side");
         box = {
           top: topBoundary + halfSideLength - halfConnectorSize,
           right: elementBoundingBox.right,
@@ -481,22 +488,19 @@ const Utils = {
         };
         break;
       case SideNames.Bottom:
-        console.log("Getting box for bottom side")
+        console.log("Getting box for bottom side");
         box = {
-          top:
-            elementBoundingBox.bottom - connectorSize,
-          right:
-            leftBoundary + halfSideLength - (connectorSize / 2),
+          top: elementBoundingBox.bottom - connectorSize,
+          right: leftBoundary + halfSideLength - connectorSize / 2,
           bottom: elementBoundingBox.bottom,
-          left: leftBoundary + halfSideLength - (connectorSize / 2),
+          left: leftBoundary + halfSideLength - connectorSize / 2,
         };
         break;
       case SideNames.Top:
-        console.log("Getting box for top side")
+        console.log("Getting box for top side");
         box = {
           top: topBoundary,
-          right:
-            leftBoundary + connectorSize,
+          right: leftBoundary + connectorSize,
           bottom: topBoundary + connectorSize,
           left: leftBoundary,
         };
@@ -638,9 +642,9 @@ const Utils = {
 
     const parentLocation = hasGroup
       ? {
-        top: parseInt(element.style.top),
-        left: parseInt(element.style.left),
-      }
+          top: parseInt(element.style.top),
+          left: parseInt(element.style.left),
+        }
       : { top: 0, left: 0 };
 
     const diffX = element.offsetWidth / 2 - this.floatTolerance / 2;
@@ -735,13 +739,13 @@ const Utils = {
   getBoundingBoxForOffset(element: HTMLDivElement) {
     return element
       ? {
-        top: element.offsetTop,
-        right: element.offsetLeft + element.offsetWidth,
-        bottom: element.offsetTop + element.offsetHeight,
-        left: element.offsetLeft,
-        width: element.offsetWidth,
-        height: element.offsetHeight,
-      }
+          top: element.offsetTop,
+          right: element.offsetLeft + element.offsetWidth,
+          bottom: element.offsetTop + element.offsetHeight,
+          left: element.offsetLeft,
+          width: element.offsetWidth,
+          height: element.offsetHeight,
+        }
       : null;
   },
 
@@ -758,9 +762,7 @@ const Utils = {
     };
   },
 
-  getPocketByCollision(
-    box: DomBox
-  ): HTMLDivElement | undefined {
+  getPocketByCollision(box: DomBox): HTMLDivElement | undefined {
     let i = 0;
     const pockets = document.querySelectorAll(".pocket");
     while (i < pockets.length) {
@@ -818,7 +820,9 @@ const Utils = {
     }
 
     if (element.dataset?.pieceIndex) {
-      return document.querySelector(`.puzzle-piece#piece-${element.dataset.pieceIndex}`) as HTMLDivElement;
+      return document.querySelector(
+        `.puzzle-piece#piece-${element.dataset.pieceIndex}`
+      ) as HTMLDivElement;
     } else if (element.nodeName === "body") {
       return;
     } else {
@@ -834,9 +838,9 @@ const Utils = {
   elementIsInDragContainer(element: HTMLDivElement) {
     return (
       (element?.parentNode as HTMLDivElement).id ===
-      ELEMENT_IDS.DRAGANDSELECT_CONTAINER ||
+        ELEMENT_IDS.DRAGANDSELECT_CONTAINER ||
       (element?.parentNode as HTMLDivElement).id ===
-      ELEMENT_IDS.POCKET_DRAG_CONTAINER
+        ELEMENT_IDS.POCKET_DRAG_CONTAINER
     );
   },
 
@@ -854,8 +858,8 @@ const Utils = {
     return width === height
       ? "square"
       : width < height
-        ? "portrait"
-        : "landscape";
+      ? "portrait"
+      : "landscape";
   },
 
   shuffleArray(array: unknown[]) {
@@ -976,21 +980,17 @@ const Utils = {
 
   // TODO: This doesn't belong here
   getSolvingAreaWidth() {
-    if (window.innerWidth < MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED) {
-      return window.innerHeight / 100 * SOLVING_AREA_SIZE_IN_VIEWPORT_PERCENTAGE;
-    } else {
-      return window.innerHeight / 100 * SOLVING_AREA_SIZE_IN_VIEWPORT_PERCENTAGE;
-    }
+    return (
+      (window.innerHeight / 100) * SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT
+    );
   },
 
   // TODO: This doesn't belong here
   getSolvingAreaHeight() {
-    if (window.innerHeight < MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED) {
-      return window.innerHeight / 100 * SOLVING_AREA_SIZE_IN_VIEWPORT_PERCENTAGE;
-    } else {
-      return window.innerHeight / 100 * SOLVING_AREA_SIZE_IN_VIEWPORT_PERCENTAGE;
-    }
-  }
+    return (
+      (window.innerHeight / 100) * SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT
+    );
+  },
 };
 
 export default Utils;
