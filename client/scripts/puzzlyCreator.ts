@@ -325,12 +325,7 @@ export default class PuzzlyCreator {
     rectangularPuzzleConfigs: PuzzleConfig[];
     squarePuzzleConfigs: PuzzleConfig[];
   } {
-    let puzzleWidth: number;
-    let puzzleHeight: number;
-
-    if (imageWidth < imageHeight) {
-      // Portrait puzzles
-    }
+    console.log("getPuzzleSizes", imageWidth, imageHeight);
 
     const shortSide: PuzzleAxis | null =
       imageWidth < imageHeight
@@ -340,18 +335,20 @@ export default class PuzzlyCreator {
         : null;
 
     let n: number = Math.sqrt(minimumNumberOfPieces);
+
+    const length = shortSide === PuzzleAxis.Horizontal
+    ? imageWidth
+    : imageHeight;
+
     let divisionResult: number;
 
     const rectangularPuzzleConfigs: PuzzleConfig[] = [];
     const squarePuzzleConfigs: PuzzleConfig[] = [];
 
     do {
-      let puzzleWidth: number;
-      let puzzleHeight: number;
+      divisionResult = length / n;
 
-      divisionResult = Math.floor(
-        shortSide === PuzzleAxis.Horizontal ? imageWidth / n : imageHeight / n
-      );
+      if(divisionResult < minimumPieceSize) break;
 
       const connectorTolerance =
         (divisionResult / 100) * CONNECTOR_TOLERANCE_AMOUNT;
@@ -364,8 +361,6 @@ export default class PuzzlyCreator {
       const puzzleConfig = {} as PuzzleConfig;
 
       if (shortSide) {
-        let numberOfPiecesOnLongSide: number;
-
         puzzleConfig.imageWidth = imageWidth;
         puzzleConfig.imageHeight = imageHeight;
         puzzleConfig.pieceSize = divisionResult;
@@ -374,17 +369,15 @@ export default class PuzzlyCreator {
         puzzleConfig.shadowOffset = shadowOffset;
         puzzleConfig.connectorDistanceFromCorner = connectorDistanceFromCorner;
 
-        let longSideConfig;
+        let numberOfPiecesOnLongSide: number;
 
         switch (shortSide) {
           case PuzzleAxis.Horizontal:
             // Portrait puzzle
-            longSideConfig = this.getConfigForForAdjacentSideByPieceSize(
+            numberOfPiecesOnLongSide = this.getNumberOfPiecesForAdjacentSideByPieceSize(
               imageHeight,
               divisionResult
             );
-            numberOfPiecesOnLongSide = longSideConfig.numberOfPieces;
-            puzzleHeight = longSideConfig.totalLength;
 
             puzzleConfig.numberOfPiecesHorizontal = n;
             puzzleConfig.numberOfPiecesVertical = numberOfPiecesOnLongSide;
@@ -395,12 +388,10 @@ export default class PuzzlyCreator {
 
           case PuzzleAxis.Vertical:
             // Landscape puzzle
-            longSideConfig = this.getConfigForForAdjacentSideByPieceSize(
+            numberOfPiecesOnLongSide = this.getNumberOfPiecesForAdjacentSideByPieceSize(
               imageWidth,
               divisionResult
             );
-            numberOfPiecesOnLongSide = longSideConfig.numberOfPieces;
-            puzzleWidth = longSideConfig.totalLength;
 
             puzzleConfig.numberOfPiecesHorizontal = numberOfPiecesOnLongSide;
             puzzleConfig.numberOfPiecesVertical = n;
@@ -453,13 +444,10 @@ export default class PuzzlyCreator {
    * @param interval number
    * @returns { numberOfPieces: number, totalLength: number }
    */
-  getConfigForForAdjacentSideByPieceSize(
+  getNumberOfPiecesForAdjacentSideByPieceSize(
     edgeLength: number,
     pieceSize: number
-  ): {
-    numberOfPieces: number;
-    totalLength: number;
-  } {
+  ): number {
     let n: number = 0;
     let sum: number = 0;
     let done = false;
@@ -474,10 +462,7 @@ export default class PuzzlyCreator {
       }
     }
 
-    return {
-      numberOfPieces: n,
-      totalLength: sum,
-    };
+    return n;
   }
 
   onImageUploadChange(e: MouseEvent) {
@@ -526,19 +511,22 @@ export default class PuzzlyCreator {
       this.sourceImage.dimensions.width = response.data.width;
       this.sourceImage.dimensions.height = response.data.height;
 
+      
       this.imageAspectRatio = response.data.width / response.data.height;
+      console.log("source image", this.sourceImage.dimensions)
+      console.log("aspect ratio", this.imageAspectRatio);
 
       // salmon
       if (window.innerHeight < window.innerWidth) {
         const availableHeight = window.innerHeight - SCREEN_MARGIN * 2;
         this.maximumPuzzleHeight =
           (availableHeight / 100) * SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT;
-        this.maximumPuzzleWidth = availableHeight * this.imageAspectRatio;
+        this.maximumPuzzleWidth = this.maximumPuzzleHeight * this.imageAspectRatio;
       } else if (window.innerWidth < window.innerHeight) {
         const availableWidth = window.innerWidth - SCREEN_MARGIN * 2;
         this.maximumPuzzleWidth =
           (availableWidth / 100) * SOLVING_AREA_SIZE_AS_PERCENTAGE_OF_VIEWPORT;
-        this.maximumPuzzleHeight = availableWidth * this.imageAspectRatio;
+        this.maximumPuzzleHeight = this.maximumPuzzleWidth * this.imageAspectRatio;
       }
     }
   }
@@ -546,11 +534,11 @@ export default class PuzzlyCreator {
   onImagePreviewLoad() {
     // console.log('image info', e)
 
-    const { width, height } = this.sourceImage.dimensions;
+    // const { width, height } = this.sourceImage.dimensions;
     const { rectangularPuzzleConfigs, squarePuzzleConfigs } =
       this.getPuzzleSizes(
-        width,
-        height,
+        this.maximumPuzzleWidth,
+        this.maximumPuzzleHeight,
         MINIMUM_PIECE_SIZE,
         MINIMUM_NUMBER_OF_PIECES
       );
@@ -786,15 +774,15 @@ export default class PuzzlyCreator {
     // console.log("crop data", cropData)
 
     const activeImpression = this.PuzzleImpressionOverlay.getActiveImpression();
-    console.log("active impression", activeImpression);
-    console.log("selected puzzle config", this.selectedPuzzleConfig);
+    // console.log("active impression", activeImpression);
+    // console.log("selected puzzle config", this.selectedPuzzleConfig);
     // const puzzleDimensions = this.getPuzzleDimensions(this.selectedPuzzleConfig, activeImpression);
 
     const mappedPieces = addPuzzleDataToPieces(
       activeImpression.pieces,
       this.selectedPuzzleConfig
     );
-    console.log("mapped pieces", mappedPieces);
+    // console.log("mapped pieces", mappedPieces);
 
     const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {
       body: JSON.stringify({

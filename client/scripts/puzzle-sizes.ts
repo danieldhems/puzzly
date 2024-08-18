@@ -29,23 +29,24 @@ export function getPuzzleSizes(
       : null;
 
   let n: number = minimumNumberOfPieces;
-  let divisionResult: number;
 
   const puzzleSizes: PuzzleSize[] = [];
 
+  const length = shortSide === PuzzleAxis.Horizontal
+    ? imageHeight
+    : imageWidth;
+
+    let divisionResult = nextPieceSize(length, n);
+
   if(shortSide){
-      do {
+    while (divisionResult > minimumPieceSize) {
           let shortSideKeyName: string;
           let longSideKeyName: string;
           let puzzleWidth: number;
           let puzzleHeight: number;
           let numberOfPiecesOnLongSide: number;
 
-          divisionResult = Math.ceil(
-            shortSide === PuzzleAxis.Horizontal
-            ? imageHeight / n
-            : imageWidth / n
-        );
+        if(divisionResult < minimumPieceSize) return;
 
           if(shortSide === PuzzleAxis.Horizontal) {
             // Portrait puzzle
@@ -80,7 +81,7 @@ export function getPuzzleSizes(
           });
 
           n++;
-      } while (divisionResult > minimumPieceSize)
+      }
   
       return puzzleSizes;
   } else {
@@ -124,4 +125,5 @@ export function getConfigForForAdjacentSideByPieceSize(
 
 const imageWidth = 1920;
 const imageHeight = 1024;
+
 console.log(getPuzzleSizes(imageWidth, imageHeight, 40, 9))
