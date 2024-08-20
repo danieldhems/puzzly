@@ -54,6 +54,7 @@ export const LAYOUTS_NEATEN_SPACE_BETWEEN_PIECES_AMOUNT = 5;
 export const CONNECTOR_SIZE_PERC = 30;
 // How far in from the corner the connector should be.
 export const SHOULDER_SIZE_PERC = 35;
+
 export const SHADOW_COLOR = "#353836";
 export const STROKE_COLOR = "#000";
 export const STROKE_WIDTH = 3;

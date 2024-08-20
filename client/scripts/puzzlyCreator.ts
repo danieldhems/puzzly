@@ -361,8 +361,6 @@ export default class PuzzlyCreator {
       const puzzleConfig = {} as PuzzleConfig;
 
       if (shortSide) {
-        puzzleConfig.imageWidth = imageWidth;
-        puzzleConfig.imageHeight = imageHeight;
         puzzleConfig.pieceSize = divisionResult;
         puzzleConfig.connectorSize = connectorSize;
         puzzleConfig.connectorTolerance = connectorTolerance;
@@ -401,7 +399,8 @@ export default class PuzzlyCreator {
             break;
         }
 
-        puzzleConfig.totalNumberOfPieces = n * numberOfPiecesOnLongSide;
+        puzzleConfig.totalNumberOfPieces = puzzleConfig.numberOfPiecesHorizontal * puzzleConfig.numberOfPiecesVertical;
+        
         rectangularPuzzleConfigs.push(puzzleConfig);
       }
 

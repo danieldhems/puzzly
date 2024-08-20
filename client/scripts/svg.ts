@@ -1,4 +1,4 @@
-import { STROKE_WIDTH, SVG_NAMESPACE } from "./constants";
+import { SVG_NAMESPACE } from "./constants";
 import jigsawPath from "./jigsawPath";
 import { JigsawPieceData, SkeletonPiece } from "./types";
 
@@ -128,8 +128,7 @@ export const getJigsawShapeSvgString = (
     // TODO: Assuming all pieces are square - might not work for irregular shapes / sizes
     const pieceSize = piece.basePieceSize as number;
 
-    const { connectorSize, connectorDistanceFromCorner: unroundedConnectorDistanceFromCorner } = piece;
-    const connectorDistanceFromCorner = Math.floor(unroundedConnectorDistanceFromCorner);
+    const { connectorSize, connectorDistanceFromCorner } = piece;
     const hasTopPlug = piece.type[0] === 1;
     const hasLeftPlug = piece.type[3] === 1;
 
@@ -154,11 +153,15 @@ export const getJigsawShapeSvgString = (
     }
 
     if (topConnector) {
-        svgString += `h ${connectorDistanceFromCorner} `;
+        // left boundary = connector size
+        // + connector distance from corner
+        svgString += `H ${leftBoundary + connectorDistanceFromCorner} `;
+        // + connector size
         svgString += `c ${topConnector.cp1.x} ${topConnector.cp1.y}, ${topConnector.cp2.x} ${topConnector.cp2.y}, ${topConnector.dest.x} ${topConnector.dest.y} `;
-        svgString += `h ${connectorDistanceFromCorner} `;
+        // should go to piece size - connector size
+        svgString += `H ${leftBoundary + pieceSize} `;
     } else {
-        svgString += `h ${pieceSize} `;
+        svgString += `H ${leftBoundary + pieceSize} `;
     }
 
     if (piece.type[1] === 1) {
@@ -168,11 +171,11 @@ export const getJigsawShapeSvgString = (
     }
 
     if (rightConnector !== null) {
-        svgString += `v ${connectorDistanceFromCorner} `;
+        svgString += `V ${topBoundary + connectorDistanceFromCorner} `;
         svgString += `c ${rightConnector.cp1.x} ${rightConnector.cp1.y}, ${rightConnector.cp2.x} ${rightConnector.cp2.y}, ${rightConnector.dest.x} ${rightConnector.dest.y} `;
-        svgString += `v ${connectorDistanceFromCorner} `;
+        svgString += `V ${topBoundary + pieceSize} `;
     } else {
-        svgString += `v ${pieceSize} `;
+        svgString += `V ${topBoundary + pieceSize} `;
     }
 
     if (piece.type[2] === 1) {
@@ -182,11 +185,11 @@ export const getJigsawShapeSvgString = (
     }
 
     if (bottomConnector) {
-        svgString += `h -${connectorDistanceFromCorner} `;
+        svgString += `H ${leftBoundary + pieceSize - connectorDistanceFromCorner} `;
         svgString += `c ${bottomConnector.cp1.x} ${bottomConnector.cp1.y}, ${bottomConnector.cp2.x} ${bottomConnector.cp2.y}, ${bottomConnector.dest.x} ${bottomConnector.dest.y} `;
-        svgString += `h -${connectorDistanceFromCorner - STROKE_WIDTH} `;
+        svgString += `H ${leftBoundary}`;
     } else {
-        svgString += `h -${pieceSize - STROKE_WIDTH} `;
+        svgString += `H ${leftBoundary}`;
     }
 
     if (piece.type[3] === 1) {
@@ -196,7 +199,7 @@ export const getJigsawShapeSvgString = (
     }
 
     if (leftConnector !== null) {
-        svgString += `v -${connectorDistanceFromCorner} `;
+        svgString += `V ${topBoundary + pieceSize - connectorDistanceFromCorner} `;
         svgString += `c ${leftConnector.cp1.x} ${leftConnector.cp1.y}, ${leftConnector.cp2.x} ${leftConnector.cp2.y}, ${leftConnector.dest.x} ${leftConnector.dest.y} `;
     }
 
