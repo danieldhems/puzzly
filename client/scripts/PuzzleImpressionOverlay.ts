@@ -60,13 +60,16 @@ export default class PuzzleImpressionOverlay {
     const scaledHeight =
       (this.targetElement.offsetHeight / imageHeight) * puzzleHeight;
 
+    const height = this.container.offsetHeight;
+    const width = puzzleConfig.aspectRatio ? height * puzzleConfig.aspectRatio : height;
+
     return {
       left: leftBoundary,
-      top: topBoundary,
+      top: 0,
       right: rightBoundary,
       bottom: bottomBoundary,
-      width: scaledWidth,
-      height: scaledHeight,
+      width,
+      height,
     };
   }
 
@@ -82,7 +85,6 @@ export default class PuzzleImpressionOverlay {
 
     const { container, impressions } = getPuzzleImpressions(puzzleConfigs);
 
-    console.log("impressions", impressions);
     this.impressionsContainer = container;
     this.impressions = impressions;
     this.draggable.element.appendChild(this.impressionsContainer);
@@ -93,6 +95,7 @@ export default class PuzzleImpressionOverlay {
     const impressionElements =
       this.impressionsContainer.getElementsByTagName("div");
     const id = "puzzle-" + puzzleConfig.totalNumberOfPieces;
+
     Array.from(impressionElements).forEach((impressionElement) => {
       if (impressionElement.id === id) {
         impressionElement.classList.remove("js-hidden");
@@ -120,10 +123,10 @@ export default class PuzzleImpressionOverlay {
   }
 
   getPositionAndDimensions() {
-    const { offsetLeft, offsetTop, offsetWidth, offsetHeight } =
-      this.draggable.element;
+    const { offsetLeft, offsetTop } = this.draggable.element;
     const width = parseInt(this.draggable.element.style.width);
     const height = parseInt(this.draggable.element.style.height);
+
     return {
       left: offsetLeft - this.leftBoundary,
       top: offsetTop - this.topBoundary,

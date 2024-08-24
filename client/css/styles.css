@@ -302,7 +302,6 @@ label {
 
 #puzzle-setup--image_preview img {
     max-height: 100%;
-    max-width: 100%;
 }
 
 #puzzle-setup--image_input {
@@ -533,11 +532,6 @@ use {
     #puzzle-creator {
         width: 700px;
         height: 45%;
-    }
-
-    #puzzle-setup--image_preview {
-        height: 250px;
-        width: 250px;
     }
     
     .inner-content {

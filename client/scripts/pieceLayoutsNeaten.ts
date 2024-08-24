@@ -141,8 +141,6 @@ export default function arrangePiecesAroundEdge() {
   let currentIteration = 0;
 
   while (i < piecesInPlay.length) {
-    console.log("current iteration", currentIteration)
-    console.log("total iterations", iterations)
     const currentPiece = piecesInPlay[i] as MovableElement;
 
     const currentPieceBoundingBox = Utils.getStyleBoundingBox(currentPiece);
@@ -220,7 +218,6 @@ export default function arrangePiecesAroundEdge() {
         solvingArea
       )
     ) {
-      console.log("proceeding to next side", i)
       if (currentSide === SideNames.Bottom) {
         iterations++;
       }
