@@ -155,13 +155,13 @@ export const getJigsawShapeSvgString = (
     if (topConnector) {
         // left boundary = connector size
         // + connector distance from corner
-        svgString += `H ${leftBoundary + connectorDistanceFromCorner} `;
+        svgString += `h ${connectorDistanceFromCorner} `;
         // + connector size
         svgString += `c ${topConnector.cp1.x} ${topConnector.cp1.y}, ${topConnector.cp2.x} ${topConnector.cp2.y}, ${topConnector.dest.x} ${topConnector.dest.y} `;
         // should go to piece size - connector size
-        svgString += `H ${leftBoundary + pieceSize} `;
+        svgString += `h ${connectorDistanceFromCorner} `;
     } else {
-        svgString += `H ${leftBoundary + pieceSize} `;
+        svgString += `h ${pieceSize} `;
     }
 
     if (piece.type[1] === 1) {
@@ -171,11 +171,11 @@ export const getJigsawShapeSvgString = (
     }
 
     if (rightConnector !== null) {
-        svgString += `V ${topBoundary + connectorDistanceFromCorner} `;
+        svgString += `v ${connectorDistanceFromCorner} `;
         svgString += `c ${rightConnector.cp1.x} ${rightConnector.cp1.y}, ${rightConnector.cp2.x} ${rightConnector.cp2.y}, ${rightConnector.dest.x} ${rightConnector.dest.y} `;
-        svgString += `V ${topBoundary + pieceSize} `;
+        svgString += `v ${connectorDistanceFromCorner} `;
     } else {
-        svgString += `V ${topBoundary + pieceSize} `;
+        svgString += `v ${pieceSize} `;
     }
 
     if (piece.type[2] === 1) {
@@ -185,11 +185,11 @@ export const getJigsawShapeSvgString = (
     }
 
     if (bottomConnector) {
-        svgString += `H ${leftBoundary + pieceSize - connectorDistanceFromCorner} `;
+        svgString += `h -${connectorDistanceFromCorner} `;
         svgString += `c ${bottomConnector.cp1.x} ${bottomConnector.cp1.y}, ${bottomConnector.cp2.x} ${bottomConnector.cp2.y}, ${bottomConnector.dest.x} ${bottomConnector.dest.y} `;
-        svgString += `H ${leftBoundary}`;
+        svgString += `h -${connectorDistanceFromCorner}`;
     } else {
-        svgString += `H ${leftBoundary}`;
+        svgString += `h -${pieceSize}`;
     }
 
     if (piece.type[3] === 1) {
@@ -199,7 +199,7 @@ export const getJigsawShapeSvgString = (
     }
 
     if (leftConnector !== null) {
-        svgString += `V ${topBoundary + pieceSize - connectorDistanceFromCorner} `;
+        svgString += `v -${connectorDistanceFromCorner} `;
         svgString += `c ${leftConnector.cp1.x} ${leftConnector.cp1.y}, ${leftConnector.cp2.x} ${leftConnector.cp2.y}, ${leftConnector.dest.x} ${leftConnector.dest.y} `;
     }
 

@@ -79,8 +79,8 @@ export default class JigsawPath {
       Math.cos(rad) * (py - origin.y);
 
     return {
-      x: Math.floor(qx),
-      y: Math.floor(qy),
+      x: qx,
+      y: qy,
     };
   }
 

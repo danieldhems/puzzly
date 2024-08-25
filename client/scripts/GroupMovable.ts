@@ -223,6 +223,7 @@ export default class GroupMovable extends BaseMovable {
     this.piecesInGroup.forEach((instance) => {
       instance.setGroupIdAcrossInstance(this._id + "");
       instance.setPositionAsGrouped();
+      instance.hide();
     });
     this.attachElements();
     this.render();

@@ -343,17 +343,18 @@ export default class PuzzlyCreator {
     const squarePuzzleConfigs: PuzzleConfig[] = [];
 
     do {
-      divisionResult = length / n;
+      divisionResult = Math.floor(length / n);
+      console.log("division result", divisionResult)
 
       if (divisionResult < minimumPieceSize) break;
 
-      const connectorTolerance =
-        (divisionResult / 100) * CONNECTOR_TOLERANCE_AMOUNT;
-      const shadowOffset = (divisionResult / 100) * SHADOW_OFFSET_RATIO;
+      const connectorTolerance = Math.floor((divisionResult / 100) * CONNECTOR_TOLERANCE_AMOUNT);
+      const shadowOffset = Math.floor((divisionResult / 100) * SHADOW_OFFSET_RATIO);
 
       const connectorSize = getConnectorSize(divisionResult);
-      const connectorDistanceFromCorner =
-        getConnectorDistanceFromCorner(divisionResult);
+      const connectorDistanceFromCorner = getConnectorDistanceFromCorner(divisionResult);
+
+      const pieceSize = connectorDistanceFromCorner * 2 + connectorSize;
 
       const puzzleConfig = {} as PuzzleConfig;
 
@@ -361,7 +362,7 @@ export default class PuzzlyCreator {
       puzzleConfig.imageHeight = imageHeight;
 
       if (shortSide) {
-        puzzleConfig.pieceSize = divisionResult;
+        puzzleConfig.pieceSize = pieceSize;
         puzzleConfig.connectorSize = connectorSize;
         puzzleConfig.connectorTolerance = connectorTolerance;
         puzzleConfig.shadowOffset = shadowOffset;
@@ -374,13 +375,13 @@ export default class PuzzlyCreator {
             // Portrait puzzle
             numberOfPiecesOnLongSide = this.getNumberOfPiecesForAdjacentSideByPieceSize(
               imageHeight,
-              divisionResult
+              pieceSize
             );
 
             puzzleConfig.numberOfPiecesHorizontal = n;
             puzzleConfig.numberOfPiecesVertical = numberOfPiecesOnLongSide;
-            puzzleConfig.puzzleWidth = divisionResult * n;
-            puzzleConfig.puzzleHeight = divisionResult * numberOfPiecesOnLongSide;
+            puzzleConfig.puzzleWidth = pieceSize * n;
+            puzzleConfig.puzzleHeight = pieceSize * numberOfPiecesOnLongSide;
 
             break;
 
@@ -388,14 +389,13 @@ export default class PuzzlyCreator {
             // Landscape puzzle
             numberOfPiecesOnLongSide = this.getNumberOfPiecesForAdjacentSideByPieceSize(
               imageWidth,
-              divisionResult
+              pieceSize
             );
 
             puzzleConfig.numberOfPiecesHorizontal = numberOfPiecesOnLongSide;
             puzzleConfig.numberOfPiecesVertical = n;
-            puzzleConfig.puzzleWidth =
-              divisionResult * numberOfPiecesOnLongSide;
-            puzzleConfig.puzzleHeight = divisionResult * n;
+            puzzleConfig.puzzleWidth = pieceSize * numberOfPiecesOnLongSide;
+            puzzleConfig.puzzleHeight = pieceSize * n;
 
             break;
         }
@@ -411,15 +411,15 @@ export default class PuzzlyCreator {
         numberOfPiecesHorizontal: n,
         numberOfPiecesVertical: n,
         totalNumberOfPieces: n * n,
-        pieceSize: divisionResult,
+        pieceSize,
         connectorSize,
         connectorTolerance,
         shadowOffset,
         connectorDistanceFromCorner,
         imageWidth,
         imageHeight,
-        puzzleWidth: divisionResult * n,
-        puzzleHeight: divisionResult * n,
+        puzzleWidth: pieceSize * n,
+        puzzleHeight: pieceSize * n,
       };
 
       squarePuzzleConfigs.push(config);

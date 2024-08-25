@@ -8,6 +8,8 @@ export default class PlayBoundaryMovable extends BaseMovable {
   instanceType = InstanceTypes.PlayBoundaryMovable;
   stage: HTMLDivElement;
   viewportLargeEnoughForOutOfBoundsArea: boolean;
+  puzzleWidth: number;
+  puzzleHeight: number;
 
   constructor(puzzly: Puzzly) {
     super(puzzly);
@@ -15,6 +17,8 @@ export default class PlayBoundaryMovable extends BaseMovable {
     this.element = this.playBoundary as HTMLDivElement;
     this.element.addEventListener("mousedown", this.onMouseDown.bind(this));
     this.stage = puzzly.stage as HTMLDivElement;
+    this.puzzleWidth = puzzly.boardWidth;
+    this.puzzleHeight = puzzly.boardHeight;
     window.Puzzly.PlayBoundaryMovable = this;
 
     this.init();
@@ -28,22 +32,10 @@ export default class PlayBoundaryMovable extends BaseMovable {
   setSize() {
     if (window.innerHeight < window.innerWidth) {
       this.element.style.height = window.innerHeight - (SCREEN_MARGIN * 2) + "px";
-
-      if (window.innerWidth < MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED) {
-        this.element.style.width = window.innerWidth - (SCREEN_MARGIN * 2) + "px";
-      } else {
-        const screenPortion = window.innerWidth / 100 * PLAY_BOUNDARY_SIZE_IN_VIEWPORT_PERCENTAGE;
-        this.element.style.width = screenPortion + "px";
-      }
-    } else if (window.innerWidth < window.innerHeight) {  
+      this.element.style.width = (this.puzzleWidth / 2 * 5) + "px";
+    } else if (window.innerWidth < window.innerHeight) {
       this.element.style.width = window.innerWidth - (SCREEN_MARGIN * 2) + "px";
-
-      if (window.innerHeight < MINIMUM_VIEWPORT_LENGTH_FOR_OUTOFBOUNDS_TO_BE_USED) {
-        this.element.style.height = window.innerHeight - (SCREEN_MARGIN * 2) + "px";
-      } else {
-        const screenPortion = window.innerWidth / 100 * PLAY_BOUNDARY_SIZE_IN_VIEWPORT_PERCENTAGE;
-        this.element.style.height = screenPortion + "px";
-      }
+      this.element.style.height = (this.puzzleHeight / 2 * 3) + "px";
     }
   }
 
