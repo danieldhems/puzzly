@@ -185,10 +185,12 @@ export class PocketMovable extends BaseMovable {
       element.setAttribute("data-pocket-id", "");
       element.style.pointerEvents = "auto";
 
-      instance.pocketId = undefined;
+      instance.pocketId = -1;
 
       // Events.notify(EVENT_TYPES.RETURN_TO_CANVAS, element);
     });
+
+    this.save();
   }
 
   getDataForSave() {
@@ -207,5 +209,6 @@ export class PocketMovable extends BaseMovable {
   destroy() {
     this.element.remove();
     this.active = false;
+    this.piecesInPocket = [];
   }
 }

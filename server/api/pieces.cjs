@@ -89,7 +89,7 @@ var api = {
         try {
           if (Array.isArray(data)) {
             puzzleId = data[0].puzzleId;
-            // console.log("Attempting to update collection of pieces", data);
+            console.log("Attempting to update collection of pieces", data);
 
             response.pieces = [];
 
@@ -121,7 +121,7 @@ var api = {
                 { upsert: true }
               );
 
-              // console.log("Piece update result", pieceUpdate)
+              console.log("Piece update result", pieceUpdate.result)
 
               if (pieceUpdate.upsertedId) {
                 currentPiece._id = pieceUpdate.upsertedId._id;

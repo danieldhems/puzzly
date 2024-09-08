@@ -146,7 +146,7 @@ export default class SingleMovable extends BaseMovable {
     el.style.width = width + SHADOW_OFFSET + "px";
     el.style.height = height + SHADOW_OFFSET + "px";
 
-    if (pocketId === undefined || pocketId === null) {
+    if (pocketId === undefined || pocketId === null || pocketId === -1) {
       el.style.top = (!!groupId ? solvedY : pageY) + "px";
       el.style.left = (!!groupId ? solvedX : pageX) + "px";
     }
@@ -240,9 +240,9 @@ export default class SingleMovable extends BaseMovable {
 
   render() {
     // console.log("rendering piece", this.pieceData);
-    const { type, pageX, pageY, isSolved, pocketId } = this.pieceData;
+    const { isSolved, pocketId } = this.pieceData;
 
-    if (Number.isInteger(pocketId)) {
+    if (Number.isInteger(pocketId) && pocketId !== -1) {
       const pocketElement = this.pocketsContainer.querySelector(
         `#pocket-${pocketId}`
       );
@@ -579,7 +579,7 @@ export default class SingleMovable extends BaseMovable {
       groupId: this.pieceData.groupId,
       puzzleId: this.puzzleId,
       _id: this.pieceData._id,
-      pocket: this.pocketId as number,
+      pocketId: this.pocketId as number,
       instanceType: this.instanceType,
     };
   }
@@ -597,13 +597,13 @@ export default class SingleMovable extends BaseMovable {
     // console.log(this.pieceData.index, "Received piece_updated event", event)
     const { index, puzzleX, puzzleY } = this.pieceData;
     const { index: uIndex, puzzleX: uPuzzleX, puzzleY: uPuzzleY, _id: uId } = event.detail;
-    if (uIndex === index && uPuzzleX === puzzleX && uPuzzleY === puzzleY) {
+    if (uId && uIndex === index && uPuzzleX === puzzleX && uPuzzleY === puzzleY) {
       this.setId(uId);
     }
   }
 
   setId(id: string) {
-    // console.log("Setting ID for piece", this.pieceData.index, id)
+    console.log("Setting ID for piece", this.pieceData.index, id)
     this.pieceData._id = id;
     this.element.setAttribute("data-piece-id-in-persistence", id);
     this._id = id;

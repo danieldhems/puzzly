@@ -179,7 +179,7 @@ export default class Puzzly {
     this.Zoom = new Zoom(this);
 
     this.Pockets = new Pockets(this);
-    // this.DragAndSelect = new DragAndSelect(this);
+    this.DragAndSelect = new DragAndSelect(this);
     this.SolvedPuzzlePreview = new SolvedPuzzlePreview(this);
     this.PocketMovable = new PocketMovable(this);
     this.PieceLayouts = new PieceLayouts(this);

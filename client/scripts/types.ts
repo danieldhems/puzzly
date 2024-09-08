@@ -308,7 +308,7 @@ export interface SingleMovableSaveState {
   zIndex: number;
   isSolved: boolean;
   puzzleId: string;
-  pocket: number;
+  pocketId: number | null;
   instanceType: InstanceTypes;
   integration?: boolean;
 }
@@ -316,7 +316,7 @@ export interface SingleMovableSaveState {
 export interface GroupMovableSaveState
   extends Omit<
     SingleMovableSaveState,
-    "pocket" | "index" | "pageX" | "pageY" | "puzzleX" | "puzzleY" | "width" | "height" | "type" | "basePieceSize" | "connectorSize" | "connectorDistanceFromCorner" | "connectorTolerance" | "numberOfPiecesHorizontal" | "numberOfPiecesVertical"
+    "pocketId" | "index" | "pageX" | "pageY" | "puzzleX" | "puzzleY" | "width" | "height" | "type" | "basePieceSize" | "connectorSize" | "connectorDistanceFromCorner" | "connectorTolerance" | "numberOfPiecesHorizontal" | "numberOfPiecesVertical"
   > {
   position: {
     top: number;

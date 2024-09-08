@@ -111,13 +111,13 @@ class DragAndSelect extends BaseMovable {
     if (this.mouseHoldStartX && this.mouseHoldStartY) {
       return (
         Math.abs(this.mouseHoldStartX - event.clientX) <=
-          this.mouseHoldDetectionMovementTolerance ||
+        this.mouseHoldDetectionMovementTolerance ||
         Math.abs(event.clientX - this.mouseHoldStartX) <=
-          this.mouseHoldDetectionMovementTolerance ||
+        this.mouseHoldDetectionMovementTolerance ||
         Math.abs(this.mouseHoldStartY - event.clientY) <=
-          this.mouseHoldDetectionMovementTolerance ||
+        this.mouseHoldDetectionMovementTolerance ||
         Math.abs(event.clientY - this.mouseHoldStartY) <=
-          this.mouseHoldDetectionMovementTolerance
+        this.mouseHoldDetectionMovementTolerance
       );
     }
   }
@@ -263,6 +263,7 @@ class DragAndSelect extends BaseMovable {
     b.style.left = box.left + "px";
     b.style.width = box.width + "px";
     b.style.height = box.height + "px";
+    b.style.opacity = ".5";
 
     pieces.forEach((p) => {
       p.style.left = p.offsetLeft - box.left + "px";
@@ -285,6 +286,7 @@ class DragAndSelect extends BaseMovable {
         p.offsetTop +
         parseInt((this.selectedPiecesContainer as HTMLDivElement).style.top) +
         "px";
+      p.classList.remove("selected");
       (this.piecesContainer as HTMLDivElement).appendChild(p);
     });
   }
@@ -301,9 +303,9 @@ class DragAndSelect extends BaseMovable {
 
     this.touchStartTime = Date.now();
 
-    const isEmptySpace = !Utils.isPuzzlePiece(e.target as HTMLElement);
+    const pieceEl = Utils.getPuzzlePieceElementFromEvent(e);
 
-    isEmptySpace &&
+    !pieceEl &&
       !this.isRightClick &&
       this.selectedPieces.length === 0 &&
       this.isMouseHoldInitiated()
@@ -338,19 +340,19 @@ class DragAndSelect extends BaseMovable {
           );
         });
 
-    if (!isEmptySpace && this.selectedPieces.length > 0) {
-      const pieceEl = Utils.getPuzzlePieceElementFromEvent(e);
-
+    if (pieceEl && this.selectedPieces.length > 0) {
       if (
-        pieceEl?.classList.contains("puzzle-piece") &&
+        pieceEl.classList.contains("puzzle-piece") &&
         pieceEl.classList.contains("selected") &&
         this.selectedPiecesContainer
       ) {
         this.diffX =
-          e.clientX - this.selectedPiecesContainer.offsetLeft * this.zoomLevel;
+          e.clientX - parseInt(this.selectedPiecesContainer.style.left) * this.zoomLevel;
         this.diffY =
-          e.clientY - this.selectedPiecesContainer.offsetTop * this.zoomLevel;
+          e.clientY - parseInt(this.selectedPiecesContainer.style.top) * this.zoomLevel;
+
         this.selectedPiecesAreMoving = true;
+
         this.Puzzly.keepOnTop(this.selectedPiecesContainer);
       }
     }
@@ -372,7 +374,7 @@ class DragAndSelect extends BaseMovable {
       this.updateDrawBox(event);
     }
 
-    if (this.selectedPiecesAreMoving && this.selectedPiecesContainer) {
+    if (this.isMouseDown && this.selectedPiecesContainer) {
       const newPosTop =
         event.clientY / this.zoomLevel - this.diffY / this.zoomLevel;
       const newPosLeft =
@@ -417,11 +419,10 @@ class DragAndSelect extends BaseMovable {
       (this.piecesContainer as HTMLDivElement).appendChild(
         this.selectedPiecesContainer
       );
-      this.setLastPosition();
 
       this.piecesSelected = true;
 
-      this.toggleHighlightPieces(this.selectedPieces);
+      this.setLastPosition();
       this.toggleDrawCursor();
       this.deactivateDrawBox();
 
@@ -459,6 +460,8 @@ class DragAndSelect extends BaseMovable {
 
     if (this.selectedPieces.length > 0) {
       this.toggleHighlightPieces(this.selectedPieces);
+      console.log("endDrag", this.selectedPieces)
+
       const eventBox = Utils.getEventBox(event);
       const pocket = Utils.getPocketByCollision(eventBox);
       if (pocket) {
@@ -513,12 +516,7 @@ class DragAndSelect extends BaseMovable {
       const pieceInstance = this.getMovableInstanceFromElement(
         element
       ) as SingleMovable;
-      return {
-        _id: pieceInstance._id,
-        pageX: pieceInstance.element.offsetLeft,
-        pageY: pieceInstance.element.offsetTop,
-        pocket: pieceInstance.pocketId,
-      };
+      return pieceInstance.getDataForSave();
     });
     window.dispatchEvent(new CustomEvent(EVENT_TYPES.SAVE, { detail: data }));
   }
