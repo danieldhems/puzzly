@@ -145,4 +145,10 @@ export default class RestrictedDraggable {
       );
     }
   }
+
+  destroy() {
+    if (this.element) {
+      this.element.remove();
+    }
+  }
 }

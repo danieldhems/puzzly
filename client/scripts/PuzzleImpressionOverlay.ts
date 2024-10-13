@@ -2,32 +2,36 @@ import RestrictedDraggable from "./RestrictedDraggable";
 import { getPuzzleImpressions } from "./puzzleGenerator";
 import { PuzzleConfig, PuzzleImpression } from "./types";
 
+export type PuzzleImpressionOverlayConstructorArgs = {
+  targetElement: HTMLImageElement | HTMLDivElement;
+  selectedPuzzleConfig: PuzzleConfig;
+  puzzleConfigs: PuzzleConfig[];
+}
+
 export default class PuzzleImpressionOverlay {
   svgElement: SVGSVGElement;
   draggable: RestrictedDraggable;
   targetElement: HTMLImageElement | HTMLDivElement;
   container: HTMLElement;
-  puzzleConfigs: PuzzleConfig[];
+  puzzleConfigs: PuzzleConfig[] | null;
   selectedPuzzleConfig: PuzzleConfig;
   pieceSvgGroups: HTMLOrSVGElement[];
   impressionsContainer: HTMLDivElement;
   impressions: PuzzleImpression[];
-  activeImpression: PuzzleImpression;
+  activeImpression: PuzzleImpression | null;
   leftBoundary: number;
   topBoundary: number;
 
-  constructor({
-    targetElement,
-    selectedPuzzleConfig,
-    puzzleConfigs,
-  }: {
-    targetElement: HTMLImageElement | HTMLDivElement;
-    selectedPuzzleConfig: PuzzleConfig;
-    puzzleConfigs: PuzzleConfig[];
-  }) {
-    this.targetElement = targetElement;
-    this.selectedPuzzleConfig = selectedPuzzleConfig;
-    this.puzzleConfigs = puzzleConfigs;
+  constructor(args: PuzzleImpressionOverlayConstructorArgs) {
+    this.initiate(args);
+  }
+
+  initiate(args: PuzzleImpressionOverlayConstructorArgs) {
+    this.reset();
+
+    this.targetElement = args.targetElement;
+    this.selectedPuzzleConfig = args.selectedPuzzleConfig;
+    this.puzzleConfigs = args.puzzleConfigs;
     this.container = this.targetElement.parentElement as HTMLElement;
 
     const layout = this.getLayout(this.selectedPuzzleConfig);
@@ -44,23 +48,31 @@ export default class PuzzleImpressionOverlay {
     this.setActiveImpression(this.selectedPuzzleConfig);
   }
 
+  reset() {
+    if (this.puzzleConfigs) {
+      this.puzzleConfigs = null;
+    }
+    if (this.activeImpression) {
+      this.activeImpression = null;
+    }
+    if (this.draggable) {
+      this.draggable.destroy();
+    }
+    if (this.impressionsContainer) {
+      this.impressionsContainer.remove();
+    }
+  }
+
   getLayout(puzzleConfig: PuzzleConfig) {
     // Calculate top and left position of target element, assuming it is centered
     const topBoundary =
       (this.container.offsetHeight - this.targetElement.offsetHeight) / 2;
     const leftBoundary =
       (this.container.offsetWidth - this.targetElement.offsetWidth) / 2;
-    const rightBoundary = this.container.offsetWidth - leftBoundary;
-    const bottomBoundary = this.container.offsetHeight - topBoundary;
+    const rightBoundary = this.targetElement.offsetWidth - leftBoundary;
+    const bottomBoundary = this.targetElement.offsetHeight - topBoundary;
 
-    const { puzzleWidth, puzzleHeight, imageWidth, imageHeight } = puzzleConfig;
-
-    const scaledWidth =
-      (this.targetElement.offsetWidth / imageWidth) * puzzleWidth;
-    const scaledHeight =
-      (this.targetElement.offsetHeight / imageHeight) * puzzleHeight;
-
-    const height = this.container.offsetHeight;
+    const height = this.targetElement.offsetHeight;
     const width = puzzleConfig.aspectRatio ? height * puzzleConfig.aspectRatio : height;
 
     return {
@@ -99,8 +111,10 @@ export default class PuzzleImpressionOverlay {
     Array.from(impressionElements).forEach((impressionElement) => {
       if (impressionElement.id === id) {
         impressionElement.classList.remove("js-hidden");
+
         const layout = this.getLayout(puzzleConfig);
         this.draggable.update(layout);
+
         const impressiongIndex = parseInt(
           impressionElement.dataset.impressionIndex as string
         );

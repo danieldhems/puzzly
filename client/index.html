@@ -36,18 +36,27 @@
                           <input name="image" id="upload-fld" type="file" value="No file chosen" />
                         </div>
                       </div>
-                      <div id="puzzle-setup--options" class="form-label-row js-hidden">
+                      <div id="puzzle-setup--options" class="form-label-row">
                         <div class="columns">
                           <div id="puzzle-setup--select-number-of-pieces" class="form-label-row">
                             <div>
-                              <label>How many pieces? <span id="puzzle-size-input-label"></span></label>
+                              <label>Number of pieces <span id="puzzle-size-input-label"></span></label>
                               <input type="range" class="form-range" min="0" max="10" id="puzzle-size-input-field">
                             </div>
                           </div>
                           <div id="puzzle-setup--puzzle-shape" class="form-label-row">
                             <div>
                               <span>Puzzle shape</span>
-                              <div class="field-container"></div>
+                              <div class="field-container">
+                                <div>
+                                  <label>Rectangle</label>
+                                  <input type="radio" name="input-puzzle_shape" value="rectangle" checked="checked" disabled="disabled" />
+                                </div>
+                                <div>
+                                  <label>Square</label>
+                                  <input type="radio" name="input-puzzle_shape" value="square" disabled="disabled" />
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>

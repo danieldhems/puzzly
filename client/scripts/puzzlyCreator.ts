@@ -21,6 +21,7 @@ import {
   PuzzleConfig,
   PuzzleImpression,
   PuzzleShapes,
+  SkeletonPiece,
 } from "./types";
 import Utils from "./utils";
 
@@ -196,31 +197,12 @@ export default class PuzzlyCreator {
     }
   }
 
-  setPuzzleShapeFieldValues() {
-    Object.keys(PuzzleShapes).forEach((key) => {
-      const container = document.createElement("div");
-      container.classList.add("form-radio-container");
+  setupPuzzleShapefield() {
+    const inputs = document.querySelectorAll("[name='input-puzzle_shape']");
 
-      const fieldId = `puzzle-shape-${key.toLowerCase()}-input-field`;
-
-      const fieldLabel = document.createElement("label");
-      fieldLabel.setAttribute("for", fieldId);
-      fieldLabel.textContent = key;
-
-      const fieldInput = document.createElement("input");
-      fieldInput.type = "radio";
-      fieldInput.id = fieldId;
-      fieldInput.value = key;
-      fieldInput.name = "input-puzzle_shape";
-
-      if (key === PuzzleShapes.Rectangle) {
-        fieldInput.checked = true;
-      }
-
-      this.puzzleShapeFieldContainer.appendChild(fieldLabel);
-      this.puzzleShapeFieldContainer.appendChild(fieldInput);
-
-      fieldInput.addEventListener(
+    Array.from(inputs).forEach((field) => {
+      field.removeAttribute("disabled");
+      field.addEventListener(
         "input",
         function (e: InputEvent) {
           e.preventDefault();
@@ -252,7 +234,7 @@ export default class PuzzlyCreator {
           }
         }.bind(this)
       );
-    });
+    })
   }
 
   showForm() {
@@ -315,7 +297,7 @@ export default class PuzzlyCreator {
     );
   }
 
-  getPuzzleSizes(
+  getPuzzleConfigs(
     imageWidth: number,
     imageHeight: number,
     minimumPieceSize: number,
@@ -324,12 +306,16 @@ export default class PuzzlyCreator {
     rectangularPuzzleConfigs: PuzzleConfig[];
     squarePuzzleConfigs: PuzzleConfig[];
   } {
+    console.log("getPuzzleConfigs: imageWidth", imageWidth)
+    console.log("getPuzzleConfigs: imageHeight", imageHeight)
     const shortSide: PuzzleAxis | null =
       imageWidth < imageHeight
         ? PuzzleAxis.Horizontal
         : imageHeight < imageWidth
           ? PuzzleAxis.Vertical
           : null;
+
+    console.log("getPuzzleConfigs: short side", shortSide)
 
     let n: number = Math.sqrt(minimumNumberOfPieces);
 
@@ -344,7 +330,6 @@ export default class PuzzlyCreator {
 
     do {
       divisionResult = Math.floor(length / n);
-      console.log("division result", divisionResult)
 
       if (divisionResult < minimumPieceSize) break;
 
@@ -514,10 +499,9 @@ export default class PuzzlyCreator {
       this.sourceImage.dimensions.width = response.data.width;
       this.sourceImage.dimensions.height = response.data.height;
 
-
       this.imageAspectRatio = response.data.width / response.data.height;
+      console.log("image aspect ratio", this.imageAspectRatio)
 
-      // salmon
       if (window.innerHeight < window.innerWidth) {
         const availableHeight = window.innerHeight - SCREEN_MARGIN * 2;
         this.maximumPuzzleHeight =
@@ -537,7 +521,7 @@ export default class PuzzlyCreator {
 
     // const { width, height } = this.sourceImage.dimensions;
     const { rectangularPuzzleConfigs, squarePuzzleConfigs } =
-      this.getPuzzleSizes(
+      this.getPuzzleConfigs(
         this.maximumPuzzleWidth,
         this.maximumPuzzleHeight,
         MINIMUM_PIECE_SIZE,
@@ -560,9 +544,14 @@ export default class PuzzlyCreator {
       selectedPuzzleConfig: this.selectedPuzzleConfig,
     };
 
-    this.PuzzleImpressionOverlay = new PuzzleImpressionOverlay(
-      puzzleImpressionOverlayConfig
-    );
+    if (this.PuzzleImpressionOverlay) {
+      this.PuzzleImpressionOverlay.initiate(puzzleImpressionOverlayConfig)
+    } else {
+      this.PuzzleImpressionOverlay = new PuzzleImpressionOverlay(
+        puzzleImpressionOverlayConfig
+      );
+    }
+
     this.imagePreviewEl.classList.remove("js-hidden");
 
     this.updatePuzzleSizeField(
@@ -571,7 +560,7 @@ export default class PuzzlyCreator {
     this.puzzleSizeInputField.value = 1 + "";
     this.puzzleSizeInputField.disabled = false;
 
-    this.setPuzzleShapeFieldValues();
+    this.setupPuzzleShapefield();
     this.addPuzzleOptionEventListeners();
     this.getCropData();
   }
@@ -765,10 +754,13 @@ export default class PuzzlyCreator {
     // console.log("selected puzzle config", this.selectedPuzzleConfig);
     // const puzzleDimensions = this.getPuzzleDimensions(this.selectedPuzzleConfig, activeImpression);
 
-    const mappedPieces = addPuzzleDataToPieces(
-      activeImpression.pieces,
-      this.selectedPuzzleConfig
-    );
+    let mappedPieces: SkeletonPiece[];
+    if (activeImpression.pieces) {
+      mappedPieces = addPuzzleDataToPieces(
+        activeImpression.pieces,
+        this.selectedPuzzleConfig
+      );
+    }
     // console.log("mapped pieces", mappedPieces);
 
     const makePuzzleImageResponse = await fetch("/api/makePuzzleImage", {

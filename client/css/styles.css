@@ -530,8 +530,8 @@ use {
     }
 
     #puzzle-creator {
-        width: 700px;
-        height: 45%;
+        width: 75%;
+        height: 75%;
     }
     
     .inner-content {
